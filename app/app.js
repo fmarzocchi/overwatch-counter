@@ -846,7 +846,7 @@ function renderGroups() {
   for (const id of ids) {
     const h = byId[sid(id)];
     box.append(el("button", { type: "button", class: `chip ${match.group}`, "aria-label": `Togli ${h.name}`, onclick: () => tapHero(sid(id)) },
-      face(h), h.name, " ✕"));
+      face(h), h.name, icon("xmark", "ic chip-x")));
   }
 }
 

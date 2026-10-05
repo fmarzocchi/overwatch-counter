@@ -212,7 +212,7 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
 
 - **Stile scelto dall'utente tra 3 proposte: "Vetro"** (tipo iOS/visionOS): sfondo scuro con luci colorate ferme
   (`body::before`), pannelli di vetro (`.glass`; sfocato `.glass-blur` solo per ciò che sta sopra altro: barra in basso
-  flottante `.dock`, barra minima, selettore fermo, fogli, messaggi), capsule, pulsante premuto bianco, fogli dal basso
+  flottante `.dock`, barra minima, selettore fermo, messaggi; i fogli a tutto schermo sono pieni, senza sfocato), capsule, pulsante premuto bianco, fogli dal basso
   (`dialog`), interruttori sì/no disegnati come iOS (`.toggle.wide`), carattere **Inter** (`app/fonts/inter.woff2`, OFL,
   il più vicino a SF Pro), icone a tratto tipo SF Symbols in `app/icons.js` (`icon()`, `[data-ic]` + `fillIcons()`)
   al posto delle emoji. Colori per giocatore `--p0…--p4` (+ velati `--p0a…` per i bordi dei riquadri).
