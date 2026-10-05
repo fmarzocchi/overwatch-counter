@@ -34,13 +34,19 @@ jobs:
 
       - name: Ultimi dati pubblicati (ripiego se counterwatch cambia)
         run: |
-          url="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/data.json?t=$(date +%s)"
-          if curl -fsSL "$url" -o prev.json && python3 -c "import json,sys; d=json.load(open('prev.json')); sys.exit(0 if d.get('heroes') else 1)"; then
+          site="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          if curl -fsSL "$site/data.json?t=$(date +%s)" -o prev.json && python3 -c "import json,sys; d=json.load(open('prev.json')); sys.exit(0 if d.get('heroes') else 1)"; then
             echo "ripiego: dati pubblicati"
           else
             cp app/data.json prev.json
             echo "ripiego: data.json del repository"
           fi
+          # file delle divisioni pubblicati: riusati se hanno meno di 12 ore (meno richieste al database del sito)
+          mkdir -p prev_divisions
+          for k in $(python3 -c "import json; print(' '.join(json.load(open('prev.json')).get('divisions', {}).keys()))"); do
+            curl -fsSL "$site/divisions/$k.json?t=$(date +%s)" -o "prev_divisions/$k.json" || rm -f "prev_divisions/$k.json"
+          done
+          echo "divisioni precedenti: $(ls prev_divisions | wc -l)"
 
       - name: Collaudo dello scraper (pagine salvate)
         run: python3 tests/test_fetch.py
@@ -49,7 +55,7 @@ jobs:
         id: fetch
         run: |
           set +e
-          python3 tools/fetch_data.py --prev prev.json
+          python3 tools/fetch_data.py --prev prev.json --prev-divisions prev_divisions
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           if [ "$code" = "1" ]; then

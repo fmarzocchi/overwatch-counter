@@ -1,4 +1,4 @@
-import { recommendDuo, breakdown, details, hasSides } from "./recommend.js";
+import { recommendDuo, breakdown, details, hasSides, withDivision, heroProfile } from "./recommend.js";
 
 const REPO = "fmarzocchi/overwatch-counter";
 const WORKFLOW = "update-data.yml";
@@ -13,6 +13,9 @@ const GROUP_HINT = {
 const ROLES = [["Tank", "Tank"], ["Damage", "Danni"], ["Support", "Supporto"]];
 const ROLE_IT = Object.fromEntries(ROLES);
 const RANKS = ["", "Bronzo", "Argento", "Oro", "Platino", "Smeraldo", "Diamante", "Master", "Grandmaster", "Campione"];
+// rank del profilo → file dei dati di quella divisione (Grandmaster e Campione condividono i dati, come sul sito)
+const RANK_DIV = { Bronzo: "bronze", Argento: "silver", Oro: "gold", Platino: "platinum", Smeraldo: "emerald",
+  Diamante: "diamond", Master: "master", Grandmaster: "gm", Campione: "gm" };
 const MODES = [["Control", "Controllo"], ["Escort", "Scorta"], ["Hybrid", "Ibrida"], ["Push", "Spinta"], ["Flashpoint", "Flashpoint"]];
 const MODE_IT = Object.fromEntries(MODES);
 const STALE_MS = 24 * 3600e3;
@@ -46,6 +49,8 @@ let byId = {};
 let profile = store.get("owc.profile", null) ?? defaultProfile();
 let match = store.get("owc.match", null) ?? emptyMatch();
 let lastDuo = null;
+const divFiles = {}; // chiave divisione → contenuto del file (o null se non disponibile)
+const divData = {}; // chiave divisione → dati generali uniti a quelli della divisione
 
 const saveProfile = () => store.set("owc.profile", profile);
 const saveMatch = () => store.set("owc.match", match);
@@ -115,12 +120,43 @@ async function loadData() {
     if (!Array.isArray(d.heroes) || !d.heroes.length) throw new Error("dati vuoti");
     data = d;
     byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
+    for (const k of Object.keys(divData)) delete divData[k];
+    for (const k of Object.keys(divFiles)) delete divFiles[k];
     cleanSelections();
+    await loadDivisions();
     return true;
   } catch (e) {
     console.warn("data.json", e);
     return false;
   }
+}
+
+// dati della divisione di ciascun giocatore (se ha scelto il rank e il file esiste)
+async function loadDivisions() {
+  const keys = new Set(profile.players.map((p) => RANK_DIV[p.rank]).filter(Boolean));
+  await Promise.all([...keys].filter((k) => !(k in divFiles)).map(async (k) => {
+    const info = data?.divisions?.[k];
+    divFiles[k] = null;
+    if (!info?.file) return;
+    try {
+      const r = await fetch(`${info.file}?t=${encodeURIComponent(info.checked ?? "")}`);
+      if (r.ok) divFiles[k] = await r.json();
+    } catch { /* offline senza copia: si usano i dati Ranked generali */ }
+  }));
+}
+
+function playerData(i) {
+  const k = RANK_DIV[profile.players[i].rank];
+  if (!k || !divFiles[k]) return data;
+  return (divData[k] ??= withDivision(data, divFiles[k]));
+}
+
+function dataLabel(i) {
+  const p = profile.players[i];
+  if (data?.filter?.gameType !== "Ranked") return "tutte le partite";
+  if (!p.rank) return "Ranked, tutte le divisioni";
+  return playerData(i) === data ? `Ranked, tutte le divisioni (dati ${p.rank} non disponibili)`
+    : `Ranked ${["Grandmaster", "Campione"].includes(p.rank) ? "Grandmaster+" : p.rank}`;
 }
 
 // eroi spariti dai dati (rimossi dal gioco): via da partita e preferiti
@@ -165,7 +201,9 @@ function renderFresh() {
 // ---------- consigli ----------
 
 function compute() {
-  const players = profile.players.map((p, i) => ({ role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites }));
+  const players = profile.players.map((p, i) => ({
+    role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites, data: playerData(i),
+  }));
   return recommendDuo(data, {
     players, mapSlug: match.mapSlug, side: match.side, bans: match.bans, enemies: match.enemies, allies: match.allies,
   });
@@ -183,18 +221,40 @@ function nextRole(i) {
 const SHOWN = 3;
 const est = (r) => `${(r.estimate * 100).toFixed(1)}%`;
 
+const pctTxt = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
+
+function profileSection(title, items, kind) {
+  if (!items.length) return null;
+  return el("section", { class: "prof-sec" },
+    el("h3", {}, title),
+    el("ul", { class: "prof-list" }, items.map((x) => el("li", {},
+      kind === "map"
+        ? el("span", { class: "prof-map" }, el("b", {}, x.subject.name), el("small", {}, MODE_IT[x.subject.mode] ?? x.subject.mode))
+        : el("span", { class: "prof-hero" }, face(x.subject), x.subject.name),
+      el("span", { class: x.delta >= 0 ? "good" : "bad" }, pctTxt(x.delta))))));
+}
+
 function openDetails(i, row) {
   const p = profile.players[i];
-  $("#t-why").textContent = `Perché ${row.hero.name}`;
+  const prof = heroProfile(playerData(i), row.hero.id);
+  $("#t-why").textContent = row.hero.name;
   $("#why-body").replaceChildren(
     el("div", { class: "why-head" }, face(row.hero),
       el("div", {}, el("div", { class: "pick-name" }, row.hero.name),
-        el("div", { class: "muted" }, `per ${p.name} · stima ${est(row)}`))),
+        el("div", { class: "muted" }, `per ${p.name} · stima ${est(row)}`),
+        el("div", { class: "muted small" }, `dati: ${dataLabel(i)}`))),
+    el("h3", { class: "why-title" }, "Perché in questa partita"),
     el("ul", { class: "why-list" }, details(row).map((d) => el("li", { class: d.good ? "good" : "bad" }, d.text))),
+    el("div", { class: "prof-grid" },
+      profileSection("Forte contro", prof.strongVs, "hero"),
+      profileSection("In difficoltà contro", prof.weakVs, "hero"),
+      profileSection("Mappe migliori", prof.bestMaps, "map"),
+      profileSection("Funziona bene con", prof.bestWith, "hero")),
     el("p", { class: "muted small" },
-      "Ogni riga è lo scarto dal 50% di vittorie (dati counterwatch). La stima li somma: serve a ordinare, non è una certezza."),
+      "Ogni valore è lo scarto dal 50% di vittorie (dati counterwatch). La stima li somma: serve a ordinare, non è una certezza."),
   );
   $("#why-dialog").showModal();
+  $("#why-body").scrollTop = 0;
 }
 
 function renderPicks() {
@@ -210,7 +270,9 @@ function renderPicks() {
       "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare`,
       onclick: () => nextRole(i),
     }, role ? ROLE_IT[role] : "Qualsiasi");
-    const head = el("div", { class: "pick-head" }, el("span", { class: "pick-player" }, p.name), roleBtn);
+    const head = el("div", { class: "pick-head" },
+      el("span", { class: "pick-player", title: dataLabel(i) }, p.name, p.rank ? el("small", { class: "pick-rank" }, p.rank) : null),
+      roleBtn);
     const top = rows[0];
     if (!top) {
       box.append(el("article", { class: "pick empty" }, head, "Nessun eroe disponibile"));
@@ -357,7 +419,7 @@ function renderProfile() {
         onchange: (e) => { p.name = e.target.value.trim() || (i ? "Lei" : "Io"); saveProfile(); render(); } }),
       el("label", { for: rankId }, "Rank"),
       (() => {
-        const s = el("select", { id: rankId, onchange: (e) => { p.rank = e.target.value; saveProfile(); } },
+        const s = el("select", { id: rankId, onchange: async (e) => { p.rank = e.target.value; saveProfile(); await loadDivisions(); render(); } },
           RANKS.map((r) => el("option", { value: r }, r || "—")));
         s.value = p.rank ?? "";
         return s;
@@ -387,7 +449,7 @@ function renderProfile() {
       "Se non ne resta nessuno (ruolo, ban, alleati) si consiglia tra tutti e lo vedi scritto."),
   ));
   box.append(el("p", { class: "muted small", style: "margin:0 16px" },
-    "Il rank per ora viene solo memorizzato: i dati sono di tutte le divisioni. " +
+    "Il rank sceglie i dati Ranked della vostra divisione (Grandmaster e Campione usano gli stessi, come su counterwatch). " +
     "I preferiti ricevono un piccolo vantaggio (+1%) nei consigli."));
   const tok = store.get("owc.token", "");
   $("#token").value = "";

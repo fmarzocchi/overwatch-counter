@@ -46,9 +46,8 @@ detto di lasciar perdere se troppo difficile. Servirebbe un'altra fonte di stati
 DA FARE:
 1. Verificare su GitHub che il giro reale dica "OK [Ranked]".
 2. **Guscio APK** + `.github/workflows/android.yml` (vedi sotto).
-3. Rank per giocatore: counterwatch ha dati per divisione (Bronze…Grandmaster+). Ora il rank è solo
-   memorizzato. Usarlo vorrebbe dire scaricare i dati di 1–2 divisioni in più: valutare con l'utente
-   (più richieste a counterwatch).
+3. Scheda eroe (tocco su un consiglio): perché in questa partita + "Forte contro", "In difficoltà contro",
+   "Mappe migliori", "Funziona bene con" (`heroProfile()`), sui dati della divisione del giocatore. FATTO.
 
 ## Dati Ranked (risolto il 2026-10-05, con l'ok dell'utente)
 
@@ -66,7 +65,11 @@ database **Supabase** (sola lettura, chiave pubblica). `fetch_data.py` fa lo ste
   `filter.why`); se prima era Ranked → `problems` (uscita 2, mail).
 - Test offline: `tests/fixtures_rest.tar.gz` (copia reale Ranked). Diagnosi manuale: workflow "Diagnosi
   counterwatch" (`tools/discover_ranked.py`, salva una copia nuova nel ramo `fixtures-rest`).
-- Divisioni disponibili nel database: Bronze…Champion (per un futuro uso del rank).
+- **Divisioni (rank del profilo)**: `update_divisions()` scrive `app/divisions/<chiave>.json` (bronze, silver,
+  gold, platinum, emerald, diamond, master, gm = Grandmaster+Champion uniti come sul sito) con counter,
+  sinergie, overall e mappe della divisione; indice in `data.json → divisions`. Rinnovati ogni **12 ore**: il
+  workflow riscarica i file pubblicati (`--prev-divisions`) e li riusa se freschi (~60 richieste ogni 12 h).
+  L'app carica solo i file dei rank dei due giocatori (`withDivision()`); ognuno ha i consigli sui suoi dati.
 
 ## I dati (formato di app/data.json)
 
@@ -113,7 +116,7 @@ Due schede (tab in basso, grandi):
 Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **Attacco/Difesa**: counterwatch non ha dati per lato. Regola dichiarata in `sideBonus()`: difesa premia lo
   stile POKE, attacco DIVE/RUSH, al massimo ±0.5%; nei motivi appare come "difesa (regola)".
-- **Rank**: counterwatch ha dati per divisione, ma ora non li scarichiamo: il rank è solo memorizzato.
+- **Rank**: sceglie i dati Ranked della divisione del giocatore (vedi "Dati Ranked").
 - Ban: max 4. Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
 - Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
 - **3 consigli per giocatore** (dal migliore), con volto, stima e perché: righe "Mappa ±x%", "Avversari ±x%"

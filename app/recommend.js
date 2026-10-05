@@ -94,7 +94,8 @@ export function recommend(
   return rows;
 }
 
-// players: [{role, favorites}, {role, favorites}]; il resto come recommend().
+// players: [{role, favorites, onlyFavorites, data?}, …]; il resto come recommend().
+// data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.
 // Restituisce, per ogni giocatore, le alternative ordinate (la prima è la scelta consigliata)
 // già calcolate tenendo conto dell'eroe consigliato all'altro.
 export function recommendDuo(data, { players = [], ...ctx } = {}) {
@@ -102,17 +103,17 @@ export function recommendDuo(data, { players = [], ...ctx } = {}) {
   const fallbackNote = "nessun preferito disponibile: consiglio tra tutti";
   // con "solo preferiti" un giocatore senza preferiti utilizzabili torna a tutti gli eroi
   const opts = players.map((p, i) => {
-    if (p.onlyFavorites && !recommend(data, { ...ctx, ...p }).length) {
+    if (p.onlyFavorites && !recommend(p.data ?? data, { ...ctx, ...p }).length) {
       notes[i] = fallbackNote;
       return { ...p, onlyFavorites: false };
     }
     return p;
   });
   if (players.length !== 2) {
-    return { lists: opts.map((p) => recommend(data, { ...ctx, ...p })), pair: null, notes };
+    return { lists: opts.map((p) => recommend(p.data ?? data, { ...ctx, ...p })), pair: null, notes };
   }
   const bestPair = () => {
-    const [r0, r1] = opts.map((p) => recommend(data, { ...ctx, ...p }));
+    const [r0, r1] = opts.map((p) => recommend(p.data ?? data, { ...ctx, ...p }));
     let best = null;
     for (const a of r0) {
       for (const b of r1) {
@@ -134,8 +135,8 @@ export function recommendDuo(data, { players = [], ...ctx } = {}) {
   if (!best) return { lists: [r0, r1], pair: null, notes };
   const allies = ctx.allies ?? [];
   const lists = [
-    recommend(data, { ...ctx, ...opts[0], allies: [...allies, best.b.hero.id] }),
-    recommend(data, { ...ctx, ...opts[1], allies: [...allies, best.a.hero.id] }),
+    recommend(opts[0].data ?? data, { ...ctx, ...opts[0], allies: [...allies, best.b.hero.id] }),
+    recommend(opts[1].data ?? data, { ...ctx, ...opts[1], allies: [...allies, best.a.hero.id] }),
   ];
   // la scelta congiunta va in cima anche se, a pari merito, l'ordine fosse diverso
   for (const [i, h] of [[0, best.a.hero], [1, best.b.hero]]) {
@@ -190,4 +191,42 @@ export function details(row) {
   if (row.side) out.push({ good: row.parts.lato >= 0, text: `${row.side === "defense" ? "difesa" : "attacco"} (regola sullo stile) ${pct(row.parts.lato)}` });
   if (row.favorite) out.push({ good: true, text: `preferito (solo per ordinare) ${pct(row.parts.pref)}` });
   return out;
+}
+
+// Dati generali + file di una divisione (app/divisions/<chiave>.json): counter, sinergie, win rate
+// generali e per mappa della divisione; le mappe assenti nel file restano quelle generali.
+export function withDivision(data, div) {
+  if (!div?.counters) return data;
+  return {
+    ...data,
+    division: div.division,
+    counters: div.counters,
+    synergies: div.synergies ?? data.synergies,
+    overall: { ...data.overall, ...div.overall },
+    maps: data.maps.map((m) => (div.maps?.[m.slug] ? { ...m, winRates: { ...m.winRates, ...div.maps[m.slug] } } : m)),
+  };
+}
+
+// Scheda di un eroe: contro chi va meglio e peggio, le mappe migliori, con chi si trova meglio.
+export function heroProfile(data, heroId, n = 5) {
+  const id = sid(heroId);
+  const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
+  const top = (items, dir = -1) => items.filter((x) => x.subject).sort((a, b) => dir * (a.delta - b.delta)).slice(0, n);
+  const others = data.heroes.filter((h) => sid(h.id) !== id);
+  const vs = others
+    .map((h) => ({ subject: h, delta: (data.counters?.[id]?.[sid(h.id)] ?? NaN) - 0.5 }))
+    .filter((x) => Number.isFinite(x.delta));
+  const withHeroes = others
+    .map((h) => ({ subject: h, delta: (pairValue(data.synergies, id, h.id) ?? NaN) - 0.5 }))
+    .filter((x) => Number.isFinite(x.delta));
+  const maps = data.maps
+    .map((m) => ({ subject: m, delta: (m.winRates?.[id] ?? NaN) - 0.5 }))
+    .filter((x) => Number.isFinite(x.delta));
+  return {
+    hero: byId[id],
+    strongVs: top(vs.filter((x) => x.delta > 0)),
+    weakVs: top(vs.filter((x) => x.delta < 0), 1),
+    bestMaps: top(maps.filter((x) => x.delta > 0)),
+    bestWith: top(withHeroes.filter((x) => x.delta > 0)),
+  };
 }

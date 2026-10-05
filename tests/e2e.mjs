@@ -2,7 +2,8 @@
 // Uso: node tests/e2e.mjs [cartella-screenshot]   (serve il pacchetto "playwright")
 // Le richieste esterne sono bloccate (icone remote e api.github.com simulate), quindi gira offline.
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,7 +29,18 @@ const check = (name, cond, info = "") => {
   console.log(`${cond ? "PASS" : "FAIL"} ${name}${cond ? "" : `\n     ${info}`}`);
 };
 
-const server = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1", "--directory", path.join(ROOT, "app")], { stdio: "ignore" });
+// copia dell'app da servire, con un file di divisione (Oro) simulato: counter di tutti +3%
+const SITE = mkdtempSync(path.join(tmpdir(), "owc-site-"));
+cpSync(path.join(ROOT, "app"), SITE, { recursive: true });
+const goldDiv = {
+  division: "gold", checked: new Date().toISOString(), overall: data.overall, synergies: data.synergies, maps: {},
+  counters: Object.fromEntries(Object.entries(data.counters).map(([h, row]) =>
+    [h, Object.fromEntries(Object.entries(row).map(([o, v]) => [o, Math.min(0.8, v + 0.03)]))])),
+};
+mkdirSync(path.join(SITE, "divisions"), { recursive: true });
+writeFileSync(path.join(SITE, "divisions", "gold.json"), JSON.stringify(goldDiv));
+writeFileSync(path.join(SITE, "data.json"), JSON.stringify({ ...data, divisions: { gold: { file: "divisions/gold.json", checked: goldDiv.checked } } }));
+const server = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1", "--directory", SITE], { stdio: "ignore" });
 const browser = await chromium.launch();
 const errors = [];
 
@@ -121,6 +133,16 @@ try {
   const det = await text(page, "#why-body");
   check("tocco su un consiglio: dettaglio per ogni avversario", ["contro Pharah", "contro Winston", "contro Reinhardt", "King's Row"].every((t) => det.includes(t)), det);
   await shot(page, "05b-perche");
+  check("scheda eroe di Fabio (senza rank): dati Ranked di tutte le divisioni", det.includes("Ranked, tutte le divisioni"), det);
+  for (const t of ["Forte contro", "In difficoltà contro", "Mappe migliori", "Funziona bene con"]) {
+    check(`scheda eroe: sezione «${t}» con eroi/mappe e percentuali`, await page.locator(".prof-sec", { hasText: t }).locator("li").count() > 0);
+  }
+  await page.click("#why-dialog [data-close]");
+  await page.locator(".pick").nth(1).locator(".sug").first().click();
+  const detG = await text(page, "#why-body");
+  check("scheda eroe di Giulia (rank Oro): usa i dati della divisione", detG.includes("dati: Ranked Oro"), detG);
+  await page.evaluate(() => document.querySelector("#why-body").scrollIntoView());
+  await shot(page, "05c-scheda-eroe");
   await page.click("#why-dialog [data-close]");
   await page.click("#groups [data-group=allies]");
   await heroBtn(page, "Lúcio").click();
@@ -255,6 +277,7 @@ try {
 } finally {
   await browser.close();
   server.kill();
+  rmSync(SITE, { recursive: true, force: true });
 }
 console.log(`\n${results.filter(Boolean).length}/${results.length} controlli superati · screenshot in ${SHOTS}`);
 process.exit(results.every(Boolean) ? 0 : 1);

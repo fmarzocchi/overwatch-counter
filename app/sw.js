@@ -1,6 +1,6 @@
 // Service worker: guscio dell'app cache-first (aggiornato in sottofondo), data.json network-first
 // con ripiego sulla copia salvata se offline, icone degli eroi cache-first.
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `owc-shell-${VERSION}`;
 const DATA = "owc-data";
 const IMG = "owc-img";
@@ -19,7 +19,7 @@ self.addEventListener("activate", (e) => {
 
 async function dataFirst(req) {
   const cache = await caches.open(DATA);
-  const key = new URL("data.json", self.registration.scope).href;
+  const key = new URL(new URL(req.url).pathname, self.registration.scope).href; // senza ?t=
   try {
     const res = await fetch(req, { cache: "no-store" });
     if (res.ok) await cache.put(key, res.clone());
@@ -49,7 +49,9 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin === location.origin && url.pathname.endsWith("/data.json")) return e.respondWith(dataFirst(req));
+  if (url.origin === location.origin && (url.pathname.endsWith("/data.json") || url.pathname.includes("/divisions/"))) {
+    return e.respondWith(dataFirst(req));
+  }
   if (req.destination === "image") return e.respondWith(cacheFirst(IMG, req));
   if (url.origin === location.origin) return e.respondWith(shellFirst(req));
 });

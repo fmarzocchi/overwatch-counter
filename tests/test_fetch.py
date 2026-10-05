@@ -170,6 +170,47 @@ l = json.loads((tmp / "lost.json").read_text()) if (tmp / "lost.json").exists() 
 check("Ranked non disponibili: segnalato", code == 2 and l.get("filter", {}).get("gameType") == "All"
       and any("Ranked" in x for x in l.get("problems", [])), log)
 
+# 13. divisioni (rank): un file per divisione, Grandmaster+Champion uniti, riuso entro 12 ore
+DIV_NAMES = ["Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond", "Master", "Grandmaster", "Champion"]
+def with_divisions(d_, shift=lambda name: 0.0, skip=()):
+    with_ranked(d_)
+    for dn in DIV_NAMES:
+        if dn in skip:
+            continue
+        for name in ["counters", "synergies", "current"]:
+            rows = json.loads((REST / f"ranked_{name}.json").read_text())
+            rows = [{**r, "win_rate": min(0.95, r["win_rate"] + shift(dn))} for r in rows]
+            (d_ / f"rest_ranked_{dn.lower()}_{name}.json").write_text(json.dumps(rows))
+ddv = mutated(tmp, "div", lambda d_: with_divisions(d_, lambda dn: {"Gold": 0.05, "Grandmaster": 0.04, "Champion": 0.0}.get(dn, 0.0)))
+code, log = run(ddv, tmp / "div" / "out.json")
+v = json.loads((tmp / "div" / "out.json").read_text()) if (tmp / "div" / "out.json").exists() else {}
+idx = v.get("divisions", {})
+gold = json.loads((tmp / "div" / "divisions" / "gold.json").read_text()) if (tmp / "div" / "divisions" / "gold.json").exists() else {}
+gm = json.loads((tmp / "div" / "divisions" / "gm.json").read_text()) if (tmp / "div" / "divisions" / "gm.json").exists() else {}
+base = shrink(row["win_rate"], row["total_matches"])
+check("divisioni: 8 file con counter, sinergie e mappe", code == 0 and len(idx) == 8
+      and all(x.get("file") and not x.get("error") for x in idx.values()) and len(gold.get("maps", {})) == len(d["maps"]), log)
+check("divisione Oro: dati suoi (diversi dal Ranked generale)",
+      abs(gold["counters"][a][b] - shrink(row["win_rate"] + 0.05, row["total_matches"])) < 1e-4, f"{gold.get('counters', {}).get(a, {}).get(b)} vs {base}")
+check("Grandmaster+: Grandmaster e Champion uniti pesando le partite",
+      abs(gm["counters"][a][b] - shrink(row["win_rate"] + 0.02, 2 * row["total_matches"])) < 1e-4, str(gm.get("counters", {}).get(a, {}).get(b)))
+
+# riuso: con i file del giro prima (freschi) non si riscarica nulla, anche se ora il database non ha divisioni
+dnodiv = mutated(tmp, "nodiv", with_ranked)
+code, log = run(dnodiv, tmp / "nodiv" / "out.json", prev=tmp / "div" / "out.json")
+cmd = [sys.executable, str(SCRIPT), "--from-dir", str(dnodiv), "--out", str(tmp / "nodiv" / "out.json"),
+       "--prev", str(tmp / "div" / "out.json"), "--prev-divisions", str(tmp / "div" / "divisions")]
+pr = subprocess.run(cmd, capture_output=True, text=True)
+n2 = json.loads((tmp / "nodiv" / "out.json").read_text())
+check("divisioni fresche (< 12 h): riusate senza scaricare", pr.returncode == 0
+      and n2["divisions"]["gold"]["checked"] == idx["gold"]["checked"] and not n2["divisions"]["gold"].get("error"), pr.stdout + pr.stderr)
+# senza file precedenti e senza dati: segnata come non disponibile, ma niente "problems"
+dmiss2 = mutated(tmp, "missdiv", lambda d_: with_divisions(d_, skip=("Silver",)))
+code, log = run(dmiss2, tmp / "missdiv" / "out.json")
+m2 = json.loads((tmp / "missdiv" / "out.json").read_text()) if (tmp / "missdiv" / "out.json").exists() else {}
+check("divisione non scaricabile: annotata, il resto funziona", code == 0 and m2["divisions"]["silver"].get("error")
+      and m2["divisions"]["gold"].get("file") and not m2.get("problems"), log)
+
 # 12. chiave e indirizzo letti dal JS del sito (mai scritti nel codice)
 sys.path.insert(0, str(ROOT / "tools"))
 import fetch_data as fd

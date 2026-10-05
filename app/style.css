@@ -86,7 +86,20 @@ a { color: var(--allies); }
 .bad { color: var(--bad); }
 .why-head { display: flex; align-items: center; gap: 12px; padding: 16px 16px 8px; }
 .why-head .face { width: 64px; height: 64px; font-size: 20px; }
-.why-list { margin: 0; padding: 8px 16px 8px 36px; font-size: 16px; line-height: 1.7; }
+.why-list { margin: 0; padding: 4px 16px 8px 36px; font-size: 16px; line-height: 1.7; }
+.why-title { margin: 8px 16px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.pick-rank { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+.prof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px 12px 8px; }
+.prof-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; min-width: 0; }
+.prof-sec h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.prof-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; }
+.prof-list li { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.prof-hero, .prof-map { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.prof-hero .face { width: 26px; height: 26px; font-size: 10px; }
+.prof-map { flex-direction: column; align-items: flex-start; gap: 0; white-space: normal; }
+.prof-map b { line-height: 1.15; }
+.prof-map small { color: var(--muted); font-size: 11px; }
+.prof-list li > span:last-child { flex: none; font-weight: 700; font-size: 12.5px; }
 #why-body > p { padding: 0 16px; }
 .pick.empty { border-style: dashed; border-color: var(--line); color: var(--muted); font-size: 14px; justify-content: center; }
 

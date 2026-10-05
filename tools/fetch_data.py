@@ -32,7 +32,13 @@ RANKED_TABLES = {  # tabella e colonne del database del sito (vedi il JS di coun
     "synergies": "community_stats_synergies_current?select=hero_id,ally_hero_id,win_rate,total_matches",
     "current": "community_stats_current?select=hero_id,map_name,game_mode_name,win_rate,total_matches",
 }
-RANKED_FILTER = "game=eq.Overwatch&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All"
+RANKED_FILTER = "game=eq.Overwatch&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.{division}"
+# Dati per divisione (rank dei giocatori): file app/divisions/<chiave>.json, rinnovati ogni 12 ore.
+# Grandmaster e Champion uniti come fa il sito ("Grandmaster+"): da soli hanno pochi dati.
+DIVISIONS = [("bronze", ["Bronze"]), ("silver", ["Silver"]), ("gold", ["Gold"]), ("platinum", ["Platinum"]),
+             ("emerald", ["Emerald"]), ("diamond", ["Diamond"]), ("master", ["Master"]),
+             ("gm", ["Grandmaster", "Champion"])]
+DIVISION_MAX_AGE_H = 12
 
 
 # ---------- lettura pagine ----------
@@ -40,6 +46,7 @@ RANKED_FILTER = "game=eq.Overwatch&stat_category=eq.5V5&game_type=eq.Ranked&divi
 class Source:
     def __init__(self, from_dir=None):
         self.from_dir = pathlib.Path(from_dir) if from_dir else None
+        self.conn = None  # (url, chiave) del database, letti dal JS del sito alla prima richiesta
 
     def html(self, path):
         if self.from_dir:
@@ -57,16 +64,26 @@ class Source:
         print(f"  ! impossibile scaricare {path}: {last}", file=sys.stderr)
         return ""
 
-    def ranked(self, tb_html):
-        """Righe Ranked {counters, synergies, current} dal database del sito; solleva un errore se non riesce."""
+    def ranked(self, tb_html, divisions=("All",)):
+        """Righe Ranked {counters, synergies, current} dal database del sito (più divisioni = righe unite).
+        Solleva un errore se non riesce."""
         if self.from_dir:
             out = {}
             for name in RANKED_TABLES:
-                f = self.from_dir / f"rest_ranked_{name}.json"
-                if not f.exists():
-                    raise LookupError(f"manca {f.name}")
-                out[name] = json.loads(f.read_text())
+                out[name] = []
+                for d in divisions:
+                    f = self.from_dir / (f"rest_ranked_{name}.json" if d == "All" else f"rest_ranked_{d.lower()}_{name}.json")
+                    if not f.exists():
+                        raise LookupError(f"manca {f.name}")
+                    out[name] += json.loads(f.read_text())
             return out
+        if not self.conn:
+            self.conn = self._connect(tb_html)
+        url, key = self.conn
+        return {name: [r for d in divisions for r in self._rest_all(url, key, f"{q}&{RANKED_FILTER.format(division=d)}")]
+                for name, q in RANKED_TABLES.items()}
+
+    def _connect(self, tb_html):
         conn = None
         for c in sorted(set(re.findall(r'/_next/static/chunks/[^"\\ ]+?\.js', tb_html))):
             time.sleep(1.0)
@@ -81,7 +98,8 @@ class Source:
         last = None
         for key in keys:  # la prima chiave che risponde (nel JS può esserci anche quella di sviluppo)
             try:
-                return {name: self._rest_all(url, key, f"{q}&{RANKED_FILTER}") for name, q in RANKED_TABLES.items()}
+                self._rest_all(url, key, f"{RANKED_TABLES['synergies']}&{RANKED_FILTER.format(division='All')}", pages=1)
+                return url, key
             except urllib.error.HTTPError as e:
                 if e.code not in (401, 403):
                     raise
@@ -89,7 +107,7 @@ class Source:
         raise LookupError(f"nessuna chiave accettata dal database ({last})")
 
     @staticmethod
-    def _rest_all(url, key, q):
+    def _rest_all(url, key, q, pages=99):
         rows, off = [], 0
         while True:
             time.sleep(1.0)
@@ -99,7 +117,7 @@ class Source:
             if not isinstance(page, list):
                 raise ValueError("risposta inattesa dal database")
             rows += page
-            if len(page) < 1000 or off > 20000:
+            if len(page) < 1000 or off > 20000 or len(rows) >= pages * 1000:
                 return rows
             off += 1000
 
@@ -117,14 +135,17 @@ def shrink(win_rate, matches):
 
 
 def ranked_matrix(rows, other):
-    """Righe {hero_id, <other>, win_rate, total_matches} → {eroe: {altro: win rate corretto}}."""
-    out = {}
+    """Righe {hero_id, <other>, win_rate, total_matches} → {eroe: {altro: win rate corretto}}.
+    Righe ripetute per la stessa coppia (più divisioni) vengono unite pesando le partite."""
+    acc = {}
     for r in rows:
         h, o, w, n = r.get("hero_id"), r.get(other), r.get("win_rate"), r.get("total_matches")
         if None in (h, o) or not isinstance(w, (int, float)) or not isinstance(n, (int, float)) or n < 0 or h == o:
             continue
-        out.setdefault(str(h), {})[str(o)] = round(shrink(w, n), 4)
-    return out
+        a = acc.setdefault(str(h), {}).setdefault(str(o), [0.0, 0.0])
+        a[0] += w * n
+        a[1] += n
+    return {h: {o: round(shrink(s / n if n else 0.5, n), 4) for o, (s, n) in row.items()} for h, row in acc.items()}
 
 
 def map_key(name):
@@ -280,11 +301,58 @@ def plausible(matrix):
     return bool(vals) and all(0.2 <= v <= 0.8 for v in vals)
 
 
+def update_divisions(src, tb_html, out_dir, prev_dir, ids, idset, trim, map_meta, overall, now):
+    """Scrive out_dir/<chiave>.json per ogni divisione; riusa i file precedenti se hanno meno di 12 ore
+    (o se la divisione non si scarica). Restituisce l'indice {chiave: {checked, file} | {error}}."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    now_dt = datetime.datetime.fromisoformat(now)
+    index = {}
+    for key, names in DIVISIONS:
+        prev = None
+        if prev_dir:
+            try:
+                prev = json.loads((pathlib.Path(prev_dir) / f"{key}.json").read_text())
+            except (OSError, ValueError):
+                prev = None
+        fresh = prev and (now_dt - datetime.datetime.fromisoformat(prev.get("checked", "2000-01-01T00:00:00+00:00"))
+                          < datetime.timedelta(hours=DIVISION_MAX_AGE_H))
+        body, why = (prev if fresh else None), ""
+        if not body:
+            try:
+                rows = src.ranked(tb_html, names)
+                c, sy = trim(ranked_matrix(rows["counters"], "opponent_hero_id")), trim(ranked_matrix(rows["synergies"], "ally_hero_id"))
+                if not (coverage(c, ids) >= 0.8 and plausible(c) and coverage(sy, ids) >= 0.3 and plausible(sy)):
+                    raise ValueError(f"dati incompleti (counter {coverage(c, ids):.0%})")
+                rm = ranked_maps(rows["current"])
+                maps = {}
+                for slug, meta in map_meta.items():
+                    wr = {h: v for h, v in (rm.get(map_key(meta["name"])) or rm.get(map_key(slug)) or {}).items() if h in idset}
+                    if len(wr) >= len(ids) * 0.6 and plausible({"x": wr}):
+                        maps[slug] = wr
+                ov = {}
+                for h in ids:
+                    vals = [wr[h] for wr in maps.values() if h in wr]
+                    ov[h] = round(sum(vals) / len(vals), 4) if vals else overall.get(h, 0.5)
+                body = {"division": key, "names": names, "checked": now, "counters": c, "synergies": sy,
+                        "overall": ov, "maps": maps}
+            except Exception as e:
+                why = str(e)[:120]
+                body = prev  # meglio dati di qualche ora fa che niente
+        if body:
+            (out_dir / f"{key}.json").write_text(json.dumps(body, ensure_ascii=False, separators=(",", ":")))
+            index[key] = {"checked": body["checked"], "file": f"divisions/{key}.json", **({"error": why} if why else {})}
+        else:
+            index[key] = {"error": why or "non disponibile"}
+            print(f"  ! divisione {key}: {why}", file=sys.stderr)
+    return index
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(ROOT / "app" / "data.json"))
     ap.add_argument("--prev", help="ultimo data.json buono (default: --out se esiste)")
     ap.add_argument("--from-dir")
+    ap.add_argument("--prev-divisions", help="cartella con i file divisions/*.json pubblicati l'ultima volta")
     args = ap.parse_args()
     out = pathlib.Path(args.out)
     prev_path = pathlib.Path(args.prev) if args.prev else out
@@ -388,7 +456,13 @@ def main():
         vals = [mp["winRates"][hid] for mp in maps if hid in mp["winRates"]]
         overall[hid] = round(sum(vals) / len(vals), 4) if vals else 0.5
 
+    divisions = {}
+    if data_filter["gameType"] == "Ranked":
+        divisions = update_divisions(src, tb_html, out.parent / "divisions", args.prev_divisions,
+                                     ids, idset, trim, map_meta, overall, now)
+
     data = {
+        "divisions": divisions,
         "source": "counterwatch.gg", "checked": now, "sourceUpdated": source_updated, "filter": data_filter,
         "status": status, "problems": problems,
         "heroes": hero_list, "overall": overall, "counters": counters,
@@ -398,6 +472,8 @@ def main():
     out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     print(f"OK [{data_filter['gameType']}]: {len(hero_list)} eroi, counter {coverage(counters, ids):.0%}, {len(maps)} mappe, "
           f"fonte aggiornata {source_updated} → {out} ({out.stat().st_size // 1024} KB)")
+    if divisions:
+        print("  divisioni: " + ", ".join(f"{k}{' (!)' if v.get('error') else ''}" for k, v in divisions.items()))
     for p in problems:
         print("  ! " + p)
     sys.exit(2 if problems else 0)

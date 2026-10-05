@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  recommend, recommendDuo, reasons, breakdown, details, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
+  recommend, recommendDuo, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -177,4 +177,34 @@ test("perché: riepilogo mappa/avversari/alleati coerente con le parti", () => {
   assert.deepEqual(plain.map((x) => x.text.split(" ")[0]), ["Generale"]);
   const d = details(r);
   assert.ok(d.some((x) => x.text.startsWith("contro Pharah")) && d.some((x) => x.text.startsWith("contro Winston")) && d.some((x) => x.text.startsWith("con Ana")));
+});
+
+test("divisione: i dati del giocatore sostituiscono quelli generali, il resto resta", () => {
+  const h = String(id("Genji")), o = String(id("Pharah"));
+  const div = { division: "gold", counters: { [h]: { [o]: 0.6 } }, overall: { [h]: 0.55 }, maps: { "kings-row": { [h]: 0.58 } } };
+  const d2 = withDivision(data, div);
+  assert.equal(d2.counters[h][o], 0.6);
+  assert.equal(d2.maps.find((m) => m.slug === "kings-row").winRates[h], 0.58);
+  assert.equal(d2.maps.find((m) => m.slug === "ilios").winRates[h], data.maps.find((m) => m.slug === "ilios").winRates[h]);
+  assert.equal(d2.synergies, data.synergies);
+  assert.equal(withDivision(data, null), data);
+  // in due: ognuno con i suoi dati
+  const { lists } = recommendDuo(data, {
+    enemies: [id("Pharah")],
+    players: [{ role: "Damage", data: d2 }, { role: "Support" }],
+  });
+  const genji = lists[0].find((r) => r.hero.name === "Genji");
+  close(genji.parts.contro, 0.1, "Genji usa i counter della divisione");
+});
+
+test("scheda eroe: forte contro, debole contro, mappe migliori, coppie migliori", () => {
+  const prof = heroProfile(data, id("Genji"));
+  const g = String(id("Genji"));
+  assert.equal(prof.hero.name, "Genji");
+  for (const k of ["strongVs", "weakVs", "bestMaps", "bestWith"]) assert.ok(prof[k].length > 0 && prof[k].length <= 5, k);
+  assert.ok(prof.strongVs.every((x) => x.delta > 0) && prof.weakVs.every((x) => x.delta < 0));
+  for (let i = 1; i < prof.strongVs.length; i++) assert.ok(prof.strongVs[i - 1].delta >= prof.strongVs[i].delta);
+  const best = Math.max(...Object.entries(data.counters[g]).map(([, v]) => v)) - 0.5;
+  close(prof.strongVs[0].delta, best, "il migliore è davvero il migliore");
+  assert.ok(prof.bestMaps.every((x) => x.subject.slug) && prof.bestWith.every((x) => x.subject.name !== "Genji"));
 });
