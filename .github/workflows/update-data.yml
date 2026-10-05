@@ -1,10 +1,12 @@
 name: Aggiorna dati e pubblica
 
-# Ogni 3 ore (e dal pulsante "Aggiorna dati" dell'app, e a ogni push su main):
-# scarica i dati da counterwatch, li collauda e pubblica la cartella app/ su GitHub Pages.
+# Ogni 30 minuti un controllo leggero (1 richiesta): se counterwatch ha dati nuovi, o se l'ultimo
+# aggiornamento completo ha più di ~3 ore, scarica i dati, li collauda e pubblica app/ su GitHub Pages.
+# Dal pulsante "Aggiorna dati" dell'app e a ogni push su main: sempre aggiornamento completo.
+# (Il telefono non fa niente di tutto questo: legge solo il data.json pubblicato, quando l'app è aperta.)
 on:
   schedule:
-    - cron: "17 */3 * * *"
+    - cron: "7,37 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -25,6 +27,7 @@ jobs:
     timeout-minutes: 20
     outputs:
       fetch_code: ${{ steps.fetch.outputs.code }}
+      run: ${{ steps.check.outputs.run }}
     steps:
       - uses: actions/checkout@v4
 
@@ -48,14 +51,22 @@ jobs:
           done
           echo "divisioni precedenti: $(ls prev_divisions | wc -l)"
 
+      - name: Serve un aggiornamento completo?
+        id: check
+        run: python3 tools/needs_update.py --prev prev.json --event "${{ github.event_name }}"
+
       - name: Collaudo dello scraper (pagine salvate)
+        if: steps.check.outputs.run == 'true'
         run: python3 tests/test_fetch.py
 
       - name: Scarica da counterwatch
+        if: steps.check.outputs.run == 'true'
         id: fetch
         run: |
           set +e
-          python3 tools/fetch_data.py --prev prev.json --prev-divisions prev_divisions
+          force=""
+          [ "${{ steps.check.outputs.force_divisions }}" = "true" ] && force="--force-divisions"
+          python3 tools/fetch_data.py --prev prev.json --prev-divisions prev_divisions $force
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           if [ "$code" = "1" ]; then
@@ -67,19 +78,38 @@ jobs:
           exit 0
 
       - name: Collaudo della logica sui dati nuovi
+        if: steps.check.outputs.run == 'true'
         run: node --test tests/*.test.js
 
       - name: Icone degli eroi
+        if: steps.check.outputs.run == 'true'
         run: python3 tools/fetch_icons.py
 
       - uses: actions/configure-pages@v5
+        if: steps.check.outputs.run == 'true'
 
       - uses: actions/upload-pages-artifact@v3
+        if: steps.check.outputs.run == 'true'
         with:
           path: app
 
+  # GitHub spegne i cron dopo 60 giorni senza attività nel repository:
+  # riattivare il workflow via API azzera il conteggio (una volta al giorno basta).
+  keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tieni acceso l'aggiornamento automatico
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(date -u +%H)" = "03" ]; then
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/update-data.yml/enable" || true
+          fi
+
   deploy:
     needs: build
+    if: needs.build.outputs.run == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -87,14 +117,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-
-      # GitHub spegne i cron dopo 60 giorni senza attività nel repository:
-      # riattivare il workflow via API azzera il conteggio.
-      - name: Tieni acceso l'aggiornamento automatico
-        if: github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/update-data.yml/enable" || true
 
       # Dati parziali o scraper rotto: pubblicato comunque, ma il job fallisce così arriva la mail.
       - name: Esito dello scraper

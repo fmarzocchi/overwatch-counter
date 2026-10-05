@@ -168,6 +168,15 @@ Sentiti libero di migliorarla (es. usare anche `counterScores`), ma con test.
 
 ## Aggiornamento automatico (GitHub Actions + Pages)
 
+**Dal 2026-10-05 (richiesta dell'utente): ogni 30 minuti** (`cron "7,37 * * * *"`), ma leggero:
+`tools/needs_update.py` fa 1 richiesta (team builder) e lancia l'aggiornamento completo solo se counterwatch
+ha dati nuovi (`dateModified` diverso → anche `--force-divisions`) o se l'ultimo completo ha più di ~3 ore;
+push e pulsante → sempre completo. Altrimenti niente scraping né pubblicazione. Keepalive del cron in un job a
+parte, una volta al giorno (ore 03 UTC). **App**: rilegge `data.json` al massimo ogni 30 minuti, solo al
+tocco dello schermo o al ritorno in primo piano (nessun timer: la WebView dell'APK non segnala in modo
+affidabile il sottofondo; senza timer in sottofondo non succede nulla). Collaudato: test_fetch n. 15, e2e
+"nessuna richiesta senza interazione" / "tocco dopo più di 30 minuti".
+
 Repository **pubblico** (serve per Pages e per i minuti Actions gratuiti, emulatore compreso).
 `update-data.yml`:
 - `schedule: cron "17 */3 * * *"` (ogni 3 ore) + `workflow_dispatch` + push su main.

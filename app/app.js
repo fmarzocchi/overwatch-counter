@@ -27,6 +27,11 @@ const RANK_DIV = { Bronzo: "bronze", Argento: "silver", Oro: "gold", Platino: "p
 const MODES = [["Control", "Controllo"], ["Escort", "Scorta"], ["Hybrid", "Ibrida"], ["Push", "Spinta"], ["Flashpoint", "Flashpoint"]];
 const MODE_IT = Object.fromEntries(MODES);
 const STALE_MS = 24 * 3600e3;
+// Dati riletti dal sito al massimo ogni 30 minuti, SOLO con l'app aperta: il controllo parte quando si
+// tocca lo schermo o l'app torna in primo piano. Nessun timer: in sottofondo l'app non fa niente.
+const AUTO_REFRESH_MS = 30 * 60e3;
+let lastLoad = 0;
+let refreshing = false;
 const DISPATCH_GAP_MS = 10 * 60e3;
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -121,6 +126,7 @@ function toast(msg, ms = 4500) {
 // ---------- dati ----------
 
 async function loadData() {
+  lastLoad = Date.now();
   try {
     const r = await fetch(`data.json?t=${Date.now()}`, { cache: "no-store" });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -499,6 +505,7 @@ async function refresh() {
   const label = (t) => { btn.textContent = t; };
   const token = store.get("owc.token", "");
   btn.disabled = true;
+  refreshing = true;
   try {
     if (!token) {
       const ok = await loadData();
@@ -550,6 +557,7 @@ async function refresh() {
   } catch {
     toast("Nessuna connessione: uso i dati salvati.");
   } finally {
+    refreshing = false;
     btn.disabled = false;
     label("Aggiorna dati");
   }
@@ -614,8 +622,21 @@ function wire() {
   $("#token-clear").addEventListener("click", () => { store.del("owc.token"); renderProfile(); toast("Token rimosso."); });
 }
 
+async function autoRefresh() {
+  if (document.visibilityState === "hidden" || refreshing || !lastLoad) return;
+  if (Date.now() - lastLoad < AUTO_REFRESH_MS) return;
+  const before = data?.checked;
+  if (await loadData()) {
+    render();
+    if (data.checked !== before) toast("Dati aggiornati ✓", 2500);
+  }
+}
+
 async function start() {
   wire();
+  document.addEventListener("pointerdown", autoRefresh, { capture: true, passive: true });
+  document.addEventListener("visibilitychange", autoRefresh);
+  window.addEventListener("focus", autoRefresh);
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
   const ok = await loadData();
   if (ok) saveMatch();

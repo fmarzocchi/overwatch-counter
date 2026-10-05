@@ -206,6 +206,32 @@ try {
   await page.waitForFunction(() => !document.querySelector("#refresh").disabled);
   check("aggiorna senza token: spiega come attivarlo", (await text(page, "#toast")).includes("token"));
 
+  // ---------- dati riletti ogni 30 minuti, solo con l'app aperta (niente timer) ----------
+  {
+    const { ctx: c6, page: p6 } = await newPage({ serviceWorkers: "block" });
+    let hits = 0, version = data.checked;
+    await c6.route("**/data.json*", (r) => { hits++; return r.fulfill({ json: { ...data, checked: version } }); });
+    await p6.clock.install();
+    await p6.goto(BASE);
+    await p6.locator(".pick .sug.first .sug-name").first().waitFor();
+    const h0 = hits;
+    await p6.clock.runFor(2 * 3600e3);              // 2 ore senza toccare niente
+    check("app lasciata lì: nessuna richiesta di dati senza interazione (niente timer)", hits === h0, `${hits - h0} richieste`);
+    await p6.click("#groups [data-group=bans]");     // primo tocco dopo 2 ore: i dati vanno riletti
+    await p6.waitForTimeout(300);
+    const h1 = hits;
+    check("tocco dopo più di 30 minuti: dati riletti", h1 === h0 + 1, `${h1 - h0} richieste`);
+    await p6.click("#groups [data-group=enemies]");
+    await p6.waitForTimeout(300);
+    check("altro tocco subito dopo: nessuna nuova richiesta", hits === h1, `${hits - h1}`);
+    version = new Date().toISOString();
+    await p6.clock.runFor(31 * 60e3);
+    await p6.click("#groups [data-group=allies]");
+    await p6.waitForFunction(() => document.querySelector("#toast")?.innerText.includes("Dati aggiornati"), null, { timeout: 5000 });
+    check("dati nuovi trovati al tocco: avviso «Dati aggiornati»", hits === h1 + 1);
+    await c6.close();
+  }
+
   // ---------- cambio di ruolo con l'app aperta (es. Sombra da Danni a Supporto) ----------
   {
     const { ctx: c5, page: p5 } = await newPage({ serviceWorkers: "block" });

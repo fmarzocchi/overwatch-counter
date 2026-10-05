@@ -219,6 +219,31 @@ ro = json.loads((tmp / "role.json").read_text()) if (tmp / "role.json").exists()
 check("cambio di ruolo sul sito: Sombra diventa Supporto", code == 0
       and next((h["role"] for h in ro.get("heroes", []) if h["name"] == "Sombra"), None) == "Support", log)
 
+# 15. controllo leggero ogni 30 minuti: aggiornamento completo solo se serve
+import datetime as _dt
+sys.path.insert(0, str(ROOT / "tools"))
+import needs_update as nu
+page = (FIX / "team-builder.html").read_text(encoding="utf-8", errors="ignore")
+src_upd = nu.source_updated(page)
+now_ = _dt.datetime(2026, 10, 5, 12, 0, tzinfo=_dt.timezone.utc)
+iso = lambda minutes: (now_ - _dt.timedelta(minutes=minutes)).isoformat()
+base = {"heroes": [1], "sourceUpdated": src_upd, "checked": iso(30)}
+check("controllo leggero: nessun dato nuovo da 30 min → salta", nu.decide(base, page, now_, "schedule")[0] is False, str(nu.decide(base, page, now_, "schedule")))
+check("controllo leggero: counterwatch ha dati nuovi → completo + divisioni",
+      nu.decide({**base, "sourceUpdated": "2026-10-04T05:00:00Z"}, page, now_, "schedule")[:2] == (True, True))
+check("controllo leggero: ultimo completo 3 h fa → completo", nu.decide({**base, "checked": iso(175)}, page, now_, "schedule")[:2] == (True, False))
+check("controllo leggero: pulsante/push → sempre completo", nu.decide(base, page, now_, "workflow_dispatch")[0] is True
+      and nu.decide(base, page, now_, "push")[0] is True)
+check("controllo leggero: pagina non leggibile → salta fino ai 3 h, poi completo",
+      nu.decide(base, "", now_, "schedule")[0] is False and nu.decide({**base, "checked": iso(200)}, "", now_, "schedule")[0] is True)
+check("controllo leggero: senza dati precedenti → completo", nu.decide({}, page, now_, "schedule")[0] is True)
+# --force-divisions: riscarica anche se i file sono freschi
+pr = subprocess.run([sys.executable, str(SCRIPT), "--from-dir", str(ddv), "--out", str(tmp / "div" / "out2.json"),
+                     "--prev-divisions", str(tmp / "div" / "divisions"), "--force-divisions"], capture_output=True, text=True)
+f2 = json.loads((tmp / "div" / "out2.json").read_text()) if (tmp / "div" / "out2.json").exists() else {}
+check("dati nuovi: divisioni riscaricate anche se fresche", pr.returncode == 0
+      and f2.get("divisions", {}).get("gold", {}).get("checked") != idx["gold"]["checked"], pr.stdout + pr.stderr)
+
 # 12. chiave e indirizzo letti dal JS del sito (mai scritti nel codice)
 sys.path.insert(0, str(ROOT / "tools"))
 import fetch_data as fd

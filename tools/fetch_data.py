@@ -301,7 +301,7 @@ def plausible(matrix):
     return bool(vals) and all(0.2 <= v <= 0.8 for v in vals)
 
 
-def update_divisions(src, tb_html, out_dir, prev_dir, ids, idset, trim, map_meta, overall, now):
+def update_divisions(src, tb_html, out_dir, prev_dir, ids, idset, trim, map_meta, overall, now, force=False):
     """Scrive out_dir/<chiave>.json per ogni divisione; riusa i file precedenti se hanno meno di 12 ore
     (o se la divisione non si scarica). Restituisce l'indice {chiave: {checked, file} | {error}}."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -314,7 +314,7 @@ def update_divisions(src, tb_html, out_dir, prev_dir, ids, idset, trim, map_meta
                 prev = json.loads((pathlib.Path(prev_dir) / f"{key}.json").read_text())
             except (OSError, ValueError):
                 prev = None
-        fresh = prev and (now_dt - datetime.datetime.fromisoformat(prev.get("checked", "2000-01-01T00:00:00+00:00"))
+        fresh = prev and not force and (now_dt - datetime.datetime.fromisoformat(prev.get("checked", "2000-01-01T00:00:00+00:00"))
                           < datetime.timedelta(hours=DIVISION_MAX_AGE_H))
         body, why = (prev if fresh else None), ""
         if not body:
@@ -353,6 +353,7 @@ def main():
     ap.add_argument("--prev", help="ultimo data.json buono (default: --out se esiste)")
     ap.add_argument("--from-dir")
     ap.add_argument("--prev-divisions", help="cartella con i file divisions/*.json pubblicati l'ultima volta")
+    ap.add_argument("--force-divisions", action="store_true", help="riscarica le divisioni anche se fresche (dati nuovi)")
     args = ap.parse_args()
     out = pathlib.Path(args.out)
     prev_path = pathlib.Path(args.prev) if args.prev else out
@@ -459,7 +460,7 @@ def main():
     divisions = {}
     if data_filter["gameType"] == "Ranked":
         divisions = update_divisions(src, tb_html, out.parent / "divisions", args.prev_divisions,
-                                     ids, idset, trim, map_meta, overall, now)
+                                     ids, idset, trim, map_meta, overall, now, force=args.force_divisions)
 
     data = {
         "divisions": divisions,
