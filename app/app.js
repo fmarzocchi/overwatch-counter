@@ -1,4 +1,4 @@
-import { recommendDuo, reasons, hasSides } from "./recommend.js";
+import { recommendDuo, breakdown, details, hasSides } from "./recommend.js";
 
 const REPO = "fmarzocchi/overwatch-counter";
 const WORKFLOW = "update-data.yml";
@@ -165,7 +165,7 @@ function renderFresh() {
 // ---------- consigli ----------
 
 function compute() {
-  const players = profile.players.map((p, i) => ({ role: match.roles[i], favorites: p.favorites }));
+  const players = profile.players.map((p, i) => ({ role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites }));
   return recommendDuo(data, {
     players, mapSlug: match.mapSlug, side: match.side, bans: match.bans, enemies: match.enemies, allies: match.allies,
   });
@@ -178,6 +178,23 @@ function nextRole(i) {
   match.roles[i] = cycle[(k + 1) % cycle.length];
   saveMatch();
   render();
+}
+
+const SHOWN = 3;
+const est = (r) => `${(r.estimate * 100).toFixed(1)}%`;
+
+function openDetails(i, row) {
+  const p = profile.players[i];
+  $("#t-why").textContent = `Perché ${row.hero.name}`;
+  $("#why-body").replaceChildren(
+    el("div", { class: "why-head" }, face(row.hero),
+      el("div", {}, el("div", { class: "pick-name" }, row.hero.name),
+        el("div", { class: "muted" }, `per ${p.name} · stima ${est(row)}`))),
+    el("ul", { class: "why-list" }, details(row).map((d) => el("li", { class: d.good ? "good" : "bad" }, d.text))),
+    el("p", { class: "muted small" },
+      "Ogni riga è lo scarto dal 50% di vittorie (dati counterwatch). La stima li somma: serve a ordinare, non è una certezza."),
+  );
+  $("#why-dialog").showModal();
 }
 
 function renderPicks() {
@@ -199,17 +216,23 @@ function renderPicks() {
       box.append(el("article", { class: "pick empty" }, head, "Nessun eroe disponibile"));
       return;
     }
-    const rs = reasons(top, 3);
-    box.append(el("article", { class: "pick", "aria-label": `Consiglio per ${p.name}` },
+    const note = lastDuo.notes?.[i];
+    box.append(el("article", { class: "pick", "aria-label": `Consigli per ${p.name}` },
       head,
-      el("div", { class: "pick-main" }, face(top.hero),
-        el("div", {},
-          el("div", { class: "pick-name" }, top.hero.name),
-          el("div", { class: "pick-est" }, `stima ${(top.estimate * 100).toFixed(1)}%`))),
-      el("ul", { class: "reasons" }, rs.length
-        ? rs.map((r) => el("li", { class: r.good ? "good" : "bad" }, r.text))
-        : el("li", { class: "muted" }, "nessun dato in più: scegli mappa o avversari")),
-      el("div", { class: "alts" }, `oppure ${rows.slice(1, 3).map((r) => r.hero.name).join(" · ")}`),
+      profile.onlyFavorites && !note ? el("div", { class: "pick-note" }, "★ solo preferiti") : null,
+      note ? el("div", { class: "pick-note warn-note" }, note) : null,
+      el("ol", { class: "sugs" }, rows.slice(0, SHOWN).map((r, k) =>
+        el("li", {},
+          el("button", {
+            type: "button", class: `sug${k === 0 ? " first" : ""}`,
+            "aria-label": `${k + 1}°: ${r.hero.name}, stima ${est(r)}, ${breakdown(r).map((b) => b.text).join(", ")}. Tocca per i dettagli`,
+            onclick: () => openDetails(i, r),
+          },
+          el("span", { class: "sug-face" }, face(r.hero), el("span", { class: "sug-n", "aria-hidden": "true" }, String(k + 1))),
+          el("span", { class: "sug-body" },
+            el("span", { class: "sug-top" }, el("span", { class: "sug-name" }, r.hero.name), el("span", { class: "sug-est" }, est(r))),
+            breakdown(r).map((b) => el("span", { class: `sug-why ${b.good ? "good" : "bad"}` }, b.text))),
+          )))),
     ));
   });
   const h = box.getBoundingClientRect().height;
@@ -348,10 +371,21 @@ function renderProfile() {
             saveProfile(); render();
           } }, label))),
       el("label", {}, `Eroi preferiti (${p.favorites.length})`),
+      p.favorites.length ? null : el("p", { class: "muted small" }, "Nessun preferito: con «solo preferiti» si consiglia tra tutti."),
       el("div", { class: "fav-list" }, p.favorites.map((id) => el("span", { class: "chip" }, face(byId[sid(id)]), byId[sid(id)].name))),
       el("div", { class: "row" }, el("button", { type: "button", class: "btn", onclick: () => openFavorites(i) }, "Scegli preferiti")),
     ));
   });
+  box.append(el("section", { class: "card" },
+    el("h2", {}, "Consigli"),
+    el("button", {
+      type: "button", class: "toggle wide", "aria-pressed": String(!!profile.onlyFavorites),
+      onclick: () => { profile.onlyFavorites = !profile.onlyFavorites; saveProfile(); render(); },
+    }, profile.onlyFavorites ? "✓ Suggerisci solo eroi preferiti" : "Suggerisci solo eroi preferiti"),
+    el("p", { class: "muted small" },
+      "Vale per entrambi: a ognuno si consiglia solo tra i suoi preferiti del ruolo scelto. " +
+      "Se non ne resta nessuno (ruolo, ban, alleati) si consiglia tra tutti e lo vedi scritto."),
+  ));
   box.append(el("p", { class: "muted small", style: "margin:0 16px" },
     "Il rank per ora viene solo memorizzato: i dati sono di tutte le divisioni. " +
     "I preferiti ricevono un piccolo vantaggio (+1%) nei consigli."));

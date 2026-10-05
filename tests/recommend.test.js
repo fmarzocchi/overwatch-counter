@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  recommend, recommendDuo, reasons, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
+  recommend, recommendDuo, reasons, breakdown, details, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -135,4 +135,46 @@ test("dati senza mappa o con eroe sconosciuto: nessun errore", () => {
   const rows = recommend(data, { role: "Tank", mapSlug: "non-esiste", enemies: ["999999"] });
   assert.ok(rows.length > 0 && rows.every((r) => r.vs.length === 0 && Number.isFinite(r.score)));
   assert.deepEqual(recommendDuo(data, { players: [] }).lists, []);
+});
+
+test("solo preferiti: si consiglia solo tra i preferiti, a entrambi", () => {
+  const favA = ["Genji", "Tracer", "Sojourn", "Ana"].map(id); // Ana non è Danni: ignorata per il ruolo
+  const favB = ["Mercy", "Juno"].map(id);
+  const { lists, notes } = recommendDuo(data, {
+    mapSlug: "kings-row", enemies: [id("Pharah")],
+    players: [{ role: "Damage", favorites: favA, onlyFavorites: true }, { role: "Support", favorites: favB, onlyFavorites: true }],
+  });
+  assert.deepEqual(names(lists[0]).sort(), ["Genji", "Sojourn", "Tracer"]);
+  assert.deepEqual(names(lists[1]).sort(), ["Juno", "Mercy"]);
+  assert.deepEqual(notes, [null, null]);
+});
+
+test("solo preferiti: nessun preferito utilizzabile → tutti gli eroi, con avviso", () => {
+  const { lists, notes } = recommendDuo(data, {
+    bans: [id("Mercy")],
+    players: [{ role: "Tank", favorites: [id("Mercy")], onlyFavorites: true }, { role: "Support", favorites: [id("Mercy")], onlyFavorites: true }],
+  });
+  assert.ok(lists[0].length > 5 && lists[1].length > 5 && notes[0] && notes[1]);
+  assert.ok(!names(lists[1]).includes("Mercy"), "il ban vale sempre");
+});
+
+test("solo preferiti: stesso ruolo e un solo preferito → il secondo sceglie tra tutti", () => {
+  const p = { role: "Support", favorites: [id("Ana")], onlyFavorites: true };
+  const { lists, pair, notes } = recommendDuo(data, { players: [p, p] });
+  assert.equal(pair.a.name, "Ana");
+  assert.notEqual(pair.b.name, "Ana");
+  assert.equal(lists[0].length, 1);
+  assert.ok(notes[1] && !notes[0]);
+});
+
+test("perché: riepilogo mappa/avversari/alleati coerente con le parti", () => {
+  const r = recommend(data, { role: "Damage", mapSlug: "kings-row", enemies: [id("Pharah"), id("Winston")], allies: [id("Ana")] })[0];
+  const b = breakdown(r);
+  assert.deepEqual(b.map((x) => x.key), ["map", "enemies", "allies"]);
+  close(b[1].delta, r.parts.contro, "avversari");
+  assert.match(b[0].text, /^Mappa [+−]\d+\.\d%$/);
+  const plain = breakdown(recommend(data, { role: "Tank" })[0]);
+  assert.deepEqual(plain.map((x) => x.text.split(" ")[0]), ["Generale"]);
+  const d = details(r);
+  assert.ok(d.some((x) => x.text.startsWith("contro Pharah")) && d.some((x) => x.text.startsWith("contro Winston")) && d.some((x) => x.text.startsWith("con Ana")));
 });

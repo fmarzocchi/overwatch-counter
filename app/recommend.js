@@ -10,6 +10,8 @@
 //
 // In due (recommendDuo) si sceglie la COPPIA con la somma più alta, contando anche
 // la sinergia tra i due eroi scelti; i due eroi sono sempre diversi.
+// onlyFavorites: si consiglia solo tra i preferiti del giocatore; se nessun preferito è
+// disponibile (ruolo, ban, alleati) si torna a tutti gli eroi e lo si segnala in notes.
 
 export const SYNERGY_WEIGHT = 0.5;
 export const FAVORITE_BONUS = 0.01;
@@ -38,7 +40,9 @@ export function sideBonus(hero, side) {
 
 export function recommend(
   data,
-  { role = null, mapSlug = null, side = null, enemies = [], allies = [], bans = [], favorites = [] } = {},
+  {
+    role = null, mapSlug = null, side = null, enemies = [], allies = [], bans = [], favorites = [], onlyFavorites = false,
+  } = {},
 ) {
   const map = mapSlug ? data.maps.find((m) => m.slug === mapSlug) : null;
   const useSide = hasSides(map) ? side : null;
@@ -47,7 +51,7 @@ export function recommend(
   const fav = new Set(favorites.map(sid));
 
   const rows = data.heroes
-    .filter((h) => (!role || h.role === role) && !excluded.has(sid(h.id)))
+    .filter((h) => (!role || h.role === role) && !excluded.has(sid(h.id)) && (!onlyFavorites || fav.has(sid(h.id))))
     .map((h) => {
       const id = sid(h.id);
       const baseWr = map?.winRates?.[id] ?? data.overall?.[id] ?? 0.5;
@@ -94,31 +98,51 @@ export function recommend(
 // Restituisce, per ogni giocatore, le alternative ordinate (la prima è la scelta consigliata)
 // già calcolate tenendo conto dell'eroe consigliato all'altro.
 export function recommendDuo(data, { players = [], ...ctx } = {}) {
-  if (players.length !== 2) {
-    return { lists: players.map((p) => recommend(data, { ...ctx, ...p })), pair: null };
-  }
-  const [r0, r1] = players.map((p) => recommend(data, { ...ctx, ...p }));
-  let best = null;
-  for (const a of r0) {
-    for (const b of r1) {
-      if (sid(a.hero.id) === sid(b.hero.id)) continue;
-      const syn = pairValue(data.synergies, a.hero.id, b.hero.id);
-      const total = a.score + b.score + (syn === null ? 0 : (syn - 0.5) * SYNERGY_WEIGHT);
-      if (!best || total > best.total) best = { total, a, b, syn };
+  const notes = players.map(() => null);
+  const fallbackNote = "nessun preferito disponibile: consiglio tra tutti";
+  // con "solo preferiti" un giocatore senza preferiti utilizzabili torna a tutti gli eroi
+  const opts = players.map((p, i) => {
+    if (p.onlyFavorites && !recommend(data, { ...ctx, ...p }).length) {
+      notes[i] = fallbackNote;
+      return { ...p, onlyFavorites: false };
     }
+    return p;
+  });
+  if (players.length !== 2) {
+    return { lists: opts.map((p) => recommend(data, { ...ctx, ...p })), pair: null, notes };
   }
-  if (!best) return { lists: [r0, r1], pair: null };
+  const bestPair = () => {
+    const [r0, r1] = opts.map((p) => recommend(data, { ...ctx, ...p }));
+    let best = null;
+    for (const a of r0) {
+      for (const b of r1) {
+        if (sid(a.hero.id) === sid(b.hero.id)) continue;
+        const syn = pairValue(data.synergies, a.hero.id, b.hero.id);
+        const total = a.score + b.score + (syn === null ? 0 : (syn - 0.5) * SYNERGY_WEIGHT);
+        if (!best || total > best.total) best = { total, a, b, syn };
+      }
+    }
+    return { best, r0, r1 };
+  };
+  let { best, r0, r1 } = bestPair();
+  if (!best && opts[1].onlyFavorites) {
+    // es. stesso ruolo e un solo preferito in comune: il secondo giocatore sceglie tra tutti
+    opts[1] = { ...opts[1], onlyFavorites: false };
+    notes[1] = fallbackNote;
+    ({ best, r0, r1 } = bestPair());
+  }
+  if (!best) return { lists: [r0, r1], pair: null, notes };
   const allies = ctx.allies ?? [];
   const lists = [
-    recommend(data, { ...ctx, ...players[0], allies: [...allies, best.b.hero.id] }),
-    recommend(data, { ...ctx, ...players[1], allies: [...allies, best.a.hero.id] }),
+    recommend(data, { ...ctx, ...opts[0], allies: [...allies, best.b.hero.id] }),
+    recommend(data, { ...ctx, ...opts[1], allies: [...allies, best.a.hero.id] }),
   ];
   // la scelta congiunta va in cima anche se, a pari merito, l'ordine fosse diverso
   for (const [i, h] of [[0, best.a.hero], [1, best.b.hero]]) {
     const k = lists[i].findIndex((r) => sid(r.hero.id) === sid(h.id));
     if (k > 0) lists[i].unshift(...lists[i].splice(k, 1));
   }
-  return { lists, pair: { a: best.a.hero, b: best.b.hero, synergy: best.syn } };
+  return { lists, pair: { a: best.a.hero, b: best.b.hero, synergy: best.syn }, notes };
 }
 
 // Frasi brevi da mostrare sotto ogni suggerimento: i punti a favore più forti
@@ -145,4 +169,25 @@ export function reasons(row, max = 3) {
   if (bad.length) out.push(bad[0]);
   if (row.favorite) out.unshift({ good: true, delta: row.parts.pref, text: "★ preferito" });
   return out.map(({ good, text }) => ({ good, text }));
+}
+
+const pct = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
+
+// Riepilogo in 1–3 righe brevi per i consigli: vantaggio sulla mappa, contro la comp avversaria
+// (somma su tutti gli avversari segnati) e con gli alleati.
+export function breakdown(row) {
+  const out = [{ key: "map", label: row.baseLabel === "generale" ? "Generale" : "Mappa", delta: row.parts.base }];
+  if (row.vs.length) out.push({ key: "enemies", label: "Avversari", delta: row.parts.contro });
+  if (row.withAllies.length) out.push({ key: "allies", label: "Alleati", delta: row.parts.con });
+  return out.map((x) => ({ ...x, good: x.delta >= 0, text: `${x.label} ${pct(x.delta)}` }));
+}
+
+// Tutti i perché, uno per riga: mappa, ogni avversario, ogni alleato, lato, preferito.
+export function details(row) {
+  const out = [{ good: row.parts.base >= 0, text: `${row.baseLabel === "generale" ? "Win rate generale" : row.baseLabel} ${pct(row.parts.base)}` }];
+  for (const v of row.vs) out.push({ good: v.delta >= 0, text: `contro ${v.hero?.name ?? "?"} ${pct(v.delta)}` });
+  for (const a of row.withAllies) out.push({ good: a.delta >= 0, text: `con ${a.hero?.name ?? "?"} ${pct(a.delta)}` });
+  if (row.side) out.push({ good: row.parts.lato >= 0, text: `${row.side === "defense" ? "difesa" : "attacco"} (regola sullo stile) ${pct(row.parts.lato)}` });
+  if (row.favorite) out.push({ good: true, text: `preferito (solo per ordinare) ${pct(row.parts.pref)}` });
+  return out;
 }

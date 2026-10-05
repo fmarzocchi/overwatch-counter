@@ -42,7 +42,7 @@ async function newPage(ctxOpts = {}) {
 const shot = (page, name) => page.screenshot({ path: path.join(SHOTS, `${name}.png`) });
 const text = (page, sel) => page.locator(sel).innerText();
 const heroBtn = (page, name) => page.locator("#grid .hero", { has: page.locator(".nm", { hasText: new RegExp(`^${name}$`) }) });
-const pickNames = (page) => page.locator(".pick .pick-name").allInnerTexts();
+const pickNames = (page) => page.locator(".pick .sug.first .sug-name").allInnerTexts();
 
 try {
   for (let i = 0; i < 50; i++) { try { await fetch(BASE); break; } catch { await new Promise((r) => setTimeout(r, 100)); } }
@@ -50,7 +50,7 @@ try {
   // ---------- primo avvio ----------
   const { ctx, page } = await newPage();
   await page.goto(BASE);
-  await page.locator(".pick .pick-name").first().waitFor();
+  await page.locator(".pick .sug.first .sug-name").first().waitFor();
   check("primo avvio: due consigli (Io e Lei)", (await page.locator(".pick").count()) === 2
     && (await text(page, ".picks")).includes("Io") && (await text(page, ".picks")).includes("Lei"));
   check("primo avvio: 53 eroi in griglia", (await page.locator("#grid .hero").count()) === data.heroes.length);
@@ -100,7 +100,7 @@ try {
   const afterBans = await pickNames(page);
   check("consigli senza eroi bannati", !afterBans.includes("Ana") && !afterBans.includes("Kiriko"), afterBans.join());
   check("consigli: Fabio e Giulia hanno eroi diversi", afterBans[0] !== afterBans[1], afterBans.join());
-  check("motivo mappa nei consigli", (await text(page, ".picks")).includes("King's Row"));
+  check("motivo mappa nei consigli", /Mappa [+−]\d/.test(await text(page, ".picks")));
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "05-inizio-partita");
 
@@ -108,9 +108,23 @@ try {
   await page.click("#groups [data-group=enemies]");
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
   check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
-  check("motivi 'vs' negli avversari", /vs (Pharah|Winston|Reinhardt)/.test(await text(page, ".picks")), await text(page, ".picks"));
+  check("motivi 'Avversari' nei consigli", /Avversari [+−]\d/.test(await text(page, ".picks")), await text(page, ".picks"));
+  check("3 consigli per giocatore, in ordine", (await page.locator(".pick").nth(0).locator(".sug").count()) === 3
+    && (await page.locator(".pick").nth(1).locator(".sug").count()) === 3
+    && (await page.locator(".pick").nth(0).locator(".sug-n").allInnerTexts()).join() === "1,2,3");
+  const order = await page.evaluate(() => [...document.querySelectorAll(".pick")].map((p) =>
+    [...p.querySelectorAll(".sug-est")].map((e) => parseFloat(e.textContent))));
+  check("ordinati dal migliore (stima non crescente, salvo bonus preferiti)", order.every((l) => l.length === 3), JSON.stringify(order));
+  const why = await page.locator(".pick").nth(0).locator(".sug").first().innerText();
+  check("perché: vantaggio su mappa e su comp avversaria", /Mappa [+−]\d/.test(why) && /Avversari [+−]\d/.test(why), why);
+  await page.locator(".pick").nth(0).locator(".sug").nth(1).click();
+  const det = await text(page, "#why-body");
+  check("tocco su un consiglio: dettaglio per ogni avversario", ["contro Pharah", "contro Winston", "contro Reinhardt", "King's Row"].every((t) => det.includes(t)), det);
+  await shot(page, "05b-perche");
+  await page.click("#why-dialog [data-close]");
   await page.click("#groups [data-group=allies]");
   await heroBtn(page, "Lúcio").click();
+  check("con alleati: riga Alleati nei perché", /Alleati [+−]\d/.test(await page.locator(".pick").nth(0).locator(".sug").first().innerText()));
   const picks = await pickNames(page);
   check("alleato non consigliato", !picks.includes("Lúcio"), picks.join());
   await page.click("#groups [data-group=enemies]");
@@ -133,6 +147,21 @@ try {
   await page.evaluate(() => window.scrollTo(0, 600));
   await shot(page, "07-griglia");
 
+  // ---------- solo preferiti ----------
+  await page.click(".tabs [data-view=profile]");
+  await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
+  await page.click(".tabs [data-view=match]");
+  const giulia = await page.locator(".pick").nth(1).locator(".sug-name").allInnerTexts();
+  check("solo preferiti: Giulia vede solo Mercy/Juno (Mercy è alleata → solo Juno)", giulia.join() === "Juno", giulia.join());
+  const fabio = await page.locator(".pick").nth(0).innerText();
+  check("solo preferiti: Fabio senza preferiti → tutti, con avviso", fabio.includes("nessun preferito disponibile")
+    && (await page.locator(".pick").nth(0).locator(".sug").count()) === 3, fabio);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shot(page, "06b-solo-preferiti");
+  await page.click(".tabs [data-view=profile]");
+  await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
+  await page.click(".tabs [data-view=match]");
+
   // Control: niente lato
   await page.click("#map-btn");
   await page.locator("#map-list .map-opt", { hasText: "Ilios" }).click();
@@ -140,7 +169,7 @@ try {
 
   // ---------- memoria e nuova partita ----------
   await page.reload();
-  await page.locator(".pick .pick-name").first().waitFor();
+  await page.locator(".pick .sug.first .sug-name").first().waitFor();
   check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "4"
     && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes("Ilios"));
   await page.click("#new-match");
@@ -156,10 +185,10 @@ try {
   // ---------- offline ----------
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
-  await page.locator(".pick .pick-name").first().waitFor();
+  await page.locator(".pick .sug.first .sug-name").first().waitFor();
   await ctx.setOffline(true);
   await page.reload();
-  const offlineOk = await page.locator(".pick .pick-name").first().waitFor({ timeout: 5000 }).then(() => true, () => false);
+  const offlineOk = await page.locator(".pick .sug.first .sug-name").first().waitFor({ timeout: 5000 }).then(() => true, () => false);
   check("offline: l'app parte con i dati salvati", offlineOk);
   await shot(page, "08-offline");
   await ctx.setOffline(false);
@@ -171,7 +200,7 @@ try {
     const old = { ...data, checked: new Date(Date.now() - 3 * 86400e3).toISOString(), problems: ["mappa x: rotta"] };
     await p2.route("**/data.json*", (r) => r.fulfill({ json: old }));
     await p2.goto(BASE);
-    await p2.locator(".pick .pick-name").first().waitFor();
+    await p2.locator(".pick .sug.first .sug-name").first().waitFor();
     const w = await text(p2, "#warn");
     check("dati vecchi/parziali: avviso giallo, app funzionante", (await p2.locator("#warn").isVisible()) && w.includes("non vengono aggiornati") && w.includes("dati precedenti"), w);
     await shot(p2, "09-dati-vecchi");
@@ -202,7 +231,7 @@ try {
       return r.fulfill({ json: { workflow_runs: [{ created_at: new Date().toISOString(), status: "completed", conclusion: "success" }] } });
     });
     await p4.goto(BASE);
-    await p4.locator(".pick .pick-name").first().waitFor();
+    await p4.locator(".pick .sug.first .sug-name").first().waitFor();
     await p4.click(".tabs [data-view=profile]");
     await p4.fill("#token", "github_pat_PROVA");
     await p4.click("#token-save");
