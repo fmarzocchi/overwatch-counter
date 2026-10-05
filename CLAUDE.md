@@ -105,6 +105,12 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **Rank**: counterwatch ha dati per divisione, ma ora non li scarichiamo: il rank è solo memorizzato.
 - Ban: max 4. Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
 - Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
+- **3 consigli per giocatore** (dal migliore), con volto, stima e perché: righe "Mappa ±x%", "Avversari ±x%"
+  (somma sulla comp avversaria), "Alleati ±x%" (`breakdown()`); un tocco apre il dettaglio per ogni
+  avversario/alleato (`details()`).
+- **"Suggerisci solo eroi preferiti"** (Profilo, vale per entrambi): `onlyFavorites` in `recommend()`; se a un
+  giocatore non resta nessun preferito utilizzabile si torna a tutti gli eroi e l'app lo scrive (`notes`).
+- Icone: i volti degli eroi vengono copiati in `app/heroes/` dal workflow (verificato: 53/53 su GitHub).
 
 ## L'app (PWA) — come deve essere
 
