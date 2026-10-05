@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected, swapAdvice,
 } from "../app/theory.js";
-import { recommend, recommendDuo, details } from "../app/recommend.js";
+import { recommend, recommendDuo, recommendTeam, details } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
 const hero = (name) => data.heroes.find((h) => h.name === name) ?? assert.fail(`eroe mancante: ${name}`);
@@ -174,6 +174,38 @@ test("cambio eroe: mai verso un eroe che rende meno, mai per il primo della list
   // senza avversari o senza alternative: niente consiglio
   const rows = recommend(data, { role: "Tank" });
   assert.equal(swapAdvice(data, TT, { hero: rows[3].hero, rows, enemies: [] }), null);
+});
+
+test("cambio eroe con «solo preferiti»: solo verso un preferito (o nessun cambio)", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const TT = buildTheory(data, raw, null);
+  let nonFavWithout = 0;
+  for (const enemies of [["Winston", "Genji", "Pharah"], ["Reinhardt", "Ana", "Kiriko", "Mei"], ["D.Va", "Tracer", "Sombra", "Lúcio", "Moira"]]) {
+    const ids = enemies.map(id);
+    for (const role of ["Tank", "Damage", "Support"]) {
+      const all = recommend(data, { role, mapSlug: "kings-row", enemies: ids }).filter((r) => !ids.includes(r.hero.id));
+      const picked = all[all.length - 1].hero; // preso un eroe debole, non preferito
+      const favs = [all[3].hero.id, all[5].hero.id];
+      for (const onlyFavorites of [false, true]) {
+        const { lists } = recommendTeam(data, {
+          players: [{ role, favorites: favs, onlyFavorites, picked: picked.id }], mapSlug: "kings-row", enemies: ids, theory: TT,
+        });
+        const rows = lists[0];
+        assert.ok(rows[0].picked && rows[0].hero.id === picked.id, "l'eroe preso resta in cima");
+        const sw = swapAdvice(data, TT, { hero: picked, rows, enemies: ids });
+        if (onlyFavorites) {
+          assert.ok(rows.slice(1).every((r) => favs.includes(r.hero.id)), `${role}: alternative solo tra i preferiti`);
+          if (sw) assert.ok(favs.includes(sw.hero.id), `${role}: ${sw.hero.name} non è tra i preferiti`);
+        } else if (sw && !favs.includes(sw.hero.id)) nonFavWithout++;
+      }
+    }
+  }
+  assert.ok(nonFavWithout > 0, "senza l'opzione il cambio può proporre eroi non preferiti: il test misura qualcosa");
+  // nessun preferito utilizzabile nel ruolo: nessuna alternativa, quindi nessun cambio
+  const { lists } = recommendTeam(data, { players: [{ role: "Tank", favorites: [id("Ana")], onlyFavorites: true, picked: id("Reinhardt") }],
+    enemies: [id("Pharah")] });
+  assert.equal(lists[0].length, 1);
+  assert.equal(swapAdvice(data, TT, { hero: hero("Reinhardt"), rows: lists[0], enemies: [id("Pharah")] }), null);
 });
 
 test("riepilogo: un avversario sta in una sola riga (Punta o Attento), coerente con il riquadro", () => {

@@ -300,6 +300,21 @@ try {
     && (await page.locator(".pick").nth(0).locator(".alt:not(.alt-other)").count()) === 2, fabio);
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "06b-solo-preferiti");
+  // Giulia ha preso un eroe non preferito: «Passa a» (riquadro e guida) propone solo preferiti
+  await toTop(page);
+  await page.locator(".pick").nth(1).locator(".alt-other").click();
+  await heroBtn(page, "Brigitte").click();
+  await toTop(page);
+  const swapCard = await page.locator(".pick").nth(1).locator(".swap b").allInnerTexts();
+  await page.locator(".pick").nth(1).locator(".pick-main").click();
+  await page.locator("#guide-dialog[open]").waitFor();
+  const swapGuide = await page.locator("#guide-body .brief-row.k-swap .hchip").evaluateAll((cs) => cs.map((c) => c.lastChild.textContent));
+  await page.click("#guide-dialog [data-close]");
+  check("solo preferiti: dopo la scelta «Passa a» propone solo preferiti (Juno)", [...swapCard, ...swapGuide].every((n) => n.trim() === "Juno")
+    && swapCard.length === 1 && swapGuide.length === 1,
+    `riquadro ${swapCard.join()} · guida ${swapGuide.join()}`);
+  await toTop(page);
+  await page.locator(".pick").nth(1).locator(".took-btn").click(); // scelta tolta: il resto del collaudo come prima
   await page.click(".tabs [data-view=profile]");
   await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
   await page.click(".tabs [data-view=match]");

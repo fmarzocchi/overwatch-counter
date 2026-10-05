@@ -138,6 +138,8 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   numeri ("Mappa ±x%", "Avversari ±x%", "Con <nome>", `breakdown()`; ogni avversario/alleato, `details()`) sono nel "Perché".
 - **"Suggerisci solo eroi preferiti"** (Profilo, vale per entrambi): `onlyFavorites` in `recommend()`; se a un
   giocatore non resta nessun preferito utilizzabile si torna a tutti gli eroi e l'app lo scrive (`notes`).
+  Vale anche dopo aver segnato l'eroe preso (richiesta del 2026-10-05): alternative e "Passa a"/"Cambia" solo tra i
+  preferiti; se nessuno è utilizzabile, nessun cambio (l'eroe preso resta anche se non è un preferito).
 - Icone: i volti degli eroi vengono copiati in `app/heroes/` dal workflow (verificato: 53/53 su GitHub).
 - **Eroi nuovi / cambi di ruolo** (es. Sombra da Danni a Supporto): elenco eroi e ruoli vengono riletti dal
   sito a ogni giro, niente è scritto a mano. L'app ridisegna la griglia se l'elenco cambia anche con l'app

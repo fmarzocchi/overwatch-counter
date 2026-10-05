@@ -226,9 +226,12 @@ export function recommendTeam(data, { players = [], ...ctx } = {}) {
         rows = [...recommend(dataOf(p), { ...o, bans: [] }).filter((r) => sid(r.hero.id) === pickedIds[i]), ...rows];
       }
       const k = rows.findIndex((r) => sid(r.hero.id) === pickedIds[i]);
-      if (k < 0) return rows;
-      const [row] = rows.splice(k, 1);
-      return [{ ...row, picked: true }, ...rows];
+      const row = k < 0 ? null : rows.splice(k, 1)[0];
+      // con "solo preferiti" anche le alternative, e quindi il cambio eroe ("Passa a"), restano tra i preferiti:
+      // se nessuno è utilizzabile non c'è alternativa (l'eroe preso resta, anche se non è un preferito)
+      const fav = new Set((p.favorites ?? []).map(sid));
+      const alts = p.onlyFavorites ? rows.filter((r) => fav.has(sid(r.hero.id))) : rows;
+      return row ? [{ ...row, picked: true }, ...alts] : alts;
     }
     const rows = recommend(dataOf(opts[i]), { ...ctx, ...opts[i], allies: [...allies, ...others] });
     // la scelta congiunta va in cima anche se, a pari merito, l'ordine fosse diverso
