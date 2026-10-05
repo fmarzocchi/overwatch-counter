@@ -166,6 +166,9 @@ try {
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
   check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
   check("con gli avversari segnati i ban consigliati spariscono", await page.locator("#ban-recs").isHidden());
+  await page.click("#groups [data-group=bans]");
+  check("…ma tornano toccando «Ban»", await page.locator("#ban-recs").isVisible());
+  await page.click("#groups [data-group=enemies]");
   await toTop(page);
   const mus = await page.locator(".pick .mu-grp").evaluateAll((gs) => gs.map((g) => g.getAttribute("aria-label")));
   check("con avversari: «Batte»/«Teme» con i volti dei soli avversari segnati", mus.length >= 1 && mus.every((l) =>

@@ -1,6 +1,7 @@
-// Service worker: guscio dell'app cache-first (aggiornato in sottofondo), data.json network-first
+// Service worker: guscio dell'app network-first (sempre la versione pubblicata; la copia salvata solo offline:
+// prima si aggiornava in sottofondo e un'apertura poteva mescolare file vecchi e nuovi), data.json network-first
 // con ripiego sulla copia salvata se offline, icone degli eroi cache-first.
-const VERSION = "v5";
+const VERSION = "v6";
 const SHELL = `owc-shell-${VERSION}`;
 const DATA = "owc-data";
 const IMG = "owc-img";
@@ -40,9 +41,13 @@ async function cacheFirst(cacheName, req) {
 
 async function shellFirst(req) {
   const cache = await caches.open(SHELL);
-  const hit = await cache.match(req, { ignoreSearch: true });
-  const update = fetch(req).then((res) => { if (res.ok) cache.put(req, res.clone()); return res; }).catch(() => null);
-  return hit ?? (await update) ?? new Response("offline", { status: 503 });
+  try {
+    const res = await fetch(req, { cache: "no-cache" });
+    if (res.ok) await cache.put(req, res.clone());
+    return res;
+  } catch {
+    return (await cache.match(req, { ignoreSearch: true })) ?? new Response("offline", { status: 503 });
+  }
 }
 
 self.addEventListener("fetch", (e) => {

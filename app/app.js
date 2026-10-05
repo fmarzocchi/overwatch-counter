@@ -591,13 +591,14 @@ function renderPicks() {
 }
 
 // ---------- ban consigliati (inizio partita) ----------
-// Con la mappa scelta e prima di segnare gli avversari: 2 per ruolo (banSuggestions), eroi forti su quella mappa e
+// Con la mappa scelta, prima di segnare gli avversari o col selettore su "Ban": 2 per ruolo (banSuggestions), eroi forti su quella mappa e
 // contro i vostri. "Vostri" = quelli che vi consiglierei SENZA ban (o già presi): non si propongono, come i preferiti
 // (un ban vale per tutte e due le squadre). L'elenco non cambia mentre si segnano i ban: si vedono barrati.
 function renderBanRecs() {
   const box = $("#ban-recs");
   const map = currentMap();
-  const show = !!map && !match.enemies.length;
+  // a inizio partita (avversari non ancora segnati) o quando si sceglie "Ban"
+  const show = !!map && (!match.enemies.length || match.group === "bans");
   box.hidden = !show;
   if (!show) return;
   const players = profile.players.map((p, i) => ({
@@ -1164,6 +1165,8 @@ function wire() {
 async function autoRefresh() {
   if (document.visibilityState === "hidden" || refreshing || !lastLoad) return;
   if (Date.now() - lastLoad < AUTO_REFRESH_MS) return;
+  // anche l'app stessa: se è uscita una versione nuova, il service worker la installa e la pagina si ricarica
+  navigator.serviceWorker?.getRegistration().then((r) => r?.update()).catch(() => {});
   const before = data?.checked;
   if (await loadData()) {
     render();
@@ -1186,7 +1189,16 @@ async function start() {
   if (document.fonts?.ready) document.fonts.ready.then(refit);
   document.addEventListener("visibilitychange", autoRefresh);
   window.addEventListener("focus", autoRefresh);
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator) {
+    // versione nuova pubblicata: il nuovo service worker prende la pagina e la si ricarica una volta,
+    // così non resta aperta (magari per ore nella WebView dell'APK) la versione vecchia
+    const updating = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (updating && !reloaded) { reloaded = true; location.reload(); }
+    });
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
   try {
     const r = await fetch("names_it.json");
     if (r.ok) IT = { heroes: {}, maps: {}, abilities: {}, ...(await r.json()) };

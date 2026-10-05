@@ -128,7 +128,7 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **Rank**: sceglie i dati Ranked della divisione del giocatore (vedi "Dati Ranked").
 - Ban: max **5** (richiesta del 2026-10-05). Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
 - **Ban consigliati per la mappa** (richiesta del 2026-10-05): riquadro "Ban consigliati per <mappa>" sotto mappa/lato,
-  visibile con la mappa scelta e finché non si segnano avversari; **2 per ruolo**, un tocco li segna/toglie (`toggleIn`).
+  visibile con la mappa scelta finché non si segnano avversari, e sempre col selettore su "Ban"; **2 per ruolo**, un tocco li segna/toglie (`toggleIn`).
   `banSuggestions()` (recommend.js, testata): forza = win rate sulla mappa − 0.5 (media sulle divisioni dei giocatori)
   + minaccia = media del win rate del candidato contro i "vostri eroi" − 0.5. Vostri eroi = quelli consigliati SENZA
   ban (o già presi): non si propongono, né i preferiti né gli alleati (un ban vale per entrambe le squadre). L'elenco
@@ -262,7 +262,10 @@ Tema scuro, bersagli grandi (min 48 px), pensata per una mano sola.
   se non caricano, iniziali del nome su sfondo colorato per ruolo.
 - Testi in italiano. Fonte citata ("dati: counterwatch.gg").
 
-Service worker: guscio dell'app cache-first; `data.json` **network-first** (con `?t=` per scavalcare la
+Service worker (dal 2026-10-05 sera, v6): guscio dell'app **network-first** (copia salvata solo offline: prima,
+aggiornato in sottofondo, la prima apertura dopo un rilascio mostrava la versione vecchia e poteva mescolare file;
+l'utente vedeva ban max 4 e niente ban consigliati); a ogni nuovo service worker la pagina si ricarica una volta
+(`controllerchange`) e `autoRefresh` chiede anche `registration.update()`. Prima era: guscio cache-first; `data.json` **network-first** (con `?t=` per scavalcare la
 cache CDN di Pages, ~10 min) e ripiego sulla copia in cache se offline; icone cache-first.
 Manifest con icone 192/512 PNG (genera con Python/Pillow o canvas), `display: standalone`, tema scuro.
 
