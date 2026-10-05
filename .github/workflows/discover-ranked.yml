@@ -4,9 +4,6 @@ name: Diagnosi counterwatch
 # nel ramo "fixtures-rest" (non tocca main).
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: [tools/discover_ranked.py]
 
 permissions:
   contents: write

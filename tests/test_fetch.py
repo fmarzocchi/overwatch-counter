@@ -122,41 +122,61 @@ code, log = run(dz, tmp / "absurd.json", prev=good)
 z = json.loads((tmp / "absurd.json").read_text()) if (tmp / "absurd.json").exists() else {}
 check("valori assurdi: rifiutati", code == 2 and z.get("counters") == d.get("counters"), log)
 
-# 8. filtro Ranked: il primo parametro che dà dati DIVERSI viene scelto, anche per le mappe
-check("senza pagine Ranked: dati di tutte le partite, nessun problema",
+# 8. dati Ranked dal database del sito (copia reale in tests/fixtures_rest.tar.gz)
+check("senza dati Ranked: tutte le partite, nessun problema",
       d.get("filter", {}).get("gameType") == "All" and not d.get("problems"), json.dumps(d.get("filter")))
-Q = "type=Ranked"  # un candidato a metà elenco
-def shift(t):  # dati "Ranked" finti: ogni win rate +0.01
-    return re.sub(r'(\\"(?:shrunk_win_rate|win_rate|shrunkWinRate|winRate)\\":)(0\.\d+)', lambda m: m.group(1) + str(round(float(m.group(2)) + 0.01, 4)), t)
-def ranked_pages(d_, transform):
-    for f in list(d_.glob("*.html")):
-        if f.name != "maps.html":
-            (d_ / f.name.replace(".html", f"@{Q}.html")).write_text(transform(f.read_text(encoding="utf-8", errors="ignore")), encoding="utf-8")
-drk = mutated(tmp, "ranked", lambda d_: ranked_pages(d_, shift))
+REST = ROOT / "tests" / "fixtures_rest"
+if not REST.exists():
+    import tarfile
+    with tarfile.open(ROOT / "tests" / "fixtures_rest.tar.gz") as t:
+        t.extractall(REST.parent)
+def with_ranked(d_, edit=lambda name, rows: rows):
+    for name in ["counters", "synergies", "current"]:
+        rows = json.loads((REST / f"ranked_{name}.json").read_text())
+        (d_ / f"rest_ranked_{name}.json").write_text(json.dumps(edit(name, rows)))
+shrink = lambda w, n: (w * n + 200) / (n + 400)
+drk = mutated(tmp, "ranked", with_ranked)
 code, log = run(drk, tmp / "ranked.json")
 k = json.loads((tmp / "ranked.json").read_text()) if (tmp / "ranked.json").exists() else {}
-a, b = ids[0], ids[1]
-kr = next((m for m in k.get("maps", []) if m["slug"] == d["maps"][0]["slug"]), {})
-check("filtro Ranked trovato: usato per counter e mappe", code == 0 and k.get("filter") == {"gameType": "Ranked", "query": Q}
-      and abs(k["counters"][a][b] - d["counters"][a][b] - 0.01) < 1e-3
-      and abs(kr["winRates"][a] - d["maps"][0]["winRates"][a] - 0.01) < 1e-3, log)
+row = next(r for r in json.loads((REST / "ranked_counters.json").read_text())
+           if str(r["hero_id"]) in ids and str(r["opponent_hero_id"]) in ids and r["hero_id"] != r["opponent_hero_id"])
+a, b = str(row["hero_id"]), str(row["opponent_hero_id"])
+check("Ranked: counter dal database con la formula del sito", code == 0 and k.get("filter", {}).get("gameType") == "Ranked"
+      and abs(k["counters"][a][b] - shrink(row["win_rate"], row["total_matches"])) < 1e-4
+      and k["counters"] != d["counters"], log)
+check("Ranked: tutte le mappe dai dati Ranked (anche con accenti)", len(k.get("maps", [])) == len(d["maps"])
+      and "mapsAll" not in k.get("filter", {}) and all(m["winRates"] != dm["winRates"] for m, dm in zip(k["maps"], d["maps"])),
+      json.dumps(k.get("filter")))
 
-# 9. parametro ignorato dal sito (stessi dati): non va scambiato per Ranked
-dig = mutated(tmp, "ignored", lambda d_: ranked_pages(d_, lambda t: t))
-code, log = run(dig, tmp / "ignored.json")
-g = json.loads((tmp / "ignored.json").read_text()) if (tmp / "ignored.json").exists() else {}
-check("parametro ignorato: resta 'tutte le partite'", code == 0 and g.get("filter", {}).get("gameType") == "All", log)
+# 9. una mappa assente dai dati Ranked: solo quella dalla pagina (tutte le partite), annotata
+first_map = d["maps"][0]
+dmiss = mutated(tmp, "missmap", lambda d_: with_ranked(d_, lambda n, rows: [r for r in rows if n != "current"
+        or re.sub(r"[^a-z]", "", r["map_name"].lower()) != re.sub(r"[^a-z]", "", first_map["name"].lower())]))
+code, log = run(dmiss, tmp / "missmap.json")
+mm = json.loads((tmp / "missmap.json").read_text()) if (tmp / "missmap.json").exists() else {}
+check("Ranked senza una mappa: quella dalla pagina, le altre Ranked", code == 0
+      and mm.get("filter", {}).get("mapsAll") == [first_map["slug"]] and len(mm.get("maps", [])) == len(d["maps"]), log)
 
-# 10. filtro già noto che smette di funzionare: dati di tutte le partite, segnalato (esce 2)
+# 10. dati Ranked troncati: rifiutati, tutte le partite; se prima era Ranked lo si segnala (esce 2)
+dcut = mutated(tmp, "cut", lambda d_: with_ranked(d_, lambda n, rows: rows[:300] if n == "counters" else rows))
+code, log = run(dcut, tmp / "cut.json", prev=tmp / "ranked.json")
+c = json.loads((tmp / "cut.json").read_text()) if (tmp / "cut.json").exists() else {}
+check("Ranked incompleti: tutte le partite, segnalato", code == 2 and c.get("filter", {}).get("gameType") == "All"
+      and c.get("counters") == d.get("counters") and any("Ranked" in x for x in c.get("problems", [])), log)
+
+# 11. database non raggiungibile (niente file): tutte le partite, segnalato perché prima era Ranked
 code, log = run(FIX, tmp / "lost.json", prev=tmp / "ranked.json")
 l = json.loads((tmp / "lost.json").read_text()) if (tmp / "lost.json").exists() else {}
-check("filtro Ranked perso: segnalato", code == 2 and l.get("filter", {}).get("gameType") == "All"
+check("Ranked non disponibili: segnalato", code == 2 and l.get("filter", {}).get("gameType") == "All"
       and any("Ranked" in x for x in l.get("problems", [])), log)
 
-# 11. ricerca fallita da poco: non si riprova (niente richieste inutili)
-code, log = run(drk, tmp / "skip.json", prev=good)
-s = json.loads((tmp / "skip.json").read_text()) if (tmp / "skip.json").exists() else {}
-check("ricerca fallita da < 24 h: non riprova", code == 0 and s.get("filter", {}).get("gameType") == "All", log)
+# 12. chiave e indirizzo letti dal JS del sito (mai scritti nel codice)
+sys.path.insert(0, str(ROOT / "tools"))
+import fetch_data as fd
+js = 'e.s(["supabasePublishableKey",0,"local"===a?"eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiIsImV4cCI6MX0.abcdefghijk":"sb_publishable_TEST-key_1","supabaseUrl",0,"local"===a?"http://127.0.0.1:8000":"https://abcdef.supabase.co"])'
+conn = fd.extract_supabase(js)
+check("chiave e indirizzo dal JS del sito", conn and conn[0] == "https://abcdef.supabase.co"
+      and conn[1][0] == "sb_publishable_TEST-key_1" and fd.extract_supabase("niente qui") is None, repr(conn))
 
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} test superati")

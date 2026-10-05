@@ -4,3 +4,4 @@ node_modules/
 *.pyc
 tests/screenshots/
 app/heroes/
+tests/fixtures_rest/

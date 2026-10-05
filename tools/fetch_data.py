@@ -9,27 +9,30 @@ Robusto ai cambiamenti del sito:
 - se non resta niente di usabile il file non viene scritto e lo script esce con 1.
 Codici di uscita: 0 tutto ok, 2 dati salvati ma parziali, 1 nessun dato salvato.
 
-Solo partite Ranked: counterwatch filtra con un parametro nell'URL che non è scritto nella
-pagina; lo scopriamo provando i nomi in RANKED_QUERIES e tenendo il primo che restituisce dati
-DIVERSI da "tutte le partite" (un parametro ignorato restituisce dati identici). Quello trovato
-viene ricordato in data.json ("filter") e riusato. Se nessuno funziona si usano i dati di tutte le
-partite e lo si scrive in "filter" (non è un errore: l'app lo mostra).
+Solo partite Ranked: le pagine del sito contengono i dati di tutte le partite; i dati Ranked il
+sito li legge nel browser dal suo database pubblico (Supabase, sola lettura). Facciamo lo stesso:
+indirizzo e chiave pubblica vengono letti A OGNI GIRO dal JavaScript del sito (mai salvati), poi
+counter, sinergie e win rate per mappa Ranked vengono scaricati e corretti con la stessa formula
+del sito (shrink). Se qualcosa non va si usano i dati di tutte le partite delle pagine; se prima
+avevamo Ranked lo si segnala in "problems".
 
 Uso: python3 tools/fetch_data.py [--out PATH] [--prev PATH] [--from-dir DIR]
   --from-dir legge le pagine da file locali (per i test) invece che dalla rete;
-  la pagina con parametro <q> è il file <nome>@<q>.html.
+  i dati Ranked sono i file rest_ranked_{counters,synergies,current}.json.
 """
-import argparse, datetime, json, pathlib, re, sys, time, urllib.request
+import argparse, datetime, json, pathlib, re, sys, time, unicodedata, urllib.request
 
 BASES = ["https://counterwatch.gg/stats/overwatch", "https://www.counterwatch.gg/stats/overwatch"]
 UA = {"User-Agent": "Mozilla/5.0 (personal counterpick helper)"}
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MIN_HEROES, MIN_MAPS = 35, 15
-# Il parametro vero del sito è "type" (diagnosi del 2026-10-05), ma oggi la pagina servita dal server
-# lo ignora: i dati Ranked il sito li carica nel browser dal suo database. Lo proviamo comunque
-# (1 richiesta al giorno al massimo) nel caso il server cominci a rispettarlo.
-RANKED_QUERIES = ["type=Ranked"]
-RETRY_DISCOVERY_HOURS = 24  # se il filtro non si trova, riprovare al massimo una volta al giorno
+SHRINK_PRIOR = 200  # formula del sito: (win_rate*partite + 200) / (partite + 400), cioè 400 partite al 50%
+RANKED_TABLES = {  # tabella e colonne del database del sito (vedi il JS di counterwatch)
+    "counters": "community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches",
+    "synergies": "community_stats_synergies_current?select=hero_id,ally_hero_id,win_rate,total_matches",
+    "current": "community_stats_current?select=hero_id,map_name,game_mode_name,win_rate,total_matches",
+}
+RANKED_FILTER = "game=eq.Overwatch&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All"
 
 
 # ---------- lettura pagine ----------
@@ -38,12 +41,10 @@ class Source:
     def __init__(self, from_dir=None):
         self.from_dir = pathlib.Path(from_dir) if from_dir else None
 
-    def html(self, path, query=None):
+    def html(self, path):
         if self.from_dir:
-            f = self.from_dir / (path.strip("/").replace("/", "__") + (f"@{query}" if query else "") + ".html")
+            f = self.from_dir / (path.strip("/").replace("/", "__") + ".html")
             return f.read_text(encoding="utf-8", errors="ignore") if f.exists() else ""
-        if query:
-            path += "?" + query
         last = None
         for base in BASES:
             for attempt in range(3):
@@ -55,6 +56,93 @@ class Source:
                     time.sleep(2 * (attempt + 1))
         print(f"  ! impossibile scaricare {path}: {last}", file=sys.stderr)
         return ""
+
+    def ranked(self, tb_html):
+        """Righe Ranked {counters, synergies, current} dal database del sito; solleva un errore se non riesce."""
+        if self.from_dir:
+            out = {}
+            for name in RANKED_TABLES:
+                f = self.from_dir / f"rest_ranked_{name}.json"
+                if not f.exists():
+                    raise LookupError(f"manca {f.name}")
+                out[name] = json.loads(f.read_text())
+            return out
+        conn = None
+        for c in sorted(set(re.findall(r'/_next/static/chunks/[^"\\ ]+?\.js', tb_html))):
+            time.sleep(1.0)
+            js = urllib.request.urlopen(urllib.request.Request(BASES[0].split("/stats")[0] + c, headers=UA),
+                                        timeout=30).read().decode("utf-8", "ignore")
+            conn = extract_supabase(js)
+            if conn:
+                break
+        if not conn:
+            raise LookupError("indirizzo/chiave del database non trovati nel JS del sito")
+        url, keys = conn
+        last = None
+        for key in keys:  # la prima chiave che risponde (nel JS può esserci anche quella di sviluppo)
+            try:
+                return {name: self._rest_all(url, key, f"{q}&{RANKED_FILTER}") for name, q in RANKED_TABLES.items()}
+            except urllib.error.HTTPError as e:
+                if e.code not in (401, 403):
+                    raise
+                last = e
+        raise LookupError(f"nessuna chiave accettata dal database ({last})")
+
+    @staticmethod
+    def _rest_all(url, key, q):
+        rows, off = [], 0
+        while True:
+            time.sleep(1.0)
+            req = urllib.request.Request(f"{url}/rest/v1/{q}&limit=1000&offset={off}",
+                                         headers={**UA, "apikey": key, "Authorization": f"Bearer {key}"})
+            page = json.loads(urllib.request.urlopen(req, timeout=30).read())
+            if not isinstance(page, list):
+                raise ValueError("risposta inattesa dal database")
+            rows += page
+            if len(page) < 1000 or off > 20000:
+                return rows
+            off += 1000
+
+
+def extract_supabase(js):
+    """(url, [chiavi pubbliche candidate]) dal JS del sito, oppure None."""
+    url = re.search(r'https://[a-z0-9]+\.supabase\.co', js)
+    keys = list(dict.fromkeys(re.findall(r'sb_publishable_[\w-]+', js)))
+    keys += list(dict.fromkeys(re.findall(r'eyJ[\w-]{10,}\.[\w-]{20,}\.[\w-]{10,}', js)))
+    return (url.group(0), keys) if url and keys else None
+
+
+def shrink(win_rate, matches):
+    return (win_rate * matches + SHRINK_PRIOR) / (matches + 2 * SHRINK_PRIOR)
+
+
+def ranked_matrix(rows, other):
+    """Righe {hero_id, <other>, win_rate, total_matches} → {eroe: {altro: win rate corretto}}."""
+    out = {}
+    for r in rows:
+        h, o, w, n = r.get("hero_id"), r.get(other), r.get("win_rate"), r.get("total_matches")
+        if None in (h, o) or not isinstance(w, (int, float)) or not isinstance(n, (int, float)) or n < 0 or h == o:
+            continue
+        out.setdefault(str(h), {})[str(o)] = round(shrink(w, n), 4)
+    return out
+
+
+def map_key(name):
+    plain = unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", plain.lower())
+
+
+def ranked_maps(rows):
+    """Righe eroe/mappa (anche più tratti per mappa) → {chiave mappa: {eroe: win rate corretto}}."""
+    acc = {}
+    for r in rows:
+        h, m, w, n = r.get("hero_id"), r.get("map_name"), r.get("win_rate"), r.get("total_matches")
+        if h is None or not m or not isinstance(w, (int, float)) or not isinstance(n, (int, float)) or n <= 0:
+            continue
+        a = acc.setdefault(map_key(m), {}).setdefault(str(h), [0.0, 0.0])
+        a[0] += w * n
+        a[1] += n
+    return {m: {h: round(shrink(s / n, n), 4) for h, (s, n) in heroes.items()} for m, heroes in acc.items()}
 
 
 def payload(html):
@@ -192,36 +280,6 @@ def plausible(matrix):
     return bool(vals) and all(0.2 <= v <= 0.8 for v in vals)
 
 
-def differs(a, b):
-    """Quota di celle diverse tra due matrici (0 = identiche)."""
-    cells = [(x, y) for x in a for y in a[x]]
-    return sum(1 for x, y in cells if b.get(x, {}).get(y) != a[x][y]) / len(cells) if cells else 0
-
-
-def find_ranked(src, all_counters, prev_filter, now_dt, pause):
-    """Restituisce (query, testo del team builder Ranked, ricerca fatta?)."""
-    known = prev_filter.get("query")
-    tried = prev_filter.get("tried")
-    if not known and tried:
-        try:
-            age = now_dt - datetime.datetime.fromisoformat(tried.replace("Z", "+00:00"))
-            if age < datetime.timedelta(hours=RETRY_DISCOVERY_HOURS):
-                return None, None, False
-        except ValueError:
-            pass
-    for q in ([known] if known else []) + [q for q in RANKED_QUERIES if q != known]:
-        pause()
-        text = payload(src.html("/team-builder", q))
-        heroes, counters, _, _ = extract_team_builder(text)
-        if len(heroes) < MIN_HEROES or not counters:
-            continue
-        if not all_counters and q == known:
-            return q, text, True  # pagina "tutte" rotta: non posso confrontare, mi fido del filtro già noto
-        if all_counters and differs(counters, all_counters) >= 0.2:
-            return q, text, True
-    return None, None, True
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(ROOT / "app" / "data.json"))
@@ -236,8 +294,7 @@ def main():
         prev = {}
     src = Source(args.from_dir)
     status, problems = {}, []
-    now_dt = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
-    now = now_dt.isoformat()
+    now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
     pause = (lambda: None) if args.from_dir else (lambda: time.sleep(1.0))
 
     def keep(section, ok, new, why):
@@ -252,15 +309,15 @@ def main():
     tb = payload(tb_html)
     heroes, counters, synergies, scores = extract_team_builder(tb)
 
-    prev_filter = prev.get("filter") or {}
-    query, ranked_tb, searched = find_ranked(src, counters, prev_filter, now_dt, pause)
-    if query:
-        heroes, counters, synergies, scores = extract_team_builder(ranked_tb)
-        data_filter = {"gameType": "Ranked", "query": query}
-    else:
-        data_filter = {"gameType": "All", "query": None, "tried": now if searched else prev_filter.get("tried")}
-        if prev_filter.get("query"):
-            problems.append(f"filtro Ranked ({prev_filter['query']}) non funziona più: dati di tutte le partite")
+    # Ranked dal database del sito; se non va si resta sui dati di tutte le partite delle pagine
+    ranked, ranked_why = None, ""
+    try:
+        rows = src.ranked(tb_html)
+        ranked = {"counters": ranked_matrix(rows["counters"], "opponent_hero_id"),
+                  "synergies": ranked_matrix(rows["synergies"], "ally_hero_id"),
+                  "maps": ranked_maps(rows["current"])}
+    except Exception as e:  # rete, chiave cambiata, formato diverso…
+        ranked_why = str(e)[:160]
     m = re.search(r'"dateModified":"([^"]+)"', tb_html)
     source_updated = m.group(1)[:19] + "Z" if m else prev.get("sourceUpdated")
 
@@ -276,6 +333,19 @@ def main():
                        for a, row in mx.items() if a in idset}
     counters, synergies, scores = trim(counters), trim(synergies), trim(scores)
 
+    data_filter = {"gameType": "All"}
+    if ranked:
+        rc, rs = trim(ranked["counters"]), trim(ranked["synergies"])
+        if coverage(rc, ids) >= 0.9 and plausible(rc) and coverage(rs, ids) >= 0.45 and plausible(rs):
+            counters, synergies = rc, rs
+            data_filter = {"gameType": "Ranked"}
+        else:
+            ranked_why = f"dati Ranked incompleti (counter {coverage(rc, ids):.0%}, sinergie {coverage(rs, ids):.0%})"
+    if data_filter["gameType"] != "Ranked":
+        data_filter["why"] = ranked_why
+        if (prev.get("filter") or {}).get("gameType") == "Ranked":
+            problems.append(f"dati Ranked non disponibili ({ranked_why}): uso tutte le partite")
+
     cc = coverage(counters, ids)
     counters = keep("counters", cc >= 0.9 and plausible(counters), counters, f"copertura {cc:.0%}")
     sc = coverage(synergies, ids)
@@ -286,9 +356,18 @@ def main():
     map_meta = extract_map_list(payload(src.html("/maps")))
     prev_maps = {mp["slug"]: mp for mp in prev.get("maps") or []}
     maps = []
+    ranked_maps_ok = data_filter["gameType"] == "Ranked"
+    pages_used = []
     for slug, meta in sorted(map_meta.items()):
-        pause()
-        wr = {k: v for k, v in extract_map_winrates(payload(src.html(f"/maps/{slug}", query))).items() if k in idset}
+        wr = {}
+        if ranked_maps_ok:
+            wr = {k: v for k, v in (ranked["maps"].get(map_key(meta["name"])) or ranked["maps"].get(map_key(slug)) or {}).items()
+                  if k in idset}
+        if not (len(wr) >= len(ids) * 0.8 and plausible({"x": wr})):
+            if ranked_maps_ok:
+                pages_used.append(slug)  # mappa non trovata nei dati Ranked: pagina del sito (tutte le partite)
+            pause()
+            wr = {k: v for k, v in extract_map_winrates(payload(src.html(f"/maps/{slug}"))).items() if k in idset}
         if len(wr) >= len(ids) * 0.8 and plausible({"x": wr}):
             maps.append({**meta, "winRates": wr})
         elif slug in prev_maps:
@@ -297,6 +376,8 @@ def main():
         else:
             problems.append(f"mappa {slug}: {len(wr)} eroi letti, scartata")
     maps = keep("maps", len(maps) >= MIN_MAPS, maps, f"solo {len(maps)} mappe valide")
+    if pages_used:
+        data_filter["mapsAll"] = pages_used
 
     if not (counters and maps):
         print("ERRORE: dati insufficienti, data.json non modificato\n  " + "\n  ".join(problems), file=sys.stderr)
@@ -315,7 +396,7 @@ def main():
     }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
-    print(f"OK [{data_filter['gameType']}{' ' + query if query else ''}]: {len(hero_list)} eroi, counter {coverage(counters, ids):.0%}, {len(maps)} mappe, "
+    print(f"OK [{data_filter['gameType']}]: {len(hero_list)} eroi, counter {coverage(counters, ids):.0%}, {len(maps)} mappe, "
           f"fonte aggiornata {source_updated} → {out} ({out.stat().st_size // 1024} KB)")
     for p in problems:
         print("  ! " + p)

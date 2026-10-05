@@ -26,9 +26,8 @@ Repository: **github.com/fmarzocchi/overwatch-counter** (pubblico). Sito: https:
 
 FATTO e collaudato in locale:
 - `tools/fetch_data.py` — scraper (Python 3 standard). Codici di uscita: 0 ok, 2 parziale, 1 niente salvato.
-  Opzioni: `--out`, `--prev`, `--from-dir`. **Solo Ranked**: scopre da solo il parametro URL del filtro
-  (vedi "Filtro Ranked" sotto).
-- `tests/test_fetch.py` — 16 test verdi (i primi 11 + 5 sul filtro Ranked). Pagine salvate in `tests/fixtures.tar.gz`.
+  Opzioni: `--out`, `--prev`, `--from-dir`. **Solo Ranked** dal database del sito (vedi "Dati Ranked").
+- `tests/test_fetch.py` — 18 test verdi. Pagine salvate in `tests/fixtures.tar.gz`, dati Ranked in `tests/fixtures_rest.tar.gz`.
 - `app/recommend.js` — `recommend()` per un giocatore e `recommendDuo()` per la coppia; ban, preferiti,
   attacco/difesa. `tests/recommend.test.js`: 13 test verdi (`node --test tests/*.test.js`).
 - PWA in `app/` (index.html, style.css, app.js, sw.js, manifest, icone generate da `tools/make_icons.py`).
@@ -38,37 +37,36 @@ FATTO e collaudato in locale:
 - `.github/workflows/update-data.yml` (dati ogni 3 h + Pages + keepalive del cron) e `ci.yml` (tutti i test + screenshot).
 
 VERIFICATO su GitHub (2026-10-05): Pages attivo (Source: GitHub Actions), sito online, `update-data.yml`
-verde, icone 53/53, CI verde. Dati: "All" (vedi "Filtro Ranked").
+verde, icone 53/53, CI verde.
 
 NON FATTO, deciso con l'utente: **perk (vantaggi) degli eroi** — counterwatch non ha dati sui perk (nessuna
 pagina nella sitemap, nessuna menzione nella pagina eroe; diagnosi `tools/discover_perks.py`). L'utente ha
 detto di lasciar perdere se troppo difficile. Servirebbe un'altra fonte di statistiche sui perk.
 
 DA FARE:
-1. Ranked: in attesa della decisione dell'utente (vedi "Filtro Ranked").
+1. Verificare su GitHub che il giro reale dica "OK [Ranked]".
 2. **Guscio APK** + `.github/workflows/android.yml` (vedi sotto).
 3. Rank per giocatore: counterwatch ha dati per divisione (Bronze…Grandmaster+). Ora il rank è solo
    memorizzato. Usarlo vorrebbe dire scaricare i dati di 1–2 divisioni in più: valutare con l'utente
    (più richieste a counterwatch).
 
-## Filtro Ranked
+## Dati Ranked (risolto il 2026-10-05, con l'ok dell'utente)
 
-L'utente vuole **solo Ranked 5v5** (niente Stadium/arena). Il parametro URL del filtro non è scritto nell'HTML
-(sta nel JS del sito). `find_ranked()` prova i candidati di `RANKED_QUERIES` sul team builder e accetta il
-primo che restituisce dati **diversi** (≥20% di celle) da "tutte le partite"; un parametro ignorato dà dati
-identici e viene scartato. Il parametro trovato va in `data.json → filter.query` e viene riusato (stesso
-parametro anche per le pagine delle mappe). Se nessuno funziona: dati di tutte le partite, `filter.gameType
-= "All"`, nuova ricerca al massimo ogni 24 h; l'app mostra "tutte le partite (filtro Ranked non trovato)".
-Se un filtro già noto smette di funzionare → `problems` (uscita 2, mail).
-
-**Diagnosi del 2026-10-05** (`tools/discover_ranked.py`, workflow "Diagnosi filtro Ranked"): nell'URL i filtri
-sono `mode` (5V5), `type` (All/Ranked/Unranked), `division`. Ma la pagina servita dal server ignora `type`:
-"All" viene da file di statistiche pubblicati, mentre Ranked/divisioni il sito li legge **nel browser** dal suo
-database Supabase (`/rest/v1/community_stats_counters_current`, `…_synergies_current`, `…_current` per le
-mappe, filtri `game`, `stat_category`, `game_type`, `division`) con la chiave pubblica del sito.
-Una prova con la prima chiave trovata nel JS ha dato 401 (probabilmente era quella sbagliata: il sito usa
-`supabasePublishableKey`). **In sospeso**: l'utente deve decidere se interrogare direttamente quel database
-(è ciò che fa il browser, ma è un passo oltre la lettura delle pagine). Finché non decide: dati "All".
+L'utente vuole **solo Ranked 5v5** (niente Stadium/arena). Le pagine del sito hanno solo "tutte le partite"
+(il parametro URL `type=Ranked` viene ignorato dal server). I dati Ranked il sito li legge nel browser dal suo
+database **Supabase** (sola lettura, chiave pubblica). `fetch_data.py` fa lo stesso:
+- a ogni giro legge **indirizzo e chiave dal JS del sito** (`extract_supabase()`; mai scritti nel codice o nei
+  dati; prova le chiavi trovate finché una risponde: nel JS c'è anche quella di sviluppo);
+- scarica `community_stats_counters_current`, `…_synergies_current`, `…_current` (eroe×mappa) con
+  `game=eq.Overwatch&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All` (~7 richieste, pagine da 1000);
+- applica la correzione del sito: `(win_rate*partite + 200)/(partite + 400)` (trovata nel JS, verificata sui dati);
+- mappe: nomi del database ↔ elenco mappe con `map_key()` (accenti tolti); una mappa assente → pagina del
+  sito (tutte le partite), annotata in `filter.mapsAll`; con Ranked non si scaricano le 30 pagine mappa.
+- Se il database non risponde o i dati sono incompleti: tutte le partite (`filter.gameType = "All"`,
+  `filter.why`); se prima era Ranked → `problems` (uscita 2, mail).
+- Test offline: `tests/fixtures_rest.tar.gz` (copia reale Ranked). Diagnosi manuale: workflow "Diagnosi
+  counterwatch" (`tools/discover_ranked.py`, salva una copia nuova nel ramo `fixtures-rest`).
+- Divisioni disponibili nel database: Bronze…Champion (per un futuro uso del rank).
 
 ## I dati (formato di app/data.json)
 
@@ -83,7 +81,7 @@ counters       {heroId: {opponentId: win rate di heroId contro opponentId}}   (m
 synergies      {heroId: {allyId: win rate della coppia}}   (metà matrice: cercare in entrambe le direzioni)
 counterScores  {heroId: {opponentId: punteggio counter di counterwatch}}   (non ancora usato)
 maps           [{slug, name, mode: Control|Escort|Hybrid|Push|Flashpoint, winRates {heroId: wr}}]
-filter         {gameType: "Ranked"|"All", query: parametro URL usato o null, tried: ISO ultima ricerca fallita}
+filter         {gameType: "Ranked"|"All", why?: perché non Ranked, mapsAll?: [mappe prese dalle pagine]}
 ```
 Le chiavi degli id sono **stringhe**. I win rate sono "shrunk" (corretti per i campioni piccoli), 0–1.
 Le differenze sono piccole (±1–5%): è normale. Ad oggi: 53 eroi, 30 mappe, modalità 5v5.
