@@ -2,3 +2,5 @@ tests/fixtures/
 __pycache__/
 node_modules/
 *.pyc
+tests/screenshots/
+app/heroes/

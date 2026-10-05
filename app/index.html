@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#11141a">
+  <meta name="description" content="Quale eroe prendere in Overwatch 2, in due, in base a mappa, ban, avversari e alleati.">
+  <title>Overwatch Counter</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#grid">Vai alla griglia eroi</a>
+
+  <!-- ============ PARTITA ============ -->
+  <main id="view-match" class="view" aria-labelledby="t-match">
+    <h1 id="t-match" class="sr-only">Partita</h1>
+
+    <section id="picks" class="picks" aria-live="polite" aria-label="Eroi consigliati"></section>
+
+    <div id="warn" class="warn" role="status" hidden></div>
+
+    <section class="controls" aria-label="Mappa e lato">
+      <button id="map-btn" class="map-btn" type="button" aria-haspopup="dialog">
+        <span class="map-label">Mappa</span>
+        <span id="map-name" class="map-name">nessuna</span>
+      </button>
+      <div id="side" class="seg side" role="group" aria-label="Lato" hidden>
+        <button type="button" data-side="attack" aria-pressed="false">Attacco</button>
+        <button type="button" data-side="defense" aria-pressed="false">Difesa</button>
+      </div>
+    </section>
+
+    <section class="groups" aria-label="Cosa stai segnando">
+      <div id="groups" class="seg groups-seg" role="group" aria-label="Tocca un eroe per aggiungerlo a">
+        <button type="button" data-group="bans" class="g-bans" aria-pressed="false">Ban <b data-count="bans">0</b></button>
+        <button type="button" data-group="enemies" class="g-enemies" aria-pressed="true">Avversari <b data-count="enemies">0</b></button>
+        <button type="button" data-group="allies" class="g-allies" aria-pressed="false">Alleati <b data-count="allies">0</b></button>
+      </div>
+    </section>
+    <div id="chosen" class="chosen" aria-label="Selezionati"></div>
+
+    <section id="grid" class="grid-wrap" aria-label="Eroi" tabindex="-1"></section>
+
+    <footer class="match-foot">
+      <button id="new-match" type="button" class="btn danger">Nuova partita</button>
+      <button id="refresh" type="button" class="btn">Aggiorna dati</button>
+      <p id="fresh" class="fresh"></p>
+      <p class="source">Dati: <a href="https://counterwatch.gg" rel="noopener">counterwatch.gg</a> · statistiche aggregate, consigli non certezze.</p>
+    </footer>
+  </main>
+
+  <!-- ============ PROFILO ============ -->
+  <main id="view-profile" class="view" aria-labelledby="t-profile" hidden>
+    <h1 id="t-profile" class="page-title">Profilo</h1>
+    <div id="players"></div>
+
+    <section class="card">
+      <h2>Aggiornamento dati</h2>
+      <p id="data-info" class="muted"></p>
+      <label for="token">Token GitHub (per "Aggiorna dati" immediato)</label>
+      <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+      <div class="row">
+        <button id="token-save" type="button" class="btn">Salva token</button>
+        <button id="token-clear" type="button" class="btn ghost">Rimuovi</button>
+      </div>
+      <p class="muted small">Il token resta solo su questo telefono. Senza token "Aggiorna dati" ricarica
+        gli ultimi dati pubblicati (aggiornati da soli ogni 3 ore).</p>
+    </section>
+  </main>
+
+  <!-- ============ SCHEDE ============ -->
+  <nav class="tabs" aria-label="Schede">
+    <button type="button" data-view="match" aria-current="page">Partita</button>
+    <button type="button" data-view="profile">Profilo</button>
+  </nav>
+
+  <!-- ============ SCELTA MAPPA ============ -->
+  <dialog id="map-dialog" aria-labelledby="t-map">
+    <div class="dlg-head">
+      <h2 id="t-map">Scegli la mappa</h2>
+      <button type="button" class="btn ghost" data-close>Chiudi</button>
+    </div>
+    <div id="map-list"></div>
+  </dialog>
+
+  <!-- ============ SCELTA PREFERITI ============ -->
+  <dialog id="fav-dialog" aria-labelledby="t-fav">
+    <div class="dlg-head">
+      <h2 id="t-fav">Preferiti</h2>
+      <button type="button" class="btn" data-close>Fatto</button>
+    </div>
+    <div id="fav-grid"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

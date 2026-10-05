@@ -1,0 +1,98 @@
+name: Aggiorna dati e pubblica
+
+# Ogni 3 ore (e dal pulsante "Aggiorna dati" dell'app, e a ogni push su main):
+# scarica i dati da counterwatch, li collauda e pubblica la cartella app/ su GitHub Pages.
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: write # solo per tenere acceso il cron (vedi ultimo passo)
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      fetch_code: ${{ steps.fetch.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ultimi dati pubblicati (ripiego se counterwatch cambia)
+        run: |
+          url="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/data.json?t=$(date +%s)"
+          if curl -fsSL "$url" -o prev.json && python3 -c "import json,sys; d=json.load(open('prev.json')); sys.exit(0 if d.get('heroes') else 1)"; then
+            echo "ripiego: dati pubblicati"
+          else
+            cp app/data.json prev.json
+            echo "ripiego: data.json del repository"
+          fi
+
+      - name: Collaudo dello scraper (pagine salvate)
+        run: python3 tests/test_fetch.py
+
+      - name: Scarica da counterwatch
+        id: fetch
+        run: |
+          set +e
+          python3 tools/fetch_data.py --prev prev.json
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" = "1" ]; then
+            echo "::error::Counterwatch non ha dato dati validi: pubblico gli ultimi dati buoni."
+            cp prev.json app/data.json
+          elif [ "$code" = "2" ]; then
+            echo "::warning::Dati parziali: alcune sezioni usano i dati precedenti (vedi 'problems')."
+          fi
+          exit 0
+
+      - name: Collaudo della logica sui dati nuovi
+        run: node --test tests/*.test.js
+
+      - name: Icone degli eroi
+        run: python3 tools/fetch_icons.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      # GitHub spegne i cron dopo 60 giorni senza attività nel repository:
+      # riattivare il workflow via API azzera il conteggio.
+      - name: Tieni acceso l'aggiornamento automatico
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/update-data.yml/enable" || true
+
+      # Dati parziali o scraper rotto: pubblicato comunque, ma il job fallisce così arriva la mail.
+      - name: Esito dello scraper
+        if: needs.build.outputs.fetch_code != '0'
+        run: |
+          echo "::error::fetch_data.py è uscito con ${{ needs.build.outputs.fetch_code }}: controlla i log del passo 'Scarica da counterwatch'."
+          exit 1

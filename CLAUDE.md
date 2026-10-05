@@ -20,27 +20,42 @@ Requisiti dell'utente, in ordine di importanza:
 L'utente ha budget limitato: lavora in modo mirato, niente esplorazioni inutili.
 Su Switch 2 l'overlay PC di Counterwatch non esiste: per questo serve l'inserimento manuale.
 
-## Stato al 2026-10-05
+## Stato al 2026-10-05 (sera)
 
-FATTO (sul Mac dell'utente, poi caricato qui):
-- `tools/fetch_data.py` — scraper **funzionante e collaudato** (Python 3 standard, nessuna dipendenza).
-  Scrive `app/data.json` (~90 KB). Codici di uscita: 0 ok, 2 dati salvati ma parziali, 1 niente salvato.
-  Opzioni: `--out`, `--prev` (ultimo data.json buono, per il ripiego sezione per sezione), `--from-dir` (test offline).
-- `tests/test_fetch.py` — 11 test, **tutti verdi**: pagine reali, campi rinominati, win rate in percentuale,
-  team builder sparito, sito irriconoscibile, matrice troncata, una mappa rotta, valori assurdi.
-  Usa le copie delle pagine in `tests/fixtures.tar.gz` (estratte da sole al primo avvio).
-- `app/data.json` — dati reali del 2026-10-05.
-- `app/recommend.js` — logica dei suggerimenti (modulo ES puro, **non ancora collaudato**).
+Repository: **github.com/fmarzocchi/overwatch-counter** (pubblico). Sito: https://fmarzocchi.github.io/overwatch-counter/
 
-DA FARE, in quest'ordine:
-1. **Test della logica** `app/recommend.js` in Node (`node --test`), con casi concreti presi da data.json.
-2. **La PWA** in `app/` (vedi "L'app" sotto). HTML/CSS/JS puri, niente framework né build.
-3. **Workflow dati** `.github/workflows/update-data.yml` + pubblicazione su **GitHub Pages**.
-4. **Pulsante "aggiorna ora"** (workflow_dispatch via API GitHub, vedi sotto).
-5. **Collaudo della PWA** con Playwright (Chromium headless, viewport telefono 390×844): flusso completo,
-   screenshot, offline, dati vecchi/rotti. Guarda tu gli screenshot.
-6. **Guscio APK** + workflow `.github/workflows/android.yml` che compila e testa sull'emulatore.
-7. Istruzioni finali all'utente: come installare la PWA o l'APK, come creare il token.
+FATTO e collaudato in locale:
+- `tools/fetch_data.py` — scraper (Python 3 standard). Codici di uscita: 0 ok, 2 parziale, 1 niente salvato.
+  Opzioni: `--out`, `--prev`, `--from-dir`. **Solo Ranked**: scopre da solo il parametro URL del filtro
+  (vedi "Filtro Ranked" sotto).
+- `tests/test_fetch.py` — 16 test verdi (i primi 11 + 5 sul filtro Ranked). Pagine salvate in `tests/fixtures.tar.gz`.
+- `app/recommend.js` — `recommend()` per un giocatore e `recommendDuo()` per la coppia; ban, preferiti,
+  attacco/difesa. `tests/recommend.test.js`: 13 test verdi (`node --test tests/*.test.js`).
+- PWA in `app/` (index.html, style.css, app.js, sw.js, manifest, icone generate da `tools/make_icons.py`).
+- `tests/e2e.mjs` — Playwright, 390×844: 34 controlli verdi (flusso completo, offline, dati vecchi/rotti,
+  "Aggiorna dati" con GitHub simulato). Screenshot in `tests/screenshots/` (non versionati), guardati.
+- `tools/fetch_icons.py` — copia le icone eroi in `app/heroes/` durante il workflow (non versionate).
+- `.github/workflows/update-data.yml` (dati ogni 3 h + Pages + keepalive del cron) e `ci.yml` (tutti i test + screenshot).
+
+DA FARE:
+1. Verificare su GitHub la prima run reale di `update-data.yml`: che il filtro Ranked venga trovato
+   (log "OK [Ranked …]"), che le icone si scarichino, che `…github.io/overwatch-counter/data.json` risponda.
+   Se il filtro Ranked NON viene trovato: leggere i chunk JS di counterwatch (`/_next/static/chunks/…`)
+   in un workflow per trovare il nome vero del parametro e aggiungerlo in testa a `RANKED_QUERIES`.
+2. **Guscio APK** + `.github/workflows/android.yml` (vedi sotto).
+3. Rank per giocatore: counterwatch ha dati per divisione (Bronze…Grandmaster+). Ora il rank è solo
+   memorizzato. Usarlo vorrebbe dire scaricare i dati di 1–2 divisioni in più: valutare con l'utente
+   (più richieste a counterwatch).
+
+## Filtro Ranked
+
+L'utente vuole **solo Ranked 5v5** (niente Stadium/arena). Il parametro URL del filtro non è scritto nell'HTML
+(sta nel JS del sito). `find_ranked()` prova i candidati di `RANKED_QUERIES` sul team builder e accetta il
+primo che restituisce dati **diversi** (≥20% di celle) da "tutte le partite"; un parametro ignorato dà dati
+identici e viene scartato. Il parametro trovato va in `data.json → filter.query` e viene riusato (stesso
+parametro anche per le pagine delle mappe). Se nessuno funziona: dati di tutte le partite, `filter.gameType
+= "All"`, nuova ricerca al massimo ogni 24 h; l'app mostra "tutte le partite (filtro Ranked non trovato)".
+Se un filtro già noto smette di funzionare → `problems` (uscita 2, mail).
 
 ## I dati (formato di app/data.json)
 
@@ -55,6 +70,7 @@ counters       {heroId: {opponentId: win rate di heroId contro opponentId}}   (m
 synergies      {heroId: {allyId: win rate della coppia}}   (metà matrice: cercare in entrambe le direzioni)
 counterScores  {heroId: {opponentId: punteggio counter di counterwatch}}   (non ancora usato)
 maps           [{slug, name, mode: Control|Escort|Hybrid|Push|Flashpoint, winRates {heroId: wr}}]
+filter         {gameType: "Ranked"|"All", query: parametro URL usato o null, tried: ISO ultima ricerca fallita}
 ```
 Le chiavi degli id sono **stringhe**. I win rate sono "shrunk" (corretti per i campioni piccoli), 0–1.
 Le differenze sono piccole (±1–5%): è normale. Ad oggi: 53 eroi, 30 mappe, modalità 5v5.
@@ -83,10 +99,12 @@ Due schede (tab in basso, grandi):
      **alleati** (da 0 a 5) → consigli di counter aggiornati a ogni tocco.
    "Nuova partita" azzera la scheda Partita, mai il Profilo.
 
-Punti aperti da verificare sui dati (dirli all'utente se non risolvibili):
-- data.json non ha win rate per **lato** (attacco/difesa) né per **rank**: controllare se
-  counterwatch li espone; se no, l'interruttore Attacco/Difesa e il rank vanno usati con una regola
-  semplice e dichiarata (o solo memorizzati), non spacciati per statistica.
+Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
+- **Attacco/Difesa**: counterwatch non ha dati per lato. Regola dichiarata in `sideBonus()`: difesa premia lo
+  stile POKE, attacco DIVE/RUSH, al massimo ±0.5%; nei motivi appare come "difesa (regola)".
+- **Rank**: counterwatch ha dati per divisione, ma ora non li scarichiamo: il rank è solo memorizzato.
+- Ban: max 4. Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
+- Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
 
 ## L'app (PWA) — come deve essere
 
