@@ -9,8 +9,15 @@ Robusto ai cambiamenti del sito:
 - se non resta niente di usabile il file non viene scritto e lo script esce con 1.
 Codici di uscita: 0 tutto ok, 2 dati salvati ma parziali, 1 nessun dato salvato.
 
+Solo partite Ranked: counterwatch filtra con un parametro nell'URL che non è scritto nella
+pagina; lo scopriamo provando i nomi in RANKED_QUERIES e tenendo il primo che restituisce dati
+DIVERSI da "tutte le partite" (un parametro ignorato restituisce dati identici). Quello trovato
+viene ricordato in data.json ("filter") e riusato. Se nessuno funziona si usano i dati di tutte le
+partite e lo si scrive in "filter" (non è un errore: l'app lo mostra).
+
 Uso: python3 tools/fetch_data.py [--out PATH] [--prev PATH] [--from-dir DIR]
-  --from-dir legge le pagine da file locali (per i test) invece che dalla rete.
+  --from-dir legge le pagine da file locali (per i test) invece che dalla rete;
+  la pagina con parametro <q> è il file <nome>@<q>.html.
 """
 import argparse, datetime, json, pathlib, re, sys, time, urllib.request
 
@@ -18,6 +25,9 @@ BASES = ["https://counterwatch.gg/stats/overwatch", "https://www.counterwatch.gg
 UA = {"User-Agent": "Mozilla/5.0 (personal counterpick helper)"}
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MIN_HEROES, MIN_MAPS = 35, 15
+RANKED_QUERIES = ["gameType=Ranked", "game_type=Ranked", "type=Ranked", "queue=Ranked",
+                  "gameMode=Ranked", "mode=Ranked", "gameType=ranked", "ranked=true"]
+RETRY_DISCOVERY_HOURS = 24  # se il filtro non si trova, riprovare al massimo una volta al giorno
 
 
 # ---------- lettura pagine ----------
@@ -26,10 +36,12 @@ class Source:
     def __init__(self, from_dir=None):
         self.from_dir = pathlib.Path(from_dir) if from_dir else None
 
-    def html(self, path):
+    def html(self, path, query=None):
         if self.from_dir:
-            f = self.from_dir / (path.strip("/").replace("/", "__") + ".html")
+            f = self.from_dir / (path.strip("/").replace("/", "__") + (f"@{query}" if query else "") + ".html")
             return f.read_text(encoding="utf-8", errors="ignore") if f.exists() else ""
+        if query:
+            path += "?" + query
         last = None
         for base in BASES:
             for attempt in range(3):
@@ -178,6 +190,36 @@ def plausible(matrix):
     return bool(vals) and all(0.2 <= v <= 0.8 for v in vals)
 
 
+def differs(a, b):
+    """Quota di celle diverse tra due matrici (0 = identiche)."""
+    cells = [(x, y) for x in a for y in a[x]]
+    return sum(1 for x, y in cells if b.get(x, {}).get(y) != a[x][y]) / len(cells) if cells else 0
+
+
+def find_ranked(src, all_counters, prev_filter, now_dt, pause):
+    """Restituisce (query, testo del team builder Ranked, ricerca fatta?)."""
+    known = prev_filter.get("query")
+    tried = prev_filter.get("tried")
+    if not known and tried:
+        try:
+            age = now_dt - datetime.datetime.fromisoformat(tried.replace("Z", "+00:00"))
+            if age < datetime.timedelta(hours=RETRY_DISCOVERY_HOURS):
+                return None, None, False
+        except ValueError:
+            pass
+    for q in ([known] if known else []) + [q for q in RANKED_QUERIES if q != known]:
+        pause()
+        text = payload(src.html("/team-builder", q))
+        heroes, counters, _, _ = extract_team_builder(text)
+        if len(heroes) < MIN_HEROES or not counters:
+            continue
+        if not all_counters and q == known:
+            return q, text, True  # pagina "tutte" rotta: non posso confrontare, mi fido del filtro già noto
+        if all_counters and differs(counters, all_counters) >= 0.2:
+            return q, text, True
+    return None, None, True
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(ROOT / "app" / "data.json"))
@@ -192,7 +234,9 @@ def main():
         prev = {}
     src = Source(args.from_dir)
     status, problems = {}, []
-    now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
+    now_dt = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+    now = now_dt.isoformat()
+    pause = (lambda: None) if args.from_dir else (lambda: time.sleep(1.0))
 
     def keep(section, ok, new, why):
         if ok:
@@ -205,6 +249,16 @@ def main():
     tb_html = src.html("/team-builder")
     tb = payload(tb_html)
     heroes, counters, synergies, scores = extract_team_builder(tb)
+
+    prev_filter = prev.get("filter") or {}
+    query, ranked_tb, searched = find_ranked(src, counters, prev_filter, now_dt, pause)
+    if query:
+        heroes, counters, synergies, scores = extract_team_builder(ranked_tb)
+        data_filter = {"gameType": "Ranked", "query": query}
+    else:
+        data_filter = {"gameType": "All", "query": None, "tried": now if searched else prev_filter.get("tried")}
+        if prev_filter.get("query"):
+            problems.append(f"filtro Ranked ({prev_filter['query']}) non funziona più: dati di tutte le partite")
     m = re.search(r'"dateModified":"([^"]+)"', tb_html)
     source_updated = m.group(1)[:19] + "Z" if m else prev.get("sourceUpdated")
 
@@ -231,9 +285,8 @@ def main():
     prev_maps = {mp["slug"]: mp for mp in prev.get("maps") or []}
     maps = []
     for slug, meta in sorted(map_meta.items()):
-        if not args.from_dir:
-            time.sleep(1.0)
-        wr = {k: v for k, v in extract_map_winrates(payload(src.html(f"/maps/{slug}"))).items() if k in idset}
+        pause()
+        wr = {k: v for k, v in extract_map_winrates(payload(src.html(f"/maps/{slug}", query))).items() if k in idset}
         if len(wr) >= len(ids) * 0.8 and plausible({"x": wr}):
             maps.append({**meta, "winRates": wr})
         elif slug in prev_maps:
@@ -253,14 +306,14 @@ def main():
         overall[hid] = round(sum(vals) / len(vals), 4) if vals else 0.5
 
     data = {
-        "source": "counterwatch.gg", "checked": now, "sourceUpdated": source_updated,
+        "source": "counterwatch.gg", "checked": now, "sourceUpdated": source_updated, "filter": data_filter,
         "status": status, "problems": problems,
         "heroes": hero_list, "overall": overall, "counters": counters,
         "synergies": synergies or {}, "counterScores": scores, "maps": maps,
     }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
-    print(f"OK: {len(hero_list)} eroi, counter {coverage(counters, ids):.0%}, {len(maps)} mappe, "
+    print(f"OK [{data_filter['gameType']}{' ' + query if query else ''}]: {len(hero_list)} eroi, counter {coverage(counters, ids):.0%}, {len(maps)} mappe, "
           f"fonte aggiornata {source_updated} → {out} ({out.stat().st_size // 1024} KB)")
     for p in problems:
         print("  ! " + p)

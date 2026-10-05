@@ -122,6 +122,42 @@ code, log = run(dz, tmp / "absurd.json", prev=good)
 z = json.loads((tmp / "absurd.json").read_text()) if (tmp / "absurd.json").exists() else {}
 check("valori assurdi: rifiutati", code == 2 and z.get("counters") == d.get("counters"), log)
 
+# 8. filtro Ranked: il primo parametro che dà dati DIVERSI viene scelto, anche per le mappe
+check("senza pagine Ranked: dati di tutte le partite, nessun problema",
+      d.get("filter", {}).get("gameType") == "All" and not d.get("problems"), json.dumps(d.get("filter")))
+Q = "type=Ranked"  # un candidato a metà elenco
+def shift(t):  # dati "Ranked" finti: ogni win rate +0.01
+    return re.sub(r'(\\"(?:shrunk_win_rate|win_rate|shrunkWinRate|winRate)\\":)(0\.\d+)', lambda m: m.group(1) + str(round(float(m.group(2)) + 0.01, 4)), t)
+def ranked_pages(d_, transform):
+    for f in list(d_.glob("*.html")):
+        if f.name != "maps.html":
+            (d_ / f.name.replace(".html", f"@{Q}.html")).write_text(transform(f.read_text(encoding="utf-8", errors="ignore")), encoding="utf-8")
+drk = mutated(tmp, "ranked", lambda d_: ranked_pages(d_, shift))
+code, log = run(drk, tmp / "ranked.json")
+k = json.loads((tmp / "ranked.json").read_text()) if (tmp / "ranked.json").exists() else {}
+a, b = ids[0], ids[1]
+kr = next((m for m in k.get("maps", []) if m["slug"] == d["maps"][0]["slug"]), {})
+check("filtro Ranked trovato: usato per counter e mappe", code == 0 and k.get("filter") == {"gameType": "Ranked", "query": Q}
+      and abs(k["counters"][a][b] - d["counters"][a][b] - 0.01) < 1e-3
+      and abs(kr["winRates"][a] - d["maps"][0]["winRates"][a] - 0.01) < 1e-3, log)
+
+# 9. parametro ignorato dal sito (stessi dati): non va scambiato per Ranked
+dig = mutated(tmp, "ignored", lambda d_: ranked_pages(d_, lambda t: t))
+code, log = run(dig, tmp / "ignored.json")
+g = json.loads((tmp / "ignored.json").read_text()) if (tmp / "ignored.json").exists() else {}
+check("parametro ignorato: resta 'tutte le partite'", code == 0 and g.get("filter", {}).get("gameType") == "All", log)
+
+# 10. filtro già noto che smette di funzionare: dati di tutte le partite, segnalato (esce 2)
+code, log = run(FIX, tmp / "lost.json", prev=tmp / "ranked.json")
+l = json.loads((tmp / "lost.json").read_text()) if (tmp / "lost.json").exists() else {}
+check("filtro Ranked perso: segnalato", code == 2 and l.get("filter", {}).get("gameType") == "All"
+      and any("Ranked" in x for x in l.get("problems", [])), log)
+
+# 11. ricerca fallita da poco: non si riprova (niente richieste inutili)
+code, log = run(drk, tmp / "skip.json", prev=good)
+s = json.loads((tmp / "skip.json").read_text()) if (tmp / "skip.json").exists() else {}
+check("ricerca fallita da < 24 h: non riprova", code == 0 and s.get("filter", {}).get("gameType") == "All", log)
+
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} test superati")
 sys.exit(0 if all(results) else 1)
