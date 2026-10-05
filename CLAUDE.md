@@ -126,7 +126,13 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **Attacco/Difesa**: counterwatch non ha dati per lato. Regola dichiarata in `sideBonus()`: difesa premia lo
   stile POKE, attacco DIVE/RUSH, al massimo ±0.5%; nei motivi appare come "difesa (regola)".
 - **Rank**: sceglie i dati Ranked della divisione del giocatore (vedi "Dati Ranked").
-- Ban: max 4. Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
+- Ban: max **5** (richiesta del 2026-10-05). Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
+- **Ban consigliati per la mappa** (richiesta del 2026-10-05): riquadro "Ban consigliati per <mappa>" sotto mappa/lato,
+  visibile con la mappa scelta e finché non si segnano avversari; **2 per ruolo**, un tocco li segna/toglie (`toggleIn`).
+  `banSuggestions()` (recommend.js, testata): forza = win rate sulla mappa − 0.5 (media sulle divisioni dei giocatori)
+  + minaccia = media del win rate del candidato contro i "vostri eroi" − 0.5. Vostri eroi = quelli consigliati SENZA
+  ban (o già presi): non si propongono, né i preferiti né gli alleati (un ban vale per entrambe le squadre). L'elenco
+  non cambia mentre si segnano i ban (si vedono barrati). e2e "ban consigliati …", "ban: al massimo 5".
 - Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
 - **3 consigli per giocatore** (dal migliore): uno grande e 2 alternative (vedi "Design: tre livelli"); i perché in
   numeri ("Mappa ±x%", "Avversari ±x%", "Con <nome>", `breakdown()`; ogni avversario/alleato, `details()`) sono nel "Perché".

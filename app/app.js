@@ -1,4 +1,4 @@
-import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline } from "./recommend.js";
+import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
 
@@ -12,7 +12,7 @@ if (!Element.prototype.replaceChildren) {
 
 const REPO = "fmarzocchi/overwatch-counter";
 const WORKFLOW = "update-data.yml";
-const LIMITS = { bans: 4, enemies: 5, allies: 5 };
+const LIMITS = { bans: 5, enemies: 5, allies: 5 };
 const MAX_PLAYERS = 5;
 // gli alleati sono gli ALTRI della squadra: in 5 con i giocatori del profilo
 const limitOf = (g) => (g === "allies" ? Math.max(0, MAX_PLAYERS - profile.players.length) : LIMITS[g]);
@@ -590,6 +590,50 @@ function renderPicks() {
   updateMini();
 }
 
+// ---------- ban consigliati (inizio partita) ----------
+// Con la mappa scelta e prima di segnare gli avversari: 2 per ruolo (banSuggestions), eroi forti su quella mappa e
+// contro i vostri. "Vostri" = quelli che vi consiglierei SENZA ban (o già presi): non si propongono, come i preferiti
+// (un ban vale per tutte e due le squadre). L'elenco non cambia mentre si segnano i ban: si vedono barrati.
+function renderBanRecs() {
+  const box = $("#ban-recs");
+  const map = currentMap();
+  const show = !!map && !match.enemies.length;
+  box.hidden = !show;
+  if (!show) return;
+  const players = profile.players.map((p, i) => ({
+    role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites, data: playerData(i), picked: match.picked[i],
+  }));
+  const { team } = recommendTeam(data, {
+    players, mapSlug: match.mapSlug, side: match.side, bans: [], enemies: [], allies: match.allies, theory: T, useTheory: !!profile.useTheory,
+  });
+  const rec = banSuggestions([...new Set(profile.players.map((p, i) => playerData(i)))], {
+    mapSlug: match.mapSlug,
+    ours: team.filter(Boolean).map((h) => h.id),
+    keep: [...profile.players.flatMap((p) => p.favorites), ...match.picked.filter(Boolean), ...match.allies],
+  });
+  const banned = new Set(match.bans.map(sid));
+  $("#t-ban-recs").textContent = `Ban consigliati per ${map.name}`;
+  fill($("#ban-recs-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
+    el("span", { class: `br-role-lab r-${role}` }, ROLE_IT[role]),
+    el("div", { class: "br-heroes" }, rec[role].map((r) => {
+      const id = sid(r.hero.id);
+      const on = banned.has(id);
+      const why = [r.strength >= 0.003 ? `forte su ${map.name}` : null,
+        r.beats.length ? `batte ${r.beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || `tra i migliori su ${map.name}`;
+      return el("button", {
+        type: "button", class: `hero${on ? " in-bans" : ""}`, "data-id": id, "aria-pressed": String(on), title: why,
+        "aria-label": `${on ? "Bannato" : "Banna"} ${r.hero.name}: ${why}`, onclick: () => toggleIn("bans", id),
+      }, face(r.hero), el("span", { class: `nm${heroName(r.hero).length >= 10 ? " long" : ""}` }, heroName(r.hero)));
+    })))));
+  fitBanRecs();
+}
+function fitBanRecs() {
+  const box = $("#ban-recs");
+  if (box.hidden) return;
+  delete box.dataset.fitW;
+  fitNames(box);
+}
+
 // ---------- mappa e lato ----------
 
 function currentMap() {
@@ -730,14 +774,18 @@ function groupOf(id) {
 const pickerOf = (id) => match.picked.findIndex((x) => x && sid(x) === id);
 
 function tapHero(id) {
-  const g = match.group;
-  if (g === "picked") { tapPicked(id); return; }
+  if (match.group === "picked") { tapPicked(id); return; }
+  toggleIn(match.group, id);
+}
+
+// un tocco mette l'eroe nel gruppo (ban, avversari, alleati) o ve lo toglie
+function toggleIn(g, id) {
   const cur = groupOf(id);
   if (cur === g) {
     match[g] = match[g].filter((x) => sid(x) !== id);
   } else {
     if (match[g].length >= limitOf(g)) {
-      toast(g === "allies" && !limitOf(g) ? `Siete già in ${MAX_PLAYERS}: segnate gli eroi presi con «Chi ha preso».`
+      toast(g === "allies" && !limitOf(g) ? `Siete già in ${MAX_PLAYERS}: segnate gli eroi presi nei vostri riquadri.`
         : `Al massimo ${limitOf(g)} ${GROUP_WORD[g]}: togline uno toccandolo.`);
       return;
     }
@@ -1049,6 +1097,7 @@ function render() {
     applySearch($("#hero-q"));
   }
   renderControls();
+  renderBanRecs();
   renderPicks();
   renderGroups();
   renderGrid();
@@ -1064,7 +1113,7 @@ function showView(name) {
   store.set("owc.view", name);
   window.scrollTo(0, 0);
   // i nomi si misurano solo a vista (nascosti hanno larghezza 0)
-  if (name === "match" && data) { renderPicks(); fitNames($("#grid")); }
+  if (name === "match" && data) { renderPicks(); fitNames($("#grid")); fitBanRecs(); }
 }
 
 function wire() {
@@ -1131,6 +1180,7 @@ async function start() {
     delete $("#grid").dataset.fitW;
     fitNames($("#grid"));
     for (const t of $$("#picks .pick-name")) fitText(t);
+    fitBanRecs();
   };
   window.addEventListener("resize", refit);
   if (document.fonts?.ready) document.fonts.ready.then(refit);

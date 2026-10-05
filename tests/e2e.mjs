@@ -125,6 +125,27 @@ try {
   check("Hybrid: attacco/difesa visibile", await page.locator("#side").isVisible());
   await page.click("#side [data-side=defense]");
   check("difesa selezionata", (await page.getAttribute("#side [data-side=defense]", "aria-pressed")) === "true");
+  // ban consigliati per la mappa: 2 per ruolo, mai i vostri eroi né i preferiti; un tocco li segna
+  await toTop(page);
+  const br = await page.evaluate(() => ({ visible: !document.querySelector("#ban-recs").hidden, title: document.querySelector("#t-ban-recs").textContent,
+    heroes: [...document.querySelectorAll("#ban-recs .hero")].map((b) => b.querySelector(".nm").textContent) }));
+  const picksNoBans = await pickNames(page);
+  const roleOf = (n) => data.heroes.find((h) => h.name === toEn(n))?.role;
+  check("mappa scelta: «Ban consigliati per King's Row», 2 per ruolo", br.visible && br.title === "Ban consigliati per King's Row"
+    && br.heroes.length === 6 && ["Tank", "Damage", "Support"].every((r) => br.heroes.filter((n) => roleOf(n) === r).length === 2), JSON.stringify(br));
+  check("ban consigliati: mai i vostri eroi né i preferiti (un ban vale per tutti)",
+    br.heroes.every((n) => !picksNoBans.includes(n) && !["Mercy", "Juno"].includes(n)), `${br.heroes.join()} / ${picksNoBans.join()}`);
+  await shot(page, "04b-ban-consigliati");
+  await page.locator("#ban-recs .hero").first().click();
+  await toTop(page);
+  check("ban consigliato: un tocco lo segna (contato, barrato, fuori dai consigli)", (await text(page, "[data-count=bans]")) === "1"
+    && (await page.locator("#ban-recs .hero").first().getAttribute("aria-pressed")) === "true"
+    && (await page.locator("#ban-recs .hero").first().evaluate((b) => b.classList.contains("in-bans")))
+    && !(await pickNames(page)).includes(br.heroes[0]));
+  check("ban consigliati: l'elenco resta lo stesso mentre si segnano",
+    (await page.locator("#ban-recs .hero .nm").allInnerTexts()).join() === br.heroes.join());
+  await page.locator("#ban-recs .hero").first().click();
+  check("ban consigliato ritoccato: tolto", (await text(page, "[data-count=bans]")) === "0");
   await page.click("#groups [data-group=bans]");
   await heroBtn(page, "Ana").click();
   await heroBtn(page, "Kiriko").click();
@@ -144,6 +165,7 @@ try {
   await page.click("#groups [data-group=enemies]");
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
   check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
+  check("con gli avversari segnati i ban consigliati spariscono", await page.locator("#ban-recs").isHidden());
   await toTop(page);
   const mus = await page.locator(".pick .mu-grp").evaluateAll((gs) => gs.map((g) => g.getAttribute("aria-label")));
   check("con avversari: «Batte»/«Teme» con i volti dei soli avversari segnati", mus.length >= 1 && mus.every((l) =>
@@ -628,6 +650,12 @@ try {
       && JSON.parse(await p12.evaluate(() => localStorage.getItem("owc.profile"))).players[0].favorites.map(String).includes(heroId("Mercy")));
     await p12.click("#fav-dialog [data-close]");
     await p12.click(".tabs [data-view=match]");
+
+    await p12.click("#groups [data-group=bans]");
+    for (const n of ["Ana", "Kiriko", "Widowmaker", "Tracer", "Genji", "Moira"]) await heroBtn(p12, n).click();
+    check("ban: al massimo 5 (il sesto non entra, con avviso)", (await text(p12, "[data-count=bans]")) === "5"
+      && (await text(p12, "#toast")).includes("Al massimo 5 ban"), await text(p12, "#toast"));
+    await p12.click("#groups [data-group=enemies]");
 
     // abilità: nel «Come giocarla» i nomi ufficiali italiani (anche dentro i consigli scritti), non quelli inglesi
     await toTop(p12);

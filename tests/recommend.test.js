@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   recommend, recommendDuo, recommendTeam, matchups, headline, MATCHUP_MIN, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
+  banSuggestions, BANS_PER_ROLE,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -332,4 +333,52 @@ test("riquadro prima degli avversari: un solo motivo in parole, senza numeri", (
   const weak = rows.find((r) => r.parts.base < 0.01 && !r.withAllies.length && !r.favorite);
   if (weak) assert.equal(headline(weak), null);
   for (const r of rows) { const h = headline(r); assert.ok(h === null || !/\d/.test(h), h); }
+});
+
+test("ban consigliati: 2 per ruolo, i più forti sulla mappa (senza vostri eroi)", () => {
+  const map = data.maps.find((m) => m.slug === "havana") ?? mapOf("Escort");
+  const rec = banSuggestions(data, { mapSlug: map.slug });
+  for (const role of ["Tank", "Damage", "Support"]) {
+    assert.equal(rec[role].length, BANS_PER_ROLE, role);
+    assert.ok(rec[role].every((r) => r.hero.role === role), role);
+    // i migliori del ruolo per win rate su quella mappa
+    const best = data.heroes.filter((h) => h.role === role)
+      .sort((a, b) => (map.winRates[String(b.id)] ?? data.overall[String(b.id)]) - (map.winRates[String(a.id)] ?? data.overall[String(a.id)]))
+      .slice(0, BANS_PER_ROLE).map((h) => h.name);
+    assert.deepEqual(names(rec[role]), best, role);
+    for (const r of rec[role]) close(r.strength, (map.winRates[String(r.hero.id)] ?? data.overall[String(r.hero.id)]) - 0.5, r.hero.name);
+  }
+});
+
+test("ban consigliati: mai i vostri eroi né quelli da tenere; chi batte i vostri eroi sale", () => {
+  const map = mapOf("Hybrid");
+  const plain = banSuggestions(data, { mapSlug: map.slug, perRole: 99 });
+  const ours = [plain.Damage[0].hero.id, plain.Support[0].hero.id];
+  const keep = [plain.Tank[0].hero.id];
+  const rec = banSuggestions(data, { mapSlug: map.slug, ours, keep, perRole: 99 });
+  const all = Object.values(rec).flat().map((r) => String(r.hero.id));
+  for (const x of [...ours, ...keep]) assert.ok(!all.includes(String(x)), "escluso");
+  for (const r of Object.values(rec).flat()) {
+    const t = ours.map((o) => data.counters[String(r.hero.id)][String(o)] - 0.5);
+    close(r.threat, t.reduce((a, b) => a + b, 0) / t.length, r.hero.name);
+    close(r.score, r.strength + r.threat, r.hero.name);
+  }
+  // il primo tank per punteggio batte i vostri eroi più di quanto non faccia l'ultimo
+  const tanks = rec.Tank;
+  assert.ok(tanks[0].score >= tanks[tanks.length - 1].score);
+  assert.ok(Object.values(rec).flat().some((r) => r.beats.length), "qualcuno batte i vostri eroi");
+});
+
+test("ban consigliati: con più divisioni si fa la media", () => {
+  const map = mapOf("Control");
+  const other = { ...data, maps: data.maps.map((m) => (m.slug === map.slug
+    ? { ...m, winRates: Object.fromEntries(Object.entries(m.winRates).map(([k, v]) => [k, v + 0.02])) } : m)) };
+  const one = banSuggestions(data, { mapSlug: map.slug, perRole: 99 });
+  const two = banSuggestions([data, other], { mapSlug: map.slug, perRole: 99 });
+  for (const role of ["Tank", "Damage", "Support"]) {
+    for (const r of two[role]) {
+      const a = one[role].find((x) => x.hero.id === r.hero.id);
+      if (map.winRates[String(r.hero.id)] !== undefined) close(r.strength, a.strength + 0.01, r.hero.name);
+    }
+  }
 });

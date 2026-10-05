@@ -101,6 +101,41 @@ export function recommend(
   return rows;
 }
 
+// Ban consigliati per la mappa: i migliori BANS_PER_ROLE di ogni ruolo. Un ban vale per entrambe le squadre, quindi
+// si propongono eroi forti su quella mappa e contro gli eroi che giocherete voi, mai quelli che volete giocare.
+//   forza    = win rate sulla mappa (o generale, senza mappa) − 0.5
+//   minaccia = media, sui vostri eroi (ours), del win rate del candidato contro ciascuno − 0.5
+//   punteggio = forza + minaccia
+// datasets: uno o più dati (es. quelli della divisione di ogni giocatore): si fa la media.
+// keep: id da non proporre (preferiti, eroi presi, alleati); anche ours non si propone.
+// Restituisce {Tank: [righe], Damage: [...], Support: [...]}, riga = {hero, score, strength, threat, beats: [eroi vostri battuti]}.
+export const BANS_PER_ROLE = 2;
+export const BAN_ROLES = ["Tank", "Damage", "Support"];
+export function banSuggestions(datasets, { mapSlug = null, ours = [], keep = [], perRole = BANS_PER_ROLE } = {}) {
+  const sets = (Array.isArray(datasets) ? datasets : [datasets]).filter(Boolean);
+  if (!sets.length) return Object.fromEntries(BAN_ROLES.map((r) => [r, []]));
+  const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  const byId = Object.fromEntries(sets[0].heroes.map((h) => [sid(h.id), h]));
+  const mine = [...new Set(ours.map(sid))].filter((o) => byId[o]);
+  const skip = new Set([...keep.map(sid), ...mine]);
+  const rows = sets[0].heroes.filter((h) => !skip.has(sid(h.id))).map((h) => {
+    const id = sid(h.id);
+    const strength = avg(sets.map((d) => {
+      const map = mapSlug ? d.maps.find((m) => m.slug === mapSlug) : null;
+      return (map?.winRates?.[id] ?? d.overall?.[id] ?? 0.5) - 0.5;
+    }));
+    const vs = mine.map((o) => {
+      const v = avg(sets.map((d) => d.counters?.[id]?.[o]).filter((x) => typeof x === "number"));
+      return v === null ? null : { hero: byId[o], delta: v - 0.5 };
+    }).filter(Boolean);
+    const threat = avg(vs.map((x) => x.delta)) ?? 0;
+    return { hero: h, score: strength + threat, strength, threat,
+      beats: vs.filter((x) => x.delta >= 0.01).sort((a, b) => b.delta - a.delta).map((x) => x.hero) };
+  });
+  return Object.fromEntries(BAN_ROLES.map((role) => [role, rows.filter((r) => r.hero.role === role)
+    .sort((a, b) => b.score - a.score || a.hero.name.localeCompare(b.hero.name)).slice(0, perRole)]));
+}
+
 // Squadra di 1–5 giocatori. players: [{role, favorites, onlyFavorites, data?, picked?}, …]; il resto come recommend().
 // data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.
 // picked: eroe GIÀ PRESO da quel giocatore → resta fisso, conta come alleato per gli altri e la sua lista
