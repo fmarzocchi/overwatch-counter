@@ -1,0 +1,28 @@
+name: Pagine Blizzard (nomi italiani)
+
+# Strumento manuale: scarica le pagine ufficiali di eroi e mappe (inglese e italiano) e ne salva una copia
+# nel ramo "fixtures-blizzard" (non tocca main). Servono per i nomi italiani di abilità, eroi e mappe.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/fetch_blizzard.py --out /tmp/blizzard
+      - name: Salva la copia nel ramo fixtures-blizzard
+        run: |
+          tar czf /tmp/blizzard.tar.gz -C /tmp blizzard
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan fixtures-blizzard
+          git rm -rq --cached .
+          cp /tmp/blizzard.tar.gz blizzard.tar.gz
+          git add blizzard.tar.gz
+          git commit -qm "Pagine ufficiali di eroi e mappe (en-us, it-it)"
+          git push -f origin fixtures-blizzard
