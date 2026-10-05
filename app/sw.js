@@ -1,11 +1,11 @@
 // Service worker: guscio dell'app cache-first (aggiornato in sottofondo), data.json network-first
 // con ripiego sulla copia salvata se offline, icone degli eroi cache-first.
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL = `owc-shell-${VERSION}`;
 const DATA = "owc-data";
 const IMG = "owc-img";
-const SHELL_FILES = ["./", "index.html", "style.css", "app.js", "recommend.js", "manifest.webmanifest",
-  "icons/icon-192.png", "icons/icon-512.png"];
+const SHELL_FILES = ["./", "index.html", "style.css", "app.js", "recommend.js", "theory.js", "icons.js",
+  "fonts/inter.woff2", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));

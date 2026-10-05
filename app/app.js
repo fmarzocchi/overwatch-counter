@@ -1,5 +1,6 @@
 import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
+import { icon, fillIcons } from "./icons.js";
 
 // WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
 if (!Element.prototype.replaceChildren) {
@@ -86,6 +87,9 @@ let lastDuo = null;
 let theoryRaw = {}; // app/theory.json: sinergie, counter e modo di giocare raccolti da fonti di Overwatch
 let T = null; // teoria pronta all'uso (resa simmetrica, con i nomi dei dati attuali)
 let patches = null; // app/patches.json: ultima patch Blizzard (per capire quando la teoria è vecchia)
+// app/names_it.json (facoltativo): nomi ufficiali italiani del gioco, dall'inglese (la lingua di counterwatch e della teoria)
+let IT = { heroes: {}, maps: {}, abilities: {} };
+const heroName = (h) => IT.heroes?.[h.name] || h.name;
 const divFiles = {}; // chiave divisione → contenuto del file (o null se non disponibile)
 const divData = {}; // chiave divisione → dati generali uniti a quelli della divisione
 
@@ -170,6 +174,7 @@ async function loadData() {
     const heroSig = (x) => (x ? x.heroes.map((h) => `${h.id}:${h.role}:${h.name}`).join("|") : "");
     if (heroSig(d) !== heroSig(data)) $("#grid").replaceChildren();
     data = d;
+    for (const m of data.maps) { m.en = m.name; m.name = IT.maps?.[m.name] || m.name; }
     T = buildTheory(data, theoryRaw, patches);
     byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
     for (const k of Object.keys(divData)) delete divData[k];
@@ -181,6 +186,40 @@ async function loadData() {
     console.warn("data.json", e);
     return false;
   }
+}
+
+// Abilità col nome ufficiale italiano del gioco (names_it.json, confronto per posizione tra le pagine ufficiali
+// inglesi e italiane): cambia il nome e lo stesso nome dentro i consigli scritti. Senza il file restano il nome
+// inglese e la traduzione tra parentesi.
+function localizeTheory(raw) {
+  if (!raw || raw._localized) return;
+  const key = (t) => norm(t).replace(/\s+/g, "");
+  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const SKIP = new Set(["name", "en", "hero", "targets", "avoidTargets", "sources", "tags", "role"]);
+  const swapIn = (x, swaps) => {
+    if (typeof x === "string") return swaps.reduce((t, [re, it]) => t.replace(re, it), x);
+    if (Array.isArray(x)) return x.map((v) => swapIn(v, swaps));
+    if (x && typeof x === "object") for (const k of Object.keys(x)) if (!SKIP.has(k)) x[k] = swapIn(x[k], swaps);
+    return x;
+  };
+  for (const [hero, t] of Object.entries(raw)) {
+    const names = IT.abilities?.[hero];
+    if (hero.startsWith("_") || !names || !Array.isArray(t?.abilities)) continue;
+    const byKey = Object.fromEntries(Object.entries(names).map(([en, it]) => [key(en), it]));
+    const swaps = [];
+    for (const a of t.abilities) {
+      const it = byKey[key(a.name ?? "")];
+      if (!it) continue;
+      if (it !== a.name) swaps.push([a.name, it]);
+      a.en = a.name;
+      a.name = it;
+      a.it = null;
+    }
+    if (t.priority?.ability && byKey[key(t.priority.ability)]) t.priority.ability = byKey[key(t.priority.ability)];
+    swaps.sort((x, y) => y[0].length - x[0].length);
+    swapIn(t, swaps.map(([en, it]) => [new RegExp(`(^|[^\\w])${esc(en)}(?![\\w])`, "g"), `$1${it}`]));
+  }
+  raw._localized = true;
 }
 
 // dati della divisione di ciascun giocatore (se ha scelto il rank e il file esiste)
@@ -336,7 +375,7 @@ function openDetails(i, row) {
         el("div", { class: "muted small" }, `dati: ${dataLabel(i)}`))),
     el("p", { class: "why-sum" }, sum.map((b, k) => [k ? " · " : null, el("span", { class: b.good ? "good" : "bad" }, b.text)])),
     el("div", { class: "guide-row" }, el("button", { type: "button", class: "btn guide-btn", onclick: () => openGuide(i, row.hero) },
-      "🎯 Come giocarla in questa partita")),
+      icon("target"), "Come giocarla in questa partita")),
     el("h3", { class: "why-title" }, "Perché in questa partita"),
     el("ul", { class: "why-list" }, details(row).map((d) =>
       el("li", { class: `${d.good ? "good" : "bad"}${d.kind === "teoria" ? " is-theory" : ""}` }, d.kind === "teoria" ? [theoryBadge(), " "] : null, d.text))),
@@ -362,23 +401,25 @@ function openDetails(i, row) {
       "Statistiche: scarto dal 50% di vittorie (dati counterwatch). Teoria: indicazioni di guide e siti, non numeri."),
   );
   if (!$("#why-dialog").open) $("#why-dialog").showModal();
-  $("#why-body").scrollTop = 0;
+  $("#why-dialog").scrollTop = 0;
 }
 
-const BRIEF_ICON = { swap: "🔁", target: "🎯", threat: "⚠️", ability: "⚡", position: "🧭", protect: "🛡️", map: "🗺️" };
+const BRIEF_ICON = { swap: "swap", target: "target", threat: "warn", ability: "bolt", position: "move", protect: "shield", map: "map" };
 // volto + nome, per le righe del riepilogo che parlano di eroi
 const heroChip = (h) => el("span", { class: "hchip" }, face(h), h.name);
 
+// ogni riga: icona tonda, etichetta (con "teoria"/"dati"), testo breve o volti degli eroi
 function briefList(items) {
   return el("ul", { class: "brief" }, items.map((it) => el("li", {
     class: `brief-row k-${it.key} ${it.kind === "teoria" ? "is-theory" : "is-data"}`,
     "aria-label": `${it.text} (${it.kind === "teoria" ? "teoria" : "dati"})`,
   },
-  el("span", { class: "brief-ico", "aria-hidden": "true" }, BRIEF_ICON[it.key] ?? "•"),
-  el("span", { class: "brief-lab", "aria-hidden": "true" }, it.label),
-  el("span", { class: "brief-txt", "aria-hidden": "true" },
-    it.heroes?.length ? it.heroes.map(heroChip) : null,
-    it.short ? el("span", { class: it.heroes?.length ? "brief-after" : null }, it.short) : it.heroes?.length ? null : it.text))));
+  el("span", { class: "brief-ico", "aria-hidden": "true" }, icon(BRIEF_ICON[it.key] ?? "list")),
+  el("span", { class: "brief-body", "aria-hidden": "true" },
+    el("span", { class: "brief-lab" }, it.label),
+    el("span", { class: "brief-txt" },
+      it.heroes?.length ? it.heroes.map(heroChip) : null,
+      it.short ? el("span", { class: it.heroes?.length ? "brief-after" : null }, it.short) : it.heroes?.length ? null : it.text)))));
 }
 
 function openGuide(i, hero) {
@@ -403,26 +444,34 @@ function openGuide(i, hero) {
       el("button", {
         type: "button", class: "took-btn", "aria-pressed": String(isPicked),
         onclick: () => { togglePicked(i, hero); openGuide(i, hero); },
-      }, isPicked ? `✓ Preso da ${p.name}` : `Segna: ${p.name} l'ha preso`)),
+      }, icon("check"), isPicked ? `Preso da ${p.name}` : `Segna: ${p.name} l'ha preso`)),
     staleBanner(hero),
     brief ? el("section", { class: "guide-sec guide-summary" },
-      el("h3", {}, "📋 In breve"),
-      briefList(brief.items),
-      el("p", { class: "legend" }, el("span", { class: "dot theory" }), " guide e siti  ", el("span", { class: "dot data" }), " statistiche Ranked")) : null,
-    rest.length ? el("details", { class: "guide-more" },
-      el("summary", {}, `Tutti i consigli (${rest.length} sezioni)`),
+      el("h3", {}, "In breve", el("span", { class: "legend", "aria-hidden": "true" },
+        el("span", { class: "dot theory" }), "teoria", el("span", { class: "dot data" }), "dati")),
+      briefList(brief.items)) : null,
+    el("div", { class: "guide-btns" },
+      rest.length ? el("button", {
+        type: "button", class: "btn more-btn", "aria-expanded": "false", "aria-controls": "guide-more",
+        onclick: (e) => {
+          const b = e.currentTarget, open = b.getAttribute("aria-expanded") !== "true";
+          b.setAttribute("aria-expanded", String(open));
+          $("#guide-more").hidden = !open;
+          if (open) $("#guide-more").scrollIntoView({ block: "start", behavior: "smooth" });
+        },
+      }, icon("list"), "Tutti i consigli") : null,
+      row ? el("button", { type: "button", class: "btn why-btn", onclick: () => openDetails(i, row) }, icon("chart"), "Perché?") : null),
+    rest.length ? el("div", { id: "guide-more", class: "guide-more", hidden: true },
       rest.map((sec) => el("section", { class: "guide-sec" },
         el("h3", {}, sec.title),
         el("ul", {}, sec.items.map((it) => el("li", {},
           el("span", { class: it.kind === "teoria" ? "theory-badge" : "data-badge" }, it.kind === "teoria" ? "Teoria" : "Dati"), " ", it.text)))))) : null,
-    row ? el("div", { class: "guide-row" }, el("button", { type: "button", class: "btn why-btn", onclick: () => openDetails(i, row) },
-      "📊 Perché? Numeri e teoria")) : null,
     g.uncertain ? el("p", { class: "muted small theory-note" }, "Per questo eroe le fonti sono poche: i consigli di teoria sono parziali.") : null,
-    el("p", { class: "muted small" }, "Consigli da guide e siti di Overwatch e da statistiche Ranked di counterwatch: aiuti, non certezze."),
+    el("p", { class: "muted small foot-note" }, "Consigli da guide e siti di Overwatch e da statistiche Ranked di counterwatch: aiuti, non certezze."),
   );
   if ($("#why-dialog").open) $("#why-dialog").close();
   if (!$("#guide-dialog").open) $("#guide-dialog").showModal();
-  $("#guide-body").scrollTop = 0;
+  $("#guide-dialog").scrollTop = 0;
 }
 
 // Il riquadro completo dei consigli scorre con la pagina; quando è uscito dallo schermo compare in alto
@@ -477,45 +526,45 @@ function pickCard(p, i) {
         "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare`,
         onclick: () => nextRole(i),
       }, role ? ROLE_IT[role] : "Qualsiasi"));
-  const style = `--pc: var(--p${i})`;
+  const style = `--pc: var(--p${i}); --pca: var(--p${i}a)`;
   if (!top) return el("article", { class: "pick empty", style }, head, el("p", { class: "pick-why" }, "Nessun eroe disponibile"));
   const note = lastDuo.notes?.[i];
   const why = match.enemies.length ? null : headline(top, partnersOf(i));
   const sw = took ? swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies }) : null;
   const alts = took ? [] : rows.slice(1, SHOWN);
-  return el("article", { class: `pick${took ? " took" : ""}`, style, "aria-label": `${p.name}: ${took ? "ha preso" : "consigliato"} ${top.hero.name}` },
+  return el("article", { class: `pick glass${took ? " took" : ""}`, style, "aria-label": `${p.name}: ${took ? "ha preso" : "consigliato"} ${top.hero.name}` },
     head,
     note ? el("div", { class: "pick-note warn-note" }, note)
       : profile.onlyFavorites && !took ? el("div", { class: "pick-note" }, "★ solo preferiti") : null,
+    // eroe grande con alone nel colore del giocatore: un tocco → Come giocarla
     el("button", {
       type: "button", class: "pick-main", onclick: () => openGuide(i, top.hero),
       "aria-label": `${took ? `${p.name} ha preso` : `Per ${p.name}:`} ${top.hero.name}, stima ${est(top)}. Tocca per come giocarla`,
     },
-    face(top.hero),
-    el("span", { class: "pm-txt" },
-      el("span", { class: "pick-name" }, top.hero.name),
-      el("span", { class: "pick-est" }, `${est(top)}${top.favorite ? " · ★" : ""}`)),
-    el("span", { class: "pick-cta" }, "🎯 Come giocarla ›")),
+    el("span", { class: "halo" }, face(top.hero)),
+    el("span", { class: "pick-name" }, top.hero.name),
+    el("span", { class: "pick-est" }, `${est(top)}${top.favorite ? " ★" : ""}`),
+    el("span", { class: "pick-cta" }, icon("target"), "Come giocarla", icon("chevron", "ic chev"))),
     match.enemies.length ? matchupRow(top) : why ? el("p", { class: "pick-why" }, why) : null,
     sw ? el("button", {
       type: "button", class: "swap", onclick: () => openGuide(i, sw.hero),
       "aria-label": `Meglio passare a ${sw.hero.name}: ${sw.why}. Tocca per come giocarla`,
-    }, el("span", { class: "swap-lab" }, "🔁 Passa a"), el("span", { class: "swap-hero" }, face(sw.hero), el("b", {}, sw.hero.name))) : null,
+    }, el("span", { class: "swap-lab" }, icon("swap"), "Passa a"), el("span", { class: "swap-hero" }, face(sw.hero), el("b", {}, sw.hero.name))) : null,
     el("button", {
       type: "button", class: "took-btn", "aria-pressed": String(took),
       "aria-label": took ? `${p.name} ha preso ${top.hero.name}: tocca per annullare` : `Segna che ${p.name} ha preso ${top.hero.name}`,
       onclick: () => togglePicked(i, top.hero),
-    }, took ? "✓ Preso" : "Segna come preso"),
+    }, took ? [icon("check"), "Preso"] : "Segna come preso"),
+    // alternative: solo volti (il nome è nell'etichetta per i lettori di schermo); "+" = ha preso un altro eroe
     took ? null : el("div", { class: "alts" },
-      el("span", { class: "alts-lab" }, alts.length ? "Oppure" : "Ha preso un altro eroe?"),
       alts.map((r) => el("button", {
         type: "button", class: "alt", onclick: () => openGuide(i, r.hero),
         "aria-label": `In alternativa ${r.hero.name}, stima ${est(r)}. Tocca per come giocarla`,
-      }, face(r.hero), el("span", { class: "alt-nm" }, r.hero.name))),
+      }, face(r.hero))),
       el("button", {
         type: "button", class: "alt alt-other", onclick: () => choosePicker(i),
         "aria-label": `${p.name} ha preso un altro eroe: toccalo nella griglia`,
-      }, el("span", { class: "face alt-plus", "aria-hidden": "true" }, "＋"), el("span", { class: "alt-nm" }, "Altro"))),
+      }, icon("plus"))),
   );
 }
 
@@ -526,7 +575,7 @@ function renderPicks() {
   lastDuo = compute();
   box.className = `picks n${profile.players.length}`;
   profile.players.forEach((p, i) => box.append(pickCard(p, i)));
-  for (const t of $$(".pick-name, .alt-nm", box)) fitText(t);
+  for (const t of $$(".pick-name", box)) fitText(t);
   renderMini();
   updateMini();
 }
@@ -539,7 +588,8 @@ function currentMap() {
 
 function renderControls() {
   const map = currentMap();
-  $("#map-name").textContent = map ? `${map.name} · ${MODE_IT[map.mode] ?? map.mode}` : "nessuna (dati generali)";
+  $("#map-btn").classList.toggle("empty", !map);
+  fill($("#map-name"), map ? [map.name, el("span", { class: "map-mode" }, ` · ${MODE_IT[map.mode] ?? map.mode}`)] : "Scegli mappa");
   const side = $("#side");
   side.hidden = !hasSides(map);
   $$("button", side).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.side === match.side)));
@@ -548,15 +598,74 @@ function renderControls() {
 function buildMapDialog() {
   const list = $("#map-list");
   list.replaceChildren();
-  list.append(el("div", { class: "maps" },
-    el("button", { type: "button", class: "map-opt none", "data-map": "", "aria-pressed": String(!match.mapSlug) }, "Nessuna mappa (dati generali)")));
+  list.append(el("div", { class: "maps", "data-block": "none" },
+    el("button", { type: "button", class: "map-opt none", "data-map": "", "data-q": searchKeys(["nessuna", "dati generali"]),
+      "aria-pressed": String(!match.mapSlug) }, "Nessuna mappa (dati generali)")));
   for (const [mode, label] of MODES) {
     const maps = data.maps.filter((m) => m.mode === mode).sort((a, b) => a.name.localeCompare(b.name));
     if (!maps.length) continue;
-    list.append(el("h3", { class: "mode-title" }, label + (hasSides({ mode }) ? " · attacco/difesa" : "")),
+    list.append(el("div", { "data-block": mode },
+      el("h3", { class: "mode-title" }, label + (hasSides({ mode }) ? " · attacco/difesa" : "")),
       el("div", { class: "maps" }, maps.map((m) =>
-        el("button", { type: "button", class: "map-opt", "data-map": m.slug, "aria-pressed": String(m.slug === match.mapSlug) }, m.name))));
+        el("button", { type: "button", class: "map-opt", "data-map": m.slug, "data-q": searchKeys([m.en, m.name, label]),
+          "aria-pressed": String(m.slug === match.mapSlug) }, m.name)))));
   }
+}
+
+// ---------- ricerca (eroi e mappe) ----------
+// Senza accenti né simboli e anche per iniziali: "lucio" trova Lúcio, "soldier76" Soldier: 76, "jq" Junker Queen.
+// Cerca sia il nome inglese (quello di counterwatch) sia quello italiano del gioco, se diverso.
+const norm = (t) => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").trim();
+function searchKeys(names) {
+  const keys = new Set();
+  for (const n of names.filter(Boolean)) {
+    const words = norm(n).split(/\s+/).filter(Boolean);
+    keys.add(words.join(""));
+    for (const w of words) keys.add(w);
+    if (words.length > 1) keys.add(words.map((w) => w[0]).join(""));
+  }
+  return [...keys].join("|");
+}
+function applySearch(input) {
+  const target = document.getElementById(input.getAttribute("aria-controls"));
+  if (!target) return;
+  const q = norm(input.value).replace(/\s+/g, "");
+  let shown = 0;
+  for (const item of target.querySelectorAll("[data-q]")) {
+    const ok = !q || item.dataset.q.split("|").some((k) => k.includes(q));
+    item.hidden = !ok;
+    if (ok) shown++;
+  }
+  // titoli di ruolo o modalità senza risultati: via anche loro
+  for (const block of target.querySelectorAll("[data-block]")) block.hidden = !block.querySelector("[data-q]:not([hidden])");
+  const none = document.querySelector(`[data-none="${target.id}"]`);
+  if (none) none.hidden = shown > 0;
+  const clear = input.parentElement.querySelector(".search-clear");
+  if (clear) clear.hidden = !input.value;
+}
+function resetSearch(id) {
+  const input = document.getElementById(id);
+  if (!input || !input.value) return;
+  input.value = "";
+  applySearch(input);
+}
+// dopo un tocco su un risultato: campo vuoto ma tastiera ancora aperta, pronto per il prossimo eroe
+function afterSearchTap(id) {
+  const input = document.getElementById(id);
+  if (input && input.value) { input.value = ""; applySearch(input); }
+}
+function wireSearch(id) {
+  const input = document.getElementById(id);
+  const target = document.getElementById(input.getAttribute("aria-controls"));
+  input.addEventListener("input", () => applySearch(input));
+  input.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const first = target.querySelector(".hero:not([hidden]), .map-opt:not([hidden])");
+    if (first && input.value) { e.preventDefault(); first.click(); }
+  });
+  // toccando un risultato la tastiera resta aperta (il campo non perde il fuoco)
+  target.addEventListener("mousedown", (e) => { if (document.activeElement === input && e.target.closest("[data-q]")) e.preventDefault(); });
+  input.parentElement.querySelector(".search-clear")?.addEventListener("click", () => { input.value = ""; applySearch(input); input.focus(); });
 }
 
 // ---------- griglia eroi ----------
@@ -565,13 +674,13 @@ function buildHeroGrid(container, onTap) {
   container.replaceChildren();
   delete container.dataset.fitW;
   for (const [role, label] of ROLES) {
-    const heroes = data.heroes.filter((h) => h.role === role).sort((a, b) => a.name.localeCompare(b.name));
-    container.append(
+    const heroes = data.heroes.filter((h) => h.role === role).sort((a, b) => heroName(a).localeCompare(heroName(b)));
+    container.append(el("div", { "data-block": role },
       el("h2", { class: `role-title r-${role}` }, label),
       el("div", { class: "grid" }, heroes.map((h) =>
-        el("button", { type: "button", class: "hero", "data-id": sid(h.id), "aria-pressed": "false", onclick: () => onTap(sid(h.id)) },
-          face(h), el("span", { class: `nm${h.name.length >= 10 ? " long" : ""}` }, h.name)))),
-    );
+        el("button", { type: "button", class: "hero", "data-id": sid(h.id), "data-q": searchKeys([h.name, heroName(h)]), "aria-pressed": "false",
+          onclick: () => onTap(sid(h.id)) },
+        face(h), el("span", { class: `nm${heroName(h).length >= 10 ? " long" : ""}` }, heroName(h)))))));
   }
 }
 
@@ -783,11 +892,11 @@ function renderProfile() {
     el("button", {
       type: "button", class: "toggle wide", "aria-pressed": String(!!profile.onlyFavorites),
       onclick: () => { profile.onlyFavorites = !profile.onlyFavorites; saveProfile(); render(); },
-    }, profile.onlyFavorites ? "✓ Suggerisci solo eroi preferiti" : "Suggerisci solo eroi preferiti"),
+    }, "Suggerisci solo eroi preferiti"),
     el("button", {
       type: "button", class: "toggle wide", "aria-pressed": String(!!profile.useTheory),
       onclick: () => { profile.useTheory = !profile.useTheory; saveProfile(); render(); },
-    }, profile.useTheory ? "✓ Usa anche la teoria nei consigli" : "Usa anche la teoria nei consigli"),
+    }, "Usa anche la teoria nei consigli"),
     el("p", { class: "muted small" },
       "Teoria: stili Rush/Dive/Poke e counter noti da guide e siti. Spenta si vede ma non cambia la classifica; " +
       "accesa aggiunge un piccolo peso (±0,5% per indicazione). " +
@@ -840,7 +949,9 @@ function openFavorites(i) {
     p.favorites = p.favorites.map(sid).includes(id) ? p.favorites.filter((x) => sid(x) !== id) : [...p.favorites, id];
     saveProfile();
     paintFavorites();
+    afterSearchTap("fav-q");
   });
+  resetSearch("fav-q");
   paintFavorites();
   $("#fav-dialog").showModal();
   fitNames(grid);
@@ -923,7 +1034,10 @@ async function refresh() {
 function render() {
   renderFresh();
   if (!data) return;
-  if (!$("#grid .hero")) buildHeroGrid($("#grid"), tapHero);
+  if (!$("#grid .hero")) {
+    buildHeroGrid($("#grid"), (id) => { tapHero(id); afterSearchTap("hero-q"); });
+    applySearch($("#hero-q"));
+  }
   renderControls();
   renderPicks();
   renderGroups();
@@ -944,13 +1058,15 @@ function showView(name) {
 }
 
 function wire() {
+  fillIcons(document);
+  for (const id of ["hero-q", "fav-q", "map-q"]) wireSearch(id);
   $$(".tabs [data-view]").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
   $$("#groups button").forEach((b) => b.addEventListener("click", () => { match.group = b.dataset.group; saveMatch(); render(); }));
   $$("#side button").forEach((b) => b.addEventListener("click", () => {
     match.side = match.side === b.dataset.side ? null : b.dataset.side;
     saveMatch(); render();
   }));
-  $("#map-btn").addEventListener("click", () => { buildMapDialog(); $("#map-dialog").showModal(); });
+  $("#map-btn").addEventListener("click", () => { buildMapDialog(); resetSearch("map-q"); $("#map-dialog").showModal(); });
   $("#map-list").addEventListener("click", (e) => {
     const b = e.target.closest("[data-map]");
     if (!b) return;
@@ -1000,18 +1116,26 @@ async function start() {
   wire();
   document.addEventListener("pointerdown", autoRefresh, { capture: true, passive: true });
   window.addEventListener("scroll", updateMini, { passive: true });
-  window.addEventListener("resize", () => {
+  const refit = () => {
     if (!data || $("#view-match").hidden) return;
+    delete $("#grid").dataset.fitW;
     fitNames($("#grid"));
-    for (const t of $$("#picks .pick-name, #picks .alt-nm")) fitText(t);
-  });
+    for (const t of $$("#picks .pick-name")) fitText(t);
+  };
+  window.addEventListener("resize", refit);
+  if (document.fonts?.ready) document.fonts.ready.then(refit);
   document.addEventListener("visibilitychange", autoRefresh);
   window.addEventListener("focus", autoRefresh);
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
   try {
+    const r = await fetch("names_it.json");
+    if (r.ok) IT = { heroes: {}, maps: {}, abilities: {}, ...(await r.json()) };
+  } catch { /* senza nomi italiani: restano quelli inglesi */ }
+  try {
     const r = await fetch("theory.json");
     if (r.ok) theoryRaw = await r.json();
   } catch { /* senza teoria: restano gli stili Rush/Dive/Poke dei dati */ }
+  localizeTheory(theoryRaw);
   try {
     const r = await fetch(`patches.json?t=${Date.now()}`);
     if (r.ok) patches = await r.json();

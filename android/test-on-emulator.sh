@@ -22,10 +22,10 @@ sleep 10                                    # icone degli eroi
 shot 1-avvio
 size=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1); W=${size%x*}; H=${size#*x}
 echo "schermo ${W}x${H}"
-adb shell input tap $((W * 3 / 4)) $((H * 93 / 100))   # scheda "Profilo"
+adb shell input tap $((W * 3 / 4)) $((H * 90 / 100))   # scheda "Profilo" (barra flottante in basso)
 sleep 4
 shot 2-profilo
-adb shell input tap $((W / 4)) $((H * 93 / 100))       # scheda "Partita"
+adb shell input tap $((W / 4)) $((H * 90 / 100))       # scheda "Partita"
 sleep 3
 adb shell input swipe $((W / 2)) $((H * 80 / 100)) $((W / 2)) $((H * 35 / 100)) 300   # scorre alla griglia
 sleep 2

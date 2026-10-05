@@ -148,7 +148,7 @@ try {
   check("3 consigli per giocatore: uno grande e 2 alternative piccole", cards.every((c) => c.alts === 2), JSON.stringify(cards));
   check("ordinati dal migliore (stima non crescente, salvo bonus preferiti)", cards.every((c) => c.est.every((v, k) => !k || v <= c.est[k - 1] + 1.01)), JSON.stringify(cards));
   await toTop(page);
-  const altName = await page.locator(".pick").nth(0).locator(".alt .alt-nm").first().innerText();
+  const altName = (await page.locator(".pick").nth(0).locator(".alt:not(.alt-other)").first().getAttribute("aria-label")).match(/^In alternativa (.+), stima/)[1];
   await page.locator(".pick").nth(0).locator(".alt").first().click();
   await page.locator("#guide-dialog[open]").waitFor();
   check("tocco su un'alternativa: «Come giocarla» di quell'eroe", (await text(page, "#t-guide")).includes(altName), await text(page, "#t-guide"));
@@ -182,11 +182,12 @@ try {
   const guideShort = await text(page, "#guide-body");
   const briefRows = await page.locator("#guide-body .brief-row").count();
   check("come giocarla: in testa «In breve» (al massimo 7 righe), il resto chiuso", briefRows >= 3 && briefRows <= 7
-    && !(await page.locator("#guide-body .guide-more").evaluate((d) => d.open)) && !guideShort.includes("Come muoverti")
+    && (await page.locator("#guide-body .guide-more").evaluate((d) => d.hidden)) && !guideShort.includes("Come muoverti")
     && !(await page.locator("#why-dialog").evaluate((d) => d.open)), `${briefRows} righe`);
   check("come giocarla: i bersagli con i volti", (await page.locator("#guide-body .brief-row.k-target .hchip").count()) >= 1);
   await shot(page, "05e-come-giocarla");
-  await page.click("#guide-body .guide-more > summary");
+  check("come giocarla: legenda teoria/dati accanto a «In breve»", (await text(page, "#guide-body .guide-summary h3")).includes("teoria"));
+  await page.click("#guide-body .more-btn");
   const guide = await text(page, "#guide-body");
   check("come giocarla: «Tutti i consigli» apre le sezioni (mappa, lato, come muoverti)",
     guide.includes("Mappa: King's Row") && guide.includes("Come muoverti")
@@ -253,7 +254,8 @@ try {
   await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
   await page.click(".tabs [data-view=match]");
   await toTop(page);
-  const giulia = await page.locator(".pick").nth(1).locator(".pick-name, .alt:not(.alt-other) .alt-nm").allInnerTexts();
+  const giulia = [await page.locator(".pick").nth(1).locator(".pick-name").innerText(),
+    ...(await page.locator(".pick").nth(1).locator(".alt:not(.alt-other)").evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label").match(/^In alternativa (.+), stima/)[1])))];
   check("solo preferiti: Giulia vede solo Mercy/Juno (Mercy è alleata → solo Juno)", giulia.join() === "Juno", giulia.join());
   await toTop(page);
   const fabio = await page.locator(".pick").nth(0).innerText();
@@ -277,7 +279,7 @@ try {
     && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes("Ilios"));
   await page.click("#new-match");
   check("nuova partita: azzera tutto tranne il profilo", (await text(page, "[data-count=enemies]")) === "0"
-    && (await text(page, "[data-count=bans]")) === "0" && (await text(page, "#map-name")).includes("nessuna")
+    && (await text(page, "[data-count=bans]")) === "0" && (await text(page, "#map-name")).includes("Scegli mappa")
     && (await text(page, ".picks")).includes("Giulia"));
   await page.click("#toast .toast-btn");
   check("nuova partita: «Annulla» nel messaggio ripristina la partita", (await text(page, "[data-count=enemies]")) === "4"
@@ -300,12 +302,12 @@ try {
     await p7.goto(BASE);
     await p7.locator(".pick .pick-name").first().waitFor();
     const hb = (n) => p7.locator("#grid .hero", { has: p7.locator(".nm", { hasText: new RegExp(`^${n}$`) }) });
-    // ogni nome dei 53 eroi, nel posto del consiglio e in quello delle alternative: mai spezzato a metà parola
+    // ogni nome dei 53 eroi, nel posto del consiglio: mai spezzato a metà parola (le alternative sono solo volti)
     const slots = await p7.evaluate(() => {
       const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
       const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
       const broken = [];
-      for (const sel of [".pick .pick-name", ".pick .alt:not(.alt-other) .alt-nm"]) {
+      for (const sel of [".pick .pick-name"]) {
         const orig = document.querySelector(sel);
         if (!orig) { broken.push(`${sel} assente`); continue; }
         const clone = orig.cloneNode(false);
@@ -314,14 +316,14 @@ try {
         for (const n of names) {
           clone.textContent = n;
           window.owcFitText(clone);
-          if (lines(clone) > n.split(/\s+/).length || clone.scrollWidth > clone.parentElement.clientWidth + 1) broken.push(`${n} (${sel.includes("alt") ? "alternativa" : "consiglio"})`);
+          if (lines(clone) > n.split(/\s+/).length || clone.scrollWidth > clone.parentElement.clientWidth + 1) broken.push(n);
         }
         clone.remove();
         orig.style.display = "";
       }
       return broken;
     });
-    if (vp.name || vp.width >= 390) check(`${label}: nei riquadri nessun nome spezzato (53 eroi, consiglio e alternative)`, slots.length === 0, slots.join(", "));
+    if (vp.name || vp.width >= 390) check(`${label}: nei riquadri nessun nome spezzato (53 eroi)`, slots.length === 0, slots.join(", "));
     await p7.click("#map-btn");
     await p7.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await p7.click("#side [data-side=attack]");
@@ -549,6 +551,81 @@ try {
       m: JSON.parse(localStorage.getItem("owc.match")) }));
     check("rimosso un giocatore: 4 riquadri, partita adeguata", four.cards === 4 && four.m.roles.length === 4 && four.m.picked.length === 4, JSON.stringify(four));
     await c10.close();
+  }
+
+  // ---------- ricerca: eroi (griglia e preferiti) e mappe; nomi italiani ufficiali (names_it.json) ----------
+  {
+    const { ctx: c12, page: p12 } = await newPage({ serviceWorkers: "block" });
+    lastPage = p12;
+    // nomi italiani simulati: un eroe, una mappa e tutte le abilità (marcate «IT …» per riconoscerle)
+    const theory = JSON.parse(readFileSync(path.join(ROOT, "app", "theory.json")));
+    const abilities = Object.fromEntries(Object.entries(theory).filter(([k, t]) => !k.startsWith("_") && Array.isArray(t.abilities))
+      .map(([k, t]) => [k, Object.fromEntries(t.abilities.map((a) => [a.name, `«IT ${a.name}»`]))]));
+    await c12.route("**/names_it.json", (r) => r.fulfill({ json: {
+      heroes: { "Soldier: 76": "Soldato-76" }, maps: { "Watchpoint: Gibraltar": "Osservatorio: Gibilterra" }, abilities } }));
+    await p12.goto(BASE);
+    await p12.locator("#grid .hero").first().waitFor();
+    const shown = (sel) => p12.$$eval(sel, (bs) => bs.filter((b) => b.offsetParent).map((b) => (b.querySelector(".nm") ?? b).textContent));
+    const search = async (q) => { await p12.fill("#hero-q", q); return shown("#grid .hero"); };
+    check("ricerca eroi: senza accenti («lucio» → Lúcio)", (await search("lucio")).join() === "Lúcio", (await search("lucio")).join());
+    check("ricerca eroi: per iniziali («jq» → Junker Queen)", (await search("jq")).join() === "Junker Queen", (await search("jq")).join());
+    check("ricerca eroi: nome italiano mostrato e trovato anche in inglese e senza simboli",
+      (await search("soldier76")).join() === "Soldato-76" && (await search("soldato")).join() === "Soldato-76", (await search("soldier76")).join());
+    const none = await search("zzz");
+    check("ricerca eroi: nessun risultato → messaggio, titoli dei ruoli nascosti", none.length === 0
+      && (await p12.locator("[data-none=grid]").isVisible()) && (await p12.locator("#grid .role-title").evaluateAll((ts) => ts.every((t) => !t.offsetParent))));
+    await shot(p12, "16-ricerca-eroi");
+    await p12.fill("#hero-q", "phar");
+    await p12.press("#hero-q", "Enter");
+    const afterEnter = await p12.evaluate(() => ({ q: document.querySelector("#hero-q").value, focus: document.activeElement?.id,
+      shown: [...document.querySelectorAll("#grid .hero")].filter((b) => b.offsetParent).length,
+      enemies: JSON.parse(localStorage.getItem("owc.match")).enemies.length }));
+    check("ricerca eroi: Invio segna il primo risultato, il campo si svuota e resta attivo (tastiera aperta)",
+      afterEnter.enemies === 1 && afterEnter.q === "" && afterEnter.focus === "hero-q" && afterEnter.shown === data.heroes.length, JSON.stringify(afterEnter));
+    await p12.fill("#hero-q", "win");
+    await heroBtn(p12, "Winston").click();
+    const afterTap = await p12.evaluate(() => ({ q: document.querySelector("#hero-q").value, focus: document.activeElement?.id,
+      enemies: JSON.parse(localStorage.getItem("owc.match")).enemies.length }));
+    check("ricerca eroi: tocco su un risultato → segnato, campo vuoto e ancora attivo", afterTap.enemies === 2 && afterTap.q === "" && afterTap.focus === "hero-q", JSON.stringify(afterTap));
+
+    await p12.click("#map-btn");
+    await p12.fill("#map-q", "kings");
+    check("ricerca mappe: «kings» → King's Row", (await shown("#map-list .map-opt")).join() === "King's Row", (await shown("#map-list .map-opt")).join());
+    await p12.fill("#map-q", "gibraltar");
+    check("ricerca mappe: nome italiano mostrato, trovato anche in inglese",
+      (await shown("#map-list .map-opt")).join() === "Osservatorio: Gibilterra", (await shown("#map-list .map-opt")).join());
+    await p12.fill("#map-q", "kings");
+    await p12.press("#map-q", "Enter");
+    check("ricerca mappe: Invio sceglie la mappa e chiude", !(await p12.locator("#map-dialog").evaluate((d) => d.open))
+      && (await text(p12, "#map-name")).includes("King's Row"));
+    await p12.click("#map-btn");
+    check("ricerca mappe: riaprendo la finestra il campo è vuoto", (await p12.inputValue("#map-q")) === ""
+      && (await shown("#map-list .map-opt")).length === data.maps.length + 1);
+    await p12.click("#map-dialog [data-close]");
+
+    await p12.click(".tabs [data-view=profile]");
+    await p12.locator("#players .btn", { hasText: "Scegli preferiti" }).first().click();
+    await p12.fill("#fav-q", "mer");
+    const favShown = await shown("#fav-grid .hero");
+    check("ricerca preferiti: «mer» → Mercy", favShown.join() === "Mercy", favShown.join());
+    await p12.locator("#fav-grid .hero", { hasText: "Mercy" }).click();
+    check("ricerca preferiti: tocco → preferito aggiunto e campo vuoto", (await p12.inputValue("#fav-q")) === ""
+      && JSON.parse(await p12.evaluate(() => localStorage.getItem("owc.profile"))).players[0].favorites.map(String).includes(heroId("Mercy")));
+    await p12.click("#fav-dialog [data-close]");
+    await p12.click(".tabs [data-view=match]");
+
+    // abilità: nel «Come giocarla» i nomi ufficiali italiani (anche dentro i consigli scritti), non quelli inglesi
+    await toTop(p12);
+    await p12.locator(".pick .pick-main").first().click();
+    await p12.locator("#guide-dialog[open]").waitFor();
+    await p12.click("#guide-body .more-btn");
+    const hero = (await text(p12, "#t-guide")).replace(/^Come giocare /, "");
+    const guide = await text(p12, "#guide-body");
+    const left = (theory[hero]?.abilities ?? []).map((a) => a.name).filter((n) => guide.replace(/«IT [^»]+»/g, "").includes(n));
+    check("abilità col nome italiano del gioco (names_it.json), anche nei consigli", guide.includes("«IT ") && left.length === 0,
+      `${hero}: ancora in inglese ${left.join(", ")}`);
+    await p12.click("#guide-dialog [data-close]");
+    await c12.close();
   }
 
   // ---------- dati riletti ogni 30 minuti, solo con l'app aperta (niente timer) ----------

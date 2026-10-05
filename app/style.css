@@ -1,216 +1,341 @@
+/* Stile "Vetro": pannelli di vetro su uno sfondo scuro con luci colorate, controlli a capsula, barra flottante.
+   Compatibile con la WebView di Android 11 (Chrome 83): niente "gap" nei flex (si usano i margini), niente "inset",
+   niente aspect-ratio né :is(). Il vetro sfocato (backdrop-filter) solo su ciò che scorre sopra altro contenuto:
+   barra in basso, barra minima in alto, selettore fermo, finestre e messaggi. */
+
+@font-face {
+  font-family: "Inter"; /* il carattere libero più vicino a quello di Apple (SF Pro); licenza in fonts/OFL.txt */
+  src: url("fonts/inter.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
-  --bg: #11141a;
-  --surface: #1b2029;
-  --surface-2: #252c38;
-  --line: #333c4b;
-  --text: #eef1f5;
-  --muted: #a3adbb;
-  --accent: #f99e1a;
-  --good: #57d68d;
-  --bad: #ff6b6b;
-  --enemies: #ff5a5f;
-  --allies: #4da3ff;
-  --bans: #9aa1ab;
-  --tank: #4f86c6;
-  --damage: #c0504d;
-  --support: #3e9e6c;
-  --warn-bg: #4a3b0b;
-  --warn-text: #ffe28a;
-  --theory: #c4a7ff;       /* tutto ciò che è "Teoria" (guide, siti, stili) è viola */
-  --theory-bg: #231a38;
-  --theory-line: #5d4494;
-  --data: #8fc3ff;
-  /* un colore per giocatore (fino a 5): riquadri, segni nella griglia, "Chi ha preso" */
-  --p0: #f99e1a;
-  --p1: #ff7ad9;
-  --p2: #2dd4bf;
+  --bg: #07080d;
+  --text: #f5f5f7;
+  --muted: rgba(235, 235, 245, .62);
+  --faint: rgba(235, 235, 245, .38);
+  --glass: rgba(255, 255, 255, .075);
+  --glass-2: rgba(255, 255, 255, .14);
+  --edge: rgba(255, 255, 255, .13);
+  --hi: rgba(255, 255, 255, .16);
+  --chrome: rgba(22, 24, 34, .86);
+  --sheet: rgba(26, 27, 36, .82);
+  --good: #32d74b;
+  --bad: #ff6961;
+  --enemies: #ff453a;
+  --allies: #409cff;
+  --bans: #8e8e93;
+  --tank: #4f8fe8;
+  --damage: #e8574f;
+  --support: #2fb36a;
+  --amber: #ffb340;
+  --warn-bg: rgba(255, 179, 64, .14);
+  --warn-line: rgba(255, 179, 64, .42);
+  --warn-text: #ffd27a;
+  --theory: #cf9fff;       /* tutto ciò che è "Teoria" (guide, siti, stili) è viola */
+  --theory-bg: rgba(191, 90, 242, .13);
+  --theory-line: rgba(191, 90, 242, .45);
+  --data: #6fd3ff;         /* le statistiche sono azzurre */
+  --data-bg: rgba(100, 210, 255, .11);
+  --data-line: rgba(100, 210, 255, .38);
+  --focus: #64d2ff;
+  /* un colore per giocatore (fino a 5): riquadri, segni nella griglia, barra minima */
+  --p0: #ffb340;
+  --p1: #ff6fae;
+  --p2: #4fd8c4;
   --p3: #c6e84b;
-  --p4: #e9edf2;
+  --p4: #e5e5ea;
+  --p0a: rgba(255, 179, 64, .5);   /* gli stessi, velati: bordo dei riquadri */
+  --p1a: rgba(255, 111, 174, .5);
+  --p2a: rgba(79, 216, 196, .5);
+  --p3a: rgba(198, 232, 75, .5);
+  --p4a: rgba(229, 229, 234, .45);
   --tap: 48px;
-  --radius: 12px;
+  --side: 14px;            /* margine laterale della pagina */
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; background: var(--bg); }
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  background: transparent; /* lo sfondo è sulla pagina (html) e sotto le luci di body::before */
   color: var(--text);
-  font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  font: 16px/1.35 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
   overscroll-behavior-y: contain;
   -webkit-tap-highlight-color: transparent;
 }
-button, input, select { font: inherit; color: inherit; }
+/* luci colorate dietro al vetro: ferme mentre la pagina scorre */
+body::before {
+  content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(420px 320px at 8% 4%, rgba(255, 150, 40, .34), transparent 70%),
+    radial-gradient(380px 320px at 96% 10%, rgba(255, 70, 160, .30), transparent 70%),
+    radial-gradient(560px 460px at 50% 82%, rgba(60, 90, 255, .26), transparent 70%),
+    linear-gradient(180deg, #0b0d16, #06070b);
+}
+button, input, select { font: inherit; color: inherit; letter-spacing: inherit; }
 button { cursor: pointer; touch-action: manipulation; }
-a { color: var(--allies); }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+a { color: var(--data); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.skip { position: absolute; left: -999px; top: 0; background: var(--accent); color: #000; padding: 8px 12px; z-index: 50; }
+.skip { position: absolute; left: -999px; top: 0; background: #fff; color: #000; padding: 8px 12px; z-index: 50; border-radius: 12px; }
 .skip:focus { left: 8px; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
+.good { color: var(--good); }
+.bad { color: var(--bad); }
 [hidden] { display: none !important; }
+
+/* icone a tratto (icons.js) */
+.ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none; }
+.ic-slot { display: inline-flex; }
+
+/* vetro: pannello chiaro e trasparente con un filo di luce in alto */
+.glass {
+  background: var(--glass); border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--hi), 0 10px 30px rgba(0, 0, 0, .22);
+}
+/* vetro sfocato: per ciò che sta sopra altro contenuto */
+.glass-blur {
+  background: var(--chrome); border: 1px solid var(--edge);
+  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: inset 0 1px 0 var(--hi), 0 12px 32px rgba(0, 0, 0, .38);
+}
+
+/* ---------- testata: titolo grande e mappa ---------- */
+.top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: calc(14px + env(safe-area-inset-top)) var(--side) 8px;
+}
+.title { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; flex: none; margin-right: 12px; }
+.map-btn {
+  display: flex; align-items: center; min-width: 0; min-height: 42px; max-width: 72%;
+  padding: 6px 12px 6px 14px; border-radius: 22px; text-align: left; font-size: 15px; font-weight: 650; line-height: 1.2;
+}
+.map-btn .map-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.map-name { min-width: 0; }
+.map-mode { color: var(--muted); font-weight: 500; }
+.map-btn .chev { margin-left: 6px; color: var(--muted); transform: rotate(90deg); }
+.map-btn.empty .map-name { color: var(--muted); }
+
+/* ---------- controlli a capsula (segmented control) ---------- */
+.seg { display: flex; border-radius: 999px; padding: 4px; }
+.seg button {
+  flex: 1 1 0; min-width: 0; min-height: 40px; padding: 0 8px; border: 0; border-radius: 999px; background: transparent;
+  color: var(--muted); font-size: 15px; font-weight: 650; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center;
+}
+.seg button + button { margin-left: 2px; }
+.seg button[aria-pressed="true"] { background: #fff; color: #111; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.side { margin: 2px var(--side) 6px; }
 
 /* ---------- consigli: un riquadro per giocatore ---------- */
 /* Livello 1, colpo d'occhio: l'eroe da prendere (grande), chi batte e chi teme (volti), una sola cifra (la stima).
    Il resto è a un tocco (Come giocarla) o due (Perché). Il riquadro scorre con la pagina; quando esce dallo
    schermo compare in alto la barra minima #mini con il n. 1 di ciascuno. */
-.picks {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-  padding: calc(8px + env(safe-area-inset-top)) 8px 8px; background: var(--bg);
-}
-.picks.n1 { grid-template-columns: 1fr; }
+.picks { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 6px var(--side) 8px; }
+.picks.n1 { grid-template-columns: minmax(0, 1fr); }
 .picks .pick:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .pick {
-  background: var(--surface); border: 2px solid var(--pc, var(--accent)); border-radius: var(--radius);
-  padding: 8px; min-width: 0; display: flex; flex-direction: column;
+  position: relative; min-width: 0; display: flex; flex-direction: column; align-items: stretch;
+  padding: 12px 10px 12px; border-radius: 28px; text-align: center; border-color: var(--pca, var(--edge));
 }
 .pick > * + * { margin-top: 8px; } /* margini: le WebView vecchie (Chrome 83) non hanno "gap" nei flex */
-.pick-head { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }
-.pick-player { color: var(--pc, var(--text)); font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 6px; }
+.pick.took { border-color: var(--pc); box-shadow: inset 0 0 0 1px var(--pc), inset 0 1px 0 var(--hi), 0 10px 30px rgba(0, 0, 0, .22); }
+.pick-head { display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 0 2px; }
+.pick-player {
+  color: var(--pc, var(--text)); font-weight: 800; font-size: 15px; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 6px; min-width: 0;
+}
 .role-btn {
-  min-height: 32px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line);
-  background: var(--surface-2); font-size: 13px; font-weight: 600; white-space: nowrap;
+  flex: none; min-height: 32px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--edge);
+  background: var(--glass); color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap;
 }
-.role-tag { font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; }
-.pick-note { font-size: 12px; color: var(--accent); }
+.role-tag { flex: none; font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.pick-note { font-size: 12.5px; color: var(--amber); }
 .pick-note.warn-note { color: var(--warn-text); }
-/* l'eroe è un unico grande pulsante: volto e nome sopra, "Come giocarla" come fascia in fondo */
+/* l'eroe è un unico grande pulsante: volto con alone del colore del giocatore, nome, stima, "Come giocarla" */
 .pick-main {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px;
-  width: 100%; padding: 8px 8px 0; text-align: left;
-  border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2);
+  display: flex; flex-direction: column; align-items: center; width: 100%; padding: 2px 0 0;
+  border: 0; border-radius: 22px; background: transparent; text-align: center;
 }
-.pick-main > .face { width: 46px; height: 46px; font-size: 16px; }
-.pm-txt { min-width: 0; display: flex; flex-direction: column; }
-.pick-name { font-size: calc(19px * var(--fit, 1)); font-weight: 800; line-height: 1.1; overflow-wrap: break-word; }
-.pick-est { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.halo { position: relative; display: block; width: 72px; height: 72px; margin: 6px auto 8px; border-radius: 50%; }
+.halo::before {
+  content: ""; position: absolute; top: -14px; left: -14px; right: -14px; bottom: -14px; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--pc, #fff), transparent); opacity: .5;
+}
+.halo .face { position: relative; width: 72px; height: 72px; font-size: 22px; box-shadow: 0 0 0 2px rgba(255, 255, 255, .55); }
+.pick-name {
+  display: block; max-width: 100%; font-size: calc(20px * var(--fit, 1)); font-weight: 800; letter-spacing: -0.02em;
+  line-height: 1.12; overflow-wrap: break-word;
+}
+.pick-est {
+  display: inline-block; margin-top: 5px; padding: 3px 10px; border-radius: 999px; background: var(--glass-2);
+  font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
 .pick-cta {
-  grid-column: 1 / -1; margin: 8px -8px 0; padding: 7px 4px; border-top: 1px solid var(--line);
-  font-size: 13px; font-weight: 700; color: var(--theory); text-align: center; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center; margin-top: 8px;
+  font-size: 12.5px; font-weight: 650; color: var(--theory); white-space: nowrap;
 }
-.pick.took .pick-main { border-color: var(--pc); }
+.pick-cta .ic { margin-right: 4px; }
+.pick-cta .chev { margin: 0 0 0 2px; font-size: 11px; }
+.pick-why { margin: 0; padding-top: 2px; font-size: 13.5px; line-height: 1.3; color: var(--muted); }
 
-.pick-why { margin: 0; font-size: 13.5px; color: var(--muted); }
 /* chi batte (verde) e chi teme (rosso), tra gli avversari segnati: solo volti */
-.mu { display: flex; flex-wrap: wrap; align-items: center; min-height: 32px; }
-.mu-grp { display: inline-flex; align-items: center; margin: 2px 10px 2px 0; --ring: var(--line); }
+.mu { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; min-height: 30px; }
+.mu-grp { display: inline-flex; align-items: center; margin: 2px 5px; --ring: var(--edge); }
 .mu-grp.good { --ring: var(--good); }
 .mu-grp.bad { --ring: var(--bad); }
-.mu-lab { font-size: 12.5px; font-weight: 800; margin-right: 5px; color: var(--ring); }
-.mu-grp .face { width: 28px; height: 28px; font-size: 10px; box-shadow: 0 0 0 2px var(--ring); margin: 2px 6px 2px 2px; }
+.mu-lab { font-size: 12.5px; font-weight: 800; margin-right: 8px; color: var(--ring); }
+.mu-grp .face { width: 26px; height: 26px; font-size: 9px; margin-left: -6px; box-shadow: 0 0 0 2px rgba(18, 18, 26, .95), 0 0 0 3.5px var(--ring); }
+.mu-lab + .face { margin-left: 0; }
+
 /* eroe preso ma la partita va male: un solo suggerimento, in ambra */
 .swap {
-  display: flex; flex-direction: column; align-items: flex-start; width: 100%; padding: 5px 10px 6px; text-align: left;
-  border-radius: 10px; border: 1px solid #8a6514; background: #33270c; color: var(--warn-text);
+  display: flex; flex-direction: column; align-items: center; width: 100%; padding: 6px 8px 7px;
+  border-radius: 18px; border: 1px solid var(--warn-line); background: var(--warn-bg); color: var(--warn-text);
 }
-.swap-lab { font-size: 12px; font-weight: 700; }
+.swap-lab { display: flex; align-items: center; font-size: 12px; font-weight: 700; }
+.swap-lab .ic { margin-right: 4px; }
 .swap-hero { display: flex; align-items: center; margin-top: 3px; font-size: 15px; }
-.swap-hero .face { width: 26px; height: 26px; font-size: 10px; margin-right: 6px; }
-/* azione secondaria: sobria. Premuto = bordo e scritta nel colore del giocatore */
+.swap-hero .face { width: 24px; height: 24px; font-size: 9px; margin-right: 6px; }
+
+/* "Segna come preso": capsula di vetro; premuto = tinta e spunta del colore del giocatore */
 .took-btn {
-  width: 100%; min-height: 40px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line);
-  background: transparent; color: var(--text); font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 40px; padding: 0 8px;
+  border-radius: 999px; border: 1px solid var(--edge); background: var(--glass); color: var(--text);
+  font-size: 14px; font-weight: 650; white-space: nowrap;
 }
-.took-btn[aria-pressed="true"] { border: 2px solid var(--pc, var(--accent)); color: var(--pc, var(--accent)); font-weight: 800; background: rgb(255 255 255 / .04); }
-/* alternative: piccole, sotto; "Altro" = ha preso un eroe diverso (lo si tocca nella griglia) */
-.alts { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 4px; }
-.alts-lab { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); }
+.took-btn .ic { margin-right: 5px; }
+.took-btn[aria-pressed="true"] {
+  border-color: var(--pc, #fff); color: var(--pc, #fff); font-weight: 800; background: rgba(255, 255, 255, .06);
+}
+
+/* alternative: solo volti; "+" = ha preso un eroe diverso (lo si tocca nella griglia) */
+.alts { display: flex; justify-content: center; align-items: center; }
 .alt {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 50px; padding: 4px 2px;
-  border-radius: 10px; border: 1px solid var(--line); background: transparent;
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; margin: 0 2px;
+  border: 0; border-radius: 50%; background: transparent;
 }
-.alt .face { width: 26px; height: 26px; font-size: 10px; }
-.alt-nm { display: block; max-width: 100%; margin-top: 2px; font-size: calc(11.5px * var(--fit, 1)); line-height: 1.1; text-align: center; overflow-wrap: break-word; }
-.alt-other { grid-column: 3; grid-row: 2; }
-.alt-plus { background: var(--surface); color: var(--muted); font-size: 15px; }
-.good { color: var(--good); }
-.bad { color: var(--bad); }
-.why-head { display: flex; align-items: center; gap: 12px; padding: 16px 16px 8px; }
-.why-head .face { width: 64px; height: 64px; font-size: 20px; }
-.why-list { margin: 0; padding: 4px 16px 8px 36px; font-size: 16px; line-height: 1.7; }
-.why-title { margin: 8px 16px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-.pick-rank { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
-.prof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px 12px 8px; }
-.prof-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; min-width: 0; }
-.prof-sec h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.prof-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; }
-.prof-list li { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
-.prof-hero, .prof-map { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.prof-hero { white-space: normal; line-height: 1.15; } /* nomi lunghi (Wrecking Ball) su due righe, non troncati */
-.prof-hero .face { width: 26px; height: 26px; font-size: 10px; }
-.prof-map { flex-direction: column; align-items: flex-start; gap: 0; white-space: normal; }
-.prof-map b { line-height: 1.15; }
-.prof-map small { color: var(--muted); font-size: 11px; }
-.prof-list li > span:last-child { flex: none; font-weight: 700; font-size: 12.5px; }
-#why-body > p { padding: 0 16px; }
-.pick.empty { border-style: dashed; border-color: var(--line); color: var(--muted); font-size: 14px; justify-content: center; }
+.alt .face { width: 34px; height: 34px; font-size: 11px; box-shadow: 0 0 0 1.5px var(--edge); }
+.alt-other .ic {
+  width: 34px; height: 34px; padding: 8px; border-radius: 50%; background: var(--glass-2); color: var(--text);
+}
+.pick.empty { justify-content: center; min-height: 140px; color: var(--muted); font-size: 14px; border-style: dashed; }
 
 /* ---------- avvisi ---------- */
 .warn {
-  margin: 0 8px 8px; padding: 10px 12px; border-radius: var(--radius);
-  background: var(--warn-bg); color: var(--warn-text); font-size: 14px;
+  margin: 4px var(--side) 8px; padding: 10px 14px; border-radius: 18px;
+  background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-text); font-size: 14px;
 }
 
-/* ---------- mappa e lato ---------- */
-.controls { display: flex; gap: 8px; padding: 0 8px 8px; }
-.map-btn {
-  flex: 1; min-height: var(--tap); text-align: left; display: flex; flex-direction: column; justify-content: center;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 12px;
+/* ---------- Ban / Avversari / Alleati: fermo in alto mentre si scorre la griglia ---------- */
+.groups { position: sticky; top: var(--picks-h, 0px); z-index: 9; padding: 6px var(--side) 6px; }
+.groups-seg {
+  background: var(--chrome);
+  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
 }
-.map-label { font-size: 12px; color: var(--muted); }
-.map-name { font-weight: 700; }
-.seg { display: flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
-.seg button { flex: 1; min-height: var(--tap); border: 0; background: transparent; padding: 0 10px; font-weight: 600; }
-.seg button + button { border-left: 1px solid var(--line); }
-.seg button[aria-pressed="true"] { background: var(--accent); color: #111; }
-.side { flex: 1; }
-
-/* ---------- gruppi ---------- */
-.groups { padding: 0 8px 6px; position: sticky; top: var(--picks-h, 0px); z-index: 9; background: var(--bg); }
-.groups-seg button { font-size: 15px; padding: 0 4px; white-space: nowrap; }
-.groups-seg b { display: inline-block; min-width: 1.5em; padding: 0 3px; margin-left: 2px; border-radius: 999px; background: var(--surface-2); color: var(--text); font-size: 13px; }
-.groups-seg .g-bans[aria-pressed="true"] { background: var(--bans); color: #111; }
-.groups-seg .g-enemies[aria-pressed="true"] { background: var(--enemies); color: #111; }
-.groups-seg .g-allies[aria-pressed="true"] { background: var(--allies); color: #111; }
-.chosen { display: flex; gap: 6px; flex-wrap: wrap; min-height: 40px; padding: 0 8px; align-items: center; }
+.groups-seg button { font-size: 14.5px; padding: 0 4px; }
+.groups-seg b {
+  display: inline-block; min-width: 20px; margin-left: 5px; padding: 1px 5px; border-radius: 999px;
+  background: var(--glass-2); color: var(--text); font-size: 12.5px; font-weight: 800; line-height: 1.3;
+}
+.groups-seg button[aria-pressed="true"] b { color: #fff; }
+.groups-seg .g-bans[aria-pressed="true"] b { background: #6e6e73; }
+.groups-seg .g-enemies[aria-pressed="true"] b { background: var(--enemies); }
+.groups-seg .g-allies[aria-pressed="true"] b { background: #0a84ff; }
+.chosen { display: flex; flex-wrap: wrap; align-items: center; min-height: 40px; padding: 2px var(--side) 0; }
 .chip {
-  display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 2px 8px 2px 2px;
-  border-radius: 999px; border: 2px solid var(--line); background: var(--surface); font-size: 13px;
+  display: inline-flex; align-items: center; min-height: 36px; padding: 2px 10px 2px 3px; margin: 0 6px 6px 0;
+  border-radius: 999px; border: 1.5px solid var(--edge); background: var(--glass); font-size: 13.5px; font-weight: 600;
 }
-.chip .face { width: 28px; height: 28px; }
+.chip .face { width: 28px; height: 28px; margin-right: 6px; font-size: 10px; }
 .chip.bans { border-color: var(--bans); }
-.chip.enemies { border-color: var(--enemies); }
-.chip.allies { border-color: var(--allies); }
-.chosen .hint { color: var(--muted); font-size: 13px; }
+.chip.enemies { border-color: var(--enemies); background: rgba(255, 69, 58, .14); }
+.chip.allies { border-color: var(--allies); background: rgba(10, 132, 255, .14); }
+.chosen .hint { color: var(--muted); font-size: 13.5px; margin-bottom: 6px; }
+
+/* "Altro": mentre si segna l'eroe preso da un giocatore, al posto del selettore */
+.pick-banner {
+  display: flex; align-items: center; justify-content: space-between; min-height: var(--tap); padding: 4px 4px 4px 16px;
+  border-radius: 999px; background: var(--pc, var(--amber)); color: #111; font-weight: 800; font-size: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+.pick-banner button {
+  flex: none; min-height: 40px; padding: 0 16px; margin-left: 8px; border: 0; border-radius: 999px;
+  background: rgba(0, 0, 0, .2); color: #111; font-weight: 800;
+}
+
+/* ---------- ricerca ---------- */
+.search {
+  display: flex; align-items: center; height: 44px; margin: 6px var(--side) 2px; padding: 0 6px 0 14px;
+  border-radius: 999px; color: var(--muted);
+}
+.search > .ic-slot { font-size: 18px; margin-right: 8px; }
+.search input {
+  flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent;
+  color: var(--text); font-size: 16px; -webkit-appearance: none; appearance: none;
+}
+.search input::placeholder { color: var(--muted); }
+.search input::-webkit-search-cancel-button, .search input::-webkit-search-decoration { -webkit-appearance: none; }
+.search:focus-within { border-color: rgba(255, 255, 255, .35); }
+.search-clear {
+  flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--glass-2);
+  color: var(--text); font-size: 13px; font-weight: 700; line-height: 32px;
+}
+.none-found { margin: 14px var(--side); color: var(--muted); text-align: center; font-size: 14px; }
 
 /* ---------- griglia eroi ---------- */
-.grid-wrap { padding: 0 8px; }
-.role-title { margin: 10px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.role-title::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--c, var(--line)); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 6px; }
-.hero {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 4px 2px; min-height: 72px; border-radius: 10px; border: 2px solid transparent; background: var(--surface);
+.grid-wrap { padding: 0 var(--side); }
+.role-title {
+  display: flex; align-items: center; margin: 14px 4px 8px; font-size: 12.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
 }
-.hero .face { width: 44px; height: 44px; }
-.hero .nm { font-size: 10.5px; line-height: 1.1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hero.in-enemies { border-color: var(--enemies); background: #3a1d21; }
-.hero.in-allies { border-color: var(--allies); background: #16283d; }
-.hero.in-bans { border-color: var(--bans); }
+.role-title::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--edge)); margin-right: 7px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 6px; }
+.hero {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  min-width: 0; min-height: 74px; padding: 7px 1px 6px; border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, .09); background: rgba(255, 255, 255, .06);
+}
+.hero .face { width: 42px; height: 42px; margin-bottom: 4px; }
+/* nomi su due righe, mai spezzati a metà parola: se serve il carattere si rimpicciolisce (fitText → --fit) */
+.hero .nm {
+  max-width: 100%; font-size: calc(10px * var(--fit, 1)); font-weight: 600; line-height: 1.1; text-align: center;
+  white-space: normal; overflow-wrap: break-word; word-break: normal; hyphens: manual; -webkit-hyphens: manual;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: clip;
+}
+.hero .nm.long { font-size: calc(9px * var(--fit, 1)); letter-spacing: -0.1px; }
+/* misura di una parola (fitText): stesso carattere del nome, su una riga, invisibile */
+.nm-probe { position: absolute; left: 0; top: 0; visibility: hidden; white-space: nowrap; font: inherit; letter-spacing: inherit; }
+.hero.in-enemies { border-color: rgba(255, 105, 97, .85); background: rgba(255, 69, 58, .24); }
+.hero.in-allies { border-color: rgba(100, 170, 255, .85); background: rgba(10, 132, 255, .24); }
+.hero.in-bans { border-color: rgba(142, 142, 147, .7); background: rgba(0, 0, 0, .3); }
 .hero.in-bans .face { filter: grayscale(1) brightness(.5); }
 .hero.in-bans::after {
-  content: ""; position: absolute; left: 8px; right: 8px; top: 50%; height: 3px; background: var(--bad); transform: rotate(-35deg);
+  content: ""; position: absolute; left: 10px; right: 10px; top: 28px; height: 3px; border-radius: 2px;
+  background: var(--bad); transform: rotate(-35deg);
 }
-.hero.fav::before { content: "★"; position: absolute; top: 1px; right: 4px; color: var(--accent); font-size: 12px; }
-.hero .tag { position: absolute; top: 2px; left: 3px; font-size: 10px; font-weight: 800; color: #111; background: var(--accent); border-radius: 4px; padding: 0 3px; }
+.hero.fav::before { content: "★"; position: absolute; top: 3px; right: 6px; color: var(--amber); font-size: 11px; line-height: 1; }
+/* tratteggio = consigliato a quel giocatore, pieno con ✓ = l'ha preso */
+.hero.rec { outline: 2px dashed var(--pc); outline-offset: -2px; }
+.hero.took { border-color: var(--pc); background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1.5px var(--pc); }
+.hero .tag {
+  position: absolute; top: 3px; left: 4px; padding: 0 4px; border-radius: 999px; font-size: 9.5px; font-weight: 800;
+  line-height: 1.35; background: rgba(0, 0, 0, .55); color: var(--pc, var(--amber)); border: 1px dashed var(--pc, var(--amber));
+}
+.hero .tag.tag-took { background: var(--pc); color: #111; border-style: solid; }
 
 /* volti: immagine o iniziali colorate per ruolo */
 .face {
-  display: inline-grid; place-items: center; border-radius: 50%; overflow: hidden; flex: none;
-  background: var(--c, var(--surface-2)); color: #fff; font-weight: 800; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; flex: none;
+  background: var(--c, var(--glass-2)); color: #fff; font-weight: 800; font-size: 14px;
 }
 .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .r-Tank { --c: var(--tank); }
@@ -218,235 +343,280 @@ a { color: var(--allies); }
 .r-Support { --c: var(--support); }
 
 /* ---------- piede ---------- */
-.match-foot { padding: 16px 8px 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.match-foot p { grid-column: 1 / -1; margin: 0; }
+.match-foot { padding: 20px var(--side) 8px; text-align: center; }
+.match-foot p { margin: 8px 0 0; }
+.match-foot .btn { width: 100%; }
 .fresh { font-size: 13px; color: var(--muted); }
-.source { font-size: 12px; color: var(--muted); }
-.btn {
-  min-height: var(--tap); padding: 0 16px; border-radius: var(--radius); border: 1px solid var(--line);
-  background: var(--surface-2); font-weight: 700;
-}
-.btn.danger { border-color: #7a3036; }
-.btn.ghost { background: transparent; }
-.btn[disabled] { opacity: .6; }
+.source { font-size: 12px; color: var(--faint); }
 
-/* ---------- schede ---------- */
-.tabs {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: 1fr 1fr;
-  background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
+/* pulsanti */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 18px;
+  border-radius: 999px; border: 1px solid var(--edge); background: var(--glass-2); color: var(--text);
+  font-size: 15px; font-weight: 650;
 }
-.tabs button { min-height: 56px; border: 0; background: transparent; font-weight: 700; font-size: 16px; color: var(--muted); }
-.tabs button[aria-current="page"] { color: var(--accent); box-shadow: 0 -3px 0 var(--accent) inset; }
+.btn .ic { margin-right: 6px; font-size: 17px; }
+.btn.ghost { background: transparent; }
+.btn.danger { border-color: rgba(255, 105, 97, .6); color: var(--bad); }
+.btn[disabled] { opacity: .55; }
+
+/* ---------- barra in basso, flottante: Partita · Nuova partita · Profilo ---------- */
+.dock {
+  position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 20;
+  transform: translateX(-50%); display: flex; align-items: center; padding: 5px; border-radius: 999px;
+}
+.dock button {
+  display: flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 18px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--muted); font-size: 14.5px; font-weight: 700; white-space: nowrap;
+}
+.dock button .ic-slot { font-size: 22px; margin-right: 7px; }
+.dock button[aria-current="page"] { background: rgba(255, 255, 255, .17); color: #fff; }
+.dock .tab-action { width: 50px; padding: 0; margin: 0 6px; background: #fff; color: #111; }
+.dock .tab-action .ic-slot { margin: 0; }
 
 /* ---------- profilo ---------- */
-.page-title { margin: 0; padding: calc(16px + env(safe-area-inset-top)) 16px 4px; font-size: 24px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin: 12px; padding: 12px 16px 16px; }
-.card h2 { margin: 4px 0 12px; font-size: 18px; }
-.card label { display: block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; }
+.card {
+  margin: 10px var(--side) 12px; padding: 14px 16px 16px; border-radius: 26px;
+  background: var(--glass); border: 1px solid var(--edge); box-shadow: inset 0 1px 0 var(--hi), 0 10px 30px rgba(0, 0, 0, .22);
+}
+.card h2 { margin: 2px 0 10px; font-size: 19px; font-weight: 750; letter-spacing: -0.02em; }
+.card label { display: block; margin: 12px 0 6px; font-size: 13.5px; font-weight: 600; color: var(--muted); }
 .card input, .card select {
-  width: 100%; min-height: var(--tap); padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+  display: block; width: 100%; min-height: var(--tap); padding: 0 14px; border-radius: 14px;
+  border: 1px solid var(--edge); background: rgba(0, 0, 0, .28); color: var(--text); font-size: 16px;
 }
-.row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+.card select {
+  -webkit-appearance: none; appearance: none; padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ebebf5' stroke-opacity='.6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 20px 20px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; }
+.card-head h2 { display: flex; align-items: center; margin-bottom: 4px; }
+.p-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--pc); margin-right: 8px; flex: none; box-shadow: 0 0 10px var(--pc); }
+.row { display: flex; flex-wrap: wrap; margin-top: 10px; }
+.row > * { margin: 0 8px 8px 0; }
+.toggles { display: flex; flex-wrap: wrap; }
 .toggle {
-  min-height: var(--tap); padding: 0 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--bg); font-weight: 600;
+  min-height: 44px; padding: 0 16px; margin: 0 8px 8px 0; border-radius: 999px; border: 1px solid var(--edge);
+  background: var(--glass); color: var(--muted); font-weight: 650;
 }
-.toggle[aria-pressed="true"] { border-color: var(--accent); background: #3b2a0c; }
-.toggle.wide { width: 100%; text-align: left; }
-.fav-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.toggle[aria-pressed="true"] { background: #fff; color: #111; border-color: #fff; }
+/* impostazioni sì/no: riga con l'interruttore a destra, come nelle Impostazioni di iOS */
+.toggle.wide {
+  position: relative; display: flex; align-items: center; width: 100%; min-height: 52px; margin: 0 0 8px;
+  padding: 8px 74px 8px 16px; border-radius: 18px; text-align: left; color: var(--text); background: rgba(0, 0, 0, .22);
+  line-height: 1.3;
+}
+.toggle.wide::after {
+  content: ""; position: absolute; right: 12px; top: 50%; width: 51px; height: 31px; margin-top: -15.5px; border-radius: 999px;
+  background: rgba(120, 120, 128, .36);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+}
+.toggle.wide::before {
+  content: ""; position: absolute; right: 34px; top: 50%; z-index: 1; width: 27px; height: 27px; margin-top: -13.5px;
+  border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+}
+.toggle.wide[aria-pressed="true"] { background: rgba(0, 0, 0, .22); color: var(--text); border-color: var(--edge); }
+.toggle.wide[aria-pressed="true"]::after { background: var(--good); }
+.toggle.wide[aria-pressed="true"]::before { right: 14px; }
+.fav-list { display: flex; flex-wrap: wrap; margin-top: 8px; }
+.small-btn { min-height: 38px; padding: 0 14px; font-size: 14px; }
+.add-row { padding: 0 var(--side) 6px; margin: 0; }
+.add-row > * { margin: 0 0 8px; }
+.add-row .btn { width: 100%; }
+#view-profile > .muted.small { margin: 0 calc(var(--side) + 6px) 16px !important; }
 
-/* ---------- finestre ---------- */
+/* ---------- finestre (fogli dal basso) ---------- */
 dialog {
-  width: 100%; max-width: 640px; height: 100%; max-height: 100%; margin: 0 auto; padding: 0; border: 0;
-  background: var(--bg); color: var(--text);
+  width: calc(100% - 12px); max-width: 640px; height: calc(100% - 28px - env(safe-area-inset-top)); max-height: none;
+  margin: auto auto 0; padding: 0 0 calc(24px + env(safe-area-inset-bottom)); border: 1px solid var(--edge); border-bottom: 0;
+  border-radius: 30px 30px 0 0; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--sheet); color: var(--text);
+  -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--hi), 0 -10px 40px rgba(0, 0, 0, .45);
 }
-dialog::backdrop { background: rgb(0 0 0 / .6); }
+dialog::backdrop { background: rgba(0, 0, 0, .5); }
 .dlg-head {
-  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: calc(8px + env(safe-area-inset-top)) 12px 8px; background: var(--surface); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+  min-height: 60px; padding: 10px 12px 8px 20px; background: rgba(26, 27, 36, .9);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
 }
-.dlg-head h2 { margin: 0; font-size: 18px; }
-.mode-title { margin: 14px 12px 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-.maps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 12px; }
+.dlg-head h2 { margin: 0 8px 0 0; min-width: 0; font-size: 19px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.2; }
+.close {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0;
+  border: 0; border-radius: 50%; background: var(--glass-2); color: var(--text); font-size: 19px;
+}
+.close.done { width: auto; min-width: 72px; padding: 0 16px; border-radius: 999px; background: #fff; color: #111; font-size: 15px; font-weight: 750; }
+dialog .search { margin: 0 16px 6px; }
+
+/* scelta mappa */
+.mode-title { margin: 16px 20px 8px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.maps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 0 16px; }
+.maps[data-block="none"] { padding-top: 8px; }
 .map-opt {
-  min-height: var(--tap); text-align: left; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line);
-  background: var(--surface); font-weight: 600;
+  min-height: var(--tap); padding: 8px 14px; border-radius: 16px; border: 1px solid var(--edge); background: var(--glass);
+  text-align: left; font-size: 15px; font-weight: 600; line-height: 1.2;
 }
-.map-opt[aria-pressed="true"] { border-color: var(--accent); background: #3b2a0c; }
+.map-opt[aria-pressed="true"] { background: #fff; color: #111; border-color: #fff; }
 .map-opt.none { grid-column: 1 / -1; }
-#fav-grid { padding: 0 12px 24px; }
+#fav-grid { padding: 0 16px 24px; }
 
-/* ---------- toast ---------- */
+/* ---------- messaggi ---------- */
 .toast {
-  position: fixed; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 30;
-  padding: 12px 14px; border-radius: var(--radius); background: #2d3542; border: 1px solid var(--line); font-size: 14px;
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 30; transform: translateX(-50%);
+  width: calc(100% - 24px); max-width: 520px; padding: 12px 16px; border-radius: 22px; font-size: 14px; line-height: 1.35;
+}
+.toast.with-action { display: flex; align-items: center; justify-content: space-between; }
+.toast-btn {
+  flex: none; min-height: 40px; margin-left: 12px; padding: 0 16px; border: 0; border-radius: 999px;
+  background: #fff; color: #111; font-weight: 800;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .hero, .seg button, .toggle { transition: background-color .12s, border-color .12s; }
-}
-
-/* ---------- teoria (viola) e liste complete scorrevoli ---------- */
-.theory-badge, .data-badge {
-  display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
-  padding: 1px 6px; border-radius: 6px; vertical-align: 1px;
-}
-.theory-badge { background: var(--theory); color: #1a1030; }
-.data-badge { background: #1d3550; color: var(--data); }
-.why-list li.is-theory { color: var(--theory); }
-.theory-title { color: var(--theory); }
-.theory-style { margin: 4px 16px 8px; padding: 8px 10px; border-radius: 10px; background: var(--theory-bg); border: 1px solid var(--theory-line); font-size: 14px; }
-.theory-style b { color: var(--theory); }
-.prof-sec.theory-sec { background: var(--theory-bg); border-color: var(--theory-line); }
-.prof-sec.theory-sec h3 { color: var(--theory); }
-.theory-grid { grid-template-columns: 1fr; }
-.theory-list .prof-hero { white-space: normal; align-items: flex-start; }
-.theory-list .prof-hero > span { display: flex; flex-direction: column; min-width: 0; }
-.theory-list small { color: #d9cdf5; font-size: 12px; line-height: 1.3; }
-.prof-count { font-weight: 600; color: var(--muted); }
-/* liste complete e distese: niente scroll dentro i riquadri, si scorre solo la scheda */
-.theory-note { margin: 4px 16px; color: #e3d4ff; }
-.sources { margin: 6px 16px; font-size: 13px; color: var(--muted); }
-.sources a { color: var(--theory); word-break: break-all; }
-.guide-btn { width: 100%; border-color: var(--theory-line); background: var(--theory-bg); color: var(--theory); }
-.guide-row { padding: 0 16px 4px; }
-.guide-sec { margin: 8px 12px; padding: 8px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
-.guide-sec h3 { margin: 2px 0 6px; font-size: 15px; }
-.guide-sec ul { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.35; }
-#guide-body > p { margin: 8px 16px; }
-
-.theory-list .prof-hero { overflow: visible; }
-.theory-list .prof-hero b, .theory-list small { display: block; white-space: normal; overflow-wrap: anywhere; }
-.theory-list li > span:last-child { flex: 1 1 auto; min-width: 0; font-weight: 400; font-size: 13.5px; }
-.theory-list small { font-weight: 400; }
-
-/* barra minima in alto (solo quando il riquadro completo dei consigli è fuori schermo) */
+/* ---------- barra minima in alto (solo quando il riquadro dei consigli è fuori schermo) ---------- */
 .mini {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 11; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
-  padding: calc(4px + env(safe-area-inset-top)) 8px 4px; background: var(--bg); border-bottom: 1px solid var(--line);
-  box-shadow: 0 4px 10px rgb(0 0 0 / .45);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 11; display: grid;
+  grid-template-columns: repeat(var(--mini-n, 2), minmax(0, 1fr)); gap: 6px;
+  padding: calc(6px + env(safe-area-inset-top)) 10px 6px; background: var(--chrome); border-bottom: 1px solid var(--edge);
+  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
 }
-.mini[hidden] { display: none; }
+.mini.n1 { --mini-n: 1; } .mini.n3 { --mini-n: 3; } .mini.n4 { --mini-n: 4; } .mini.n5 { --mini-n: 5; }
 .mini-pick {
-  display: flex; align-items: center; gap: 6px; min-height: 48px; padding: 3px 6px; text-align: left; min-width: 0;
-  border-radius: 10px; border: 1px solid #6b4a12; background: #2b2414;
+  display: flex; align-items: center; min-width: 0; min-height: 48px; padding: 4px 10px 4px 4px; text-align: left;
+  border-radius: 999px; border: 1.5px solid var(--pc, var(--edge)); background: var(--glass);
 }
-.mini-pick .face { width: 34px; height: 34px; }
+.mini-pick > .face { width: 36px; height: 36px; margin-right: 8px; }
+.mini-pick.took { background: rgba(255, 255, 255, .12); }
 .mini-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
 .mini-txt b { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-txt small { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-dialog { overscroll-behavior: contain; }
-
-/* schermi stretti (≤ 380 px): un po' più compatti */
-@media (max-width: 380px) {
-  .picks { gap: 6px; padding-left: 6px; padding-right: 6px; }
-  .pick { padding: 6px; }
-  .pick-main { padding: 6px; }
-  .pick-main > .face { width: 42px; height: 42px; }
-  .pick-player { font-size: 14px; }
-  .role-btn { padding: 2px 8px; font-size: 12px; }
-  .side button { padding: 0 6px; font-size: 15px; }
-  .alts { grid-template-columns: 1fr 1fr 40px; }
-  .took-btn { font-size: 13px; padding: 0 4px; }
+.mini.n3 .mini-txt b { font-size: 13px; }
+/* con 4–5 giocatori: volto e nome uno sotto l'altro */
+.mini.n4 .mini-pick, .mini.n5 .mini-pick {
+  flex-direction: column; justify-content: center; min-height: 54px; padding: 4px 2px; border-radius: 16px; text-align: center;
 }
-
-/* nomi della griglia su due righe */
-.hero .nm {
-  white-space: normal; text-align: center; line-height: 1.1; overflow-wrap: anywhere;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: clip;
-}
-/* con il carattere di sistema ingrandito (es. 130% su Xiaomi) i nomi non si spezzano a metà parola */
-.hero .nm { font-size: calc(10px * var(--fit, 1)); overflow-wrap: break-word; word-break: normal; hyphens: manual; -webkit-hyphens: manual; }
-.hero .nm.long { font-size: calc(9px * var(--fit, 1)); letter-spacing: -0.1px; }
-/* misura di una parola (fitText): stesso carattere del nome, su una riga, invisibile */
-.nm-probe { position: absolute; left: 0; top: 0; visibility: hidden; white-space: nowrap; font: inherit; letter-spacing: inherit; }
-.hero { padding-left: 1px; padding-right: 1px; }
-
-/* riepilogo della partita in testa a "Come giocarla" */
-.guide-summary { border: 2px solid var(--accent); background: #261f12; }
-.guide-summary h3 { color: var(--accent); }
-.guide-summary ul { font-size: 15.5px; }
-.stale-note { margin: 6px 12px; padding: 8px 10px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-text); font-size: 13.5px; }
-
-/* ---------- più giocatori: un colore a testa ---------- */
-.pick.took { box-shadow: 0 0 0 1px var(--pc) inset; }
-.mini { grid-template-columns: repeat(var(--mini-n, 2), minmax(0, 1fr)); }
-.mini.n1 { --mini-n: 1; } .mini.n3 { --mini-n: 3; } .mini.n4 { --mini-n: 4; } .mini.n5 { --mini-n: 5; }
-.mini-pick { border-color: var(--pc, #6b4a12); }
-.mini-pick.took { box-shadow: 0 0 0 1px var(--pc) inset; }
-/* con 4–5 giocatori la barra minima mostra volto e nome dell'eroe, uno sotto l'altro */
-.mini.n4 .mini-pick, .mini.n5 .mini-pick { flex-direction: column; justify-content: center; padding: 3px 2px; min-height: 52px; text-align: center; }
-.mini.n4 .mini-pick > * + *, .mini.n5 .mini-pick > * + * { margin-top: 1px; }
+.mini.n4 .mini-pick > .face, .mini.n5 .mini-pick > .face { width: 28px; height: 28px; margin: 0 0 2px; }
 .mini.n4 .mini-txt, .mini.n5 .mini-txt { align-items: center; width: 100%; }
 .mini.n4 .mini-txt b, .mini.n5 .mini-txt b { font-size: 11.5px; max-width: 100%; }
 .mini.n5 .mini-txt b { font-size: 10.5px; letter-spacing: -0.2px; }
 .mini.n4 .mini-txt small, .mini.n5 .mini-txt small { display: none; }
-.mini.n4 .face, .mini.n5 .face { width: 28px; height: 28px; }
-.mini.n3 .mini-txt b { font-size: 13px; }
-
-
-/* griglia: tratteggio = consigliato a quel giocatore, pieno con ✓ = l'ha preso */
-.hero.rec { box-shadow: none; outline: 2px dashed var(--pc); outline-offset: -2px; }
-.hero.took { border-color: var(--pc); background: #24262d; box-shadow: 0 0 0 2px var(--pc) inset; }
-.hero .tag { background: var(--surface-2); color: var(--pc, var(--accent)); border: 1px dashed var(--pc, var(--accent)); line-height: 1.2; }
-.hero .tag.tag-took { background: var(--pc); color: #111; border-style: solid; }
-
-.card-head { display: flex; align-items: center; justify-content: space-between; }
-.card-head h2 { display: flex; align-items: center; }
-.p-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--pc); margin-right: 8px; flex: none; }
-.small-btn { min-height: 40px; padding: 4px 12px; font-size: 14px; }
-.add-row { padding: 0 16px 12px; }
-.add-row .btn { width: 100%; }
-
-/* la barra minima lampeggia una volta quando cambia il consiglio di un giocatore (mentre si segnano gli avversari) */
+/* la barra minima lampeggia una volta quando cambia il consiglio di un giocatore */
 @media (prefers-reduced-motion: no-preference) {
   .mini-pick.pulse { animation: owc-pulse 1s ease-out 1; }
+  .hero, .seg button, .toggle, .took-btn, .map-opt { transition: background-color .15s, border-color .15s, color .15s; }
+  .toggle.wide::before { transition: right .18s ease; }
+  .toggle.wide::after { transition: background-color .18s; }
 }
-@keyframes owc-pulse { from { box-shadow: 0 0 0 0 var(--pc); } to { box-shadow: 0 0 0 12px rgb(0 0 0 / 0); } }
+@keyframes owc-pulse { from { box-shadow: 0 0 0 0 var(--pc); } to { box-shadow: 0 0 0 12px rgba(0, 0, 0, 0); } }
 
-/* "Altro": mentre si segna l'eroe preso da un giocatore, al posto del selettore Ban/Avversari/Alleati */
-.pick-banner {
-  display: flex; align-items: center; justify-content: space-between; min-height: var(--tap); padding: 4px 4px 4px 14px;
-  border-radius: var(--radius); background: var(--pc, var(--accent)); color: #111; font-weight: 800; font-size: 15px;
+/* ---------- Come giocarla e Perché: testata con il volto ---------- */
+.why-head { display: flex; align-items: center; padding: 6px 20px 10px; }
+.why-head > .face { width: 60px; height: 60px; font-size: 20px; margin-right: 14px; box-shadow: 0 0 0 2px rgba(255, 255, 255, .5); }
+.why-head .pick-name { font-size: 24px; text-align: left; }
+.why-head .muted { margin-top: 2px; font-size: 13.5px; }
+.why-sum { margin: 0 20px 10px; font-size: 14px; }
+.guide-actions { padding: 2px 16px 8px; }
+/* nella guida "Segna" è l'azione principale: capsula bianca; fatto = tinta del giocatore con la spunta */
+.guide-actions .took-btn { min-height: 50px; font-size: 16px; font-weight: 750; background: #fff; color: #111; border-color: #fff; }
+.guide-actions .took-btn[aria-pressed="true"] { background: rgba(255, 255, 255, .06); color: var(--pc, #fff); border-color: var(--pc, #fff); }
+
+/* riepilogo "In breve": poche righe con icona, etichetta e volti */
+.guide-sec { margin: 10px 16px; padding: 12px 14px; border-radius: 22px; background: var(--glass); border: 1px solid var(--edge); }
+.guide-sec h3 { margin: 0 0 8px; font-size: 16px; font-weight: 750; letter-spacing: -0.01em; }
+.guide-sec ul { margin: 0; padding: 0; list-style: none; font-size: 15px; line-height: 1.4; }
+.guide-sec li + li { margin-top: 8px; }
+.guide-summary { padding: 4px 0 0; background: transparent; border: 0; }
+.guide-summary h3 {
+  display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px;
+  font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
 }
-.pick-banner button { flex: none; min-height: 40px; padding: 0 14px; margin-left: 8px; border: 0; border-radius: 10px; background: rgb(0 0 0 / .22); color: #111; font-weight: 800; }
-
-/* barra in basso: Partita · Nuova partita (sempre a portata di pollice) · Profilo */
-.tabs { grid-template-columns: 1fr 1fr 1fr; }
-.tabs .tab-action { color: var(--text); font-size: 14.5px; line-height: 1.15; padding: 0 6px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
-
-/* messaggio con un'azione (es. "Annulla") */
-.toast.with-action { display: flex; align-items: center; justify-content: space-between; }
-.toast-btn {
-  flex: none; min-height: 40px; margin-left: 12px; padding: 0 14px; border-radius: 10px;
-  border: 1px solid var(--accent); background: transparent; color: var(--accent); font-weight: 800;
-}
-
-/* ---------- Come giocarla (livello 2): riepilogo in poche righe, il resto chiuso sotto ---------- */
-.guide-actions { padding: 0 16px 6px; }
+.legend { font-size: 11.5px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.legend .dot { display: inline-block; width: 8px; height: 8px; margin: 0 4px 0 10px; border-radius: 50%; vertical-align: 0; }
+.dot.theory { background: var(--theory); }
+.dot.data { background: var(--data); }
 .brief { list-style: none; margin: 0; padding: 0; }
-.brief-row { display: grid; grid-template-columns: 24px 90px minmax(0, 1fr); align-items: start; padding: 4px 0 4px 8px; border-left: 3px solid var(--theory-line); }
-.brief-row + .brief-row { margin-top: 6px; }
-.brief-row.is-data { border-left-color: #2f6aa8; }
-.brief-row.k-swap { background: #3a2c0a; border-left-color: var(--accent); border-radius: 0 8px 8px 0; }
-.brief-ico { font-size: 15px; line-height: 24px; }
-.brief-lab { font-size: 13.5px; font-weight: 800; line-height: 24px; }
-.brief-txt { font-size: 15px; line-height: 1.4; }
-.brief-after { display: block; color: var(--muted); font-size: 13.5px; }
-.hchip { display: inline-flex; align-items: center; margin: 0 10px 2px 0; font-weight: 700; vertical-align: top; }
-.hchip .face { width: 24px; height: 24px; font-size: 9px; margin-right: 5px; }
-.legend { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
-.dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; }
-.dot.theory { background: var(--theory-line); }
-.dot.data { background: #2f6aa8; }
-.guide-more { margin: 10px 12px; }
-.guide-more > summary {
-  display: flex; align-items: center; min-height: var(--tap); padding: 0 14px; border-radius: var(--radius);
-  background: var(--surface); border: 1px solid var(--line); font-weight: 700; list-style: none; cursor: pointer;
+.guide-sec .brief li + li { margin-top: 8px; }
+.brief-row {
+  display: flex; align-items: flex-start; padding: 11px 12px; border-radius: 20px;
+  background: var(--glass); border: 1px solid var(--edge);
 }
-.guide-more > summary::-webkit-details-marker { display: none; }
-.guide-more > summary::before { content: "▸"; margin-right: 8px; color: var(--muted); }
-.guide-more[open] > summary::before { content: "▾"; }
-.guide-more .guide-sec { margin: 8px 0; }
-.why-btn { width: 100%; }
-.why-sum { margin: 0 16px 8px; font-size: 14px; }
+.brief-ico {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin-right: 12px;
+  border-radius: 50%; font-size: 18px; background: var(--theory-bg); color: var(--theory); box-shadow: inset 0 0 0 1px var(--theory-line);
+}
+.brief-row.is-data .brief-ico { background: var(--data-bg); color: var(--data); box-shadow: inset 0 0 0 1px var(--data-line); }
+.brief-body { min-width: 0; flex: 1 1 auto; }
+.brief-lab { display: block; margin: 1px 0 2px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.brief-txt { display: block; font-size: 15px; line-height: 1.38; }
+.brief-after { display: block; margin-top: 2px; color: var(--muted); font-size: 13.5px; }
+.brief-row.k-swap { background: var(--warn-bg); border-color: var(--warn-line); }
+.brief-row.k-swap .brief-ico { background: rgba(255, 179, 64, .2); color: var(--amber); box-shadow: inset 0 0 0 1px var(--warn-line); }
+.hchip { display: inline-flex; align-items: center; margin: 1px 12px 2px 0; font-weight: 700; vertical-align: top; }
+.hchip .face { width: 24px; height: 24px; font-size: 9px; margin-right: 6px; }
+.guide-btns { display: flex; padding: 4px 16px 0; }
+.guide-btns .btn { flex: 1 1 0; min-width: 0; padding: 0 10px; background: var(--glass); }
+.guide-btns .btn + .btn { margin-left: 8px; }
+.more-btn[aria-expanded="true"] { background: var(--glass-2); }
+.guide-more { margin-top: 4px; }
+.guide-more .guide-sec li { display: block; }
+.guide-row { padding: 0 16px 6px; }
+.guide-btn { width: 100%; background: var(--theory-bg); border-color: var(--theory-line); color: var(--theory); }
+#guide-body > p, #why-body > p:not(.why-sum) { margin: 10px 20px; }
+.foot-note { color: var(--faint); }
+
+/* ---------- Perché (livello 3): numeri e teoria completi ---------- */
+.why-title { margin: 18px 20px 8px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.why-list { margin: 0 16px; padding: 10px 14px 10px 32px; border-radius: 20px; background: var(--glass); border: 1px solid var(--edge); font-size: 15px; line-height: 1.6; }
+.why-list li.is-theory { color: var(--theory); }
+.prof-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 0 16px 8px; }
+.prof-sec { min-width: 0; padding: 10px 12px; border-radius: 20px; background: var(--data-bg); border: 1px solid rgba(100, 210, 255, .2); }
+.prof-sec h3 { margin: 0 0 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.prof-count { font-weight: 600; color: var(--faint); }
+.prof-list { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
+.prof-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; min-width: 0; }
+.prof-list li + li { margin-top: 6px; }
+.prof-hero, .prof-map { display: flex; align-items: center; min-width: 0; margin-right: 6px; line-height: 1.15; }
+.prof-hero .face { width: 26px; height: 26px; font-size: 10px; margin-right: 7px; }
+.prof-map { flex-direction: column; align-items: flex-start; }
+.prof-map small { color: var(--muted); font-size: 11px; }
+.prof-list li > span:last-child { flex: none; margin-left: auto; font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.theory-badge, .data-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 800;
+  letter-spacing: .04em; text-transform: uppercase; vertical-align: 1px;
+}
+.theory-badge { background: var(--theory); color: #1d0f33; }
+.data-badge { background: var(--data-bg); color: var(--data); box-shadow: inset 0 0 0 1px var(--data-line); }
+.theory-title { color: var(--theory); }
+.theory-style { margin: 4px 16px 10px; padding: 10px 14px; border-radius: 18px; background: var(--theory-bg); border: 1px solid var(--theory-line); font-size: 14px; }
+.theory-style b { color: var(--theory); }
+.theory-grid { grid-template-columns: minmax(0, 1fr); }
+.prof-sec.theory-sec { background: var(--theory-bg); border-color: var(--theory-line); }
+.prof-sec.theory-sec h3 { color: var(--theory); }
+.theory-list li { align-items: flex-start; }
+.theory-list .prof-hero { align-items: flex-start; overflow: visible; }
+.theory-list .prof-hero > span { display: flex; flex-direction: column; min-width: 0; }
+.theory-list .prof-hero b, .theory-list small { display: block; white-space: normal; overflow-wrap: anywhere; }
+.theory-list small { margin-top: 1px; color: #dccdf7; font-size: 12.5px; font-weight: 400; line-height: 1.3; }
+.theory-list li > span:last-child { flex: 1 1 auto; min-width: 0; font-weight: 400; font-size: 13.5px; }
+.theory-note { color: #e3d4ff; }
+.stale-note { margin: 6px 16px; padding: 10px 14px; border-radius: 18px; background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-text); font-size: 13.5px; }
+.sources { margin: 8px 20px; font-size: 13px; color: var(--muted); }
+.sources a { color: var(--theory); word-break: break-all; }
+
+/* schermi stretti (≤ 380 px): un po' più compatti */
+@media (max-width: 380px) {
+  :root { --side: 10px; }
+  .title { font-size: 26px; }
+  .map-btn { font-size: 14px; padding-left: 12px; }
+  .picks { gap: 8px; }
+  .pick { padding: 10px 7px; border-radius: 24px; }
+  .halo, .halo .face { width: 64px; height: 64px; }
+  .pick-player { font-size: 14px; }
+  .role-btn { padding: 0 8px; font-size: 12px; }
+  .seg button { font-size: 14px; padding: 0 4px; }
+  .groups-seg button { font-size: 13.5px; }
+  .groups-seg b { margin-left: 3px; padding: 1px 4px; }
+  .took-btn { font-size: 13px; padding: 0 4px; }
+  .alt { width: 42px; height: 42px; margin: 0 1px; }
+  .dock button { padding: 0 14px; }
+}

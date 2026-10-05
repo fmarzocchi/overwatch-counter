@@ -195,18 +195,39 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
 1. **Riquadro del giocatore** (colpo d'occhio): l'eroe da prendere grande (volto + nome) con UNA sola cifra (la stima);
    prima degli avversari un solo motivo in parole (`headline()`, es. "Forte su King's Row"); con gli avversari
    **Batte/Teme** con i volti (`matchups()`: numeri + teoria, coerente con "Punta/Attento" della guida);
-   "Segna come preso" (un tocco); "Oppure" 2 alternative piccole + "Altro" (eroe diverso → banner "Tocca l'eroe preso
+   "Segna come preso" (un tocco); 2 alternative (solo volti) + "＋" (eroe diverso → banner "Tocca l'eroe preso
    da X" al posto del selettore, `choosePicker`). Eroe preso: il riquadro resta fermo su quell'eroe; se conviene davvero
-   compare "🔁 Passa a …" (`swapAdvice()`: +1,5% nei numeri, o counterato in teoria da 2+ avversari e l'alternativa non
+   compare "Passa a …" (`swapAdvice()`: +1,5% nei numeri, o counterato in teoria da 2+ avversari e l'alternativa non
    rende meno; mai per il n. 1 della lista). Niente percentuali "Mappa/Avversari/Con": sono nel livello 3.
 2. **Come giocarla** (tocco sull'eroe, sul riquadrino in alto o su un'alternativa): "In breve" ≤ 7 righe con etichetta
-   (Cambia, Punta, Attento, Abilità, Posizione, Proteggi, Mappa), volti per gli eroi, bordo viola = teoria / blu = dati;
-   "Tutti i consigli" chiuso (`<details>`); "Segna: X l'ha preso"; "📊 Perché? Numeri e teoria".
+   (Cambia, Punta, Attento, Abilità, Posizione, Proteggi, Mappa), volti per gli eroi, icona viola = teoria / azzurra = dati (legenda accanto a «In breve»);
+   "Tutti i consigli" chiuso (`#guide-more` nascosto, pulsante `.more-btn`); "Segna: X l'ha preso"; "Perché?".
 3. **Perché** (dalla guida): riepilogo Mappa/Avversari/Con, ogni riga, statistiche Ranked complete, teoria completa.
 - "↺ Nuova partita" nella barra in basso (sempre a portata di pollice) con "Annulla" nel messaggio.
 - La barra minima in alto lampeggia una volta quando cambia il consiglio di un giocatore.
 - Collaudo e2e: "un solo numero per riquadro", "In breve ≤ 7 righe e il resto chiuso", "Segna come preso: un tocco",
-  "Annulla", nomi dei 53 eroi mai spezzati nel posto del consiglio e delle alternative (`window.owcFitText`).
+  "Annulla", nomi dei 53 eroi mai spezzati nel posto del consiglio (`window.owcFitText`).
+
+## Stile "Vetro", ricerca e nomi italiani (2026-10-05, richiesta dell'utente) — ha la precedenza su ciò che segue
+
+- **Stile scelto dall'utente tra 3 proposte: "Vetro"** (tipo iOS/visionOS): sfondo scuro con luci colorate ferme
+  (`body::before`), pannelli di vetro (`.glass`; sfocato `.glass-blur` solo per ciò che sta sopra altro: barra in basso
+  flottante `.dock`, barra minima, selettore fermo, fogli, messaggi), capsule, pulsante premuto bianco, fogli dal basso
+  (`dialog`), interruttori sì/no disegnati come iOS (`.toggle.wide`), carattere **Inter** (`app/fonts/inter.woff2`, OFL,
+  il più vicino a SF Pro), icone a tratto tipo SF Symbols in `app/icons.js` (`icon()`, `[data-ic]` + `fillIcons()`)
+  al posto delle emoji. Colori per giocatore `--p0…--p4` (+ velati `--p0a…` per i bordi dei riquadri).
+  Vincoli Chrome 83 (WebView API 30): niente gap nei flex, niente `inset`/`aspect-ratio`/`:is()`; `backdrop-filter` sì.
+  Nel Chromium senza GPU dei test lo sfocato non si vede: le barre hanno comunque fondo all'86%.
+  Mockup in scratchpad (non versionati). I nomi si rimisurano quando arriva il carattere (`document.fonts.ready`).
+- **Ricerca** (griglia eroi, preferiti, mappe): `wireSearch()`; senza accenti né simboli, anche per iniziali ("jq"),
+  nome inglese e italiano; Invio = primo risultato; dopo un tocco il campo si svuota e la tastiera resta aperta
+  (`mousedown` senza focus). e2e "ricerca …".
+- **Nomi ufficiali italiani** (abilità soprattutto, poi mappe ed eroi): `app/names_it.json`
+  `{heroes:{en:it}, maps:{en:it}, abilities:{eroe:{en:it}}}`, facoltativo. Le mappe prendono il nome italiano al
+  caricamento (`m.en` = inglese; la teoria le cerca per slug); gli eroi solo in griglia/ricerca (`heroName()`: la
+  teoria li cerca per nome inglese); le abilità con `localizeTheory()` (nome e stesso nome dentro i consigli scritti).
+  Fonte: `tools/fetch_blizzard.py` (OverFast API + sito Blizzard, en/it, confronto per posizione) via workflow
+  manuale "Pagine Blizzard (nomi italiani)" → ramo `fixtures-blizzard`. Dalla sessione cloud non si raggiungono.
 
 ## L'app (PWA) — come deve essere
 

@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#11141a">
+  <meta name="theme-color" content="#0b0d16">
   <meta name="description" content="Quale eroe prendere in Overwatch 2, da soli o in gruppo (fino a 5), in base a mappa, ban, avversari e alleati.">
   <title>Overwatch Counter</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,26 +17,27 @@
 
   <!-- ============ PARTITA ============ -->
   <main id="view-match" class="view" aria-labelledby="t-match">
-    <h1 id="t-match" class="sr-only">Partita</h1>
-
     <div id="mini" class="mini" hidden></div>
+
+    <header class="top">
+      <h1 id="t-match" class="title">Partita</h1>
+      <button id="map-btn" class="map-btn glass" type="button" aria-haspopup="dialog">
+        <span class="map-label">Mappa</span>
+        <span id="map-name" class="map-name">Scegli mappa</span>
+        <span class="ic-slot chev" data-ic="chevron"></span>
+      </button>
+    </header>
+    <div id="side" class="seg side glass" role="group" aria-label="Lato" hidden>
+      <button type="button" data-side="attack" aria-pressed="false">Attacco</button>
+      <button type="button" data-side="defense" aria-pressed="false">Difesa</button>
+    </div>
+
     <section id="picks" class="picks" aria-live="polite" aria-label="Eroi consigliati"></section>
 
-    <div id="warn" class="warn" role="status" hidden></div>
-
-    <section class="controls" aria-label="Mappa e lato">
-      <button id="map-btn" class="map-btn" type="button" aria-haspopup="dialog">
-        <span class="map-label">Mappa</span>
-        <span id="map-name" class="map-name">nessuna</span>
-      </button>
-      <div id="side" class="seg side" role="group" aria-label="Lato" hidden>
-        <button type="button" data-side="attack" aria-pressed="false">Attacco</button>
-        <button type="button" data-side="defense" aria-pressed="false">Difesa</button>
-      </div>
-    </section>
+    <div id="warn" class="warn glass" role="status" hidden></div>
 
     <section class="groups" aria-label="Cosa stai segnando">
-      <div id="groups" class="seg groups-seg" role="group" aria-label="Tocca un eroe per aggiungerlo a">
+      <div id="groups" class="seg groups-seg glass" role="group" aria-label="Tocca un eroe per aggiungerlo a">
         <button type="button" data-group="bans" class="g-bans" aria-pressed="false">Ban <b data-count="bans">0</b></button>
         <button type="button" data-group="enemies" class="g-enemies" aria-pressed="true">Avversari <b data-count="enemies">0</b></button>
         <button type="button" data-group="allies" class="g-allies" aria-pressed="false">Alleati <b data-count="allies">0</b></button>
@@ -48,10 +50,17 @@
     </section>
     <div id="chosen" class="chosen" aria-label="Selezionati"></div>
 
+    <div class="search glass">
+      <span class="ic-slot" data-ic="search"></span>
+      <input id="hero-q" type="search" placeholder="Cerca eroe" autocomplete="off" autocapitalize="off" spellcheck="false"
+        enterkeyhint="go" aria-label="Cerca eroe" aria-controls="grid">
+      <button type="button" class="search-clear" data-clear="hero-q" aria-label="Cancella la ricerca" hidden>✕</button>
+    </div>
     <section id="grid" class="grid-wrap" aria-label="Eroi" tabindex="-1"></section>
+    <p class="none-found" data-none="grid" hidden>Nessun eroe con questo nome.</p>
 
     <footer class="match-foot">
-      <button id="refresh" type="button" class="btn">Aggiorna dati</button>
+      <button id="refresh" type="button" class="btn glass">Aggiorna dati</button>
       <p id="fresh" class="fresh"></p>
       <p class="source">Dati: <a href="https://counterwatch.gg" rel="noopener">counterwatch.gg</a> · statistiche aggregate, consigli non certezze.</p>
     </footer>
@@ -59,10 +68,10 @@
 
   <!-- ============ PROFILO ============ -->
   <main id="view-profile" class="view" aria-labelledby="t-profile" hidden>
-    <h1 id="t-profile" class="page-title">Profilo</h1>
+    <header class="top"><h1 id="t-profile" class="title">Profilo</h1></header>
     <div id="players"></div>
 
-    <section class="card">
+    <section class="card glass">
       <h2>Aggiornamento dati</h2>
       <p id="data-info" class="muted"></p>
       <label for="token">Token GitHub (per "Aggiorna dati" immediato)</label>
@@ -76,37 +85,51 @@
     </section>
   </main>
 
-  <!-- ============ SCHEDE ============ -->
-  <nav class="tabs" aria-label="Schede">
-    <button type="button" data-view="match" aria-current="page">Partita</button>
+  <!-- ============ BARRA IN BASSO (flottante) ============ -->
+  <nav class="tabs dock glass-blur" aria-label="Schede">
+    <button type="button" data-view="match" aria-current="page"><span class="ic-slot" data-ic="game"></span>Partita</button>
     <!-- sempre a portata di pollice; si può annullare dal messaggio che compare -->
-    <button type="button" id="new-match" class="tab-action">↺ Nuova partita</button>
-    <button type="button" data-view="profile">Profilo</button>
+    <button type="button" id="new-match" class="tab-action" aria-label="Nuova partita"><span class="ic-slot" data-ic="restart"></span></button>
+    <button type="button" data-view="profile"><span class="ic-slot" data-ic="person"></span>Profilo</button>
   </nav>
 
   <!-- ============ SCELTA MAPPA ============ -->
   <dialog id="map-dialog" aria-labelledby="t-map">
     <div class="dlg-head">
       <h2 id="t-map">Scegli la mappa</h2>
-      <button type="button" class="btn ghost" data-close>Chiudi</button>
+      <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
+    </div>
+    <div class="search glass">
+      <span class="ic-slot" data-ic="search"></span>
+      <input id="map-q" type="search" placeholder="Cerca mappa" autocomplete="off" autocapitalize="off" spellcheck="false"
+        enterkeyhint="go" aria-label="Cerca mappa" aria-controls="map-list">
+      <button type="button" class="search-clear" data-clear="map-q" aria-label="Cancella la ricerca" hidden>✕</button>
     </div>
     <div id="map-list"></div>
+    <p class="none-found" data-none="map-list" hidden>Nessuna mappa con questo nome.</p>
   </dialog>
 
   <!-- ============ SCELTA PREFERITI ============ -->
   <dialog id="fav-dialog" aria-labelledby="t-fav">
     <div class="dlg-head">
       <h2 id="t-fav">Preferiti</h2>
-      <button type="button" class="btn" data-close>Fatto</button>
+      <button type="button" class="close done" data-close>Fatto</button>
+    </div>
+    <div class="search glass">
+      <span class="ic-slot" data-ic="search"></span>
+      <input id="fav-q" type="search" placeholder="Cerca eroe" autocomplete="off" autocapitalize="off" spellcheck="false"
+        enterkeyhint="go" aria-label="Cerca eroe" aria-controls="fav-grid">
+      <button type="button" class="search-clear" data-clear="fav-q" aria-label="Cancella la ricerca" hidden>✕</button>
     </div>
     <div id="fav-grid"></div>
+    <p class="none-found" data-none="fav-grid" hidden>Nessun eroe con questo nome.</p>
   </dialog>
 
   <!-- ============ PERCHÉ ============ -->
   <dialog id="why-dialog" aria-labelledby="t-why">
     <div class="dlg-head">
       <h2 id="t-why">Perché</h2>
-      <button type="button" class="btn" data-close>Chiudi</button>
+      <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
     </div>
     <div id="why-body"></div>
   </dialog>
@@ -115,12 +138,12 @@
   <dialog id="guide-dialog" aria-labelledby="t-guide">
     <div class="dlg-head">
       <h2 id="t-guide">Come giocarla</h2>
-      <button type="button" class="btn" data-close>Chiudi</button>
+      <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
     </div>
     <div id="guide-body"></div>
   </dialog>
 
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <div id="toast" class="toast glass-blur" role="status" aria-live="polite" hidden></div>
 
   <script type="module" src="app.js"></script>
 </body>
