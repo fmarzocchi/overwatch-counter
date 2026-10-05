@@ -1,5 +1,13 @@
 import { recommendDuo, breakdown, details, hasSides, withDivision, heroProfile } from "./recommend.js";
 
+// WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
+if (!Element.prototype.replaceChildren) {
+  Element.prototype.replaceChildren = function replaceChildren(...nodes) {
+    while (this.firstChild) this.removeChild(this.firstChild);
+    this.append(...nodes);
+  };
+}
+
 const REPO = "fmarzocchi/overwatch-counter";
 const WORKFLOW = "update-data.yml";
 const LIMITS = { bans: 4, enemies: 5, allies: 5 };
