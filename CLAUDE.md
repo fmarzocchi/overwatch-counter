@@ -134,6 +134,9 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **"Suggerisci solo eroi preferiti"** (Profilo, vale per entrambi): `onlyFavorites` in `recommend()`; se a un
   giocatore non resta nessun preferito utilizzabile si torna a tutti gli eroi e l'app lo scrive (`notes`).
 - Icone: i volti degli eroi vengono copiati in `app/heroes/` dal workflow (verificato: 53/53 su GitHub).
+- **Eroi nuovi / cambi di ruolo** (es. Sombra da Danni a Supporto): elenco eroi e ruoli vengono riletti dal
+  sito a ogni giro, niente è scritto a mano. L'app ridisegna la griglia se l'elenco cambia anche con l'app
+  aperta. Collaudato: `test_fetch.py` n. 14 e il controllo e2e "ruolo cambiato nei dati".
 
 ## L'app (PWA) — come deve essere
 

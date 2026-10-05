@@ -126,6 +126,9 @@ async function loadData() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
     if (!Array.isArray(d.heroes) || !d.heroes.length) throw new Error("dati vuoti");
+    // elenco eroi cambiato (eroe nuovo o cambio di ruolo): la griglia va ridisegnata
+    const heroSig = (x) => (x ? x.heroes.map((h) => `${h.id}:${h.role}:${h.name}`).join("|") : "");
+    if (heroSig(d) !== heroSig(data)) $("#grid").replaceChildren();
     data = d;
     byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
     for (const k of Object.keys(divData)) delete divData[k];

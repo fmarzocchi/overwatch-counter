@@ -206,6 +206,28 @@ try {
   await page.waitForFunction(() => !document.querySelector("#refresh").disabled);
   check("aggiorna senza token: spiega come attivarlo", (await text(page, "#toast")).includes("token"));
 
+  // ---------- cambio di ruolo con l'app aperta (es. Sombra da Danni a Supporto) ----------
+  {
+    const { ctx: c5, page: p5 } = await newPage({ serviceWorkers: "block" });
+    let swapped = false;
+    await c5.route("**/data.json*", (r) => r.fulfill({ json: swapped
+      ? { ...data, heroes: data.heroes.map((h) => (h.name === "Sombra" ? { ...h, role: "Support" } : h)) } : data }));
+    await p5.goto(BASE);
+    await p5.locator(".pick .sug.first .sug-name").first().waitFor();
+    const roleOf = () => p5.evaluate(() => {
+      const b = [...document.querySelectorAll("#grid .hero")].find((x) => x.querySelector(".nm").textContent === "Sombra");
+      let el = b.closest(".grid").previousElementSibling;
+      return el.textContent;
+    });
+    const before = await roleOf();
+    swapped = true;
+    await p5.click("#refresh");
+    await p5.waitForFunction(() => !document.querySelector("#refresh").disabled);
+    const after = await roleOf();
+    check("ruolo cambiato nei dati: la griglia si aggiorna senza riaprire l'app", before === "Danni" && after === "Supporto", `${before} → ${after}`);
+    await c5.close();
+  }
+
   // ---------- offline ----------
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();

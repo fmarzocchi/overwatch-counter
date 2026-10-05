@@ -211,6 +211,14 @@ m2 = json.loads((tmp / "missdiv" / "out.json").read_text()) if (tmp / "missdiv" 
 check("divisione non scaricabile: annotata, il resto funziona", code == 0 and m2["divisions"]["silver"].get("error")
       and m2["divisions"]["gold"].get("file") and not m2.get("problems"), log)
 
+# 14. il sito sposta un eroe di ruolo (es. Sombra da Danni a Supporto): lo prendiamo dal sito
+drole = mutated(tmp, "role", lambda d_: edit(d_, "team-builder.html", lambda t: t.replace(
+    '\\"hero_raw_name\\":\\"SOMBRA\\",\\"role_name\\":\\"Damage\\"', '\\"hero_raw_name\\":\\"SOMBRA\\",\\"role_name\\":\\"Support\\"')))
+code, log = run(drole, tmp / "role.json")
+ro = json.loads((tmp / "role.json").read_text()) if (tmp / "role.json").exists() else {}
+check("cambio di ruolo sul sito: Sombra diventa Supporto", code == 0
+      and next((h["role"] for h in ro.get("heroes", []) if h["name"] == "Sombra"), None) == "Support", log)
+
 # 12. chiave e indirizzo letti dal JS del sito (mai scritti nel codice)
 sys.path.insert(0, str(ROOT / "tools"))
 import fetch_data as fd
