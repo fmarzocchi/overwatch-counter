@@ -89,7 +89,17 @@ let T = null; // teoria pronta all'uso (resa simmetrica, con i nomi dei dati att
 let patches = null; // app/patches.json: ultima patch Blizzard (per capire quando la teoria è vecchia)
 // app/names_it.json (facoltativo): nomi ufficiali italiani del gioco, dall'inglese (la lingua di counterwatch e della teoria)
 let IT = { heroes: {}, maps: {}, abilities: {} };
-const heroName = (h) => IT.heroes?.[h.name] || h.name;
+// Eroi col nome del gioco dove è diverso (Soldier: 76 → Soldato-76, Junker Queen → Regina dei Junker): solo nei
+// testi mostrati (el/fill e titoli), perché dati e teoria li cercano per nome inglese. D.VA ≈ D.Va: resta com'è.
+let heroRe = null;
+let heroIt = {};
+function setHeroNames() {
+  heroIt = Object.fromEntries(Object.entries(IT.heroes ?? {}).filter(([en, it]) => it && en.toLowerCase() !== it.toLowerCase()));
+  const keys = Object.keys(heroIt).sort((a, b) => b.length - a.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  heroRe = keys.length ? new RegExp(keys.join("|"), "g") : null;
+}
+const tr = (t) => (heroRe && typeof t === "string" ? t.replace(heroRe, (m) => heroIt[m]) : t);
+const heroName = (h) => tr(h.name);
 const divFiles = {}; // chiave divisione → contenuto del file (o null se non disponibile)
 const divData = {}; // chiave divisione → dati generali uniti a quelli della divisione
 
@@ -137,15 +147,15 @@ function el(tag, attrs = {}, ...kids) {
     if (v === null || v === undefined || v === false) continue;
     if (k === "class") e.className = v;
     else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
-    else e.setAttribute(k, v === true ? "" : v);
+    else e.setAttribute(k, v === true ? "" : tr(v));
   }
-  e.append(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false));
+  e.append(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false).map(tr));
   return e;
 }
 
 // come replaceChildren, ma salta le parti facoltative assenti (null/undefined/false): altrimenti diventano testo "null"
 function fill(box, ...kids) {
-  box.replaceChildren(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false));
+  box.replaceChildren(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false).map(tr));
 }
 
 // action: {label, run} → pulsante nel messaggio (es. "Annulla" dopo "Nuova partita")
@@ -367,7 +377,7 @@ function openDetails(i, row) {
   const prof = heroProfile(playerData(i), row.hero.id, Infinity);
   const th = heroTheory(playerData(i), T, row.hero);
   const sum = breakdown(row, partnersOf(i));
-  $("#t-why").textContent = `Perché ${row.hero.name}`;
+  $("#t-why").textContent = tr(`Perché ${row.hero.name}`);
   fill($("#why-body"),
     el("div", { class: "why-head" }, face(row.hero),
       el("div", {}, el("div", { class: "pick-name" }, row.hero.name),
@@ -434,7 +444,7 @@ function openGuide(i, hero) {
   const rest = g.sections.filter((s) => !s.summary);
   const isPicked = !!match.picked[i] && sid(match.picked[i]) === sid(hero.id);
   const row = rowFor(i, hero);
-  $("#t-guide").textContent = `Come giocare ${hero.name}`;
+  $("#t-guide").textContent = tr(`Come giocare ${hero.name}`);
   fill($("#guide-body"),
     el("div", { class: "why-head" }, face(hero),
       el("div", {}, el("div", { class: "pick-name" }, hero.name),
@@ -1130,6 +1140,7 @@ async function start() {
   try {
     const r = await fetch("names_it.json");
     if (r.ok) IT = { heroes: {}, maps: {}, abilities: {}, ...(await r.json()) };
+    setHeroNames();
   } catch { /* senza nomi italiani: restano quelli inglesi */ }
   try {
     const r = await fetch("theory.json");

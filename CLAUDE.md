@@ -222,12 +222,19 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
 - **Ricerca** (griglia eroi, preferiti, mappe): `wireSearch()`; senza accenti né simboli, anche per iniziali ("jq"),
   nome inglese e italiano; Invio = primo risultato; dopo un tocco il campo si svuota e la tastiera resta aperta
   (`mousedown` senza focus). e2e "ricerca …".
-- **Nomi ufficiali italiani** (abilità soprattutto, poi mappe ed eroi): `app/names_it.json`
-  `{heroes:{en:it}, maps:{en:it}, abilities:{eroe:{en:it}}}`, facoltativo. Le mappe prendono il nome italiano al
-  caricamento (`m.en` = inglese; la teoria le cerca per slug); gli eroi solo in griglia/ricerca (`heroName()`: la
-  teoria li cerca per nome inglese); le abilità con `localizeTheory()` (nome e stesso nome dentro i consigli scritti).
-  Fonte: `tools/fetch_blizzard.py` (OverFast API + sito Blizzard, en/it, confronto per posizione) via workflow
-  manuale "Pagine Blizzard (nomi italiani)" → ramo `fixtures-blizzard`. Dalla sessione cloud non si raggiungono.
+- **Nomi ufficiali italiani** in `app/names_it.json` `{heroes:{en:it}, maps:{en:it}, abilities:{eroe:{en:it}}}`
+  (facoltativo; chiavi = nomi inglesi di counterwatch/theory.json). Fonte: **OverFast API** (dati del sito ufficiale,
+  en-us/it-it, abilità confrontate per posizione); rigenerare: workflow manuale "Pagine Blizzard (nomi italiani)"
+  (`tools/fetch_blizzard.py` → ramo `fixtures-blizzard`), poi
+  `git show origin/fixtures-blizzard:blizzard.tar.gz | tar xz -C /tmp && python3 tools/names_it.py /tmp/blizzard`
+  (elenca le abilità della teoria senza nome ufficiale: Flashbang di Cassidy, Siphon Blaster di Emre, Jagged Blade,
+  Flash Heal di Mercy, Nemesis Form, Trash Compactor del Roadhog S5 → restano in inglese con la traduzione).
+  - **Abilità**: `localizeTheory()` mette il nome del gioco (es. Biostimolatore, Sovraccarico) anche dentro i consigli.
+  - **Eroi**: diversi solo Soldato-76 e Regina dei Junker (D.MON/D.VA = solo maiuscole, ignorati): `tr()` li traduce
+    nei testi mostrati (`el`/`fill`/titoli), dati e teoria restano in inglese. e2e: `itn()`/`toEn()`.
+  - **Mappe**: nessuna fonte italiana (OverFast non le traduce, la pagina /maps/ di Blizzard non esiste più): `maps: {}`,
+    restano i nomi di counterwatch. Il codice è pronto (`m.en`, ricerca in entrambe le lingue).
+  - OverFast ha anche i **perk** (nomi e descrizioni in italiano, niente statistiche): non ancora usati.
 
 ## L'app (PWA) — come deve essere
 

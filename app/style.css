@@ -305,11 +305,11 @@ a { color: var(--data); }
   border: 1px solid rgba(255, 255, 255, .09); background: rgba(255, 255, 255, .06);
 }
 .hero .face { width: 42px; height: 42px; margin-bottom: 4px; }
-/* nomi su due righe, mai spezzati a metà parola: se serve il carattere si rimpicciolisce (fitText → --fit) */
+/* nomi su due righe (tre per «Regina dei Junker» col carattere grande), mai spezzati a metà parola: se serve il carattere si rimpicciolisce (fitText → --fit) */
 .hero .nm {
   max-width: 100%; font-size: calc(10px * var(--fit, 1)); font-weight: 600; line-height: 1.1; text-align: center;
   white-space: normal; overflow-wrap: break-word; word-break: normal; hyphens: manual; -webkit-hyphens: manual;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: clip;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: clip;
 }
 .hero .nm.long { font-size: calc(9px * var(--fit, 1)); letter-spacing: -0.1px; }
 /* misura di una parola (fitText): stesso carattere del nome, su una riga, invisibile */

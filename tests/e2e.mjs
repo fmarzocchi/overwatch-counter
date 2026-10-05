@@ -22,6 +22,13 @@ mkdirSync(SHOTS, { recursive: true });
 const PORT = 8765 + Math.floor(Math.random() * 200);
 const BASE = `http://127.0.0.1:${PORT}/`;
 const data = JSON.parse(readFileSync(path.join(ROOT, "app", "data.json")));
+// nomi italiani del gioco (app/names_it.json): la pagina mostra "Soldato-76", i dati dicono "Soldier: 76"
+let namesFile = {};
+try { namesFile = JSON.parse(readFileSync(path.join(ROOT, "app", "names_it.json"))); } catch { /* facoltativo */ }
+const namesIt = namesFile.heroes ?? {};
+const shownIt = Object.fromEntries(Object.entries(namesIt).filter(([en, it]) => it && en.toLowerCase() !== it.toLowerCase()));
+const itn = (en) => shownIt[en] ?? en; // nome dei dati → nome mostrato
+const toEn = (n) => Object.keys(shownIt).find((en) => shownIt[en] === n) ?? n; // nome mostrato → nome dei dati
 
 const results = [];
 const check = (name, cond, info = "") => {
@@ -58,7 +65,7 @@ const heroBtn = (page, name) => page.locator("#grid .hero", { has: page.locator(
 // in cima alla pagina il riquadro dei consigli è completo (scorrendo si compatta)
 const toTop = async (page) => { await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(50); };
 const pickNames = (page) => page.locator(".pick .pick-name").allInnerTexts();
-const heroId = (name) => String(data.heroes.find((h) => h.name === name).id);
+const heroId = (name) => String(data.heroes.find((h) => h.name === toEn(name)).id);
 const matchState = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("owc.match")));
 
 try {
@@ -73,6 +80,11 @@ try {
   check("primo avvio: due consigli (Io e Lei)", (await page.locator(".pick").count()) === 2
     && (await text(page, ".picks")).includes("Io") && (await text(page, ".picks")).includes("Lei"));
   check("primo avvio: 53 eroi in griglia", (await page.locator("#grid .hero").count()) === data.heroes.length);
+  if (Object.keys(shownIt).length) {
+    const gridNames = await page.locator("#grid .hero .nm").allInnerTexts();
+    check("nomi degli eroi come nel gioco in italiano (es. Soldato-76)", Object.values(shownIt).every((n) => gridNames.includes(n))
+      && Object.keys(shownIt).every((n) => !gridNames.includes(n)), JSON.stringify(shownIt));
+  }
   const initialsOk = await page.waitForFunction(() => [...document.querySelectorAll("#grid .face")].every((f) => f.querySelector("img") || f.textContent.trim()), null, { timeout: 10000 }).then(() => true, () => false);
   check("icone non raggiungibili: iniziali al loro posto", initialsOk);
   check("freschezza visibile", /Dati counterwatch del .*controllati/.test(await text(page, "#fresh")), await text(page, "#fresh"));
@@ -189,6 +201,9 @@ try {
   check("come giocarla: legenda teoria/dati accanto a «In breve»", (await text(page, "#guide-body .guide-summary h3")).includes("teoria"));
   await page.click("#guide-body .more-btn");
   const guide = await text(page, "#guide-body");
+  const guideHero = toEn((await text(page, "#t-guide")).replace(/^Come giocare /, ""));
+  const itAbilities = Object.values(namesFile.abilities?.[guideHero] ?? {});
+  if (itAbilities.length) check("come giocarla: abilità col nome italiano del gioco", itAbilities.some((n) => guide.includes(n)), `${guideHero}: ${itAbilities.join(", ")}`);
   check("come giocarla: «Tutti i consigli» apre le sezioni (mappa, lato, come muoverti)",
     guide.includes("Mappa: King's Row") && guide.includes("Come muoverti")
     && (await page.locator("#guide-body .guide-sec").count()) >= 3 && (await page.locator("#guide-body .theory-badge").count()) > 0, guide.slice(0, 400));
@@ -240,7 +255,7 @@ try {
   check("ruolo di Giulia cambiato al volo (Supporto → Danni)", (await page.locator(".pick").nth(1).locator(".role-btn").innerText()) === "Danni");
   await toTop(page);
   const duo = await pickNames(page);
-  const role = (n) => data.heroes.find((h) => h.name === n)?.role;
+  const role = (n) => data.heroes.find((h) => h.name === toEn(n))?.role;
   check("con lo stesso ruolo eroi diversi", duo[0] !== duo[1] && role(duo[0]) === "Damage" && role(duo[1]) === "Damage", duo.join());
   await toTop(page);
   await page.locator(".pick").nth(1).locator(".role-btn").click();
@@ -411,7 +426,7 @@ try {
   {
     const QUEUE = [["Fabio", "Damage"], ["Giulia", "Support"], ["Marco", "Tank"], ["Sara", "Support"], ["Luca", "Damage"]];
     // eroe preso da ciascuno (scelto apposta diverso dal n. 1 consigliato, se possibile)
-    const TAKE = { Damage: ["Soldier: 76", "Sojourn"], Support: ["Ana", "Kiriko"], Tank: ["Reinhardt"] };
+    const TAKE = { Damage: [itn("Soldier: 76"), "Sojourn"], Support: ["Ana", "Kiriko"], Tank: ["Reinhardt"] };
     for (const n of [1, 2, 3, 4, 5]) {
       for (const vp of n === 5 ? [{ width: 360, height: 640 }, { width: 407, height: 833, name: "Xiaomi 14T" }, { width: 420, height: 860, name: "Nothing Phone (3)" }]
         : [{ width: 407, height: 833, name: "Xiaomi 14T" }, { width: 420, height: 860, name: "Nothing Phone (3)" }]) {
@@ -439,7 +454,7 @@ try {
         }));
         check(`${label}: un riquadro per giocatore, ognuno con l'eroe da prendere`, st.cards === n && st.mains === n, JSON.stringify(st));
         check(`${label}: consigli tutti diversi, del ruolo di ciascuno`,
-          new Set(st.firsts).size === n && st.firsts.every((h, i) => data.heroes.find((x) => x.name === h)?.role === QUEUE[i][1]), st.firsts.join(", "));
+          new Set(st.firsts).size === n && st.firsts.every((h, i) => data.heroes.find((x) => x.name === toEn(h))?.role === QUEUE[i][1]), st.firsts.join(", "));
         check(`${label}: un colore diverso per giocatore (riquadri e griglia)`,
           new Set(st.colors).size === n && st.recs.length === n && new Set(st.recs.map((r) => r[1])).size === n, JSON.stringify(st.recs));
         check(`${label}: «Alleati» solo se c'è posto in squadra (5 − giocatori)`, st.alliesHidden === (n === 5));

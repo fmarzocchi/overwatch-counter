@@ -1,0 +1,442 @@
+{
+ "abilities": {
+  "Ana": {
+   "Biotic Grenade": "Granata Biotica",
+   "Biotic Rifle": "Fucile Biotico",
+   "Nano Boost": "Biostimolatore",
+   "Sleep Dart": "Dardo Soporifero"
+  },
+  "Anran": {
+   "Dancing Blaze": "Fiamma Danzante",
+   "Fan the Flames": "Fiammata",
+   "Ignition": "Accensione",
+   "Inferno Rush": "Scatto Infernale",
+   "Vermillion Ascent": "Ascesa Vermiglia",
+   "Vermillion Revival": "Rinascita Vermiglia",
+   "Zhuque Fans": "Ventagli Zhuque"
+  },
+  "Ashe": {
+   "B.O.B.": "B.O.B.",
+   "Coach Gun": "Doppietta",
+   "Dynamite": "Dinamite",
+   "The Viper": "Vipera"
+  },
+  "Baptiste": {
+   "Amplification Matrix": "Matrice di Amplificazione",
+   "Biotic Launcher": "Lanciagranate Biotico",
+   "Exo Boots": "Stivali Potenziati",
+   "Immortality Field": "Campo d'Immortalità",
+   "Regenerative Burst": "Impulso Rigenerativo"
+  },
+  "Bastion": {
+   "A-36 Tactical Grenade": "Granata Tattica A-36",
+   "Configuration: Artillery": "Assetto: Artiglieria",
+   "Configuration: Assault": "Assetto: Attacco",
+   "Configuration: Recon": "Assetto: Ricognitore",
+   "Reconfigure": "Riconfigurazione"
+  },
+  "Brigitte": {
+   "Barrier Shield": "Scudo Protettivo",
+   "Inspire": "Ispirazione",
+   "Rally": "Adunata",
+   "Repair Pack": "Modulo Riparatore",
+   "Rocket Flail": "Mazzafrusto a Reazione",
+   "Shield Bash": "Colpo di Scudo",
+   "Whip Shot": "Frustata"
+  },
+  "Cassidy": {
+   "Combat Roll": "Capriola Tattica",
+   "Deadeye": "Scarica di Piombo",
+   "Peacekeeper": "Pacificatore"
+  },
+  "D.Mon": {
+   "Call Mech": "Richiama Mech",
+   "Eject!": "Espulsione!",
+   "Fusion Repeater": "Ripetitore a Fusione",
+   "Limit Break": "Oltre il Limite",
+   "Plasma Saber": "Sciabola al Plasma ",
+   "Plasma Saber ": "Sciabola al Plasma ",
+   "Portable Fusion Repeater": "Ripetitore a Fusione Portatile",
+   "Power Barrier": "Barriera Energetica",
+   "Propulsors": "Propulsori",
+   "Surging Strike": "Assalto Crescente"
+  },
+  "D.Va": {
+   "Boosters": "Retrorazzi",
+   "Call Mech": "Richiama Mech",
+   "Defense Matrix": "Matrice Difensiva",
+   "Eject!": "Espulsione!",
+   "Fusion Cannons": "Cannoni a Fusione",
+   "Light Gun": "Pistola Laser",
+   "Micro Missiles": "Micromissili",
+   "Self-Destruct": "Autodistruzione"
+  },
+  "Domina": {
+   "Barrier Array": "Barriera Fotonica",
+   "Crystal Charge": "Cristallo Esplosivo",
+   "Panopticon": "Panopticon",
+   "Photon Magnum": "Raggio Fotonico",
+   "Sonic Repulsors": "Repulsori Sonici"
+  },
+  "Doomfist": {
+   "Hand Cannon": "Artiglieria Integrata",
+   "Meteor Strike": "Impatto Devastante",
+   "Power Block": "Baluardo",
+   "Rocket Punch": "Pugno a Reazione",
+   "Seismic Slam": "Slancio Sismico"
+  },
+  "Echo": {
+   "Duplicate": "Duplicazione",
+   "Flight": "Volo",
+   "Focusing Beam": "Raggio Focalizzante",
+   "Glide": "Planata",
+   "Sticky Bombs": "Bombe Adesive",
+   "Tri-Shot": "Colpo Triplo"
+  },
+  "Emre": {
+   "Altered Vitals": "Vigore Alterato",
+   "Cyber Frag": "Cybergranata",
+   "Override Protocol": "Protocollo di Sovversione",
+   "Synthetic Burst Rifle": "Fucile a Impulsi Sintetici"
+  },
+  "Freja": {
+   "Bola Shot": "Colpo di Bola",
+   "Quick Dash": "Scatto Lampo",
+   "Take Aim": "Mira Precisa",
+   "Updraft": "Corrente Ascensionale"
+  },
+  "Genji": {
+   "Cyber-Agility": "Cyber-agilità",
+   "Deflect": "Deviazione",
+   "Dragonblade": "Spada del Drago",
+   "Shuriken": "Shuriken",
+   "Swift Strike": "Assalto Rapido"
+  },
+  "Hanzo": {
+   "Dragonstrike": "Assalto del Drago",
+   "Lunge": "Balzo",
+   "Sonic Arrow": "Freccia Sonica",
+   "Storm Arrows": "Tempesta di Frecce",
+   "Storm Bow": "Arco della Tempesta",
+   "Wall Climb": "Arrampicata"
+  },
+  "Hazard": {
+   "Bonespur": "Raffica Acuminata",
+   "Downpour": "Diluvio",
+   "Jagged Wall": "Muro Spinato",
+   "Spike Guard": "Guardia Affilata",
+   "Vault": "Acrobazia",
+   "Violent Leap": "Balzo Furioso"
+  },
+  "Illari": {
+   "Captive Sun": "Sole Imprigionato",
+   "Healing Pylon": "Torretta Curativa",
+   "Outburst": "Scoppio",
+   "Solar Rifle": "Fucile Solare"
+  },
+  "Jetpack Cat": {
+   "Biotic Pawjectiles": "Purrriettili Biotici",
+   "Catnapper": "Gattura",
+   "Frenetic Flight": "Volo Frenetico",
+   "Lifeline": "Artiglio Vitale",
+   "Purr": "Fusa"
+  },
+  "Junker Queen": {
+   "Adrenaline Rush": "Scarica di Adrenalina",
+   "Carnage": "Mattanza",
+   "Commanding Shout": "Urlo di Comando",
+   "Rampage": "Furia",
+   "Scattergun": "Frantumatore"
+  },
+  "Junkrat": {
+   "Concussion Mine": "Mina Dirompente",
+   "Frag Launcher": "Lanciagranate",
+   "RIP-Tire": "Rotobomba",
+   "Steel Trap": "Tagliola",
+   "Total Mayhem": "Botto Finale"
+  },
+  "Juno": {
+   "Glide Boost": "Planata Potenziata",
+   "Hyper Ring": "Anello Sonico",
+   "Martian Overboots": "Stivali Marziani",
+   "Mediblaster": "Mediblaster",
+   "Orbital Ray": "Flusso Cosmico",
+   "Pulsar Torpedoes": "Siluri Pulsar"
+  },
+  "Kiriko": {
+   "Healing Ofuda": "Ofuda di Cura",
+   "Kitsune Rush": "Scatto Kitsune",
+   "Kunai": "Kunai",
+   "Protection Suzu": "Suzu di Protezione",
+   "Swift Step": "Passo Rapido"
+  },
+  "Lifeweaver": {
+   "Healing Blossom": "Bocciolo Curativo",
+   "Life Grip": "Presa Vitale",
+   "Petal Platform": "Piattaforma di Petali",
+   "Rejuvenating Dash": "Scatto Rinvigorente",
+   "Thorn Volley": "Raffica di Spine",
+   "Tree of Life": "Albero della Vita"
+  },
+  "Lúcio": {
+   "Amp It Up": "Volume al Massimo",
+   "Crossfade": "Vibrazioni",
+   "Sonic Amplifier": "Amplificatore Sonico",
+   "Sound Barrier": "Barriera Sonora",
+   "Soundwave": "Onda d'Urto",
+   "Wall Ride": "Corsa sui Muri"
+  },
+  "Mauga": {
+   "Berserker": "Berserker",
+   "Cage Fight": "Lotta in Gabbia",
+   "Cardiac Overdrive": "Sovraccarico cardiaco",
+   "Overrun": "Sovrastazione"
+  },
+  "Mei": {
+   "Blizzard": "Tormenta",
+   "Cryo-Freeze": "Ibernazione",
+   "Endothermic Blaster": "Pistola Endotermica",
+   "Ice Wall": "Muro di Ghiaccio"
+  },
+  "Mercy": {
+   "Angelic Descent": "Discesa Angelica",
+   "Caduceus Blaster": "Caduceo Punitivo",
+   "Caduceus Staff": "Caduceo Benefico",
+   "Guardian Angel": "Angelo Custode",
+   "Resurrect": "Resurrezione",
+   "Valkyrie": "Valchiria"
+  },
+  "Mizuki": {
+   "Binding Chain": "Catena Vincolante",
+   "Healing Kasa": "Kasa Curativo",
+   "Katashiro Return": "Richiamo del Katashiro",
+   "Kekkai Sanctuary": "Santuario Kekkai",
+   "Remedy Aura": "Aura Curativa",
+   "Spirit Glaive": "Lama Spirituale"
+  },
+  "Moira": {
+   "Biotic Grasp": "Biomanipolazione",
+   "Biotic Orb": "Globo Biotico",
+   "Coalescence": "Coalescenza",
+   "Fade": "Dissolvenza"
+  },
+  "Orisa": {
+   "Augmented Fusion Driver": "Mitragliatrice a Fusione Potenziata",
+   "Energy Javelin": "Giavellotto Energetico",
+   "Fortify": "Fortificazione",
+   "Javelin Spin": "Giavellotto Rotante",
+   "Terra Surge": "Impeto Terrestre"
+  },
+  "Pharah": {
+   "Barrage": "Pioggia di Fuoco",
+   "Concussive Blast": "Scarica Esplosiva",
+   "Hover Jets": "Propulsori",
+   "Jet Dash": "Scatto Jet",
+   "Jump Jet": "Propulsori",
+   "Rocket Launcher": "Lanciarazzi"
+  },
+  "Ramattra": {
+   "Annihilation": "Annientamento",
+   "Pummel": "Raffica di Pugni (Forma Nemesi)",
+   "Pummel (Nemesis Form)": "Raffica di Pugni (Forma Nemesi)",
+   "Ravenous Vortex": "Vortice Insaziabile",
+   "Void Accelerator": "Acceleratore del Vuoto (Forma Omnic)",
+   "Void Accelerator (Omnic Form)": "Acceleratore del Vuoto (Forma Omnic)",
+   "Void Barrier": "Barriera del Vuoto (Forma Omnic)",
+   "Void Barrier (Omnic Form)": "Barriera del Vuoto (Forma Omnic)"
+  },
+  "Reaper": {
+   "Death Blossom": "Spirale della Morte",
+   "Hellfire Shotguns": "Bocche Infernali",
+   "Shadow Step": "Passo d'Ombra",
+   "The Reaping": "Mietitura",
+   "Wraith Form": "Forma Spettrale"
+  },
+  "Reinhardt": {
+   "Barrier Field": "Barriera",
+   "Charge": "Carica",
+   "Earthshatter": "Schianto Sismico",
+   "Fire Strike": "Dardo di Fuoco",
+   "Rocket Hammer": "Martello a Reazione"
+  },
+  "Roadhog": {
+   "Chain Hook": "Gancio",
+   "Scrap Gun": "Rottamatrice",
+   "Take a Breather": "Boccata d'Aria",
+   "Whole Hog": "Porcata"
+  },
+  "Shion": {
+   "Evade": "Elusione",
+   "Execution": "Esecuzione",
+   "Joyride": "Corsa Spericolata",
+   "Kira Pistols": "Pistole Kira",
+   "Satsuriku Spree": "Furia Satsuriku"
+  },
+  "Sierra": {
+   "Anchor Drone": "Drone Ancora",
+   "Helix Rifle": "Fucile Helix",
+   "Tracking Shot": "Colpo Tracciante",
+   "Trailblazer": "Apripista",
+   "Tremor Charge": "Carica Sismica"
+  },
+  "Sigma": {
+   "Accretion": "Accrescimento",
+   "Experimental Barrier": "Barriera Sperimentale",
+   "Gravitic Flux": "Flusso Gravitazionale",
+   "Hyperspheres": "Ipersfere",
+   "Kinetic Grasp": "Presa Cinetica"
+  },
+  "Sojourn": {
+   "Disruptor Shot": "Colpo Distruttivo",
+   "Overclock": "Overclock",
+   "Power Slide": "Scivolata Energica",
+   "Railgun": "Fucile a Rotaia"
+  },
+  "Soldier: 76": {
+   "Biotic Field": "Rigeneratore Biotico",
+   "Heavy Pulse Rifle": "Fucile a Impulsi",
+   "Helix Rockets": "Razzi Helix",
+   "Sprint": "Scatto",
+   "Tactical Visor": "Visore Tattico"
+  },
+  "Sombra": {
+   "EMP": "EMP",
+   "Hack": "Hacking",
+   "Machine Pistol": "Pistola mitragliatrice",
+   "Translocator": "Rilocatore",
+   "Virus": "Virus"
+  },
+  "Symmetra": {
+   "Photon Barrier": "Barriera Fotonica",
+   "Photon Projector": "Proiettore Fotonico",
+   "Sentry Turret": "Drone Sentinella",
+   "Teleporter": "Televarco"
+  },
+  "Torbjörn": {
+   "Deploy Turret": "Posiziona Torretta",
+   "Forge Hammer": "Martello da Forgia",
+   "Molten Core": "Nucleo Ardente",
+   "Overload": "Sovraccarico",
+   "Rivet Gun": "Sparachiodi"
+  },
+  "Tracer": {
+   "Blink": "Traslazione",
+   "Pulse Bomb": "Bomba a Impulsi",
+   "Pulse Pistols": "Pistole a Impulsi",
+   "Recall": "Flashback"
+  },
+  "Vendetta": {
+   "Palatine Fang": "Zanna del Palatino",
+   "Projected Edge": "Squarcio Fulmineo",
+   "Soaring Slice": "Fendente Aereo",
+   "Sundering Blade": "Lama Separatrice",
+   "Warding Stance": "Posizione di Difesa",
+   "Whirlwind Dash": "Scatto Turbine"
+  },
+  "Venture": {
+   "Burrow": "Immersione",
+   "Drill Dash": "Scatto Trivella",
+   "SMART Excavator": "Scavatrice SMART",
+   "Tectonic Shock": "Scossa Tellurica"
+  },
+  "Widowmaker": {
+   "Grappling Hook": "Rampino",
+   "Infra-Sight": "Visore Termico",
+   "Venom Mine": "Mina Venefica",
+   "Widow's Kiss": "Bacio della Vedova"
+  },
+  "Winston": {
+   "Barrier Projector": "Proiettore Difensivo",
+   "Jump Pack": "Ipersalto",
+   "Primal Rage": "Rabbia Primordiale",
+   "Tesla Cannon": "Cannone Tesla"
+  },
+  "Wrecking Ball": {
+   "Adaptive Shield": "Scudo Adattivo",
+   "Grappling Claw": "Rampone",
+   "Minefield": "Campo Minato",
+   "Piledriver": "Stella Cadente",
+   "Quad Cannons": "Quadricannoni",
+   "Roll": "Rotolamento"
+  },
+  "Wuyang": {
+   "Guardian Wave": "Onda Guardiana",
+   "Restorative Stream": "Sorgente Rigenerante",
+   "Rushing Torrent": "Torrente Impetuoso",
+   "Tidal Blast": "Marea Esplosiva",
+   "Xuanwu Staff": "Bastone di Xuanwu"
+  },
+  "Zarya": {
+   "Energy": "Energia",
+   "Graviton Surge": "Bomba Gravitonica",
+   "Particle Barrier": "Barriera Particellare",
+   "Particle Cannon": "Cannone a Particelle",
+   "Projected Barrier": "Proiezione Difensiva"
+  },
+  "Zenyatta": {
+   "Orb of Destruction": "Globo della Rovina",
+   "Orb of Discord": "Globo della Discordia",
+   "Orb of Harmony": "Globo dell'Armonia",
+   "Snap Kick": "Calcio Rapido",
+   "Transcendence": "Trascendenza"
+  }
+ },
+ "heroes": {
+  "Ana": "Ana",
+  "Anran": "Anran",
+  "Ashe": "Ashe",
+  "Baptiste": "Baptiste",
+  "Bastion": "Bastion",
+  "Brigitte": "Brigitte",
+  "Cassidy": "Cassidy",
+  "D.Mon": "D.MON",
+  "D.Va": "D.VA",
+  "Domina": "Domina",
+  "Doomfist": "Doomfist",
+  "Echo": "Echo",
+  "Emre": "Emre",
+  "Freja": "Freja",
+  "Genji": "Genji",
+  "Hanzo": "Hanzo",
+  "Hazard": "Hazard",
+  "Illari": "Illari",
+  "Jetpack Cat": "Jetpack Cat",
+  "Junker Queen": "Regina dei Junker",
+  "Junkrat": "Junkrat",
+  "Juno": "Juno",
+  "Kiriko": "Kiriko",
+  "Lifeweaver": "Lifeweaver",
+  "Lúcio": "Lúcio",
+  "Mauga": "Mauga",
+  "Mei": "Mei",
+  "Mercy": "Mercy",
+  "Mizuki": "Mizuki",
+  "Moira": "Moira",
+  "Orisa": "Orisa",
+  "Pharah": "Pharah",
+  "Ramattra": "Ramattra",
+  "Reaper": "Reaper",
+  "Reinhardt": "Reinhardt",
+  "Roadhog": "Roadhog",
+  "Shion": "Shion",
+  "Sierra": "Sierra",
+  "Sigma": "Sigma",
+  "Sojourn": "Sojourn",
+  "Soldier: 76": "Soldato-76",
+  "Sombra": "Sombra",
+  "Symmetra": "Symmetra",
+  "Torbjörn": "Torbjörn",
+  "Tracer": "Tracer",
+  "Vendetta": "Vendetta",
+  "Venture": "Venture",
+  "Widowmaker": "Widowmaker",
+  "Winston": "Winston",
+  "Wrecking Ball": "Wrecking Ball",
+  "Wuyang": "Wuyang",
+  "Zarya": "Zarya",
+  "Zenyatta": "Zenyatta"
+ },
+ "maps": {},
+ "source": "OverFast API (overfast-api.tekrop.fr), dal sito ufficiale overwatch.blizzard.com (en-us / it-it)",
+ "updated": "2026-10-05"
+}
