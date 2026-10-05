@@ -37,11 +37,15 @@ FATTO e collaudato in locale:
 - `tools/fetch_icons.py` — copia le icone eroi in `app/heroes/` durante il workflow (non versionate).
 - `.github/workflows/update-data.yml` (dati ogni 3 h + Pages + keepalive del cron) e `ci.yml` (tutti i test + screenshot).
 
+VERIFICATO su GitHub (2026-10-05): Pages attivo (Source: GitHub Actions), sito online, `update-data.yml`
+verde, icone 53/53, CI verde. Dati: "All" (vedi "Filtro Ranked").
+
+NON FATTO, deciso con l'utente: **perk (vantaggi) degli eroi** — counterwatch non ha dati sui perk (nessuna
+pagina nella sitemap, nessuna menzione nella pagina eroe; diagnosi `tools/discover_perks.py`). L'utente ha
+detto di lasciar perdere se troppo difficile. Servirebbe un'altra fonte di statistiche sui perk.
+
 DA FARE:
-1. Verificare su GitHub la prima run reale di `update-data.yml`: che il filtro Ranked venga trovato
-   (log "OK [Ranked …]"), che le icone si scarichino, che `…github.io/overwatch-counter/data.json` risponda.
-   Se il filtro Ranked NON viene trovato: leggere i chunk JS di counterwatch (`/_next/static/chunks/…`)
-   in un workflow per trovare il nome vero del parametro e aggiungerlo in testa a `RANKED_QUERIES`.
+1. Ranked: in attesa della decisione dell'utente (vedi "Filtro Ranked").
 2. **Guscio APK** + `.github/workflows/android.yml` (vedi sotto).
 3. Rank per giocatore: counterwatch ha dati per divisione (Bronze…Grandmaster+). Ora il rank è solo
    memorizzato. Usarlo vorrebbe dire scaricare i dati di 1–2 divisioni in più: valutare con l'utente
