@@ -356,22 +356,26 @@ function theoryLine(r) {
   return t ? el("span", { class: `sug-theory${th.beatenBy[0] && !th.beats[0] ? " bad" : ""}` }, "teoria: ", t) : null;
 }
 
-// Il riquadro dei consigli è fisso in alto; lo spazio sotto (spacer) ha l'altezza del riquadro completo.
-// Scorrendo oltre metà riquadro si compatta (solo il n. 1), tornando in cima si riapre: la pagina non salta.
-let compact = false;
-function layoutPicks() {
-  if ($("#view-match").hidden) return; // nascosto: misurerebbe 0
-  const h = Math.round($("#picks").getBoundingClientRect().height);
-  if (!compact) $("#picks-spacer").style.height = `${h}px`;
-  document.documentElement.style.setProperty("--picks-h", `${h}px`);
+// Il riquadro completo dei consigli scorre con la pagina; quando è uscito dallo schermo compare in alto
+// la barra minima (n. 1 di ciascuno, toccabile) e il selettore Ban/Avversari/Alleati si ferma sotto di lei.
+function renderMini() {
+  const box = $("#mini");
+  box.replaceChildren();
+  if (!lastDuo) return;
+  profile.players.forEach((p, i) => {
+    const r = lastDuo.lists[i]?.[0];
+    if (!r) return;
+    box.append(el("button", { type: "button", class: "mini-pick", onclick: () => openDetails(i, r),
+      "aria-label": `${p.name}: ${r.hero.name}, stima ${est(r)}. Tocca per i dettagli` },
+    face(r.hero), el("span", { class: "mini-txt" }, el("b", {}, r.hero.name), el("small", {}, `${p.name} · ${est(r)}`))));
+  });
 }
-function onScroll() {
-  const full = $("#picks-spacer").getBoundingClientRect().height;
-  const want = compact ? window.scrollY > full * 0.25 : window.scrollY > full * 0.6;
-  if (want === compact || $("#view-match").hidden) return;
-  compact = want;
-  document.body.classList.toggle("compact-picks", compact);
-  layoutPicks();
+function updateMini() {
+  if ($("#view-match").hidden) return;
+  const mini = $("#mini");
+  const show = $("#picks").getBoundingClientRect().bottom < 0;
+  if (mini.hidden === show) mini.hidden = !show;
+  document.documentElement.style.setProperty("--picks-h", show ? `${Math.round(mini.getBoundingClientRect().height)}px` : "0px");
 }
 
 function renderPicks() {
@@ -417,7 +421,8 @@ function renderPicks() {
           )))),
     ));
   });
-  layoutPicks();
+  renderMini();
+  updateMini();
   renderGuides();
 }
 
@@ -689,11 +694,7 @@ function showView(name) {
   if (name === "profile" && data) renderProfile();
   store.set("owc.view", name);
   window.scrollTo(0, 0);
-  if (name === "match") {
-    compact = false;
-    document.body.classList.remove("compact-picks");
-    layoutPicks();
-  }
+  if (name === "match") updateMini();
 }
 
 function wire() {
@@ -746,7 +747,7 @@ async function autoRefresh() {
 async function start() {
   wire();
   document.addEventListener("pointerdown", autoRefresh, { capture: true, passive: true });
-  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("scroll", updateMini, { passive: true });
   document.addEventListener("visibilitychange", autoRefresh);
   window.addEventListener("focus", autoRefresh);
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

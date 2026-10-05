@@ -154,7 +154,11 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   "Viene counterato da" nella scheda eroe; liste complete e scorrevoli; pulsanti "🎯 <eroe>" sotto mappa/lato e
   "Come giocarla in questa partita" nella scheda; interruttore nel Profilo "Usa anche la teoria nei consigli"
   (±0,5% per indicazione, la "stima" resta statistica).
-- Riquadro consigli fisso in alto (con spacer); scorrendo si compatta (solo il n. 1), in cima torna completo.
+- Riquadro consigli **in flusso** (scorre via con la pagina, non copre mai la griglia); quando è fuori schermo compare
+  in alto la barra minima `#mini` (n. 1 di ciascuno, toccabile) e sotto si ferma il selettore Ban/Avversari/Alleati.
+  **Niente scroll dentro i riquadri** (liste complete e distese; si scorre solo pagina o scheda). Collaudo e2e:
+  "tutte le selezioni: ogni eroe toccabile" su 360×640 e 390×844 + "nessuno scroll interno" (falliscono sulla
+  versione precedente, verificato). Schermi ≤ 380 px: layout compatto via media query.
 
 ## L'app (PWA) — come deve essere
 

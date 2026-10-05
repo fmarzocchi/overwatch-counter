@@ -156,7 +156,7 @@ export function recommendDuo(data, { players = [], ...ctx } = {}) {
 // Frasi brevi da mostrare sotto ogni suggerimento: i punti a favore più forti
 // e, se c'è, il matchup peggiore (in rosso).
 export function reasons(row, max = 3) {
-  const pct = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
+  const pct = (d) => (Math.abs(d) < 0.0005 ? "±0.0%" : `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`);
   const all = [];
   if (Math.abs(row.parts.base) >= 0.005) {
     all.push({ good: row.parts.base > 0, delta: row.parts.base, text: `${row.baseLabel} ${pct(row.parts.base)}` });
@@ -179,7 +179,7 @@ export function reasons(row, max = 3) {
   return out.map(({ good, text }) => ({ good, text }));
 }
 
-const pct = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
+const pct = (d) => (Math.abs(d) < 0.0005 ? "±0.0%" : `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`);
 
 // Riepilogo in 1–3 righe brevi per i consigli: vantaggio sulla mappa, contro la comp avversaria
 // (somma su tutti gli avversari segnati) e con gli alleati.
@@ -192,7 +192,7 @@ export function breakdown(row, partner = null) {
   const mate = row.withAllies.find(isPartner);
   if (others.length) out.push({ key: "allies", label: "Alleati", delta: others.reduce((s, a) => s + a.delta, 0) });
   if (mate) out.push({ key: "partner", label: `Con ${partner.name}`, delta: mate.delta });
-  return out.map((x) => ({ ...x, good: x.delta >= 0, text: `${x.label} ${pct(x.delta)}` }));
+  return out.map((x) => ({ ...x, good: x.delta > -0.0005, text: `${x.label} ${pct(x.delta)}` }));
 }
 
 // Tutti i perché, uno per riga: mappa, ogni avversario, ogni alleato, lato, preferito.

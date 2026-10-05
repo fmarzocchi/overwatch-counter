@@ -151,8 +151,10 @@ try {
     check(`scheda eroe: sezione «${t}» con eroi/mappe e percentuali`, await page.locator(".prof-sec", { hasText: t }).locator("li").count() > 0);
   }
   const firstList = await page.locator("#why-body .prof-sec").first().locator("li").count();
-  check("statistiche nella scheda: lista completa (più di 5), scorrevole", firstList > 5
-    && await page.locator("#why-body .prof-list").first().evaluate((x) => getComputedStyle(x).overflowY === "auto"), `${firstList} voci`);
+  const innerScroll = await page.evaluate(() => [...document.querySelectorAll("#why-body *")]
+    .filter((x) => ["auto", "scroll"].includes(getComputedStyle(x).overflowY) && x.scrollHeight > x.clientHeight + 1).length);
+  check("statistiche nella scheda: lista completa (più di 5) e nessuno scroll interno ai riquadri", firstList > 5 && innerScroll === 0,
+    `${firstList} voci, ${innerScroll} riquadri con scroll interno`);
   check("teoria nella scheda: stile Rush/Dive/Poke e tre riquadri «Teoria»", (await page.locator("#why-body .theory-style").count()) === 1
     && (await page.locator("#why-body .theory-sec").count()) === 3
     && (await page.locator("#why-body .theory-sec .theory-badge").count()) === 3);
@@ -248,6 +250,53 @@ try {
   await page.click("#refresh");
   await page.waitForFunction(() => !document.querySelector("#refresh").disabled);
   check("aggiorna senza token: spiega come attivarlo", (await text(page, "#toast")).includes("token"));
+
+  // ---------- tutte le selezioni fatte: ogni eroe resta toccabile (schermo piccolo e normale) ----------
+  for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }]) {
+    const { ctx: c7, page: p7 } = await newPage({ viewport: vp, serviceWorkers: "block" });
+    await p7.addInitScript(() => localStorage.setItem("owc.profile", JSON.stringify({ useTheory: true,
+      players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] })));
+    await p7.goto(BASE);
+    await p7.locator(".pick .sug.first .sug-name").first().waitFor();
+    const hb = (n) => p7.locator("#grid .hero", { has: p7.locator(".nm", { hasText: new RegExp(`^${n}$`) }) });
+    await p7.click("#map-btn");
+    await p7.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
+    await p7.click("#side [data-side=attack]");
+    for (const [g, names] of [["bans", ["Ana", "Kiriko", "Widowmaker", "Tracer"]], ["enemies", ["Reinhardt", "Genji", "Pharah", "Mercy", "Lúcio"]], ["allies", ["Winston", "Sojourn", "Baptiste", "Zarya", "Moira"]]]) {
+      await toTop(p7);
+      await p7.click(`#groups [data-group=${g}]`);
+      for (const n of names) await hb(n).click();
+    }
+    const res = await p7.evaluate(async () => {
+      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const bad = [];
+      let maxStack = 0;
+      const tabs = document.querySelector(".tabs").getBoundingClientRect().top;
+      for (const btn of document.querySelectorAll("#grid .hero")) {
+        // l'eroe appena sotto la barra fissa in alto: è lì che di solito lo si tocca dopo aver scorso
+        btn.scrollIntoView({ block: "start" });
+        await frame();
+        const stack = Math.max(document.querySelector("#mini").hidden ? 0 : document.querySelector("#mini").getBoundingClientRect().bottom,
+          document.querySelector(".groups").getBoundingClientRect().bottom);
+        maxStack = Math.max(maxStack, stack);
+        window.scrollBy(0, -(stack + 4));
+        await frame();
+        const r = btn.getBoundingClientRect();
+        const y = Math.min(r.top + r.height / 2, tabs - 4);
+        const el = document.elementFromPoint(r.left + r.width / 2, y);
+        if (!btn.contains(el)) bad.push(btn.querySelector(".nm").textContent);
+      }
+      return { bad, maxStack: Math.round(maxStack), tabs: Math.round(tabs) };
+    });
+    check(`${vp.width}×${vp.height}, tutte le selezioni: ogni eroe toccabile`, res.bad.length === 0, res.bad.join(", "));
+    check(`${vp.width}×${vp.height}: barra fissa in alto bassa (≤ 140 px)`, res.maxStack <= 140, `${res.maxStack}px`);
+    await p7.evaluate(() => window.scrollTo(0, 900));
+    await p7.waitForTimeout(100);
+    if (vp.height === 640) await shot(p7, "11-tutte-le-selezioni-scorso");
+    await toTop(p7);
+    if (vp.height === 640) await shot(p7, "11-tutte-le-selezioni-in-cima");
+    await c7.close();
+  }
 
   // ---------- dati riletti ogni 30 minuti, solo con l'app aperta (niente timer) ----------
   {

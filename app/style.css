@@ -48,9 +48,9 @@ a { color: var(--allies); }
 [hidden] { display: none !important; }
 
 /* ---------- consigli (fissi in alto) ---------- */
-/* fisso in alto con uno spazio riservato sotto: quando si scorre si compatta senza far saltare la pagina */
+/* il riquadro completo scorre con la pagina (non copre mai la griglia); quando esce dallo schermo
+   compare in alto la barra minima #mini con il n. 1 di ciascuno */
 .picks {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
   padding: calc(8px + env(safe-area-inset-top)) 8px 8px;
   background: var(--bg);
@@ -267,7 +267,7 @@ dialog::backdrop { background: rgb(0 0 0 / .6); }
 .theory-list .prof-hero > span { display: flex; flex-direction: column; min-width: 0; }
 .theory-list small { color: #d9cdf5; font-size: 12px; line-height: 1.3; }
 .prof-count { font-weight: 600; color: var(--muted); }
-.prof-list { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+/* liste complete e distese: niente scroll dentro i riquadri, si scorre solo la scheda */
 .theory-note { margin: 4px 16px; color: #e3d4ff; }
 .sources { margin: 6px 16px; font-size: 13px; color: var(--muted); }
 .sources a { color: var(--theory); word-break: break-all; }
@@ -279,14 +279,39 @@ dialog::backdrop { background: rgb(0 0 0 / .6); }
 .guide-sec ul { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.35; }
 #guide-body > p { margin: 8px 16px; }
 
-/* consigli compatti mentre si scorre la griglia: solo il n. 1 di ciascuno, nome e stima */
-.compact-picks .picks { padding-top: calc(4px + env(safe-area-inset-top)); padding-bottom: 4px; box-shadow: 0 4px 12px rgb(0 0 0 / .5); }
-.compact-picks .pick { padding: 4px 8px; gap: 2px; }
-.compact-picks .sug:not(.first), .compact-picks .sug-why, .compact-picks .sug-theory, .compact-picks .pick-note, .compact-picks .pick-rank { display: none; }
-.compact-picks .sug { min-height: 40px; padding: 2px; }
-.compact-picks .sug-face .face { width: 30px; height: 30px; }
-.compact-picks .role-btn { min-height: 28px; padding: 0 8px; font-size: 12px; }
 .theory-list .prof-hero { overflow: visible; }
 .theory-list .prof-hero b, .theory-list small { display: block; white-space: normal; overflow-wrap: anywhere; }
 .theory-list li > span:last-child { flex: 1 1 auto; min-width: 0; font-weight: 400; font-size: 13.5px; }
 .theory-list small { font-weight: 400; }
+
+/* barra minima in alto (solo quando il riquadro completo dei consigli è fuori schermo) */
+.mini {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 11; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  padding: calc(4px + env(safe-area-inset-top)) 8px 4px; background: var(--bg); border-bottom: 1px solid var(--line);
+  box-shadow: 0 4px 10px rgb(0 0 0 / .45);
+}
+.mini[hidden] { display: none; }
+.mini-pick {
+  display: flex; align-items: center; gap: 6px; min-height: 48px; padding: 3px 6px; text-align: left; min-width: 0;
+  border-radius: 10px; border: 1px solid #6b4a12; background: #2b2414;
+}
+.mini-pick .face { width: 34px; height: 34px; }
+.mini-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.mini-txt b { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-txt small { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+dialog { overscroll-behavior: contain; }
+
+/* schermi stretti (≤ 380 px): un po' più compatti, così nomi e perché non vengono troncati */
+@media (max-width: 380px) {
+  .picks { gap: 6px; padding-left: 6px; padding-right: 6px; }
+  .pick { padding: 5px 5px 6px; }
+  .sug { gap: 4px; padding-left: 0; padding-right: 2px; }
+  .sug-face .face { width: 28px; height: 28px; font-size: 11px; }
+  .sug-n { width: 15px; height: 15px; font-size: 10px; left: -4px; top: -4px; }
+  .sug-name, .sug.first .sug-name { font-size: 14px; }
+  .sug-est { font-size: 11px; margin-left: 2px; }
+  .sug-why, .sug-theory { font-size: 11.5px; }
+  .pick-player { font-size: 13px; }
+  .role-btn { padding: 2px 8px; font-size: 12px; }
+  .side button { padding: 0 6px; font-size: 15px; }
+}
