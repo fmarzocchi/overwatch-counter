@@ -144,6 +144,8 @@ try {
   await page.evaluate(() => document.querySelector("#why-body").scrollIntoView());
   await shot(page, "05c-scheda-eroe");
   await page.click("#why-dialog [data-close]");
+  check("senza alleati: niente riga «Alleati», la sinergia col compagno è «Con Giulia»",
+    !/Alleati [+−]/.test(await page.locator(".pick").nth(0).innerText()) && /Con Giulia [+−]/.test(await page.locator(".pick").nth(0).innerText()));
   await page.click("#groups [data-group=allies]");
   await heroBtn(page, "Lúcio").click();
   check("con alleati: riga Alleati nei perché", /Alleati [+−]\d/.test(await page.locator(".pick").nth(0).locator(".sug").first().innerText()));

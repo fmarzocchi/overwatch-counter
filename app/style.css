@@ -78,7 +78,7 @@ a { color: var(--allies); }
 .sug:not(.first) .sug-n { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
 .sug-body { min-width: 0; flex: 1; display: flex; flex-direction: column; }
 .sug-top { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
-.sug-name { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sug-name { flex: 1; min-width: 0; font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sug.first .sug-name { font-size: 16px; }
 .sug-est { font-size: 12px; color: var(--muted); flex: none; }
 .sug-why { font-size: 12px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

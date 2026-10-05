@@ -176,10 +176,15 @@ const pct = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
 
 // Riepilogo in 1–3 righe brevi per i consigli: vantaggio sulla mappa, contro la comp avversaria
 // (somma su tutti gli avversari segnati) e con gli alleati.
-export function breakdown(row) {
+// partner: {id, name} dell'altro giocatore, la cui sinergia viene mostrata a parte ("Con Lei").
+export function breakdown(row, partner = null) {
   const out = [{ key: "map", label: row.baseLabel === "generale" ? "Generale" : "Mappa", delta: row.parts.base }];
   if (row.vs.length) out.push({ key: "enemies", label: "Avversari", delta: row.parts.contro });
-  if (row.withAllies.length) out.push({ key: "allies", label: "Alleati", delta: row.parts.con });
+  const isPartner = (a) => partner && String(a.hero?.id) === String(partner.id);
+  const others = row.withAllies.filter((a) => !isPartner(a));
+  const mate = row.withAllies.find(isPartner);
+  if (others.length) out.push({ key: "allies", label: "Alleati", delta: others.reduce((s, a) => s + a.delta, 0) });
+  if (mate) out.push({ key: "partner", label: `Con ${partner.name}`, delta: mate.delta });
   return out.map((x) => ({ ...x, good: x.delta >= 0, text: `${x.label} ${pct(x.delta)}` }));
 }
 

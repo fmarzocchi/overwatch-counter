@@ -208,3 +208,12 @@ test("scheda eroe: forte contro, debole contro, mappe migliori, coppie migliori"
   close(prof.strongVs[0].delta, best, "il migliore è davvero il migliore");
   assert.ok(prof.bestMaps.every((x) => x.subject.slug) && prof.bestWith.every((x) => x.subject.name !== "Genji"));
 });
+
+test("perché: la sinergia col compagno è mostrata a parte, non come «Alleati»", () => {
+  const { lists, pair } = recommendDuo(data, { players: [{ role: "Damage" }, { role: "Support" }] });
+  const b = breakdown(lists[0][0], { id: pair.b.id, name: "Lei" });
+  assert.ok(!b.some((x) => x.key === "allies"), "nessun alleato segnato");
+  assert.ok(b.some((x) => x.key === "partner" && x.text.startsWith("Con Lei")));
+  const b2 = breakdown(recommend(data, { role: "Damage", allies: [id("Ana"), pair.b.id] })[0], { id: pair.b.id, name: "Lei" });
+  assert.ok(b2.some((x) => x.key === "allies") && b2.some((x) => x.key === "partner"));
+});

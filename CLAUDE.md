@@ -43,9 +43,18 @@ NON FATTO, deciso con l'utente: **perk (vantaggi) degli eroi** — counterwatch 
 pagina nella sitemap, nessuna menzione nella pagina eroe; diagnosi `tools/discover_perks.py`). L'utente ha
 detto di lasciar perdere se troppo difficile. Servirebbe un'altra fonte di statistiche sui perk.
 
+APK (FATTO, 2026-10-05): guscio **WebView** in Java (`android/`, nessuna dipendenza) che apre il sito di Pages:
+grafica/logica/dati si aggiornano dal sito, una nuova APK serve solo se cambia il guscio. Firmato con
+`android/debug.keystore` versionata (stessa firma → gli aggiornamenti si installano sopra). `android.yml` compila,
+prova sull'emulatore API 30 (`android/test-on-emulator.sh`: fallisce se l'app si chiude o se nel log ci sono
+"Uncaught" JS), pubblica l'APK nel ramo `apk` e screenshot/log nel ramo `apk-test`; gira anche dopo ogni
+pubblicazione del sito dovuta a un push (workflow_run). Lezione: la WebView di API 30 è Chrome 83 →
+niente ES2021 (`??=`) né API recenti; `ci.yml` controlla la sintassi con `es-check es2020`, `replaceChildren`
+ha un sostituto in `app.js`.
+
 DA FARE:
-1. Verificare su GitHub che il giro reale dica "OK [Ranked]".
-2. **Guscio APK** + `.github/workflows/android.yml` (vedi sotto).
+1. (nulla di aperto)
+2.
 3. Scheda eroe (tocco su un consiglio): perché in questa partita + "Forte contro", "In difficoltà contro",
    "Mappe migliori", "Funziona bene con" (`heroProfile()`), sui dati della divisione del giocatore. FATTO.
 

@@ -288,6 +288,8 @@ function renderPicks() {
       return;
     }
     const note = lastDuo.notes?.[i];
+    const mateHero = lastDuo.pair ? (i === 0 ? lastDuo.pair.b : lastDuo.pair.a) : null;
+    const partner = mateHero ? { id: mateHero.id, name: profile.players[1 - i].name } : null;
     box.append(el("article", { class: "pick", "aria-label": `Consigli per ${p.name}` },
       head,
       profile.onlyFavorites && !note ? el("div", { class: "pick-note" }, "★ solo preferiti") : null,
@@ -296,13 +298,13 @@ function renderPicks() {
         el("li", {},
           el("button", {
             type: "button", class: `sug${k === 0 ? " first" : ""}`,
-            "aria-label": `${k + 1}°: ${r.hero.name}, stima ${est(r)}, ${breakdown(r).map((b) => b.text).join(", ")}. Tocca per i dettagli`,
+            "aria-label": `${k + 1}°: ${r.hero.name}, stima ${est(r)}, ${breakdown(r, partner).map((b) => b.text).join(", ")}. Tocca per i dettagli`,
             onclick: () => openDetails(i, r),
           },
           el("span", { class: "sug-face" }, face(r.hero), el("span", { class: "sug-n", "aria-hidden": "true" }, String(k + 1))),
           el("span", { class: "sug-body" },
             el("span", { class: "sug-top" }, el("span", { class: "sug-name" }, r.hero.name), el("span", { class: "sug-est" }, est(r))),
-            breakdown(r).map((b) => el("span", { class: `sug-why ${b.good ? "good" : "bad"}` }, b.text))),
+            breakdown(r, partner).map((b) => el("span", { class: `sug-why ${b.good ? "good" : "bad"}` }, b.text))),
           )))),
     ));
   });
