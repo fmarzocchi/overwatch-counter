@@ -332,3 +332,9 @@ dialog { overscroll-behavior: contain; }
 .hero .nm { font-size: 10px; overflow-wrap: break-word; word-break: normal; hyphens: auto; -webkit-hyphens: auto; }
 .hero .nm.long { font-size: 9px; letter-spacing: -0.1px; }
 .hero { padding-left: 1px; padding-right: 1px; }
+
+/* riepilogo della partita in testa a "Come giocarla" */
+.guide-summary { border: 2px solid var(--accent); background: #261f12; }
+.guide-summary h3 { color: var(--accent); }
+.guide-summary ul { font-size: 15.5px; }
+.stale-note { margin: 6px 12px; padding: 8px 10px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-text); font-size: 13.5px; }

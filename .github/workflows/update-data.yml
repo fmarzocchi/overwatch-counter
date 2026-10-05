@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  issues: write # segnalazione automatica quando una patch cambia eroi
   pages: write
   id-token: write
   actions: write # solo per tenere acceso il cron (vedi ultimo passo)
@@ -84,6 +85,27 @@ jobs:
       - name: Icone degli eroi
         if: steps.check.outputs.run == 'true'
         run: python3 tools/fetch_icons.py
+
+      # Ultima patch Blizzard: se è nuova e cita eroi, l'app segnala "teoria da rivedere" e si apre una
+      # segnalazione nel repository (arriva la mail) per aggiornare app/theory.json di quegli eroi.
+      - name: Note patch Blizzard
+        if: steps.check.outputs.run == 'true'
+        id: patch
+        run: |
+          site="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          curl -fsSL "$site/patches.json?t=$(date +%s)" -o prev_patches.json || echo '{}' > prev_patches.json
+          python3 tools/check_patches.py --prev prev_patches.json --out app/patches.json
+
+      - name: Segnalazione "teoria da rivedere"
+        if: steps.patch.outputs.new == 'true' && steps.patch.outputs.heroes != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Patch Overwatch del ${{ steps.patch.outputs.date }}: rivedere la teoria"
+          if ! gh issue list --repo "${{ github.repository }}" --state all --search "$title in:title" --json title -q '.[].title' | grep -qF "$title"; then
+            gh issue create --repo "${{ github.repository }}" --title "$title" \
+              --body "Eroi citati nelle note della patch: ${{ steps.patch.outputs.heroes }}. L'app mostra «Teoria da rivedere» per loro. Chiedi a Claude di aggiornare app/theory.json per questi eroi." || true
+          fi
 
       - uses: actions/configure-pages@v5
         if: steps.check.outputs.run == 'true'

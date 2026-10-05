@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, THEORY_WEIGHT,
+  dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT,
 } from "../app/theory.js";
 import { recommend, recommendDuo, details } from "../app/recommend.js";
 
@@ -94,4 +94,66 @@ test("come giocarla: bersagli, attenzione, proteggi, posizione, mappa e lato", (
   // senza nulla segnato: invito a segnare mappa e avversari
   const empty = playGuide(data, {}, { hero: hero("Mei") });
   assert.match(empty.sections[0].items[0].text, /Segna mappa e avversari/);
+});
+
+// abilità e mappe di prova (quelle vere arrivano dalla ricerca in theory.json)
+const RAW2 = {
+  ...RAW,
+  _researched: "2026-10-05",
+  _maps: {
+    ilios: { features: ["env-kills", "close-quarters"], envKills: "il pozzo al centro", tips: ["Controlla il pozzo"] },
+    "kings-row": { features: ["chokepoints", "high-ground"], attack: "Sfondate la prima strettoia insieme", defense: "Tenete il primo punto dall'alto" },
+  },
+  "Junker Queen": {
+    ...RAW["Junker Queen"], role: "Tank",
+    abilities: [
+      { name: "Jagged Blade", it: "lama", tags: ["hook"], use: "Tira a te un bersaglio fragile", when: "quando è lontano dai compagni", targets: ["Zenyatta", "Ana"] },
+      { name: "Commanding Shout", it: "grido", tags: ["speed"], use: "Velocità e salute alla squadra", saveFor: [{ hero: "Ana", why: "per salvarti dall'anti-nade" }] },
+      { name: "Rampage", it: "ultimate", ult: true, tags: ["anti-heal"], use: "Ferite che bloccano le cure", avoidOn: [{ hero: "Kiriko", why: "Suzu la annulla" }] },
+    ],
+    priority: { ability: "Commanding Shout", why: "decide se sopravvivi negli scontri ravvicinati" },
+    mapFeatures: { likes: ["close-quarters"], dislikes: ["long-sightlines"], why: "devi arrivare addosso" },
+  },
+  Kiriko: { role: "Support" },
+};
+const T2 = buildTheory(data, RAW2, { latest: { date: "2026-10-20", heroes: ["Cassidy"] } });
+
+test("come giocarla: abilità su chi, quando, cosa tenere e cosa non sprecare", () => {
+  const g = playGuide(data, T2, { hero: hero("Junker Queen"), mapSlug: "ilios", enemies: [id("Zenyatta"), id("Ana"), id("Kiriko")] });
+  const ab = g.sections.find((s) => s.title === "Abilità").items.map((i) => i.text).join(" | ");
+  assert.match(ab, /Jagged Blade \(lama\): usala su Zenyatta e Ana/);
+  assert.match(ab, /Tieni Commanding Shout per Ana: per salvarti dall'anti-nade/);
+  assert.match(ab, /Non sprecare Rampage su Kiriko: Suzu la annulla/);
+  assert.match(ab, /Abilità chiave: Commanding Shout/);
+  assert.match(ab, /Su Ilios usa Jagged Blade per spingere nei baratri \(il pozzo al centro\)/);
+  const mp = g.sections.find((s) => s.title.startsWith("Mappa")).items.map((i) => i.text).join(" | ");
+  assert.match(mp, /La mappa ti favorisce: spazi stretti/);
+  assert.match(mp, /Controlla il pozzo/);
+});
+
+test("come giocarla: riepilogo «In breve» in testa con bersagli, abilità, mappa e cambio eroe", () => {
+  const ctx = { mapSlug: "kings-row", side: "defense", enemies: [id("Zenyatta"), id("Ana"), id("Kiriko"), id("Mei")] };
+  const rows = recommend(data, { role: "Tank", ...ctx, theory: T2 });
+  const g = playGuide(data, T2, { hero: hero("Junker Queen"), ...ctx, rows });
+  assert.equal(g.sections[0].title, "In breve");
+  const brief = g.sections[0].items.map((i) => i.text).join(" | ");
+  assert.match(brief, /Punta a/);
+  assert.match(brief, /Usa Jagged Blade su Zenyatta e Ana|Tieni Commanding Shout per Ana/);
+  assert.match(brief, /La mappa ti sfavorisce|King's Row/);
+  // Ana, Kiriko e Mei la battono in teoria (Ana nei dati di prova + Kiriko/Mei se presenti): cambio eroe consigliato
+  const sw = g.sections.find((s) => s.title === "Cambio eroe");
+  assert.ok(sw && /Se la partita va male, passa a /.test(sw.items[0].text), JSON.stringify(sw));
+  assert.ok(!sw.items[0].text.includes("passa a Junker Queen"));
+  assert.match(brief, /Se la partita va male, passa a/);
+  assert.match(g.sections.find((s) => s.title.startsWith("Mappa")).items.map((i) => i.text).join(" "), /King's Row, difesa: Tenete il primo punto dall'alto/);
+});
+
+test("teoria che invecchia: cambio di ruolo, patch successiva, eroe senza teoria", () => {
+  const sombra = { ...hero("Sombra"), role: "Support" };
+  const T3 = buildTheory({ ...data, heroes: data.heroes.map((h) => (h.name === "Sombra" ? sombra : h)) },
+    { ...RAW2, Sombra: { role: "Damage" } }, { latest: { date: "2026-10-20", heroes: ["Junker Queen"] } });
+  assert.match(theoryStatus(T3, sombra).reasons.join(), /ha cambiato ruolo \(ora Supporto\)/);
+  assert.match(theoryStatus(T3, hero("Junker Queen")).reasons.join(), /modificato nella patch del 2026-10-20/);
+  assert.equal(theoryStatus(T3, hero("Kiriko")).stale, false);
+  assert.match(theoryStatus(T3, hero("Mei")).reasons.join(), /senza teoria/);
 });

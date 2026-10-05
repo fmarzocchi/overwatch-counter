@@ -1,5 +1,5 @@
 import { recommendDuo, breakdown, details, hasSides, withDivision, heroProfile } from "./recommend.js";
-import { buildTheory, heroTheory, playGuide, STYLE_IT, STYLE_DESC } from "./theory.js";
+import { buildTheory, heroTheory, playGuide, theoryStatus, STYLE_IT, STYLE_DESC } from "./theory.js";
 
 // WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
 if (!Element.prototype.replaceChildren) {
@@ -65,6 +65,7 @@ let match = store.get("owc.match", null) ?? emptyMatch();
 let lastDuo = null;
 let theoryRaw = {}; // app/theory.json: sinergie, counter e modo di giocare raccolti da fonti di Overwatch
 let T = null; // teoria pronta all'uso (resa simmetrica, con i nomi dei dati attuali)
+let patches = null; // app/patches.json: ultima patch Blizzard (per capire quando la teoria è vecchia)
 const divFiles = {}; // chiave divisione → contenuto del file (o null se non disponibile)
 const divData = {}; // chiave divisione → dati generali uniti a quelli della divisione
 
@@ -139,7 +140,7 @@ async function loadData() {
     const heroSig = (x) => (x ? x.heroes.map((h) => `${h.id}:${h.role}:${h.name}`).join("|") : "");
     if (heroSig(d) !== heroSig(data)) $("#grid").replaceChildren();
     data = d;
-    T = buildTheory(data, theoryRaw);
+    T = buildTheory(data, theoryRaw, patches);
     byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
     for (const k of Object.keys(divData)) delete divData[k];
     for (const k of Object.keys(divFiles)) delete divFiles[k];
@@ -258,6 +259,11 @@ function profileSection(title, items, kind) {
 }
 
 const theoryBadge = () => el("span", { class: "theory-badge" }, "Teoria");
+function staleBanner(hero) {
+  const st = theoryStatus(T, hero);
+  return st.stale ? el("p", { class: "stale-note" }, `⚠ Teoria da rivedere per ${hero.name}: ${st.reasons.join("; ")}. `
+    + "Le statistiche sono aggiornate; i consigli di teoria potrebbero non valere più.") : null;
+}
 
 function theorySection(title, items) {
   return el("section", { class: "prof-sec theory-sec" },
@@ -297,6 +303,7 @@ function openDetails(i, row) {
       profileSection("Mappe migliori", prof.bestMaps, "map"),
       profileSection("Funziona bene con", prof.bestWith, "hero")),
     el("h3", { class: "why-title theory-title" }, theoryBadge(), " Come si incastra (guide e siti di Overwatch)"),
+    staleBanner(row.hero),
     th.style ? el("p", { class: "theory-style" },
       el("b", {}, `Stile ${STYLE_IT[th.style]}`), `: ${STYLE_DESC[th.style]} (classificazione di counterwatch).`) : null,
     el("div", { class: "prof-grid theory-grid" },
@@ -318,6 +325,7 @@ function openGuide(i, hero) {
   const g = playGuide(playerData(i), T, {
     hero, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies: match.allies,
     partner: partnerHero(i) && partnerHero(i).id !== hero.id ? partnerHero(i) : null,
+    rows: lastDuo?.lists?.[i] ?? null,
   });
   $("#t-guide").textContent = `Come giocare ${hero.name}`;
   $("#guide-body").replaceChildren(
@@ -325,8 +333,9 @@ function openGuide(i, hero) {
       el("div", {}, el("div", { class: "pick-name" }, hero.name),
         el("div", { class: "muted small" }, `${profile.players[i].name} · ${currentMap()?.name ?? "nessuna mappa"}` +
           `${match.side ? ` · ${match.side === "attack" ? "attacco" : "difesa"}` : ""} · ${match.enemies.length} avversari`))),
-    ...g.sections.map((sec) => el("section", { class: "guide-sec" },
-      el("h3", {}, sec.title),
+    staleBanner(hero),
+    ...g.sections.map((sec) => el("section", { class: `guide-sec${sec.summary ? " guide-summary" : ""}` },
+      el("h3", {}, sec.summary ? "📋 In breve: come giocare questa partita" : sec.title),
       el("ul", {}, sec.items.map((it) => el("li", {},
         el("span", { class: it.kind === "teoria" ? "theory-badge" : "data-badge" }, it.kind === "teoria" ? "Teoria" : "Dati"), " ", it.text))))),
     g.uncertain ? el("p", { class: "muted small theory-note" }, "Per questo eroe le fonti sono poche: i consigli di teoria sono parziali.") : null,
@@ -757,6 +766,10 @@ async function start() {
     const r = await fetch("theory.json");
     if (r.ok) theoryRaw = await r.json();
   } catch { /* senza teoria: restano gli stili Rush/Dive/Poke dei dati */ }
+  try {
+    const r = await fetch(`patches.json?t=${Date.now()}`);
+    if (r.ok) patches = await r.json();
+  } catch { /* facoltativo */ }
   const ok = await loadData();
   if (ok) saveMatch();
   render();

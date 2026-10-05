@@ -244,6 +244,16 @@ f2 = json.loads((tmp / "div" / "out2.json").read_text()) if (tmp / "div" / "out2
 check("dati nuovi: divisioni riscaricate anche se fresche", pr.returncode == 0
       and f2.get("divisions", {}).get("gold", {}).get("checked") != idx["gold"]["checked"], pr.stdout + pr.stderr)
 
+# 16. note patch Blizzard: data e eroi della patch più recente (per capire quando la teoria è vecchia)
+import check_patches as cp
+fake = """<html><body><div class="PatchNotes-patch"><h3>Overwatch Retail Patch Notes &ndash; October 14, 2026</h3>
+<p>Hero Updates</p><h4>Sombra</h4><p>Hack cooldown reduced.</p><h4>Junker Queen</h4><p>Rampage changes.</p>
+<p>Soldier: 76 sprint speed.</p></div><div class="PatchNotes-patch"><h3>Overwatch Retail Patch Notes &ndash; September 30, 2026</h3>
+<h4>Ana</h4><p>Sleep Dart.</p></div><script>var x = "Mercy";</script></body></html>"""
+lp = cp.latest_patch(fake, [h["name"] for h in d["heroes"]])
+check("note patch: data e solo gli eroi dell'ultima patch", lp == {"date": "2026-10-14", "heroes": ["Junker Queen", "Soldier: 76", "Sombra"]}, str(lp))
+check("note patch: pagina irriconoscibile → nessun dato (si tengono i precedenti)", cp.latest_patch("<html>niente</html>", ["Ana"]) is None)
+
 # 12. chiave e indirizzo letti dal JS del sito (mai scritti nel codice)
 sys.path.insert(0, str(ROOT / "tools"))
 import fetch_data as fd
