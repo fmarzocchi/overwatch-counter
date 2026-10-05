@@ -57,7 +57,9 @@ const text = (page, sel) => page.locator(sel).innerText();
 const heroBtn = (page, name) => page.locator("#grid .hero", { has: page.locator(".nm", { hasText: new RegExp(`^${name}$`) }) });
 // in cima alla pagina il riquadro dei consigli è completo (scorrendo si compatta)
 const toTop = async (page) => { await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(50); };
-const pickNames = (page) => page.locator(".pick .sug.first .sug-name").allInnerTexts();
+const pickNames = (page) => page.locator(".pick .pick-name").allInnerTexts();
+const heroId = (name) => String(data.heroes.find((h) => h.name === name).id);
+const matchState = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("owc.match")));
 
 try {
   for (let i = 0; i < 50; i++) { try { await fetch(BASE); break; } catch { await new Promise((r) => setTimeout(r, 100)); } }
@@ -66,7 +68,7 @@ try {
   const { ctx, page } = await newPage();
   lastPage = page;
   await page.goto(BASE);
-  await page.locator(".pick .sug.first .sug-name").first().waitFor();
+  await page.locator(".pick .pick-name").first().waitFor();
   await toTop(page);
   check("primo avvio: due consigli (Io e Lei)", (await page.locator(".pick").count()) === 2
     && (await text(page, ".picks")).includes("Io") && (await text(page, ".picks")).includes("Lei"));
@@ -120,7 +122,9 @@ try {
   check("consigli senza eroi bannati", !afterBans.includes("Ana") && !afterBans.includes("Kiriko"), afterBans.join());
   check("consigli: Fabio e Giulia hanno eroi diversi", afterBans[0] !== afterBans[1], afterBans.join());
   await toTop(page);
-  check("motivo mappa nei consigli", /Mappa [+−]\d/.test(await text(page, ".picks")));
+  const cardNums = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => (c.innerText.match(/\d+[.,]\d%/g) ?? []).length));
+  check("prima degli avversari: un motivo in parole («Forte su King's Row») e un solo numero per riquadro (la stima)",
+    (await page.locator(".pick .pick-why", { hasText: "King's Row" }).count()) >= 1 && cardNums.every((k) => k === 1), JSON.stringify(cardNums));
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "05-inizio-partita");
 
@@ -129,21 +133,29 @@ try {
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
   check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
   await toTop(page);
-  check("motivi 'Avversari' nei consigli", /Avversari [+−]\d/.test(await text(page, ".picks")), await text(page, ".picks"));
-  check("pulsanti «Come giocare» per i due eroi consigliati", (await page.locator("#guides .guide-btn").count()) === 2);
+  const mus = await page.locator(".pick .mu-grp").evaluateAll((gs) => gs.map((g) => g.getAttribute("aria-label")));
+  check("con avversari: «Batte»/«Teme» con i volti dei soli avversari segnati", mus.length >= 1 && mus.every((l) =>
+    /^(Batte|Teme) /.test(l) && l.replace(/^(Batte|Teme) /, "").split(", ").every((n) => ["Pharah", "Winston", "Reinhardt"].includes(n))), JSON.stringify(mus));
+  const nums2 = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => (c.innerText.match(/\d+[.,]\d%/g) ?? []).length));
+  check("con avversari: sempre un solo numero per riquadro (i dettagli sono a un tocco)", nums2.every((k) => k === 1), JSON.stringify(nums2));
+  check("ogni riquadro: l'eroe è il pulsante «Come giocarla»", (await page.locator(".pick .pick-main").count()) === 2
+    && (await page.locator(".pick .pick-cta").first().innerText()).includes("Come giocarla"));
   await toTop(page);
-  check("3 consigli per giocatore, in ordine", (await page.locator(".pick").nth(0).locator(".sug").count()) === 3
-    && (await page.locator(".pick").nth(1).locator(".sug").count()) === 3
-    && (await page.locator(".pick").nth(0).locator(".sug-n").allInnerTexts()).join() === "1,2,3");
-  const order = await page.evaluate(() => [...document.querySelectorAll(".pick")].map((p) =>
-    [...p.querySelectorAll(".sug-est")].map((e) => parseFloat(e.textContent))));
-  check("ordinati dal migliore (stima non crescente, salvo bonus preferiti)", order.every((l) => l.length === 3), JSON.stringify(order));
+  const cards = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => ({
+    alts: c.querySelectorAll(".alt:not(.alt-other)").length,
+    est: [c.querySelector(".pick-main"), ...c.querySelectorAll(".alt:not(.alt-other)")].map((b) => parseFloat(b.getAttribute("aria-label").match(/stima (\d+\.\d)%/)[1])),
+  })));
+  check("3 consigli per giocatore: uno grande e 2 alternative piccole", cards.every((c) => c.alts === 2), JSON.stringify(cards));
+  check("ordinati dal migliore (stima non crescente, salvo bonus preferiti)", cards.every((c) => c.est.every((v, k) => !k || v <= c.est[k - 1] + 1.01)), JSON.stringify(cards));
   await toTop(page);
-  const why = await page.locator(".pick").nth(0).locator(".sug").first().innerText();
-  check("perché: vantaggio su mappa e su comp avversaria", /Mappa [+−]\d/.test(why) && /Avversari [+−]\d/.test(why), why);
-  await toTop(page);
-  await page.locator(".pick").nth(0).locator(".sug").nth(1).click();
+  const altName = await page.locator(".pick").nth(0).locator(".alt .alt-nm").first().innerText();
+  await page.locator(".pick").nth(0).locator(".alt").first().click();
+  await page.locator("#guide-dialog[open]").waitFor();
+  check("tocco su un'alternativa: «Come giocarla» di quell'eroe", (await text(page, "#t-guide")).includes(altName), await text(page, "#t-guide"));
+  await page.click("#guide-body .why-btn");
+  await page.locator("#why-dialog[open]").waitFor();
   const det = await text(page, "#why-body");
+  check("«Perché»: riepilogo mappa e comp avversaria (i numeri tolti dal riquadro)", /Mappa [+−]\d/.test(det) && /Avversari [+−]\d/.test(det), det.slice(0, 300));
   check("tocco su un consiglio: dettaglio per ogni avversario", ["contro Pharah", "contro Winston", "contro Reinhardt", "King's Row"].every((t) => det.includes(t)), det);
   await shot(page, "05b-perche");
   check("scheda eroe di Fabio (senza rank): dati Ranked di tutte le divisioni", det.includes("Ranked, tutte le divisioni"), det);
@@ -167,27 +179,48 @@ try {
   await shot(page, "05d-teoria");
   await page.click("#why-body .guide-btn");
   await page.locator("#guide-dialog[open]").waitFor();
+  const guideShort = await text(page, "#guide-body");
+  const briefRows = await page.locator("#guide-body .brief-row").count();
+  check("come giocarla: in testa «In breve» (al massimo 7 righe), il resto chiuso", briefRows >= 3 && briefRows <= 7
+    && !(await page.locator("#guide-body .guide-more").evaluate((d) => d.open)) && !guideShort.includes("Come muoverti")
+    && !(await page.locator("#why-dialog").evaluate((d) => d.open)), `${briefRows} righe`);
+  check("come giocarla: i bersagli con i volti", (await page.locator("#guide-body .brief-row.k-target .hchip").count()) >= 1);
+  await shot(page, "05e-come-giocarla");
+  await page.click("#guide-body .guide-more > summary");
   const guide = await text(page, "#guide-body");
-  check("come giocarla: scheda con sezioni per questa partita (mappa, lato, come muoverti)",
+  check("come giocarla: «Tutti i consigli» apre le sezioni (mappa, lato, come muoverti)",
     guide.includes("Mappa: King's Row") && guide.includes("Come muoverti")
     && (await page.locator("#guide-body .guide-sec").count()) >= 3 && (await page.locator("#guide-body .theory-badge").count()) > 0, guide.slice(0, 400));
-  await shot(page, "05e-come-giocarla");
+
   check("schede senza testi «null»/«undefined»", !/\b(null|undefined|NaN)\b/.test(guide + det), (guide + det).match(/.{0,40}\b(null|undefined|NaN)\b.{0,20}/)?.[0]);
   await page.click("#guide-dialog [data-close]");
-  await page.click("#why-dialog [data-close]");
   await toTop(page);
-  await page.locator(".pick").nth(1).locator(".sug").first().click();
-  const detG = await text(page, "#why-body");
+  // dettaglio di un eroe: riquadro → Come giocarla → Perché
+  const openWhy = async (k) => {
+    await toTop(page);
+    await page.locator(".pick").nth(k).locator(".pick-main").click();
+    await page.locator("#guide-dialog[open]").waitFor();
+    await page.click("#guide-body .why-btn");
+    await page.locator("#why-dialog[open]").waitFor();
+    return text(page, "#why-body");
+  };
+  const closeAll = async () => {
+    for (const d of ["#why-dialog", "#guide-dialog"]) if (await page.locator(d).evaluate((x) => x.open)) await page.click(`${d} [data-close]`);
+  };
+  const detG = await openWhy(1);
   check("scheda eroe di Giulia (rank Oro): usa i dati della divisione", detG.includes("dati: Ranked Oro"), detG);
   await page.evaluate(() => document.querySelector("#why-body").scrollIntoView());
   await shot(page, "05c-scheda-eroe");
-  await page.click("#why-dialog [data-close]");
-  check("senza alleati: niente riga «Alleati», la sinergia col compagno è «Con Giulia»",
-    !/Alleati [+−]/.test(await page.locator(".pick").nth(0).innerText()) && /Con Giulia [+−]/.test(await page.locator(".pick").nth(0).innerText()));
+  await closeAll();
+  const sumF = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
+  await closeAll();
+  check("senza alleati: niente riga «Alleati», la sinergia col compagno è «Con Giulia»", !/Alleati [+−]/.test(sumF) && /Con Giulia [+−]/.test(sumF), sumF);
   await page.click("#groups [data-group=allies]");
   await heroBtn(page, "Lúcio").click();
   await toTop(page);
-  check("con alleati: riga Alleati nei perché", /Alleati [+−]\d/.test(await page.locator(".pick").nth(0).locator(".sug").first().innerText()));
+  const sumA = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
+  await closeAll();
+  check("con alleati: riga Alleati nei perché", /Alleati [+−]\d/.test(sumA), sumA);
   await toTop(page);
   const picks = await pickNames(page);
   check("alleato non consigliato", !picks.includes("Lúcio"), picks.join());
@@ -220,12 +253,12 @@ try {
   await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
   await page.click(".tabs [data-view=match]");
   await toTop(page);
-  const giulia = await page.locator(".pick").nth(1).locator(".sug-name").allInnerTexts();
+  const giulia = await page.locator(".pick").nth(1).locator(".pick-name, .alt:not(.alt-other) .alt-nm").allInnerTexts();
   check("solo preferiti: Giulia vede solo Mercy/Juno (Mercy è alleata → solo Juno)", giulia.join() === "Juno", giulia.join());
   await toTop(page);
   const fabio = await page.locator(".pick").nth(0).innerText();
   check("solo preferiti: Fabio senza preferiti → tutti, con avviso", fabio.includes("nessun preferito disponibile")
-    && (await page.locator(".pick").nth(0).locator(".sug").count()) === 3, fabio);
+    && (await page.locator(".pick").nth(0).locator(".alt:not(.alt-other)").count()) === 2, fabio);
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "06b-solo-preferiti");
   await page.click(".tabs [data-view=profile]");
@@ -239,13 +272,17 @@ try {
 
   // ---------- memoria e nuova partita ----------
   await page.reload();
-  await page.locator(".pick .sug.first .sug-name").first().waitFor();
+  await page.locator(".pick .pick-name").first().waitFor();
   check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "4"
     && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes("Ilios"));
   await page.click("#new-match");
   check("nuova partita: azzera tutto tranne il profilo", (await text(page, "[data-count=enemies]")) === "0"
     && (await text(page, "[data-count=bans]")) === "0" && (await text(page, "#map-name")).includes("nessuna")
     && (await text(page, ".picks")).includes("Giulia"));
+  await page.click("#toast .toast-btn");
+  check("nuova partita: «Annulla» nel messaggio ripristina la partita", (await text(page, "[data-count=enemies]")) === "4"
+    && (await text(page, "#map-name")).includes("Ilios"));
+  await page.click("#new-match");
 
   // ---------- aggiorna senza token ----------
   await page.click("#refresh");
@@ -261,8 +298,30 @@ try {
     await p7.addInitScript(() => localStorage.setItem("owc.profile", JSON.stringify({ useTheory: true,
       players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] })));
     await p7.goto(BASE);
-    await p7.locator(".pick .sug.first .sug-name").first().waitFor();
+    await p7.locator(".pick .pick-name").first().waitFor();
     const hb = (n) => p7.locator("#grid .hero", { has: p7.locator(".nm", { hasText: new RegExp(`^${n}$`) }) });
+    // ogni nome dei 53 eroi, nel posto del consiglio e in quello delle alternative: mai spezzato a metà parola
+    const slots = await p7.evaluate(() => {
+      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
+      const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
+      const broken = [];
+      for (const sel of [".pick .pick-name", ".pick .alt:not(.alt-other) .alt-nm"]) {
+        const orig = document.querySelector(sel);
+        if (!orig) { broken.push(`${sel} assente`); continue; }
+        const clone = orig.cloneNode(false);
+        orig.after(clone);
+        orig.style.display = "none";
+        for (const n of names) {
+          clone.textContent = n;
+          window.owcFitText(clone);
+          if (lines(clone) > n.split(/\s+/).length || clone.scrollWidth > clone.parentElement.clientWidth + 1) broken.push(`${n} (${sel.includes("alt") ? "alternativa" : "consiglio"})`);
+        }
+        clone.remove();
+        orig.style.display = "";
+      }
+      return broken;
+    });
+    if (vp.name || vp.width >= 390) check(`${label}: nei riquadri nessun nome spezzato (53 eroi, consiglio e alternative)`, slots.length === 0, slots.join(", "));
     await p7.click("#map-btn");
     await p7.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await p7.click("#side [data-side=attack]");
@@ -271,10 +330,12 @@ try {
       await p7.click(`#groups [data-group=${g}]`);
       for (const n of names) await hb(n).click();
     }
-    // e gli eroi presi da Fabio e Giulia (in 5: 3 alleati + i due giocatori)
+    // e gli eroi presi da Fabio e Giulia (in 5: 3 alleati + i due giocatori), con «Altro» nei loro riquadri
     await toTop(p7);
-    await p7.locator("#pickers .picker").nth(0).click();
+    await p7.locator(".pick").nth(0).locator(".alt-other").click();
     await hb("Cassidy").click();
+    await toTop(p7);
+    await p7.locator(".pick").nth(1).locator(".alt-other").click();
     await hb("Moira").click();
     await p7.waitForTimeout(2600); // il messaggio in basso sparisce
     const res = await p7.evaluate(async () => {
@@ -304,23 +365,13 @@ try {
     const fit = await p7.evaluate(async () => {
       window.scrollTo(0, 0);
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const nameEl = document.querySelector(".pick .sug:not(.first) .sug-name");
-      const top = nameEl.parentElement;
-      const est = top.querySelector(".sug-est"); // se la stima è sulla stessa riga del nome, toglie spazio
-      const avail = top.getBoundingClientRect().width - (est ? est.getBoundingClientRect().width + 6 : 0);
-      const ctx2 = document.createElement("canvas").getContext("2d");
-      const cs = getComputedStyle(nameEl);
-      ctx2.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
-      const tooLong = names.filter((n) => ctx2.measureText(n).width > avail);
       const gridCut = [...document.querySelectorAll("#grid .hero .nm")].filter((x) => x.scrollHeight > x.clientHeight + 1 || x.scrollWidth > x.clientWidth + 1).map((x) => x.textContent);
       // nome spezzato a metà parola (es. "Widowmake/r"): più righe che parole
       const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
       for (const x of document.querySelectorAll("#grid .hero .nm")) if (lines(x) > x.textContent.split(/\s+/).length) gridCut.push(`${x.textContent} (spezzato)`);
-      return { tooLong, gridCut, overflow: document.documentElement.scrollWidth - window.innerWidth, avail: Math.round(avail) };
+      return { gridCut, overflow: document.documentElement.scrollWidth - window.innerWidth };
     });
     if (vp.name || vp.width >= 390) {
-      check(`${label}: nessun nome troncato nei consigli`, fit.tooLong.length === 0, `spazio ${fit.avail}px, troncati: ${fit.tooLong.join(", ")}`);
       check(`${label}: nomi nella griglia interi`, fit.gridCut.length === 0, fit.gridCut.join(", "));
     }
     check(`${label}: niente scorrimento orizzontale`, fit.overflow <= 0, `${fit.overflow}px`);
@@ -368,7 +419,7 @@ try {
         const players = QUEUE.slice(0, n).map(([name, role]) => ({ name, rank: "", roles: [role], favorites: [] }));
         await p9.addInitScript((pl) => localStorage.setItem("owc.profile", JSON.stringify({ players: pl })), players);
         await p9.goto(BASE);
-        await p9.locator(".pick .sug.first .sug-name").first().waitFor();
+        await p9.locator(".pick .pick-name").first().waitFor();
         const hb = (name) => p9.locator("#grid .hero", { has: p9.locator(".nm", { hasText: new RegExp(`^${name.replace(/[.:]/g, "\\$&")}$`) }) });
         await p9.click("#map-btn");
         await p9.locator("#map-list .map-opt", { hasText: "Ilios" }).click();
@@ -378,15 +429,13 @@ try {
 
         const st = await p9.evaluate(() => ({
           cards: document.querySelectorAll("#picks .pick").length,
-          pickers: document.querySelectorAll("#pickers .picker").length,
-          guides: document.querySelectorAll("#guides .guide-btn").length,
-          firsts: [...document.querySelectorAll(".pick .sug.first .sug-name")].map((x) => x.textContent),
+          mains: document.querySelectorAll("#picks .pick-main").length,
+          firsts: [...document.querySelectorAll(".pick .pick-name")].map((x) => x.textContent),
           colors: [...document.querySelectorAll("#picks .pick")].map((x) => getComputedStyle(x).borderTopColor),
           recs: [...document.querySelectorAll("#grid .hero.rec")].map((b) => [b.querySelector(".nm").textContent, getComputedStyle(b).outlineColor]),
           alliesHidden: document.querySelector("#groups [data-group=allies]").hidden,
         }));
-        check(`${label}: un riquadro, un «chi ha preso» e un «Come giocare» a testa`,
-          st.cards === n && st.pickers === n && st.guides === n, JSON.stringify(st));
+        check(`${label}: un riquadro per giocatore, ognuno con l'eroe da prendere`, st.cards === n && st.mains === n, JSON.stringify(st));
         check(`${label}: consigli tutti diversi, del ruolo di ciascuno`,
           new Set(st.firsts).size === n && st.firsts.every((h, i) => data.heroes.find((x) => x.name === h)?.role === QUEUE[i][1]), st.firsts.join(", "));
         check(`${label}: un colore diverso per giocatore (riquadri e griglia)`,
@@ -394,35 +443,37 @@ try {
         check(`${label}: «Alleati» solo se c'è posto in squadra (5 − giocatori)`, st.alliesHidden === (n === 5));
         if (n === 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-consigli`);
 
-        // ognuno segna l'eroe che ha preso: tocco sul giocatore, poi sull'eroe; si passa da soli al successivo
+        // ognuno segna l'eroe che ha preso (diverso dal consigliato): «Altro» nel suo riquadro, poi l'eroe nella griglia
         const used = { Damage: 0, Support: 0, Tank: 0 };
         const taken = [];
-        await p9.locator("#pickers .picker").nth(0).click();
         for (let i = 0; i < n; i++) {
           const role = QUEUE[i][1];
           const h = TAKE[role][used[role]++];
           taken.push(h);
-          check(`${label}: tocca a ${QUEUE[i][0]}`, (await p9.locator("#pickers .picker").nth(i).getAttribute("aria-pressed")) === "true");
+          await toTop(p9);
+          await p9.locator(".pick").nth(i).locator(".alt-other").click();
+          check(`${label}: «Tocca l'eroe preso da ${QUEUE[i][0]}» al posto del selettore`, (await p9.locator("#pick-banner").isVisible())
+            && (await text(p9, "#pick-banner-txt")).includes(QUEUE[i][0]) && !(await p9.locator("#groups").isVisible()));
           await hb(h).click();
         }
         await p9.waitForTimeout(150);
         await toTop(p9);
         const after = await p9.evaluate(() => ({
-          firsts: [...document.querySelectorAll(".pick .sug.first .sug-name")].map((x) => x.textContent),
-          notes: [...document.querySelectorAll(".pick .took-note")].map((x) => x.textContent),
-          pickers: [...document.querySelectorAll("#pickers .picker small, #pickers .picker b")].map((x) => x.textContent),
+          firsts: [...document.querySelectorAll(".pick .pick-name")].map((x) => x.textContent),
+          pressed: document.querySelectorAll(".pick .took-btn[aria-pressed=true]").length,
           took: [...document.querySelectorAll("#grid .hero.took")].map((b) => [b.querySelector(".nm").textContent, b.querySelector(".tag")?.textContent]),
           rec: document.querySelectorAll("#grid .hero.rec").length,
           group: JSON.parse(localStorage.getItem("owc.match")).group,
-          seconds: [...document.querySelectorAll(".pick")].map((c) => [...c.querySelectorAll(".sug-name")].slice(1).map((x) => x.textContent)),
+          alts: document.querySelectorAll(".pick .alt").length,
+          swaps: [...document.querySelectorAll(".pick .swap b")].map((x) => x.textContent),
         }));
-        check(`${label}: ogni riquadro mostra l'eroe preso, in cima`, after.firsts.join() === taken.join() && after.notes.length === n, JSON.stringify(after.firsts));
+        check(`${label}: ogni riquadro mostra l'eroe preso, segnato «✓ Preso»`, after.firsts.join() === taken.join() && after.pressed === n, JSON.stringify(after.firsts));
         check(`${label}: griglia: eroi presi segnati col ✓ e l'iniziale di chi li ha presi`,
           after.took.length === n && taken.every((h, i) => after.took.some(([nm, tag]) => nm === h && tag === `${QUEUE[i][0][0]}✓`)) && after.rec === 0,
           JSON.stringify(after.took));
-        check(`${label}: alternative senza gli eroi presi dagli altri`,
-          after.seconds.every((alts, i) => alts.every((a) => !taken.some((t, j) => j !== i && t === a))), JSON.stringify(after.seconds));
-        check(`${label}: tutti hanno scelto → si torna agli avversari`, after.group === "enemies", after.group);
+        check(`${label}: dopo la scelta niente alternative; un eventuale cambio non propone eroi presi dagli altri`,
+          after.alts === 0 && after.swaps.every((x) => !taken.includes(x)), JSON.stringify(after));
+        check(`${label}: dopo ogni scelta si torna agli avversari`, after.group === "enemies", after.group);
         // barra minima e barra fissa: tutti visibili, non troppo alte
         const bar = await p9.evaluate(async () => {
           window.scrollTo(0, document.querySelector("#grid").offsetTop);
@@ -439,7 +490,7 @@ try {
         if (n === 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-scorso`);
         // «Come giocarla» del primo giocatore: parla del suo eroe preso
         await toTop(p9);
-        await p9.locator("#guides .guide-btn").first().click();
+        await p9.locator(".pick .pick-main").first().click();
         await p9.locator("#guide-dialog[open] .guide-sec").first().waitFor();
         check(`${label}: «Come giocarla» sull'eroe preso`, (await text(p9, "#t-guide")).includes(taken[0]), await text(p9, "#t-guide"));
         await p9.locator("#guide-dialog [data-close]").click();
@@ -451,17 +502,33 @@ try {
     const { ctx: c10, page: p10 } = await newPage({ serviceWorkers: "block" });
     lastPage = p10;
     await p10.goto(BASE);
-    await p10.locator(".pick .sug.first .sug-name").first().waitFor();
+    await p10.locator(".pick .pick-name").first().waitFor();
     await p10.click("#groups [data-group=enemies]");
     await heroBtn(p10, "Mercy").click();
-    await p10.locator("#pickers .picker").nth(1).click();
+    await toTop(p10);
+    await p10.locator(".pick").nth(1).locator(".alt-other").click();
     await heroBtn(p10, "Mercy").click();
-    const m1 = await p10.evaluate(() => JSON.parse(localStorage.getItem("owc.match")));
-    check("eroe preso: tolto dagli avversari, assegnato al giocatore scelto",
-      !m1.enemies.length && String(m1.picked[1]) === String(data.heroes.find((h) => h.name === "Mercy").id) && m1.picked[0] === null, JSON.stringify(m1));
-    await p10.locator("#pickers .picker").nth(1).click();
-    await heroBtn(p10, "Mercy").click();
-    check("ritoccare l'eroe preso lo toglie", (await p10.evaluate(() => JSON.parse(localStorage.getItem("owc.match")).picked[1])) === null);
+    const m1 = await matchState(p10);
+    check("«Altro»: eroe preso tolto dagli avversari e assegnato al giocatore", !m1.enemies.length && String(m1.picked[1]) === heroId("Mercy") && m1.picked[0] === null, JSON.stringify(m1));
+    await toTop(p10);
+    await p10.locator(".pick").nth(1).locator(".took-btn").click();
+    check("«✓ Preso» ritoccato: l'eroe non è più segnato", (await matchState(p10)).picked[1] === null);
+    await toTop(p10);
+    const rec0 = await p10.locator(".pick").nth(0).locator(".pick-name").innerText();
+    await p10.locator(".pick").nth(0).locator(".took-btn").click();
+    await toTop(p10);
+    check("«Segna come preso»: un tocco e l'eroe consigliato è segnato", String((await matchState(p10)).picked[0]) === heroId(rec0)
+      && (await p10.locator(".pick").nth(0).locator(".took-btn").getAttribute("aria-pressed")) === "true", rec0);
+    await p10.locator(".pick").nth(1).locator(".alt-other").click();
+    await p10.click("#pick-cancel");
+    check("«Annulla» nel banner: torna il selettore, niente segnato", (await p10.locator("#groups").isVisible())
+      && !(await p10.locator("#pick-banner").isVisible()) && (await matchState(p10)).picked[1] === null);
+    await toTop(p10);
+    await p10.locator(".pick").nth(1).locator(".pick-main").click();
+    await p10.locator("#guide-body .took-btn").click();
+    check("dalla guida: «Segna: Lei l'ha preso»", (await matchState(p10)).picked[1] !== null
+      && (await p10.locator("#guide-body .took-btn").getAttribute("aria-pressed")) === "true");
+    await p10.click("#guide-dialog [data-close]");
 
     // Profilo: si aggiungono giocatori fino a 5 e si tolgono; la partita si adegua
     await p10.click(".tabs [data-view=profile]");
@@ -491,7 +558,7 @@ try {
     await c6.route("**/data.json*", (r) => { hits++; return r.fulfill({ json: { ...data, checked: version } }); });
     await p6.clock.install();
     await p6.goto(BASE);
-    await p6.locator(".pick .sug.first .sug-name").first().waitFor();
+    await p6.locator(".pick .pick-name").first().waitFor();
     const h0 = hits;
     await p6.clock.runFor(2 * 3600e3);              // 2 ore senza toccare niente
     check("app lasciata lì: nessuna richiesta di dati senza interazione (niente timer)", hits === h0, `${hits - h0} richieste`);
@@ -517,7 +584,7 @@ try {
     await c5.route("**/data.json*", (r) => r.fulfill({ json: swapped
       ? { ...data, heroes: data.heroes.map((h) => (h.name === "Sombra" ? { ...h, role: "Support" } : h)) } : data }));
     await p5.goto(BASE);
-    await p5.locator(".pick .sug.first .sug-name").first().waitFor();
+    await p5.locator(".pick .pick-name").first().waitFor();
     const roleOf = () => p5.evaluate(() => {
       const b = [...document.querySelectorAll("#grid .hero")].find((x) => x.querySelector(".nm").textContent === "Sombra");
       let el = b.closest(".grid").previousElementSibling;
@@ -535,10 +602,10 @@ try {
   // ---------- offline ----------
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
-  await page.locator(".pick .sug.first .sug-name").first().waitFor();
+  await page.locator(".pick .pick-name").first().waitFor();
   await ctx.setOffline(true);
   await page.reload();
-  const offlineOk = await page.locator(".pick .sug.first .sug-name").first().waitFor({ timeout: 5000 }).then(() => true, () => false);
+  const offlineOk = await page.locator(".pick .pick-name").first().waitFor({ timeout: 5000 }).then(() => true, () => false);
   check("offline: l'app parte con i dati salvati", offlineOk);
   await shot(page, "08-offline");
   await ctx.setOffline(false);
@@ -550,7 +617,7 @@ try {
     const old = { ...data, checked: new Date(Date.now() - 3 * 86400e3).toISOString(), problems: ["mappa x: rotta"] };
     await p2.route("**/data.json*", (r) => r.fulfill({ json: old }));
     await p2.goto(BASE);
-    await p2.locator(".pick .sug.first .sug-name").first().waitFor();
+    await p2.locator(".pick .pick-name").first().waitFor();
     const w = await text(p2, "#warn");
     check("dati vecchi/parziali: avviso giallo, app funzionante", (await p2.locator("#warn").isVisible()) && w.includes("non vengono aggiornati") && w.includes("dati precedenti"), w);
     await shot(p2, "09-dati-vecchi");
@@ -581,7 +648,7 @@ try {
       return r.fulfill({ json: { workflow_runs: [{ created_at: new Date().toISOString(), status: "completed", conclusion: "success" }] } });
     });
     await p4.goto(BASE);
-    await p4.locator(".pick .sug.first .sug-name").first().waitFor();
+    await p4.locator(".pick .pick-name").first().waitFor();
     await p4.click(".tabs [data-view=profile]");
     await p4.fill("#token", "github_pat_PROVA");
     await p4.click("#token-save");

@@ -256,6 +256,42 @@ export function breakdown(row, partners = null) {
   return out.map((x) => ({ ...x, good: x.delta > -0.0005, text: `${x.label} ${pct(x.delta)}` }));
 }
 
+// Per il riquadro (colpo d'occhio): contro quali avversari l'eroe va forte e da quali deve guardarsi.
+// Unisce statistica (scarto contro quell'avversario) e teoria (counter noti, che valgono +/-1,5%).
+// Un counter "da manuale" si mostra sempre, salvo che i numeri lo smentiscano nettamente (segnale oltre l'1%
+// nel verso opposto): così il riquadro dice la stessa cosa delle righe "Punta"/"Attento" di Come giocarla.
+export const MATCHUP_MIN = 0.01;
+export const MATCHUP_THEORY = 0.015;
+export function matchups(row, max = 3) {
+  const beats = new Set((row?.theory?.beats ?? []).map((b) => b.name));
+  const beaten = new Set((row?.theory?.beatenBy ?? []).map((b) => b.name));
+  const all = (row?.vs ?? []).filter((v) => v.hero).map((v) => {
+    const t = beats.has(v.hero.name) ? 1 : beaten.has(v.hero.name) ? -1 : 0;
+    return { hero: v.hero, delta: v.delta, theory: t, signal: v.delta + t * MATCHUP_THEORY };
+  });
+  const strong = (x) => x.signal >= MATCHUP_MIN || (x.theory === 1 && x.signal > -MATCHUP_MIN);
+  const weak = (x) => !strong(x) && (x.signal <= -MATCHUP_MIN || (x.theory === -1 && x.signal < MATCHUP_MIN));
+  return {
+    strong: all.filter(strong).sort((a, b) => b.signal - a.signal).slice(0, max),
+    weak: all.filter(weak).sort((a, b) => a.signal - b.signal).slice(0, max),
+  };
+}
+
+// Un solo motivo, in parole e senza numeri, per il riquadro prima di conoscere gli avversari
+// (i numeri restano nel dettaglio). null se non c'è un motivo netto.
+export function headline(row, partners = []) {
+  if (!row) return null;
+  if (row.parts.base >= 0.01) return row.baseLabel === "generale" ? "Tra i più forti in generale" : `Forte su ${row.baseLabel}`;
+  const mates = (Array.isArray(partners) ? partners : [partners]).filter(Boolean);
+  const best = row.withAllies
+    .map((a) => ({ a, p: mates.find((m) => String(m.id) === String(a.hero?.id)) }))
+    .filter((x) => x.p)
+    .sort((x, y) => y.a.delta - x.a.delta)[0];
+  if (best && best.a.delta >= 0.004) return `Bene con ${best.p.name}`;
+  if (row.favorite) return "Tra i tuoi preferiti";
+  return null;
+}
+
 // Tutti i perché, uno per riga: mappa, ogni avversario, ogni alleato, lato, preferito.
 export function details(row) {
   const out = [{ good: row.parts.base >= 0, text: `${row.baseLabel === "generale" ? "Win rate generale" : row.baseLabel} ${pct(row.parts.base)}` }];

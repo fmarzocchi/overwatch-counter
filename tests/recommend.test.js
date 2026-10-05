@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  recommend, recommendDuo, recommendTeam, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
+  recommend, recommendDuo, recommendTeam, matchups, headline, MATCHUP_MIN, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -305,4 +305,31 @@ test("squadra di 5 senza ruolo: risposta rapida", () => {
   const { team } = recommendTeam(data, { players: [{}, {}, {}, {}, {}], enemies: [id("Pharah")] });
   assert.ok(distinct(team) && team.length === 5);
   assert.ok(Date.now() - t0 < 1500, `troppo lento: ${Date.now() - t0} ms`);
+});
+
+test("riquadro: «Batte» e «Teme» dagli scarti contro gli avversari (+ teoria), soglia 1%", () => {
+  const enemies = ["Pharah", "Winston", "Genji", "Mercy"].map(id);
+  for (const row of recommend(data, { role: "Damage", enemies }).slice(0, 10)) {
+    const m = matchups(row);
+    assert.ok(m.strong.every((x) => x.signal >= MATCHUP_MIN) && m.weak.every((x) => x.signal <= -MATCHUP_MIN));
+    assert.ok(m.strong.length <= 3 && m.weak.length <= 3);
+    const ids = new Set(enemies.map(String));
+    assert.ok([...m.strong, ...m.weak].every((x) => ids.has(String(x.hero.id))), "solo avversari segnati");
+    assert.ok(!m.strong.some((x) => m.weak.includes(x)));
+  }
+  // la teoria sposta il segnale: un counter noto entra in «Batte» anche con numeri vicini al 50%
+  const row = { vs: [{ hero: hero("Pharah"), delta: 0.001 }], theory: { beats: [{ name: "Pharah" }], beatenBy: [] } };
+  assert.equal(matchups(row).strong[0].hero.name, "Pharah");
+  assert.deepEqual(matchups({ vs: [{ hero: hero("Pharah"), delta: 0.005 }] }), { strong: [], weak: [] });
+});
+
+test("riquadro prima degli avversari: un solo motivo in parole, senza numeri", () => {
+  const rows = recommend(data, { role: "Tank", mapSlug: "kings-row" });
+  const top = rows.find((r) => r.parts.base >= 0.01);
+  assert.equal(headline(top), "Forte su King's Row");
+  const gen = recommend(data, { role: "Support" }).find((r) => r.parts.base >= 0.01);
+  if (gen) assert.equal(headline(gen), "Tra i più forti in generale");
+  const weak = rows.find((r) => r.parts.base < 0.01 && !r.withAllies.length && !r.favorite);
+  if (weak) assert.equal(headline(weak), null);
+  for (const r of rows) { const h = headline(r); assert.ok(h === null || !/\d/.test(h), h); }
 });

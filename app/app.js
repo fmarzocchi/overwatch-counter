@@ -1,5 +1,5 @@
-import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile } from "./recommend.js";
-import { buildTheory, heroTheory, playGuide, theoryStatus, STYLE_IT, STYLE_DESC } from "./theory.js";
+import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline } from "./recommend.js";
+import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 
 // WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
 if (!Element.prototype.replaceChildren) {
@@ -135,18 +135,23 @@ function el(tag, attrs = {}, ...kids) {
     else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
     else e.setAttribute(k, v === true ? "" : v);
   }
-  e.append(...kids.flat().filter((k) => k !== null && k !== undefined && k !== false));
+  e.append(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false));
   return e;
 }
 
 // come replaceChildren, ma salta le parti facoltative assenti (null/undefined/false): altrimenti diventano testo "null"
 function fill(box, ...kids) {
-  box.replaceChildren(...kids.flat().filter((k) => k !== null && k !== undefined && k !== false));
+  box.replaceChildren(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false));
 }
 
-function toast(msg, ms = 4500) {
+// action: {label, run} → pulsante nel messaggio (es. "Annulla" dopo "Nuova partita")
+function toast(msg, ms = 4500, action = null) {
   const t = $("#toast");
-  t.textContent = msg;
+  fill(t, el("span", {}, msg), action ? el("button", {
+    type: "button", class: "toast-btn",
+    onclick: () => { t.hidden = true; clearTimeout(toast.timer); action.run(); },
+  }, action.label) : null);
+  t.classList.toggle("with-action", !!action);
   t.hidden = false;
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => { t.hidden = true; }, ms);
@@ -309,16 +314,27 @@ function partnersOf(i) {
   return (lastDuo?.team ?? []).map((h, j) => (h && j !== i ? { id: h.id, name: profile.players[j].name, hero: h } : null)).filter(Boolean);
 }
 
+// Tre livelli, dal più immediato al più approfondito:
+// 1. riquadro (colpo d'occhio): chi prendere, chi batte e chi teme (volti), "Segna come preso", alternative;
+// 2. "Come giocarla" (un tocco sull'eroe): riepilogo di poche righe, il resto dei consigli chiuso sotto;
+// 3. "Perché" (dalla guida): numeri, statistiche Ranked e teoria completa.
+
+function rowFor(i, hero) {
+  return (lastDuo?.lists?.[i] ?? []).find((r) => sid(r.hero.id) === sid(hero.id)) ?? null;
+}
+
 function openDetails(i, row) {
   const p = profile.players[i];
   const prof = heroProfile(playerData(i), row.hero.id, Infinity);
   const th = heroTheory(playerData(i), T, row.hero);
-  $("#t-why").textContent = row.hero.name;
-  fill($("#why-body"), 
+  const sum = breakdown(row, partnersOf(i));
+  $("#t-why").textContent = `Perché ${row.hero.name}`;
+  fill($("#why-body"),
     el("div", { class: "why-head" }, face(row.hero),
       el("div", {}, el("div", { class: "pick-name" }, row.hero.name),
         el("div", { class: "muted" }, `per ${p.name} · stima ${est(row)}`),
         el("div", { class: "muted small" }, `dati: ${dataLabel(i)}`))),
+    el("p", { class: "why-sum" }, sum.map((b, k) => [k ? " · " : null, el("span", { class: b.good ? "good" : "bad" }, b.text)])),
     el("div", { class: "guide-row" }, el("button", { type: "button", class: "btn guide-btn", onclick: () => openGuide(i, row.hero) },
       "🎯 Come giocarla in questa partita")),
     el("h3", { class: "why-title" }, "Perché in questa partita"),
@@ -345,68 +361,90 @@ function openDetails(i, row) {
     el("p", { class: "muted small" },
       "Statistiche: scarto dal 50% di vittorie (dati counterwatch). Teoria: indicazioni di guide e siti, non numeri."),
   );
-  $("#why-dialog").showModal();
+  if (!$("#why-dialog").open) $("#why-dialog").showModal();
   $("#why-body").scrollTop = 0;
 }
 
+const BRIEF_ICON = { swap: "🔁", target: "🎯", threat: "⚠️", ability: "⚡", position: "🧭", protect: "🛡️", map: "🗺️" };
+// volto + nome, per le righe del riepilogo che parlano di eroi
+const heroChip = (h) => el("span", { class: "hchip" }, face(h), h.name);
+
+function briefList(items) {
+  return el("ul", { class: "brief" }, items.map((it) => el("li", {
+    class: `brief-row k-${it.key} ${it.kind === "teoria" ? "is-theory" : "is-data"}`,
+    "aria-label": `${it.text} (${it.kind === "teoria" ? "teoria" : "dati"})`,
+  },
+  el("span", { class: "brief-ico", "aria-hidden": "true" }, BRIEF_ICON[it.key] ?? "•"),
+  el("span", { class: "brief-lab", "aria-hidden": "true" }, it.label),
+  el("span", { class: "brief-txt", "aria-hidden": "true" },
+    it.heroes?.length ? it.heroes.map(heroChip) : null,
+    it.short ? el("span", { class: it.heroes?.length ? "brief-after" : null }, it.short) : it.heroes?.length ? null : it.text))));
+}
+
 function openGuide(i, hero) {
+  const p = profile.players[i];
+  const rows = lastDuo?.lists?.[i] ?? null;
   const g = playGuide(playerData(i), T, {
     hero, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies: match.allies,
     partners: partnersOf(i).map((x) => x.hero).filter((h) => sid(h.id) !== sid(hero.id)),
-    rows: lastDuo?.lists?.[i] ?? null,
+    rows,
   });
+  const brief = g.sections.find((s) => s.summary);
+  const rest = g.sections.filter((s) => !s.summary);
+  const isPicked = !!match.picked[i] && sid(match.picked[i]) === sid(hero.id);
+  const row = rowFor(i, hero);
   $("#t-guide").textContent = `Come giocare ${hero.name}`;
-  fill($("#guide-body"), 
+  fill($("#guide-body"),
     el("div", { class: "why-head" }, face(hero),
       el("div", {}, el("div", { class: "pick-name" }, hero.name),
-        el("div", { class: "muted small" }, `${profile.players[i].name} · ${currentMap()?.name ?? "nessuna mappa"}` +
+        el("div", { class: "muted small" }, `${p.name} · ${currentMap()?.name ?? "nessuna mappa"}` +
           `${match.side ? ` · ${match.side === "attack" ? "attacco" : "difesa"}` : ""} · ${match.enemies.length} avversari`))),
+    el("div", { class: "guide-actions", style: `--pc: var(--p${i})` },
+      el("button", {
+        type: "button", class: "took-btn", "aria-pressed": String(isPicked),
+        onclick: () => { togglePicked(i, hero); openGuide(i, hero); },
+      }, isPicked ? `✓ Preso da ${p.name}` : `Segna: ${p.name} l'ha preso`)),
     staleBanner(hero),
-    ...g.sections.map((sec) => el("section", { class: `guide-sec${sec.summary ? " guide-summary" : ""}` },
-      el("h3", {}, sec.summary ? "📋 In breve: come giocare questa partita" : sec.title),
-      el("ul", {}, sec.items.map((it) => el("li", {},
-        el("span", { class: it.kind === "teoria" ? "theory-badge" : "data-badge" }, it.kind === "teoria" ? "Teoria" : "Dati"), " ", it.text))))),
+    brief ? el("section", { class: "guide-sec guide-summary" },
+      el("h3", {}, "📋 In breve"),
+      briefList(brief.items),
+      el("p", { class: "legend" }, el("span", { class: "dot theory" }), " guide e siti  ", el("span", { class: "dot data" }), " statistiche Ranked")) : null,
+    rest.length ? el("details", { class: "guide-more" },
+      el("summary", {}, `Tutti i consigli (${rest.length} sezioni)`),
+      rest.map((sec) => el("section", { class: "guide-sec" },
+        el("h3", {}, sec.title),
+        el("ul", {}, sec.items.map((it) => el("li", {},
+          el("span", { class: it.kind === "teoria" ? "theory-badge" : "data-badge" }, it.kind === "teoria" ? "Teoria" : "Dati"), " ", it.text)))))) : null,
+    row ? el("div", { class: "guide-row" }, el("button", { type: "button", class: "btn why-btn", onclick: () => openDetails(i, row) },
+      "📊 Perché? Numeri e teoria")) : null,
     g.uncertain ? el("p", { class: "muted small theory-note" }, "Per questo eroe le fonti sono poche: i consigli di teoria sono parziali.") : null,
-    el("p", { class: "muted small" }, "«Teoria»: guide e siti di Overwatch. «Dati»: statistiche Ranked di counterwatch. Consigli, non certezze."),
+    el("p", { class: "muted small" }, "Consigli da guide e siti di Overwatch e da statistiche Ranked di counterwatch: aiuti, non certezze."),
   );
+  if ($("#why-dialog").open) $("#why-dialog").close();
   if (!$("#guide-dialog").open) $("#guide-dialog").showModal();
   $("#guide-body").scrollTop = 0;
 }
 
-function renderGuides() {
-  const box = $("#guides");
-  box.replaceChildren();
-  if (!lastDuo) return;
-  profile.players.forEach((p, i) => {
-    const top = lastDuo.lists[i]?.[0];
-    if (!top) return;
-    box.append(el("button", { type: "button", class: "btn guide-btn", style: `--pc: var(--p${i})`, onclick: () => openGuide(i, top.hero),
-      "aria-label": `Come giocare ${top.hero.name} (${p.name})` }, `🎯 ${top.hero.name}`));
-  });
-}
-
-function theoryLine(r) {
-  const th = r.theory;
-  if (!th) return null;
-  const t = th.beats[0] ? `batte ${th.beats[0].name}` : th.beatenBy[0] ? `soffre ${th.beatenBy[0].name}`
-    : th.withMates[0] ? `con ${th.withMates[0].name}` : th.fit ? `stile ${STYLE_IT[th.fit]} come la squadra` : null;
-  return t ? el("span", { class: `sug-theory${th.beatenBy[0] && !th.beats[0] ? " bad" : ""}` }, "teoria: ", t) : null;
-}
-
 // Il riquadro completo dei consigli scorre con la pagina; quando è uscito dallo schermo compare in alto
 // la barra minima (n. 1 di ciascuno, toccabile) e il selettore Ban/Avversari/Alleati si ferma sotto di lei.
+// Se il consiglio di un giocatore cambia mentre si segnano gli avversari, il suo riquadrino lampeggia una volta.
+let miniTops = [];
 function renderMini() {
   const box = $("#mini");
   box.replaceChildren();
   if (!lastDuo) return;
   box.className = `mini n${Math.min(profile.players.length, 5)}`;
+  const tops = profile.players.map((p, i) => lastDuo.lists[i]?.[0]?.hero?.id ?? null);
   profile.players.forEach((p, i) => {
     const r = lastDuo.lists[i]?.[0];
     if (!r) return;
-    box.append(el("button", { type: "button", class: `mini-pick${r.picked ? " took" : ""}`, style: `--pc: var(--p${i})`, onclick: () => openDetails(i, r),
-      "aria-label": `${p.name}: ${r.picked ? "ha preso " : ""}${r.hero.name}, stima ${est(r)}. Tocca per i dettagli` },
+    const changed = miniTops[i] !== undefined && miniTops[i] !== tops[i];
+    box.append(el("button", { type: "button", class: `mini-pick${r.picked ? " took" : ""}${changed ? " pulse" : ""}`, style: `--pc: var(--p${i})`,
+      onclick: () => openGuide(i, r.hero),
+      "aria-label": `${p.name}: ${r.picked ? "ha preso " : ""}${r.hero.name}, stima ${est(r)}. Tocca per come giocarla` },
     face(r.hero), el("span", { class: "mini-txt" }, el("b", {}, r.hero.name), el("small", {}, `${r.picked ? "✓ " : ""}${p.name} · ${est(r)}`))));
   });
+  miniTops = tops;
 }
 function updateMini() {
   if ($("#view-match").hidden) return;
@@ -416,56 +454,81 @@ function updateMini() {
   document.documentElement.style.setProperty("--picks-h", show ? `${Math.round(mini.getBoundingClientRect().height)}px` : "0px");
 }
 
+// avversari che l'eroe batte (verde) e da cui deve guardarsi (rosso): solo volti, il dettaglio è nella guida
+function matchupRow(top) {
+  const m = matchups(top);
+  if (!m.strong.length && !m.weak.length) return el("p", { class: "pick-why" }, "Nessun vantaggio netto");
+  const grp = (cls, label, xs) => (xs.length ? el("span", {
+    class: `mu-grp ${cls}`, role: "img", "aria-label": `${label} ${xs.map((x) => x.hero.name).join(", ")}`,
+  }, el("span", { class: "mu-lab", "aria-hidden": "true" }, label), xs.map((x) => face(x.hero))) : null);
+  return el("div", { class: "mu" }, grp("good", "Batte", m.strong), grp("bad", "Teme", m.weak));
+}
+
+function pickCard(p, i) {
+  const rows = lastDuo.lists[i] ?? [];
+  const top = rows[0];
+  const took = !!top?.picked;
+  const role = took ? top.hero.role : match.roles[i];
+  const head = el("div", { class: "pick-head" },
+    el("span", { class: "pick-player", title: dataLabel(i) }, p.name),
+    took ? el("span", { class: "role-tag" }, ROLE_IT[role] ?? "")
+      : el("button", {
+        type: "button", class: "role-btn",
+        "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare`,
+        onclick: () => nextRole(i),
+      }, role ? ROLE_IT[role] : "Qualsiasi"));
+  const style = `--pc: var(--p${i})`;
+  if (!top) return el("article", { class: "pick empty", style }, head, el("p", { class: "pick-why" }, "Nessun eroe disponibile"));
+  const note = lastDuo.notes?.[i];
+  const why = match.enemies.length ? null : headline(top, partnersOf(i));
+  const sw = took ? swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies }) : null;
+  const alts = took ? [] : rows.slice(1, SHOWN);
+  return el("article", { class: `pick${took ? " took" : ""}`, style, "aria-label": `${p.name}: ${took ? "ha preso" : "consigliato"} ${top.hero.name}` },
+    head,
+    note ? el("div", { class: "pick-note warn-note" }, note)
+      : profile.onlyFavorites && !took ? el("div", { class: "pick-note" }, "★ solo preferiti") : null,
+    el("button", {
+      type: "button", class: "pick-main", onclick: () => openGuide(i, top.hero),
+      "aria-label": `${took ? `${p.name} ha preso` : `Per ${p.name}:`} ${top.hero.name}, stima ${est(top)}. Tocca per come giocarla`,
+    },
+    face(top.hero),
+    el("span", { class: "pm-txt" },
+      el("span", { class: "pick-name" }, top.hero.name),
+      el("span", { class: "pick-est" }, `${est(top)}${top.favorite ? " · ★" : ""}`)),
+    el("span", { class: "pick-cta" }, "🎯 Come giocarla ›")),
+    match.enemies.length ? matchupRow(top) : why ? el("p", { class: "pick-why" }, why) : null,
+    sw ? el("button", {
+      type: "button", class: "swap", onclick: () => openGuide(i, sw.hero),
+      "aria-label": `Meglio passare a ${sw.hero.name}: ${sw.why}. Tocca per come giocarla`,
+    }, el("span", { class: "swap-lab" }, "🔁 Passa a"), el("span", { class: "swap-hero" }, face(sw.hero), el("b", {}, sw.hero.name))) : null,
+    el("button", {
+      type: "button", class: "took-btn", "aria-pressed": String(took),
+      "aria-label": took ? `${p.name} ha preso ${top.hero.name}: tocca per annullare` : `Segna che ${p.name} ha preso ${top.hero.name}`,
+      onclick: () => togglePicked(i, top.hero),
+    }, took ? "✓ Preso" : "Segna come preso"),
+    took ? null : el("div", { class: "alts" },
+      el("span", { class: "alts-lab" }, alts.length ? "Oppure" : "Ha preso un altro eroe?"),
+      alts.map((r) => el("button", {
+        type: "button", class: "alt", onclick: () => openGuide(i, r.hero),
+        "aria-label": `In alternativa ${r.hero.name}, stima ${est(r)}. Tocca per come giocarla`,
+      }, face(r.hero), el("span", { class: "alt-nm" }, r.hero.name))),
+      el("button", {
+        type: "button", class: "alt alt-other", onclick: () => choosePicker(i),
+        "aria-label": `${p.name} ha preso un altro eroe: toccalo nella griglia`,
+      }, el("span", { class: "face alt-plus", "aria-hidden": "true" }, "＋"), el("span", { class: "alt-nm" }, "Altro"))),
+  );
+}
+
 function renderPicks() {
   const box = $("#picks");
   box.replaceChildren();
   if (!data) return;
   lastDuo = compute();
   box.className = `picks n${profile.players.length}`;
-  profile.players.forEach((p, i) => {
-    const rows = lastDuo.lists[i] ?? [];
-    const took = !!lastDuo.picked?.[i];
-    const role = took ? byId[sid(match.picked[i])]?.role ?? match.roles[i] : match.roles[i];
-    const roleBtn = el("button", {
-      type: "button", class: "role-btn",
-      "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare`,
-      onclick: () => nextRole(i),
-    }, role ? ROLE_IT[role] : "Qualsiasi");
-    const head = el("div", { class: "pick-head" },
-      el("span", { class: "pick-player", title: dataLabel(i) }, p.name, p.rank ? el("small", { class: "pick-rank" }, p.rank) : null),
-      roleBtn);
-    const top = rows[0];
-    if (!top) {
-      box.append(el("article", { class: "pick empty", style: `--pc: var(--p${i})` }, head, "Nessun eroe disponibile"));
-      return;
-    }
-    const note = lastDuo.notes?.[i];
-    const partner = partnersOf(i);
-    box.append(el("article", { class: `pick${took ? " took" : ""}`, style: `--pc: var(--p${i})`, "aria-label": `${took ? "Scelta" : "Consigli"} per ${p.name}` },
-      head,
-      took ? el("div", { class: "pick-note took-note" }, `✓ ha preso ${top.hero.name} · sotto: alternative se va male`)
-        : profile.onlyFavorites && !note ? el("div", { class: "pick-note" }, "★ solo preferiti") : null,
-      note ? el("div", { class: "pick-note warn-note" }, note) : null,
-      el("ol", { class: "sugs" }, rows.slice(0, SHOWN).map((r, k) =>
-        el("li", {},
-          el("button", {
-            type: "button", class: `sug${k === 0 ? " first" : ""}`,
-            "aria-label": `${r.picked ? "Preso" : `${k + 1}°`}: ${r.hero.name}, stima ${est(r)}, ${breakdown(r, partner).map((b) => b.text).join(", ")}. Tocca per i dettagli`,
-            onclick: () => openDetails(i, r),
-          },
-          // percentuale sotto il volto: il nome ha tutta la riga (niente nomi troncati)
-          el("span", { class: "sug-face" }, face(r.hero), el("span", { class: "sug-n", "aria-hidden": "true" }, r.picked ? "✓" : String(took ? k : k + 1)),
-            el("span", { class: "sug-est" }, est(r))),
-          el("span", { class: "sug-body" },
-            el("span", { class: "sug-top" }, el("span", { class: "sug-name" }, r.hero.name)),
-            breakdown(r, partner).map((b) => el("span", { class: `sug-why ${b.good ? "good" : "bad"}` }, b.text)),
-            theoryLine(r)),
-          )))),
-    ));
-  });
+  profile.players.forEach((p, i) => box.append(pickCard(p, i)));
+  for (const t of $$(".pick-name, .alt-nm", box)) fitText(t);
   renderMini();
   updateMini();
-  renderGuides();
 }
 
 // ---------- mappa e lato ----------
@@ -512,29 +575,34 @@ function buildHeroGrid(container, onTap) {
   }
 }
 
-// nomi della griglia mai spezzati a metà parola: se la parola più lunga non ci sta, il carattere si
+// Nomi mai spezzati a metà parola: se la parola più lunga non ci sta nello spazio disponibile, il carattere si
 // rimpicciolisce quanto basta. Si misura il testo VERO sulla pagina (con il carattere del telefono e il suo
 // ingrandimento di sistema, es. 130% su Xiaomi) e si cambia solo un fattore (--fit): una dimensione in px
-// verrebbe ingrandita una seconda volta dalla WebView.
+// verrebbe ingrandita una seconda volta dalla WebView. Vale per la griglia, i riquadri e le alternative.
+function fitText(t) {
+  t.style.removeProperty("--fit");
+  const box = t.parentElement;
+  if (!box || !box.clientWidth) return;
+  const cs = getComputedStyle(box);
+  const avail = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+  const probe = el("span", { class: "nm-probe", "aria-hidden": "true" });
+  t.append(probe);
+  let w = 0;
+  for (const word of (t.firstChild?.textContent ?? "").split(/\s+/)) {
+    probe.textContent = word;
+    w = Math.max(w, probe.getBoundingClientRect().width);
+  }
+  probe.remove();
+  if (w > avail) t.style.setProperty("--fit", String(Math.max(0.55, Math.floor((avail / w) * 100) / 100)));
+}
+window.owcFitText = fitText; // per il collaudo
+
 function fitNames(container) {
   const nms = $$(".hero .nm", container);
   const width = nms[0]?.parentElement.clientWidth ?? 0;
   if (!width || container.dataset.fitW === String(width)) return;
   container.dataset.fitW = String(width);
-  for (const nm of nms) nm.style.removeProperty("--fit");
-  const probe = el("span", { class: "nm-probe", "aria-hidden": "true" });
-  for (const nm of nms) {
-    const btn = getComputedStyle(nm.parentElement);
-    const avail = nm.parentElement.clientWidth - parseFloat(btn.paddingLeft) - parseFloat(btn.paddingRight) - 2;
-    let w = 0;
-    nm.append(probe);
-    for (const word of nm.firstChild.textContent.split(/\s+/)) {
-      probe.textContent = word;
-      w = Math.max(w, probe.getBoundingClientRect().width);
-    }
-    probe.remove();
-    if (w > avail) nm.style.setProperty("--fit", String(Math.max(0.6, Math.floor((avail / w) * 100) / 100)));
-  }
+  for (const nm of nms) fitText(nm);
 }
 
 function groupOf(id) {
@@ -563,37 +631,42 @@ function tapHero(id) {
   render();
 }
 
-// "Chi ha preso": l'eroe toccato diventa la scelta del giocatore attivo (uno a testa);
-// poi si passa da solo al prossimo giocatore che non ha ancora scelto.
-function tapPicked(id) {
-  const i = match.pickFor;
+// Eroe preso da un giocatore: "Segna come preso" nel riquadro (o nella guida) per l'eroe consigliato,
+// "Altro" nel riquadro per un eroe diverso (si tocca nella griglia). Un eroe preso esce da ban/avversari/alleati.
+function setPicked(i, id) {
   const who = pickerOf(id);
-  if (who === i) {
-    match.picked[i] = null;
-  } else {
-    if (who >= 0) match.picked[who] = null;
-    for (const g of Object.keys(LIMITS)) match[g] = match[g].filter((x) => sid(x) !== id);
-    match.picked[i] = id;
-    const n = match.picked.length;
-    const next = [...Array(n).keys()].map((k) => (i + k) % n).find((j) => !match.picked[j]);
-    if (next === undefined) {
-      // tutti hanno scelto: si torna a segnare gli avversari
-      match.group = "enemies";
-      toast(`${profile.players[i].name}: ${byId[id].name} ✓ — tutti hanno scelto, ora segna gli avversari.`, 2500);
-    } else {
-      match.pickFor = next;
-      toast(`${profile.players[i].name}: ${byId[id].name} ✓ — ora ${profile.players[next].name}.`, 2000);
-    }
-  }
-  saveMatch();
-  render();
+  if (who >= 0) match.picked[who] = null;
+  for (const g of Object.keys(LIMITS)) match[g] = match[g].filter((x) => sid(x) !== id);
+  match.picked[i] = id;
 }
 
+function togglePicked(i, hero) {
+  const id = sid(hero.id);
+  const was = !!match.picked[i] && sid(match.picked[i]) === id;
+  if (was) match.picked[i] = null;
+  else setPicked(i, id);
+  saveMatch();
+  render();
+  toast(was ? `${profile.players[i].name}: ${hero.name} tolto` : `${profile.players[i].name} ha preso ${hero.name} ✓`, 1800);
+}
+
+// "Altro": il prossimo tocco nella griglia è l'eroe preso da quel giocatore (poi si torna agli avversari)
 function choosePicker(i) {
   match.group = "picked";
   match.pickFor = i;
   saveMatch();
   render();
+  const top = $("#grid").getBoundingClientRect().top + window.scrollY;
+  window.scrollTo(0, Math.max(0, top - 170));
+}
+
+function tapPicked(id) {
+  const i = match.pickFor;
+  setPicked(i, id);
+  match.group = "enemies";
+  saveMatch();
+  render();
+  toast(`${profile.players[i].name} ha preso ${byId[id].name} ✓`, 2000);
 }
 
 function renderGrid() {
@@ -633,27 +706,17 @@ function renderGroups() {
     $(`[data-count="${g}"]`).textContent = match[g].length;
     if (g === "allies") b.hidden = !limitOf("allies");
   }
-  // una riga per giocatore: chi ha preso cosa (tocco = segna la scelta di quel giocatore)
-  const who = $("#pickers");
-  who.replaceChildren(...profile.players.map((p, i) => {
-    const h = match.picked[i] ? byId[sid(match.picked[i])] : null;
-    const on = match.group === "picked" && match.pickFor === i;
-    return el("button", { type: "button", class: `picker${h ? " has" : ""}`, style: `--pc: var(--p${i})`, "aria-pressed": String(on),
-      "aria-label": `${p.name}: ${h ? `ha preso ${h.name}` : "non ha ancora preso"}. Tocca per segnare il suo eroe`,
-      onclick: () => choosePicker(i) },
-    h ? face(h) : el("span", { class: "face picker-dot", "aria-hidden": "true" }, initials(p.name).slice(0, 1)),
-    el("span", { class: "picker-txt" }, el("b", {}, p.name), el("small", {}, h ? h.name : "sceglie…")));
-  }));
-  who.className = `pickers n${profile.players.length}`;
+  // mentre si segna l'eroe preso da un giocatore, al posto del selettore c'è un avviso col suo colore
+  const picking = match.group === "picked";
+  $("#groups").hidden = picking;
+  const banner = $("#pick-banner");
+  banner.hidden = !picking;
   const box = $("#chosen");
   box.replaceChildren();
-  if (match.group === "picked") {
-    const i = match.pickFor;
-    const h = match.picked[i] ? byId[sid(match.picked[i])] : null;
-    box.append(el("span", { class: "hint", style: `--pc: var(--p${i})` },
-      el("b", { class: "hint-who" }, profile.players[i].name), h
-        ? `: ha preso ${h.name}. Tocca un altro eroe per cambiarlo, lo stesso per toglierlo.`
-        : ": tocca l'eroe che ha preso."));
+  box.hidden = picking;
+  if (picking) {
+    banner.style.setProperty("--pc", `var(--p${match.pickFor})`);
+    $("#pick-banner-txt").textContent = `Tocca l'eroe preso da ${profile.players[match.pickFor].name}`;
     return;
   }
   const ids = match[match.group];
@@ -872,15 +935,16 @@ function render() {
 function showView(name) {
   $("#view-match").hidden = name !== "match";
   $("#view-profile").hidden = name !== "profile";
-  $$(".tabs button").forEach((b) => (b.dataset.view === name ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
+  $$(".tabs [data-view]").forEach((b) => (b.dataset.view === name ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
   if (name === "profile" && data) renderProfile();
   store.set("owc.view", name);
   window.scrollTo(0, 0);
-  if (name === "match") { updateMini(); if (data) fitNames($("#grid")); }
+  // i nomi si misurano solo a vista (nascosti hanno larghezza 0)
+  if (name === "match" && data) { renderPicks(); fitNames($("#grid")); }
 }
 
 function wire() {
-  $$(".tabs button").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
+  $$(".tabs [data-view]").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
   $$("#groups button").forEach((b) => b.addEventListener("click", () => { match.group = b.dataset.group; saveMatch(); render(); }));
   $$("#side button").forEach((b) => b.addEventListener("click", () => {
     match.side = match.side === b.dataset.side ? null : b.dataset.side;
@@ -898,13 +962,19 @@ function wire() {
   });
   $$("[data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
   $("#fav-dialog").addEventListener("close", () => render());
+  // Nuova partita: un tocco, sempre a portata di pollice; per un tocco sbagliato c'è "Annulla"
   $("#new-match").addEventListener("click", () => {
+    const before = JSON.stringify(match);
     match = emptyMatch();
     saveMatch();
+    showView("match");
     render();
-    window.scrollTo(0, 0);
-    toast("Nuova partita: scegli mappa e ban.");
+    toast("Nuova partita: scegli mappa e ban.", 6000, {
+      label: "Annulla",
+      run: () => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); },
+    });
   });
+  $("#pick-cancel").addEventListener("click", () => { match.group = "enemies"; saveMatch(); render(); });
   $("#refresh").addEventListener("click", refresh);
   $("#token-save").addEventListener("click", () => {
     const v = $("#token").value.trim();
@@ -930,7 +1000,11 @@ async function start() {
   wire();
   document.addEventListener("pointerdown", autoRefresh, { capture: true, passive: true });
   window.addEventListener("scroll", updateMini, { passive: true });
-  window.addEventListener("resize", () => { if (data && !$("#view-match").hidden) fitNames($("#grid")); });
+  window.addEventListener("resize", () => {
+    if (!data || $("#view-match").hidden) return;
+    fitNames($("#grid"));
+    for (const t of $$("#picks .pick-name, #picks .alt-nm")) fitText(t);
+  });
   document.addEventListener("visibilitychange", autoRefresh);
   window.addEventListener("focus", autoRefresh);
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

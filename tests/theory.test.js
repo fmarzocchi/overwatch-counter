@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected,
+  dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected, swapAdvice,
 } from "../app/theory.js";
 import { recommend, recommendDuo, details } from "../app/recommend.js";
 
@@ -140,12 +140,57 @@ test("come giocarla: riepilogo «In breve» in testa con bersagli, abilità, map
   assert.match(brief, /Punta a/);
   assert.match(brief, /Usa Jagged Blade su Zenyatta e Ana|Tieni Commanding Shout per Ana/);
   assert.match(brief, /La mappa ti sfavorisce|King's Row/);
-  // Ana, Kiriko e Mei la battono in teoria (Ana nei dati di prova + Kiriko/Mei se presenti): cambio eroe consigliato
-  const sw = g.sections.find((s) => s.title === "Cambio eroe");
-  assert.ok(sw && /Se la partita va male, passa a /.test(sw.items[0].text), JSON.stringify(sw));
-  assert.ok(!sw.items[0].text.includes("passa a Junker Queen"));
-  assert.match(brief, /Se la partita va male, passa a/);
+  // ogni riga del riepilogo ha etichetta e testo breve o volti
+  assert.ok(g.sections[0].items.every((i) => i.label && (i.short || i.heroes?.length || i.text)), JSON.stringify(g.sections[0].items));
   assert.match(g.sections.find((s) => s.title.startsWith("Mappa")).items.map((i) => i.text).join(" "), /King's Row, difesa: Tenete il primo punto dall'alto/);
+  // l'eroe peggiore della lista riceve il consiglio di cambiare (verso uno migliore), anche nel riepilogo
+  const worst = rows[rows.length - 1];
+  const gw = playGuide(data, T2, { hero: worst.hero, ...ctx, rows });
+  const sw = gw.sections.find((s) => s.title === "Cambio eroe");
+  assert.ok(sw && /Se la partita va male, passa a /.test(sw.items[0].text), JSON.stringify(sw));
+  assert.ok(!sw.items[0].text.includes(`passa a ${worst.hero.name}`));
+  assert.equal(gw.sections[0].items[0].key, "swap", "il cambio eroe è la prima riga del riepilogo");
+});
+
+test("cambio eroe: mai verso un eroe che rende meno, mai per il primo della lista", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const TT = buildTheory(data, raw, null);
+  for (const enemies of [["Winston", "Genji", "Pharah"], ["Reinhardt", "Ana", "Kiriko", "Mei"], ["D.Va", "Tracer", "Sombra", "Lúcio", "Moira"]]) {
+    const ids = enemies.map(id);
+    for (const role of ["Tank", "Damage", "Support"]) {
+      for (const useTheory of [false, true]) {
+        const rows = recommend(data, { role, mapSlug: "kings-row", enemies: ids, theory: TT, useTheory });
+        assert.equal(swapAdvice(data, TT, { hero: rows[0].hero, rows, enemies: ids }), null, `${role}: il n.1 non deve cambiare`);
+        for (const r of rows) {
+          const sw = swapAdvice(data, TT, { hero: r.hero, rows, enemies: ids });
+          if (!sw) continue;
+          assert.ok(sw.gain >= 0, `${r.hero.name} → ${sw.hero.name}: ${sw.gain}`);
+          assert.notEqual(sw.hero.name, r.hero.name);
+          assert.ok(sw.why && !/−/.test(sw.why), sw.why);
+        }
+      }
+    }
+  }
+  // senza avversari o senza alternative: niente consiglio
+  const rows = recommend(data, { role: "Tank" });
+  assert.equal(swapAdvice(data, TT, { hero: rows[3].hero, rows, enemies: [] }), null);
+});
+
+test("riepilogo: un avversario sta in una sola riga (Punta o Attento), coerente con il riquadro", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const TT = buildTheory(data, raw, null);
+  for (const role of ["Tank", "Damage", "Support"]) {
+    const enemies = ["Winston", "Genji", "Pharah", "Ana", "Reinhardt"].map(id);
+    const rows = recommend(data, { role, mapSlug: "kings-row", enemies, theory: TT });
+    for (const r of rows.slice(0, 6)) {
+      const g = playGuide(data, TT, { hero: r.hero, mapSlug: "kings-row", enemies, rows });
+      const items = g.sections[0].items;
+      const target = items.find((i) => i.key === "target")?.heroes ?? [];
+      const threat = items.find((i) => i.key === "threat")?.heroes ?? [];
+      assert.ok(target.every((h) => !threat.includes(h)), `${r.hero.name}: ${target.map((h) => h.name)} / ${threat.map((h) => h.name)}`);
+      assert.ok(items.length <= 7);
+    }
+  }
 });
 
 test("teoria che invecchia: cambio di ruolo, patch successiva, eroe senza teoria", () => {

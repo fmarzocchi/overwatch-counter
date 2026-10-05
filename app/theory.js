@@ -158,6 +158,7 @@ const MODE_SIDE = {
 };
 const pct = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
 const names = (xs) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`);
+const lower = (t) => String(t).replace(/\.$/, "").replace(/^\p{Lu}(?!\p{Lu})/u, (c) => c.toLowerCase());
 
 // ctx: {hero, data, mapSlug, side, enemies, allies, partners} (partners = eroi presi o consigliati agli altri giocatori;
 // partner, un solo eroe, resta accettato)
@@ -172,6 +173,44 @@ export function allyDirected(a) {
   if (a?.on === "allies" || a?.on === "enemies") return a.on === "allies";
   const t = a?.tags ?? [];
   return t.some((x) => ALLY_TAGS.includes(x)) && !t.some((x) => ENEMY_TAGS.includes(x));
+}
+
+// Cambio eroe: solo verso un eroe che conviene DAVVERO con questi avversari.
+// - nei numeri rende almeno +1,5% in più, oppure
+// - in teoria l'eroe attuale è counterato da 2+ avversari e l'alternativa ne soffre meno, senza rendere meno
+//   nel punteggio (che con "Usa anche la teoria" comprende già la teoria).
+// Così il primo della lista non riceve mai il consiglio di cambiare: l'app non si contraddice.
+// rows: alternative ordinate per quel giocatore (recommend). Restituisce {hero, gain, why, kind, countered} o null.
+export const SWAP_GAIN = 0.015;
+export function swapAdvice(data, theory, { hero, rows = null, enemies = [] } = {}) {
+  if (!hero || !rows || rows.length < 2 || !enemies.length) return null;
+  const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
+  const enemyH = enemies.map((x) => byId[sid(x)]).filter(Boolean);
+  const cur = rows.find((r) => sid(r.hero.id) === sid(hero.id));
+  if (!cur) return null;
+  const vsTheory = (h) => {
+    const t = theory?.idx?.[h.name];
+    return { beats: t ? enemyH.filter((e) => t.counters.has(e.name)) : [], beatenBy: t ? enemyH.filter((e) => t.counteredBy.has(e.name)) : [] };
+  };
+  const countered = vsTheory(hero).beatenBy;
+  let best = null;
+  for (const r of rows) {
+    if (sid(r.hero.id) === sid(hero.id)) continue;
+    const gain = r.score - cur.score;
+    const th = vsTheory(r.hero);
+    const byData = gain >= SWAP_GAIN;
+    const byTheory = countered.length >= 2 && th.beatenBy.length < countered.length && gain >= 0;
+    if (!byData && !byTheory) continue;
+    const value = gain + 0.01 * (th.beats.length - th.beatenBy.length);
+    if (!best || value > best.value) best = { r, gain, th, value };
+  }
+  if (!best) return null;
+  const beats = best.th.beats.map((h) => h.name);
+  const why = beats.length
+    ? `in teoria batte ${names(beats)}${best.gain >= 0.005 ? ` e nei dati rende ${pct(best.gain)} in più` : ""}`
+    : best.gain >= 0.005 ? `nei dati rende ${pct(best.gain)} in più con questi avversari`
+      : `soffre meno questi avversari (${names(countered.map((h) => h.name))} counterano ${hero.name})`;
+  return { hero: best.r.hero, gain: best.gain, why, kind: beats.length || best.gain < 0.005 ? "teoria" : "statistica", countered };
 }
 
 export function playGuide(data, theory, { hero, mapSlug = null, side = null, enemies = [], allies = [], partner = null, partners = null, rows = null } = {}) {
@@ -227,8 +266,8 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   for (const h of enemyH) {
     const why = me?.counteredBy.get(h.name);
     const d = stat(hero, h);
-    if (why) danger.push({ text: `${h.name}: ${why}`, kind: "teoria", w: 2 - d });
-    else if (d <= -0.015) danger.push({ text: `${h.name}: nei dati ti batte (${pct(d)}), evita l'1 contro 1`, kind: "statistica", w: 1 - d });
+    if (why) danger.push({ h, text: `${h.name}: ${why}`, kind: "teoria", w: 2 - d });
+    else if (d <= -0.015) danger.push({ h, text: `${h.name}: nei dati ti batte (${pct(d)}), evita l'1 contro 1`, kind: "statistica", w: 1 - d });
   }
   push("Attenzione a", danger.sort((a, b) => b.w - a.w).slice(0, 3).map(({ text, kind }) => ({ text, kind })));
 
@@ -271,18 +310,20 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
       const mates = (a.targets ?? []).filter((n) => allyNames.has(n));
       if (mates.length) {
         abil.push({ text: `${label}: dalla a ${names(mates)} (squadra tua). ${a.use ?? ""}${a.when ? ` Quando: ${a.when}` : ""}`.trim(), kind: "teoria", w: 2.5 + mates.length });
-        keyLines.push({ text: `${a.name} su ${names(mates)}${a.when ? ` (${a.when.replace(/\.$/, "")})` : ""}.`, kind: "teoria", w: 2.5 + mates.length });
+        keyLines.push({ text: `${a.name} su ${names(mates)}${a.when ? ` (${a.when.replace(/\.$/, "")})` : ""}.`, kind: "teoria", w: 2.5 + mates.length,
+          short: `${a.name} su ${names(mates)}${a.when ? ` — ${lower(a.when)}` : ""}` });
       }
     }
     const on = allyDirected(a) ? [] : (a.targets ?? []).filter((n) => enemyNames.has(n));
     if (on.length) {
       const t = `${label}: usala su ${names(on)}. ${a.use ?? ""}${a.when ? ` Quando: ${a.when}` : ""}`.trim();
       abil.push({ text: t, kind: "teoria", w: 3 + on.length });
-      keyLines.push({ text: `Usa ${a.name} su ${names(on)}${a.when ? ` (${a.when.replace(/\.$/, "")})` : ""}.`, kind: "teoria", w: 3 + on.length });
+      keyLines.push({ text: `Usa ${a.name} su ${names(on)}${a.when ? ` (${a.when.replace(/\.$/, "")})` : ""}.`, kind: "teoria", w: 3 + on.length,
+        short: `${a.name} su ${names(on)}${a.when ? ` — ${lower(a.when)}` : ""}` });
     }
     for (const sv of (a.saveFor ?? []).filter((x) => enemyNames.has(x.hero))) {
       abil.push({ text: `Tieni ${a.name} per ${sv.hero}: ${sv.why}`, kind: "teoria", w: 4 });
-      keyLines.push({ text: `Tieni ${a.name} per ${sv.hero}.`, kind: "teoria", w: 4 });
+      keyLines.push({ text: `Tieni ${a.name} per ${sv.hero}.`, kind: "teoria", w: 4, short: `Tieni ${a.name} per ${sv.hero}` });
     }
     for (const av of (a.avoidOn ?? []).filter((x) => enemyNames.has(x.hero))) {
       abil.push({ text: `Non sprecare ${a.name} su ${av.hero}: ${av.why}`, kind: "teoria", w: 2.5 });
@@ -291,7 +332,8 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
     if (envTag && mapT?.features?.includes("env-kills")) {
       const where = mapT.envKills ? ` (${mapT.envKills})` : "";
       abil.push({ text: `Su ${map.name} usa ${a.name} per spingere nei baratri${where}.`, kind: "teoria", w: 3.5 });
-      keyLines.push({ text: `Su ${map.name} cerca le uccisioni ambientali con ${a.name}.`, kind: "teoria", w: 3.5 });
+      keyLines.push({ text: `Su ${map.name} cerca le uccisioni ambientali con ${a.name}.`, kind: "teoria", w: 3.5,
+        short: `${a.name} per buttare giù dai bordi` });
     }
   }
   const pr = me?.priority?.ability ? (me.abilities ?? []).find((a) => a.name === me.priority.ability) : null;
@@ -323,37 +365,48 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   }
   push(map ? `Mappa: ${map.name}` : "Mappa", mapItems);
 
-  // 9. cambio eroe se la composizione avversaria è sfavorevole
+  // 9. cambio eroe se la composizione avversaria è sfavorevole (solo verso un eroe che conviene davvero)
+  const sw = swapAdvice(data, theory, { hero, rows, enemies });
   let switchLine = null;
-  if (rows && rows.length > 1 && enemyH.length) {
-    const cur = rows.find((r) => sid(r.hero.id) === sid(hero.id));
-    const best = rows.find((r) => sid(r.hero.id) !== sid(hero.id));
-    const countered = me ? enemyH.filter((h) => me.counteredBy.has(h.name)).length : 0;
-    if (cur && best && (best.score - cur.score >= 0.015 || countered >= 2)) {
-      const bt = theory?.idx?.[best.hero.name];
-      const beats = bt ? enemyH.filter((h) => bt.counters.has(h.name)).map((h) => h.name) : [];
-      const why = beats.length ? `in teoria batte ${names(beats)}` : `nei dati rende ${pct(best.score - cur.score)} in più con questi avversari`;
-      switchLine = { text: `Se la partita va male, passa a ${best.hero.name}: ${why}.`, kind: beats.length ? "teoria" : "statistica" };
-      push("Cambio eroe", [switchLine,
-        ...(countered >= 2 ? [{ text: `${names(enemyH.filter((h) => me.counteredBy.has(h.name)).map((h) => h.name))} ti mettono in difficoltà.`, kind: "teoria" }] : [])]);
-    }
+  if (sw) {
+    switchLine = { text: `Se la partita va male, passa a ${sw.hero.name}: ${sw.why}.`, kind: sw.kind };
+    push("Cambio eroe", [switchLine,
+      ...(sw.countered.length >= 2 ? [{ text: `${names(sw.countered.map((h) => h.name))} ti mettono in difficoltà.`, kind: "teoria" }] : [])]);
   }
 
-  // 10. riepilogo in testa: le cose più importanti di tutte le sezioni
+  // 10. riepilogo in testa: poche righe, ognuna con un'etichetta (Punta, Attento, Abilità…) e, dove serve, i volti.
+  // text = frase completa (lettori di schermo, test); short = ciò che si legge accanto all'etichetta.
   const summary = [];
-  if (good.length) summary.push({ text: `Punta a ${names(good.slice(0, 3).map((t) => t.h.name))}${ignore.length ? `; ignora ${names(ignore.slice(0, 2).map((h) => h.name))}` : ""}.`, kind: good[0].kind });
-  summary.push(...keyLines.sort((a, b) => b.w - a.w).slice(0, 2).map(({ text, kind }) => ({ text, kind })));
-  if (!keyLines.length && me?.priority?.ability) summary.push({ text: `Abilità su cui puntare: ${me.priority.ability}.`, kind: "teoria" });
-  if (me?.play?.position && POSITION_IT[me.play.position]) summary.push({ text: POSITION_IT[me.play.position], kind: "teoria" });
-  const dz = danger.sort((a, b) => b.w - a.w)[0];
-  if (dz) summary.push({ text: `Attento a ${dz.text.split(":")[0]}.`, kind: dz.kind });
+  const line = (key, label, text, kind, extra = {}) => summary.push({ key, label, text, kind, short: extra.short ?? null, heroes: extra.heroes ?? null });
+  if (sw) line("swap", "Cambia", switchLine.text, sw.kind, { heroes: [sw.hero], short: sw.why });
+  // un avversario sta in una sola riga: "Punta" se nel complesso lo batti (numeri + teoria), altrimenti "Attento"
+  const signal = (h) => stat(hero, h) + (me?.counters.has(h.name) ? 0.015 : 0) - (me?.counteredBy.has(h.name) ? 0.015 : 0);
+  const top3 = good.filter((t) => signal(t.h) > -0.01).slice(0, 3).map((t) => t.h);
+  if (top3.length) {
+    const ign = ignore.slice(0, 2).map((h) => h.name);
+    line("target", "Punta", `Punta a ${names(top3.map((h) => h.name))}${ign.length ? `; ignora ${names(ign)}` : ""}.`,
+      good[0].kind, { heroes: top3, short: ign.length ? `ignora ${names(ign)}` : null });
+  }
+  const dangerTop = danger.filter((d) => !top3.includes(d.h) && signal(d.h) < 0.01).sort((a, b) => b.w - a.w).slice(0, 2);
+  if (dangerTop.length) {
+    const hs = dangerTop.map((d) => d.h);
+    line("threat", "Attento", `Attento a ${names(hs.map((h) => h.name))}.`, dangerTop[0].kind, { heroes: hs });
+  }
+  const keyTop = keyLines.sort((a, b) => b.w - a.w).slice(0, 2);
+  for (const k of keyTop) line("ability", "Abilità", k.text, k.kind, { short: k.short });
+  if (!keyTop.length && me?.priority?.ability) {
+    line("ability", "Abilità", `Abilità su cui puntare: ${me.priority.ability}.`, "teoria", { short: `${me.priority.ability}${pr?.it ? ` (${pr.it})` : ""}: la più importante` });
+  }
+  if (me?.play?.position && POSITION_IT[me.play.position]) line("position", "Posizione", POSITION_IT[me.play.position], "teoria");
   const pz = protect.sort((a, b) => b.w - a.w)[0];
-  if (pz) summary.push({ text: pz.text.split(":")[0].replace(/ — tu lo batti\.?$/, "") + ".", kind: pz.kind });
+  if (pz) {
+    const t = pz.text.split(":")[0].replace(/ — tu lo batti\.?$/, "");
+    line("protect", "Proteggi", `${t}.`, pz.kind, { short: t.replace(/^Proteggi /, "") });
+  }
   if (map && mapItems.length) {
     const m = mapItems.find((x) => x.kind === "teoria" && /favorisce|sfavorisce|baratri/.test(x.text)) ?? mapItems[0];
-    summary.push(m);
+    line("map", "Mappa", m.text, m.kind, { short: m.text.replace(/^La mappa /, "").replace(/\.$/, "") });
   }
-  if (switchLine) summary.push(switchLine);
   if (summary.length) sections.unshift({ title: "In breve", summary: true, items: summary.slice(0, 7) });
 
   if (!sections.length) {

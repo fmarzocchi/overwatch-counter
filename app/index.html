@@ -34,18 +34,16 @@
       </div>
     </section>
 
-    <section id="guides" class="guides" aria-label="Come giocare"></section>
-
-    <section class="took-box" aria-labelledby="t-took">
-      <h2 id="t-took" class="took-title">Chi ha preso cosa <small>tocca un giocatore, poi il suo eroe</small></h2>
-      <div id="pickers" class="pickers" role="group" aria-labelledby="t-took"></div>
-    </section>
-
     <section class="groups" aria-label="Cosa stai segnando">
       <div id="groups" class="seg groups-seg" role="group" aria-label="Tocca un eroe per aggiungerlo a">
         <button type="button" data-group="bans" class="g-bans" aria-pressed="false">Ban <b data-count="bans">0</b></button>
         <button type="button" data-group="enemies" class="g-enemies" aria-pressed="true">Avversari <b data-count="enemies">0</b></button>
         <button type="button" data-group="allies" class="g-allies" aria-pressed="false">Alleati <b data-count="allies">0</b></button>
+      </div>
+      <!-- al posto del selettore, mentre si segna l'eroe preso da un giocatore ("Altro" nel suo riquadro) -->
+      <div id="pick-banner" class="pick-banner" role="status" hidden>
+        <span id="pick-banner-txt"></span>
+        <button type="button" id="pick-cancel">Annulla</button>
       </div>
     </section>
     <div id="chosen" class="chosen" aria-label="Selezionati"></div>
@@ -53,7 +51,6 @@
     <section id="grid" class="grid-wrap" aria-label="Eroi" tabindex="-1"></section>
 
     <footer class="match-foot">
-      <button id="new-match" type="button" class="btn danger">Nuova partita</button>
       <button id="refresh" type="button" class="btn">Aggiorna dati</button>
       <p id="fresh" class="fresh"></p>
       <p class="source">Dati: <a href="https://counterwatch.gg" rel="noopener">counterwatch.gg</a> · statistiche aggregate, consigli non certezze.</p>
@@ -82,6 +79,8 @@
   <!-- ============ SCHEDE ============ -->
   <nav class="tabs" aria-label="Schede">
     <button type="button" data-view="match" aria-current="page">Partita</button>
+    <!-- sempre a portata di pollice; si può annullare dal messaggio che compare -->
+    <button type="button" id="new-match" class="tab-action">↺ Nuova partita</button>
     <button type="button" data-view="profile">Profilo</button>
   </nav>
 

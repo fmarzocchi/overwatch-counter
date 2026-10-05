@@ -128,9 +128,8 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **Rank**: sceglie i dati Ranked della divisione del giocatore (vedi "Dati Ranked").
 - Ban: max 4. Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
 - Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
-- **3 consigli per giocatore** (dal migliore), con volto, stima e perché: righe "Mappa ±x%", "Avversari ±x%"
-  (somma sulla comp avversaria), "Alleati ±x%" (`breakdown()`); un tocco apre il dettaglio per ogni
-  avversario/alleato (`details()`).
+- **3 consigli per giocatore** (dal migliore): uno grande e 2 alternative (vedi "Design: tre livelli"); i perché in
+  numeri ("Mappa ±x%", "Avversari ±x%", "Con <nome>", `breakdown()`; ogni avversario/alleato, `details()`) sono nel "Perché".
 - **"Suggerisci solo eroi preferiti"** (Profilo, vale per entrambi): `onlyFavorites` in `recommend()`; se a un
   giocatore non resta nessun preferito utilizzabile si torna a tutti gli eroi e l'app lo scrive (`notes`).
 - Icone: i volti degli eroi vengono copiati in `app/heroes/` dal workflow (verificato: 53/53 su GitHub).
@@ -151,9 +150,8 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   Sierra, Sombra, Jetpack Cat, Mizuki, Wuyang. **Sombra diventa Supporto dal 6/10/2026 (Stagione 5)**: la sua
   teoria descrive il kit Danni e va rifatta.
 - UI: colore viola + etichetta "Teoria" (`--theory`), "Dati" in blu; riquadri "Sinergizza con", "Countera bene",
-  "Viene counterato da" nella scheda eroe; liste complete e scorrevoli; pulsanti "🎯 <eroe>" sotto mappa/lato e
-  "Come giocarla in questa partita" nella scheda; interruttore nel Profilo "Usa anche la teoria nei consigli"
-  (±0,5% per indicazione, la "stima" resta statistica).
+  "Viene counterato da" nella scheda "Perché"; liste complete; "Come giocarla" dal riquadro (vedi "Design: tre livelli");
+  interruttore nel Profilo "Usa anche la teoria nei consigli" (±0,5% per indicazione, la "stima" resta statistica).
 - Riquadro consigli **in flusso** (scorre via con la pagina, non copre mai la griglia); quando è fuori schermo compare
   in alto la barra minima `#mini` (n. 1 di ciascuno, toccabile) e sotto si ferma il selettore Ban/Avversari/Alleati.
   **Niente scroll dentro i riquadri** (liste complete e distese; si scorre solo pagina o scheda). Collaudo e2e:
@@ -176,9 +174,9 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 
 - Profilo: **da 1 a 5 giocatori** (`MAX_PLAYERS`), "＋ Aggiungi giocatore" (il nuovo prende il ruolo che manca nella coda
   1 tank/2 danni/2 supporti) e "Rimuovi" a due tocchi. Ognuno ha un **colore** (`--p0`…`--p4`): riquadro, griglia, barra.
-- Partita: riga **"Chi ha preso cosa"** (`#pickers`, fuori dalla barra fissa per non alzarla): tocco su un giocatore, poi
-  sul suo eroe → `match.picked[i]`; si passa da soli al prossimo che non ha scelto, finiti tutti si torna agli Avversari.
-  Un eroe preso esce da ban/avversari/alleati. Griglia: **tratteggio** = consigliato a quel giocatore, **pieno + "F✓"** = preso.
+- Partita: eroe preso → `match.picked[i]`, da "Segna come preso" (riquadro o guida) o "Altro" + tocco nella griglia
+  (poi si torna agli Avversari). Un eroe preso esce da ban/avversari/alleati. Griglia: **tratteggio** = consigliato a quel
+  giocatore, **pieno + "F✓"** = preso. (La riga "Chi ha preso cosa" è stata tolta nel ridisegno: era un doppione.)
 - Alleati = gli ALTRI della squadra: max `5 − giocatori` (il pulsante sparisce in 5).
 - Logica: `recommendTeam()` (`recommendDuo` è lo stesso): eroi presi fissi (e alleati per gli altri; in cima alla loro lista
   con `picked: true`, sotto le alternative del ruolo); per gli altri la combinazione migliore (eroi diversi, sinergia tra
@@ -190,6 +188,25 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   il fattore `--fit` (CSS `calc(10px * var(--fit))`): una dimensione in px veniva ingrandita due volte dalla WebView col
   carattere di sistema al 130% (visto sull'emulatore). e2e "carattere al 130%" lo imita;
   l'e2e ora fallisce se un nome va a capo a metà parola (prima "Symmetra"/"Widowmaker" si spezzavano).
+
+## Design: tre livelli (2026-10-05, richiesta dell'utente) — ha la precedenza su ciò che segue
+
+L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il resto è a un tocco o due.
+1. **Riquadro del giocatore** (colpo d'occhio): l'eroe da prendere grande (volto + nome) con UNA sola cifra (la stima);
+   prima degli avversari un solo motivo in parole (`headline()`, es. "Forte su King's Row"); con gli avversari
+   **Batte/Teme** con i volti (`matchups()`: numeri + teoria, coerente con "Punta/Attento" della guida);
+   "Segna come preso" (un tocco); "Oppure" 2 alternative piccole + "Altro" (eroe diverso → banner "Tocca l'eroe preso
+   da X" al posto del selettore, `choosePicker`). Eroe preso: il riquadro resta fermo su quell'eroe; se conviene davvero
+   compare "🔁 Passa a …" (`swapAdvice()`: +1,5% nei numeri, o counterato in teoria da 2+ avversari e l'alternativa non
+   rende meno; mai per il n. 1 della lista). Niente percentuali "Mappa/Avversari/Con": sono nel livello 3.
+2. **Come giocarla** (tocco sull'eroe, sul riquadrino in alto o su un'alternativa): "In breve" ≤ 7 righe con etichetta
+   (Cambia, Punta, Attento, Abilità, Posizione, Proteggi, Mappa), volti per gli eroi, bordo viola = teoria / blu = dati;
+   "Tutti i consigli" chiuso (`<details>`); "Segna: X l'ha preso"; "📊 Perché? Numeri e teoria".
+3. **Perché** (dalla guida): riepilogo Mappa/Avversari/Con, ogni riga, statistiche Ranked complete, teoria completa.
+- "↺ Nuova partita" nella barra in basso (sempre a portata di pollice) con "Annulla" nel messaggio.
+- La barra minima in alto lampeggia una volta quando cambia il consiglio di un giocatore.
+- Collaudo e2e: "un solo numero per riquadro", "In breve ≤ 7 righe e il resto chiuso", "Segna come preso: un tocco",
+  "Annulla", nomi dei 53 eroi mai spezzati nel posto del consiglio e delle alternative (`window.owcFitText`).
 
 ## L'app (PWA) — come deve essere
 

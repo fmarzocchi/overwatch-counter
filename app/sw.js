@@ -1,6 +1,6 @@
 // Service worker: guscio dell'app cache-first (aggiornato in sottofondo), data.json network-first
 // con ripiego sulla copia salvata se offline, icone degli eroi cache-first.
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL = `owc-shell-${VERSION}`;
 const DATA = "owc-data";
 const IMG = "owc-img";
