@@ -334,8 +334,10 @@ dialog { overscroll-behavior: contain; }
   .sug-name, .sug.first .sug-name { font-size: 14px; }
 }
 /* con il carattere di sistema ingrandito (es. 130% su Xiaomi) i nomi non si spezzano a metà parola */
-.hero .nm { font-size: 10px; overflow-wrap: break-word; word-break: normal; hyphens: auto; -webkit-hyphens: auto; }
-.hero .nm.long { font-size: 9px; letter-spacing: -0.1px; }
+.hero .nm { font-size: calc(10px * var(--fit, 1)); overflow-wrap: break-word; word-break: normal; hyphens: manual; -webkit-hyphens: manual; }
+.hero .nm.long { font-size: calc(9px * var(--fit, 1)); letter-spacing: -0.1px; }
+/* misura di una parola (fitNames): stesso carattere del nome, su una riga, invisibile */
+.nm-probe { position: absolute; left: 0; top: 0; visibility: hidden; white-space: nowrap; font: inherit; letter-spacing: inherit; }
 .hero { padding-left: 1px; padding-right: 1px; }
 
 /* riepilogo della partita in testa a "Come giocarla" */

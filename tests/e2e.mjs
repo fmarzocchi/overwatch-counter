@@ -333,6 +333,27 @@ try {
     await c7.close();
   }
 
+  // ---------- carattere di sistema ingrandito (Xiaomi al 130%): nomi interi, mai spezzati a metà parola ----------
+  {
+    const { ctx: c11, page: p11 } = await newPage({ viewport: { width: 407, height: 833 }, deviceScaleFactor: 3, serviceWorkers: "block" });
+    lastPage = p11;
+    await p11.goto(BASE);
+    await p11.locator("#grid .hero").first().waitFor();
+    // la WebView ingrandisce tutto il testo del 30%: qui lo si imita sui nomi della griglia
+    await p11.addStyleTag({ content: ".hero .nm { font-size: calc(13px * var(--fit, 1)) !important } .hero .nm.long { font-size: calc(11.7px * var(--fit, 1)) !important }" });
+    await p11.evaluate(() => { document.querySelector("#grid").dataset.fitW = ""; window.dispatchEvent(new Event("resize")); });
+    await p11.waitForTimeout(100);
+    const broken = await p11.evaluate(() => {
+      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
+      return [...document.querySelectorAll("#grid .hero .nm")].filter((x) => lines(x) > x.textContent.split(/\s+/).length
+        || x.scrollHeight > x.clientHeight + 1).map((x) => x.textContent);
+    });
+    check("carattere al 130%: nomi della griglia interi, mai spezzati a metà parola", broken.length === 0, broken.join(", "));
+    await p11.locator("#grid .hero", { has: p11.locator(".nm", { hasText: /^Vendetta$/ }) }).scrollIntoViewIfNeeded();
+    await shot(p11, "15-carattere-130");
+    await c11.close();
+  }
+
   // ---------- da 1 a 5 giocatori, ognuno col suo colore; "Chi ha preso cosa" ----------
   {
     const QUEUE = [["Fabio", "Damage"], ["Giulia", "Support"], ["Marco", "Tank"], ["Sara", "Support"], ["Luca", "Damage"]];

@@ -513,24 +513,27 @@ function buildHeroGrid(container, onTap) {
 }
 
 // nomi della griglia mai spezzati a metà parola: se la parola più lunga non ci sta, il carattere si
-// rimpicciolisce quanto basta (misurato sul telefono, con il suo carattere e la sua scala del testo)
-let measureCtx = null;
+// rimpicciolisce quanto basta. Si misura il testo VERO sulla pagina (con il carattere del telefono e il suo
+// ingrandimento di sistema, es. 130% su Xiaomi) e si cambia solo un fattore (--fit): una dimensione in px
+// verrebbe ingrandita una seconda volta dalla WebView.
 function fitNames(container) {
   const nms = $$(".hero .nm", container);
   const width = nms[0]?.parentElement.clientWidth ?? 0;
   if (!width || container.dataset.fitW === String(width)) return;
   container.dataset.fitW = String(width);
-  if (!measureCtx) measureCtx = document.createElement("canvas").getContext("2d");
-  for (const nm of nms) nm.style.fontSize = "";
+  for (const nm of nms) nm.style.removeProperty("--fit");
+  const probe = el("span", { class: "nm-probe", "aria-hidden": "true" });
   for (const nm of nms) {
-    const cs = getComputedStyle(nm);
     const btn = getComputedStyle(nm.parentElement);
-    // margine: la misura del canvas e quella della pagina possono differire di qualche decimo di pixel
-    const avail = nm.parentElement.clientWidth - parseFloat(btn.paddingLeft) - parseFloat(btn.paddingRight) - 3;
-    const size = parseFloat(cs.fontSize);
-    measureCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${size}px ${cs.fontFamily}`;
-    const w = Math.max(...nm.textContent.split(/\s+/).map((x) => measureCtx.measureText(x).width + (parseFloat(cs.letterSpacing) || 0) * x.length));
-    if (w > avail) nm.style.fontSize = `${Math.max(7, Math.floor((size * avail) / w * 10) / 10)}px`;
+    const avail = nm.parentElement.clientWidth - parseFloat(btn.paddingLeft) - parseFloat(btn.paddingRight) - 2;
+    let w = 0;
+    nm.append(probe);
+    for (const word of nm.firstChild.textContent.split(/\s+/)) {
+      probe.textContent = word;
+      w = Math.max(w, probe.getBoundingClientRect().width);
+    }
+    probe.remove();
+    if (w > avail) nm.style.setProperty("--fit", String(Math.max(0.6, Math.floor((avail / w) * 100) / 100)));
   }
 }
 

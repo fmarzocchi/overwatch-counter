@@ -186,7 +186,9 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   `breakdown(row, partners[])`: "Con <nome>" o "Con voi". `playGuide` accetta `partners[]`.
 - Collaudo: `recommend.test.js` (squadre da 1 a 5, combinazione ottima verificata a forza bruta con 3, eroi presi, tutti
   presi) ed e2e (1–5 giocatori su Xiaomi 14T e Nothing Phone (3), 5 anche su 360×640; aggiungi/rimuovi; screenshot 13-*, 14-*).
-- Nomi della griglia: `fitNames()` rimpicciolisce il carattere se la parola più lunga non ci sta (misurata sul telefono);
+- Nomi della griglia: `fitNames()` misura la parola più lunga col testo VERO della pagina (span invisibile) e imposta solo
+  il fattore `--fit` (CSS `calc(10px * var(--fit))`): una dimensione in px veniva ingrandita due volte dalla WebView col
+  carattere di sistema al 130% (visto sull'emulatore). e2e "carattere al 130%" lo imita;
   l'e2e ora fallisce se un nome va a capo a metà parola (prima "Symmetra"/"Widowmaker" si spezzavano).
 
 ## L'app (PWA) — come deve essere
