@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  recommend, recommendDuo, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
+  recommend, recommendDuo, recommendTeam, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -216,4 +216,93 @@ test("perché: la sinergia col compagno è mostrata a parte, non come «Alleati�
   assert.ok(b.some((x) => x.key === "partner" && x.text.startsWith("Con Lei")));
   const b2 = breakdown(recommend(data, { role: "Damage", allies: [id("Ana"), pair.b.id] })[0], { id: pair.b.id, name: "Lei" });
   assert.ok(b2.some((x) => x.key === "allies") && b2.some((x) => x.key === "partner"));
+});
+
+// ---------- squadra da 1 a 5 giocatori, eroi già presi ----------
+
+const ROLE_QUEUE = ["Tank", "Damage", "Damage", "Support", "Support"];
+const distinct = (heroes) => new Set(heroes.map((h) => String(h.id))).size === heroes.length;
+
+for (const n of [1, 2, 3, 4, 5]) {
+  test(`squadra di ${n}: un eroe a testa, tutti diversi, del ruolo di ciascuno`, () => {
+    const players = ROLE_QUEUE.slice(0, n).map((role) => ({ role }));
+    const ctx = { mapSlug: "kings-row", enemies: [id("Pharah"), id("Mercy")], bans: [id("Ana")] };
+    const { lists, team, picked } = recommendTeam(data, { ...ctx, players });
+    assert.equal(lists.length, n);
+    assert.equal(team.length, n);
+    assert.ok(team.every(Boolean), "ognuno ha un eroe");
+    assert.ok(distinct(team), "eroi diversi");
+    team.forEach((h, i) => {
+      assert.equal(h.role, players[i].role);
+      assert.equal(lists[i][0].hero.id, h.id, "la scelta è in cima alla lista");
+      assert.notEqual(h.id, id("Ana"), "ban rispettato");
+    });
+    assert.deepEqual(picked, players.map(() => false));
+    // ogni lista conta gli eroi degli altri come alleati
+    team.forEach((h, i) => {
+      const mates = team.filter((_, j) => j !== i).map((x) => String(x.id));
+      assert.ok(lists[i].every((r) => !mates.includes(String(r.hero.id))), "gli eroi degli altri non sono tra le alternative");
+    });
+  });
+}
+
+test("squadra: la combinazione scelta è la migliore (controllo completo con 3 giocatori)", () => {
+  const players = [{ role: "Tank" }, { role: "Support" }, { role: "Support" }];
+  const ctx = { mapSlug: "ilios", enemies: [id("Genji"), id("Winston")] };
+  const { team } = recommendTeam(data, { ...ctx, players });
+  const syn = (a, b) => { const v = pairValue(data.synergies, a.hero.id, b.hero.id); return v === null ? 0 : (v - 0.5) * SYNERGY_WEIGHT; };
+  const [r0, r1, r2] = players.map((p) => recommend(data, { ...ctx, ...p }));
+  let best = -Infinity, bestIds = null;
+  for (const a of r0) for (const b of r1) for (const c of r2) {
+    if (b.hero.id === c.hero.id) continue;
+    const t = a.score + b.score + c.score + syn(a, b) + syn(a, c) + syn(b, c);
+    if (t > best) { best = t; bestIds = [a, b, c].map((r) => r.hero.id); }
+  }
+  assert.deepEqual(team.map((h) => h.id), bestIds);
+});
+
+test("eroe già preso: resta fisso, in cima con picked, e conta come alleato per gli altri", () => {
+  const players = [{ role: "Damage" }, { role: "Support", picked: id("Mercy") }, { role: "Support" }];
+  const { lists, team, picked } = recommendTeam(data, { enemies: [id("Pharah")], players });
+  assert.deepEqual(picked, [false, true, false]);
+  assert.equal(team[1].name, "Mercy");
+  assert.equal(lists[1][0].hero.name, "Mercy");
+  assert.equal(lists[1][0].picked, true);
+  assert.ok(lists[1].slice(1).every((r) => r.hero.role === "Support" && !r.picked), "alternative dello stesso ruolo");
+  assert.ok(lists[2].every((r) => r.hero.name !== "Mercy"), "nessuno riceve l'eroe già preso");
+  assert.ok(lists[0][0].withAllies.some((a) => a.hero.name === "Mercy"), "sinergia con l'eroe preso");
+  // il ruolo dell'eroe preso vale anche se il giocatore aveva un altro ruolo
+  const r = recommendTeam(data, { players: [{ role: "Tank", picked: id("Ana") }] });
+  assert.equal(r.lists[0][0].hero.name, "Ana");
+});
+
+test("tutti hanno già preso: niente ricerca, liste con l'eroe preso in cima", () => {
+  const names5 = ["Reinhardt", "Tracer", "Genji", "Ana", "Lúcio"];
+  const players = names5.map((n) => ({ role: hero(n).role, picked: id(n) }));
+  const { lists, team } = recommendTeam(data, { mapSlug: "kings-row", players });
+  assert.deepEqual(team.map((h) => h.name), names5);
+  lists.forEach((rows, i) => {
+    assert.equal(rows[0].hero.name, names5[i]);
+    assert.equal(rows[0].withAllies.length, 4, "gli altri 4 come alleati");
+  });
+});
+
+test("perché con più compagni: «Con voi» somma la sinergia con gli altri giocatori", () => {
+  const players = [{ role: "Tank" }, { role: "Damage" }, { role: "Support" }];
+  const { lists, team } = recommendTeam(data, { players });
+  const partners = [{ id: team[1].id, name: "B" }, { id: team[2].id, name: "C" }];
+  const row = lists[0][0];
+  const b = breakdown(row, partners);
+  const g = b.find((x) => x.key === "partner");
+  assert.equal(g.label, "Con voi");
+  close(g.delta, row.withAllies.reduce((s, a) => s + a.delta, 0), "somma");
+  assert.ok(!b.some((x) => x.key === "allies"));
+  assert.equal(breakdown(row, [partners[0]]).find((x) => x.key === "partner").label, "Con B");
+});
+
+test("squadra di 5 senza ruolo: risposta rapida", () => {
+  const t0 = Date.now();
+  const { team } = recommendTeam(data, { players: [{}, {}, {}, {}, {}], enemies: [id("Pharah")] });
+  assert.ok(distinct(team) && team.length === 5);
+  assert.ok(Date.now() - t0 < 1500, `troppo lento: ${Date.now() - t0} ms`);
 });

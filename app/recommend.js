@@ -8,8 +8,8 @@
 //   pref   = piccolo bonus se l'eroe è tra i preferiti del giocatore
 // "stima" = 50% + punteggio (senza il bonus preferiti): non è una probabilità esatta, serve a ordinare.
 //
-// In due (recommendDuo) si sceglie la COPPIA con la somma più alta, contando anche
-// la sinergia tra i due eroi scelti; i due eroi sono sempre diversi.
+// In squadra (recommendTeam, 1–5 giocatori) si sceglie la COMBINAZIONE con la somma più alta, contando anche
+// la sinergia tra gli eroi scelti; gli eroi sono sempre diversi e quelli già presi restano fissi.
 // onlyFavorites: si consiglia solo tra i preferiti del giocatore; se nessun preferito è
 // disponibile (ruolo, ban, alleati) si torna a tutti gli eroi e lo si segnala in notes.
 
@@ -101,57 +101,113 @@ export function recommend(
   return rows;
 }
 
-// players: [{role, favorites, onlyFavorites, data?}, …]; il resto come recommend().
+// Squadra di 1–5 giocatori. players: [{role, favorites, onlyFavorites, data?, picked?}, …]; il resto come recommend().
 // data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.
-// Restituisce, per ogni giocatore, le alternative ordinate (la prima è la scelta consigliata)
-// già calcolate tenendo conto dell'eroe consigliato all'altro.
-export function recommendDuo(data, { players = [], ...ctx } = {}) {
+// picked: eroe GIÀ PRESO da quel giocatore → resta fisso, conta come alleato per gli altri e la sua lista
+// ha in cima l'eroe preso (row.picked = true) seguito dalle alternative del suo ruolo.
+// Per gli altri si cerca la COMBINAZIONE migliore (eroi tutti diversi): somma dei punteggi + sinergia
+// tra ogni coppia di eroi consigliati. Fino a 2 giocatori liberi la ricerca è completa; con di più si
+// considerano i migliori TEAM_BEAM eroi di ciascuno (differenza trascurabile, calcolo istantaneo).
+// Restituisce {lists, team, picked, pair, notes}: lists[i] = alternative ordinate (la prima è quella consigliata
+// o presa), già calcolate con gli eroi degli altri come alleati; team[i] = eroe di ciascuno.
+export const TEAM_BEAM = 12;
+export function recommendTeam(data, { players = [], ...ctx } = {}) {
   const notes = players.map(() => null);
   const fallbackNote = "nessun preferito disponibile: consiglio tra tutti";
+  const allies = (ctx.allies ?? []).map(sid);
+  const pickedIds = players.map((p) => (p.picked != null && p.picked !== "" ? sid(p.picked) : null));
+  const fixed = pickedIds.filter(Boolean);
+  const dataOf = (p) => p.data ?? data;
+  const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
+  const free = players.map((_, i) => i).filter((i) => !pickedIds[i]);
   // con "solo preferiti" un giocatore senza preferiti utilizzabili torna a tutti gli eroi
   const opts = players.map((p, i) => {
-    if (p.onlyFavorites && !recommend(p.data ?? data, { ...ctx, ...p }).length) {
+    if (!pickedIds[i] && p.onlyFavorites && !recommend(dataOf(p), { ...ctx, ...p, allies: [...allies, ...fixed] }).length) {
       notes[i] = fallbackNote;
       return { ...p, onlyFavorites: false };
     }
     return p;
   });
-  if (players.length !== 2) {
-    return { lists: opts.map((p) => recommend(p.data ?? data, { ...ctx, ...p })), pair: null, notes };
-  }
-  const bestPair = () => {
-    const [r0, r1] = opts.map((p) => recommend(p.data ?? data, { ...ctx, ...p }));
-    let best = null;
-    for (const a of r0) {
-      for (const b of r1) {
-        if (sid(a.hero.id) === sid(b.hero.id)) continue;
-        const syn = pairValue(data.synergies, a.hero.id, b.hero.id);
-        const total = a.score + b.score + (syn === null ? 0 : (syn - 0.5) * SYNERGY_WEIGHT);
-        if (!best || total > best.total) best = { total, a, b, syn };
-      }
-    }
-    return { best, r0, r1 };
+  const synOf = (a, b) => {
+    const v = pairValue(data.synergies, a, b);
+    return v === null ? 0 : (v - 0.5) * SYNERGY_WEIGHT;
   };
-  let { best, r0, r1 } = bestPair();
-  if (!best && opts[1].onlyFavorites) {
-    // es. stesso ruolo e un solo preferito in comune: il secondo giocatore sceglie tra tutti
-    opts[1] = { ...opts[1], onlyFavorites: false };
-    notes[1] = fallbackNote;
-    ({ best, r0, r1 } = bestPair());
+  const search = () => {
+    const cands = free.map((i) => {
+      const rows = recommend(dataOf(opts[i]), { ...ctx, ...opts[i], allies: [...allies, ...fixed] });
+      return free.length > 2 ? rows.slice(0, TEAM_BEAM) : rows;
+    });
+    // indici numerici e tabella delle sinergie: con 5 giocatori le combinazioni sono centinaia di migliaia
+    const ids = [...new Set(cands.flat().map((r) => sid(r.hero.id)))];
+    const at = new Map(ids.map((x, k) => [x, k]));
+    const n = ids.length;
+    const syn = new Float64Array(n * n);
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) syn[a * n + b] = syn[b * n + a] = synOf(ids[a], ids[b]);
+    const idx = cands.map((rows) => rows.map((r) => at.get(sid(r.hero.id))));
+    const used = new Uint8Array(n);
+    const pick = new Int32Array(free.length);
+    const cur = new Int32Array(free.length);
+    let best = null;
+    let bestTotal = -Infinity;
+    const dfs = (k, total) => {
+      if (k === free.length) {
+        if (total > bestTotal) { bestTotal = total; pick.set(cur); best = true; }
+        return;
+      }
+      const rows = cands[k];
+      for (let j = 0; j < rows.length; j++) {
+        const h = idx[k][j];
+        if (used[h]) continue;
+        let t = total + rows[j].score;
+        for (let q = 0; q < k; q++) t += syn[h * n + idx[q][cur[q]]];
+        used[h] = 1;
+        cur[k] = j;
+        dfs(k + 1, t);
+        used[h] = 0;
+      }
+    };
+    dfs(0, 0);
+    return best ? { total: bestTotal, rows: [...pick].map((j, k) => cands[k][j]) } : null;
+  };
+  let best = search();
+  // es. stesso ruolo e un solo preferito in comune: gli ultimi giocatori scelgono tra tutti
+  for (let k = free.length - 1; !best && k >= 0; k--) {
+    const i = free[k];
+    if (!opts[i].onlyFavorites) continue;
+    opts[i] = { ...opts[i], onlyFavorites: false };
+    notes[i] = fallbackNote;
+    best = search();
   }
-  if (!best) return { lists: [r0, r1], pair: null, notes };
-  const allies = ctx.allies ?? [];
-  const lists = [
-    recommend(opts[0].data ?? data, { ...ctx, ...opts[0], allies: [...allies, best.b.hero.id] }),
-    recommend(opts[1].data ?? data, { ...ctx, ...opts[1], allies: [...allies, best.a.hero.id] }),
-  ];
-  // la scelta congiunta va in cima anche se, a pari merito, l'ordine fosse diverso
-  for (const [i, h] of [[0, best.a.hero], [1, best.b.hero]]) {
-    const k = lists[i].findIndex((r) => sid(r.hero.id) === sid(h.id));
-    if (k > 0) lists[i].unshift(...lists[i].splice(k, 1));
-  }
-  return { lists, pair: { a: best.a.hero, b: best.b.hero, synergy: best.syn }, notes };
+  const team = players.map((_, i) => (pickedIds[i] ? byId[pickedIds[i]] ?? null : null));
+  if (best) free.forEach((i, k) => { team[i] = best.rows[k].hero; });
+  const lists = players.map((p, i) => {
+    const others = team.filter((h, j) => h && j !== i).map((h) => sid(h.id));
+    if (pickedIds[i]) {
+      const h = byId[pickedIds[i]];
+      const o = { ...ctx, ...opts[i], role: h?.role ?? null, onlyFavorites: false, allies: [...allies, ...others] };
+      let rows = recommend(dataOf(p), o);
+      if (!rows.some((r) => sid(r.hero.id) === pickedIds[i])) {
+        // preso anche se segnato tra i ban: lo si mostra lo stesso
+        rows = [...recommend(dataOf(p), { ...o, bans: [] }).filter((r) => sid(r.hero.id) === pickedIds[i]), ...rows];
+      }
+      const k = rows.findIndex((r) => sid(r.hero.id) === pickedIds[i]);
+      if (k < 0) return rows;
+      const [row] = rows.splice(k, 1);
+      return [{ ...row, picked: true }, ...rows];
+    }
+    const rows = recommend(dataOf(opts[i]), { ...ctx, ...opts[i], allies: [...allies, ...others] });
+    // la scelta congiunta va in cima anche se, a pari merito, l'ordine fosse diverso
+    const k = team[i] ? rows.findIndex((r) => sid(r.hero.id) === sid(team[i].id)) : -1;
+    if (k > 0) rows.unshift(...rows.splice(k, 1));
+    return rows;
+  });
+  const pair = players.length === 2 && team[0] && team[1]
+    ? { a: team[0], b: team[1], synergy: pairValue(data.synergies, team[0].id, team[1].id) } : null;
+  return { lists, team, picked: pickedIds.map(Boolean), pair, notes };
 }
+
+// compatibilità: la coppia è una squadra di due
+export const recommendDuo = recommendTeam;
 
 // Frasi brevi da mostrare sotto ogni suggerimento: i punti a favore più forti
 // e, se c'è, il matchup peggiore (in rosso).
@@ -183,15 +239,20 @@ const pct = (d) => (Math.abs(d) < 0.0005 ? "±0.0%" : `${d >= 0 ? "+" : "−"}${
 
 // Riepilogo in 1–3 righe brevi per i consigli: vantaggio sulla mappa, contro la comp avversaria
 // (somma su tutti gli avversari segnati) e con gli alleati.
-// partner: {id, name} dell'altro giocatore, la cui sinergia viene mostrata a parte ("Con Lei").
-export function breakdown(row, partner = null) {
+// partners: [{id, name}] degli altri giocatori (o uno solo, come oggetto): la sinergia con loro è mostrata a parte,
+// "Con Lei" se è uno solo, "Con voi" (somma) se sono di più.
+export function breakdown(row, partners = null) {
+  const list = (Array.isArray(partners) ? partners : partners ? [partners] : []).filter(Boolean);
   const out = [{ key: "map", label: row.baseLabel === "generale" ? "Generale" : "Mappa", delta: row.parts.base }];
   if (row.vs.length) out.push({ key: "enemies", label: "Avversari", delta: row.parts.contro });
-  const isPartner = (a) => partner && String(a.hero?.id) === String(partner.id);
-  const others = row.withAllies.filter((a) => !isPartner(a));
-  const mate = row.withAllies.find(isPartner);
+  const mateOf = (a) => list.find((p) => String(a.hero?.id) === String(p.id));
+  const others = row.withAllies.filter((a) => !mateOf(a));
+  const mates = row.withAllies.filter(mateOf);
   if (others.length) out.push({ key: "allies", label: "Alleati", delta: others.reduce((s, a) => s + a.delta, 0) });
-  if (mate) out.push({ key: "partner", label: `Con ${partner.name}`, delta: mate.delta });
+  if (mates.length) {
+    out.push({ key: "partner", label: mates.length === 1 ? `Con ${mateOf(mates[0]).name}` : "Con voi",
+      delta: mates.reduce((s, a) => s + a.delta, 0) });
+  }
   return out.map((x) => ({ ...x, good: x.delta > -0.0005, text: `${x.label} ${pct(x.delta)}` }));
 }
 

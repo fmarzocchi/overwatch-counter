@@ -20,6 +20,12 @@
   --theory-bg: #231a38;
   --theory-line: #5d4494;
   --data: #8fc3ff;
+  /* un colore per giocatore (fino a 5): riquadri, segni nella griglia, "Chi ha preso" */
+  --p0: #f99e1a;
+  --p1: #ff7ad9;
+  --p2: #2dd4bf;
+  --p3: #c6e84b;
+  --p4: #e9edf2;
   --tap: 48px;
   --radius: 12px;
   color-scheme: dark;
@@ -165,7 +171,6 @@ a { color: var(--allies); }
   content: ""; position: absolute; left: 8px; right: 8px; top: 50%; height: 3px; background: var(--bad); transform: rotate(-35deg);
 }
 .hero.fav::before { content: "★"; position: absolute; top: 1px; right: 4px; color: var(--accent); font-size: 12px; }
-.hero.pick-0, .hero.pick-1 { box-shadow: 0 0 0 2px var(--accent) inset; }
 .hero .tag { position: absolute; top: 2px; left: 3px; font-size: 10px; font-weight: 800; color: #111; background: var(--accent); border-radius: 4px; padding: 0 3px; }
 
 /* volti: immagine o iniziali colorate per ruolo */
@@ -338,3 +343,67 @@ dialog { overscroll-behavior: contain; }
 .guide-summary h3 { color: var(--accent); }
 .guide-summary ul { font-size: 15.5px; }
 .stale-note { margin: 6px 12px; padding: 8px 10px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-text); font-size: 13.5px; }
+
+/* ---------- più giocatori: un colore a testa ---------- */
+.pick { border-color: var(--pc, var(--accent)); }
+.picks .pick:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.pick.took { border-style: solid; box-shadow: 0 0 0 1px var(--pc) inset; }
+.pick-note.took-note { color: var(--pc); font-weight: 700; }
+.pick-player { color: var(--pc, var(--text)); }
+.mini { grid-template-columns: repeat(var(--mini-n, 2), minmax(0, 1fr)); }
+.mini.n1 { --mini-n: 1; } .mini.n3 { --mini-n: 3; } .mini.n4 { --mini-n: 4; } .mini.n5 { --mini-n: 5; }
+.mini-pick { border-color: var(--pc, #6b4a12); }
+.mini-pick.took { box-shadow: 0 0 0 1px var(--pc) inset; }
+/* con 4–5 giocatori la barra minima mostra volto e nome dell'eroe, uno sotto l'altro */
+.mini.n4 .mini-pick, .mini.n5 .mini-pick { flex-direction: column; justify-content: center; padding: 3px 2px; min-height: 52px; text-align: center; }
+.mini.n4 .mini-pick > * + *, .mini.n5 .mini-pick > * + * { margin-top: 1px; }
+.mini.n4 .mini-txt, .mini.n5 .mini-txt { align-items: center; width: 100%; }
+.mini.n4 .mini-txt b, .mini.n5 .mini-txt b { font-size: 11.5px; max-width: 100%; }
+.mini.n5 .mini-txt b { font-size: 10.5px; letter-spacing: -0.2px; }
+.mini.n4 .mini-txt small, .mini.n5 .mini-txt small { display: none; }
+.mini.n4 .face, .mini.n5 .face { width: 28px; height: 28px; }
+.mini.n3 .mini-txt b { font-size: 13px; }
+.guide-btn { border-left: 4px solid var(--pc, var(--theory-line)); }
+.guides { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+
+.took-box { padding: 0 8px 8px; }
+.took-title { margin: 2px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.took-title small { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.pickers { display: grid; grid-template-columns: repeat(var(--pk-n, 2), minmax(0, 1fr)); }
+.pickers > * + * { margin-left: 6px; }
+.pickers.n1 { --pk-n: 1; } .pickers.n3 { --pk-n: 3; } .pickers.n4 { --pk-n: 4; } .pickers.n5 { --pk-n: 5; }
+.picker {
+  display: flex; align-items: center; min-height: var(--tap); padding: 3px 6px; min-width: 0; text-align: left;
+  border-radius: 10px; border: 2px dashed var(--pc); background: var(--surface);
+}
+.picker > * + * { margin-left: 6px; }
+.picker.has { border-style: solid; }
+.picker[aria-pressed="true"] { background: var(--pc); color: #111; }
+.picker[aria-pressed="true"] small { color: #222; }
+.picker .face { width: 30px; height: 30px; }
+.picker-dot { background: var(--surface-2); color: var(--pc); font-size: 13px; }
+.picker[aria-pressed="true"] .picker-dot { background: #111; }
+.picker-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.12; }
+.picker-txt b { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.picker-txt small { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 4–5 giocatori: volto sopra, nome sotto */
+.pickers.n4 .picker, .pickers.n5 .picker { flex-direction: column; justify-content: center; padding: 3px 2px; text-align: center; }
+.pickers.n4 .picker > * + *, .pickers.n5 .picker > * + * { margin-left: 0; margin-top: 1px; }
+.pickers.n4 .picker-txt, .pickers.n5 .picker-txt { align-items: center; width: 100%; }
+.pickers.n4 .picker-txt small, .pickers.n5 .picker-txt small { display: none; }
+.pickers.n4 .picker .face, .pickers.n5 .picker .face { width: 26px; height: 26px; }
+.pickers.n4 .picker-txt b, .pickers.n5 .picker-txt b { font-size: 11.5px; max-width: 100%; }
+.hint-who { color: var(--pc); }
+
+/* griglia: tratteggio = consigliato a quel giocatore, pieno con ✓ = l'ha preso */
+.hero.rec { box-shadow: none; outline: 2px dashed var(--pc); outline-offset: -2px; }
+.hero.took { border-color: var(--pc); background: #24262d; box-shadow: 0 0 0 2px var(--pc) inset; }
+.hero .tag { background: var(--surface-2); color: var(--pc, var(--accent)); border: 1px dashed var(--pc, var(--accent)); line-height: 1.2; }
+.hero .tag.tag-took { background: var(--pc); color: #111; border-style: solid; }
+
+.card-head { display: flex; align-items: center; justify-content: space-between; }
+.card-head h2 { display: flex; align-items: center; }
+.p-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--pc); margin-right: 8px; flex: none; }
+.small-btn { min-height: 40px; padding: 4px 12px; font-size: 14px; }
+.add-row { padding: 0 16px 12px; }
+.add-row .btn { width: 100%; }

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT,
+  dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected,
 } from "../app/theory.js";
 import { recommend, recommendDuo, details } from "../app/recommend.js";
 
@@ -83,7 +83,7 @@ test("come giocarla: bersagli, attenzione, proteggi, posizione, mappa e lato", (
   assert.match(text("Bersagli"), /Punta a Zenyatta/);
   assert.match(text("Lascia stare"), /Ignora Orisa/);
   assert.match(text("Attenzione a"), /Ana: anti-nade/);
-  assert.match(text("Proteggi"), /Proteggi il tuo compagno con Zenyatta da Reaper/);
+  assert.match(text("Proteggi"), /Proteggi il tuo compagno \(Zenyatta\) da Reaper/);
   assert.match(text("Come muoverti"), /prima linea/);
   assert.match(text("Mappa"), /King's Row/);
   assert.match(text("Mappa"), /Entra per prima sul punto con Lúcio/);
@@ -156,4 +156,22 @@ test("teoria che invecchia: cambio di ruolo, patch successiva, eroe senza teoria
   assert.match(theoryStatus(T3, hero("Junker Queen")).reasons.join(), /modificato nella patch del 2026-10-20/);
   assert.equal(theoryStatus(T3, hero("Kiriko")).stale, false);
   assert.match(theoryStatus(T3, hero("Mei")).reasons.join(), /senza teoria/);
+});
+
+test("come giocarla: le abilità per i compagni puntano agli alleati, quelle offensive ai nemici", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const T = buildTheory(data, raw, null);
+  const hid = (n) => data.heroes.find((h) => h.name === n).id;
+  const ana = data.heroes.find((h) => h.name === "Ana");
+  const g = playGuide(data, T, { hero: ana, enemies: ["Winston", "Genji"].map(hid), allies: [hid("Reinhardt")] });
+  const all = g.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
+  assert.ok(!/Nano Boost[^\n]*Winston/.test(all), "Nano Boost non va dato a un nemico");
+  assert.match(all, /Nano Boost[^\n]*Reinhardt/);
+  assert.match(all, /Sleep Dart[^\n]*Winston/);
+  assert.ok(!/\.\./.test(all), "niente doppi punti");
+  // Kinetic Grasp (per sé) e Orb of Discord (sui nemici) non sono abilità "per i compagni"
+  const abil = (h, n) => raw[h].abilities.find((a) => a.name === n);
+  assert.equal(allyDirected(abil("Sigma", "Kinetic Grasp")), false);
+  assert.equal(allyDirected(abil("Zenyatta", "Orb of Discord")), false);
+  assert.equal(allyDirected(abil("Mercy", "Caduceus Staff")), true);
 });

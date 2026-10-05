@@ -164,6 +164,31 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   niente scorrimento orizzontale); l'emulatore li imita con `wm size`/`wm density 480` + prova con carattere 130%.
   Stima sotto il volto (il nome ha tutta la riga), nomi della griglia su 2 righe.
 
+- **Abilità e mappe (2026-10-05)**: in theory.json per eroe `abilities` [{name, it, ult, tags, use, when, targets, saveFor,
+  avoidOn, on?}], `priority`, `mapFeatures`, `abilitiesNote`, `role` (ruolo al momento della ricerca: se cambia → "teoria da
+  rivedere"); `_maps` (30 mappe: features, envKills, tips, attack, defense, goodStyles) e `_researched`. Ricerca di 4 agenti
+  (solo riassunti WebSearch). `allyDirected()`: abilità da dare ai compagni (Nano Boost…) → targets = alleati; `on` in
+  theory.json decide a mano (Orb of Discord = nemici). Sombra: kit Danni, da rifare dopo il 6/10. Roadhog: rework S5 incluso.
+- `fill()` in app.js al posto di `replaceChildren` per le schede: le parti facoltative assenti non diventano testo "null"
+  (e2e "schede senza testi «null»").
+
+## Più giocatori e "chi ha preso cosa" (2026-10-05, richiesta dell'utente)
+
+- Profilo: **da 1 a 5 giocatori** (`MAX_PLAYERS`), "＋ Aggiungi giocatore" (il nuovo prende il ruolo che manca nella coda
+  1 tank/2 danni/2 supporti) e "Rimuovi" a due tocchi. Ognuno ha un **colore** (`--p0`…`--p4`): riquadro, griglia, barra.
+- Partita: riga **"Chi ha preso cosa"** (`#pickers`, fuori dalla barra fissa per non alzarla): tocco su un giocatore, poi
+  sul suo eroe → `match.picked[i]`; si passa da soli al prossimo che non ha scelto, finiti tutti si torna agli Avversari.
+  Un eroe preso esce da ban/avversari/alleati. Griglia: **tratteggio** = consigliato a quel giocatore, **pieno + "F✓"** = preso.
+- Alleati = gli ALTRI della squadra: max `5 − giocatori` (il pulsante sparisce in 5).
+- Logica: `recommendTeam()` (`recommendDuo` è lo stesso): eroi presi fissi (e alleati per gli altri; in cima alla loro lista
+  con `picked: true`, sotto le alternative del ruolo); per gli altri la combinazione migliore (eroi diversi, sinergia tra
+  ogni coppia), completa fino a 2 liberi, poi i migliori `TEAM_BEAM` = 12 a testa (5 giocatori: ~5 ms).
+  `breakdown(row, partners[])`: "Con <nome>" o "Con voi". `playGuide` accetta `partners[]`.
+- Collaudo: `recommend.test.js` (squadre da 1 a 5, combinazione ottima verificata a forza bruta con 3, eroi presi, tutti
+  presi) ed e2e (1–5 giocatori su Xiaomi 14T e Nothing Phone (3), 5 anche su 360×640; aggiungi/rimuovi; screenshot 13-*, 14-*).
+- Nomi della griglia: `fitNames()` rimpicciolisce il carattere se la parola più lunga non ci sta (misurata sul telefono);
+  l'e2e ora fallisce se un nome va a capo a metà parola (prima "Symmetra"/"Widowmaker" si spezzavano).
+
 ## L'app (PWA) — come deve essere
 
 Tema scuro, bersagli grandi (min 48 px), pensata per una mano sola.

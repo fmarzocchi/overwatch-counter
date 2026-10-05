@@ -159,16 +159,30 @@ const MODE_SIDE = {
 const pct = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
 const names = (xs) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}`);
 
-// ctx: {hero, data, mapSlug, side, enemies, allies, partner} (partner = eroe consigliato all'altro giocatore)
+// ctx: {hero, data, mapSlug, side, enemies, allies, partners} (partners = eroi presi o consigliati agli altri giocatori;
+// partner, un solo eroe, resta accettato)
 // Restituisce sezioni [{title, items:[{text, kind: "teoria"|"statistica"}]}].
 // rows: consigli ordinati per quel giocatore (per il consiglio di cambio eroe)
-export function playGuide(data, theory, { hero, mapSlug = null, side = null, enemies = [], allies = [], partner = null, rows = null } = {}) {
+// abilità che si usano sui COMPAGNI: effetti di aiuto e nessun effetto contro i nemici.
+// "armor" no (Fortify, Kinetic Grasp sono per sé); un campo "on": "allies"|"enemies" in theory.json decide a mano
+// (es. Orb of Discord: amplifica i danni ma si lancia su un nemico).
+const ALLY_TAGS = ["heal", "damage-amp", "speed", "immortality", "revive", "cleanse"];
+const ENEMY_TAGS = ["cc", "stun", "sleep", "hook", "hack", "boop", "knockback", "burst", "anti-heal", "zone", "environmental-kill", "engage"];
+export function allyDirected(a) {
+  if (a?.on === "allies" || a?.on === "enemies") return a.on === "allies";
+  const t = a?.tags ?? [];
+  return t.some((x) => ALLY_TAGS.includes(x)) && !t.some((x) => ENEMY_TAGS.includes(x));
+}
+
+export function playGuide(data, theory, { hero, mapSlug = null, side = null, enemies = [], allies = [], partner = null, partners = null, rows = null } = {}) {
+  const mates = new Set([...(partners ?? []), partner].filter(Boolean).map((h) => sid(h.id)));
   const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
   const T = (name) => theory?.idx?.[name];
   const me = T(hero.name);
   const tagsOf = (h) => T(h.name)?.tags ?? [];
   const enemyH = enemies.map((x) => byId[sid(x)]).filter(Boolean);
-  const allyH = [...allies.map((x) => byId[sid(x)]), partner].filter(Boolean).filter((h) => sid(h.id) !== sid(hero.id));
+  const allyH = [...new Map([...allies.map((x) => byId[sid(x)]), ...(partners ?? []), partner].filter(Boolean)
+    .map((h) => [sid(h.id), h])).values()].filter((h) => sid(h.id) !== sid(hero.id));
   const stat = (a, b) => { const v = data.counters?.[sid(a.id)]?.[sid(b.id)]; return typeof v === "number" ? v - 0.5 : 0; };
   const sections = [];
   const push = (title, items) => { if (items.length) sections.push({ title, items }); };
@@ -225,8 +239,8 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
       const why = T(a.name)?.counteredBy.get(h.name);
       if (!why && stat(a, h) > -0.025) continue;
       const iBeat = me?.counters.has(h.name) || stat(hero, h) >= 0.01;
-      protect.push({ text: `Proteggi ${a === partner ? "il tuo compagno con " : "il tuo "}${a.name} da ${h.name}${why ? `: ${why}` : ""}${iBeat ? " — tu lo batti" : ""}.`,
-        kind: why ? "teoria" : "statistica", w: (iBeat ? 2 : 1) + (a === partner ? 0.5 : 0) });
+      protect.push({ text: `Proteggi ${mates.has(sid(a.id)) ? `il tuo compagno (${a.name})` : a.name} da ${h.name}${why ? `: ${why}` : ""}${iBeat ? " — tu lo batti" : ""}.`,
+        kind: why ? "teoria" : "statistica", w: (iBeat ? 2 : 1) + (mates.has(sid(a.id)) ? 0.5 : 0) });
     }
   }
   push("Proteggi", protect.sort((a, b) => b.w - a.w).slice(0, 2).map(({ text, kind }) => ({ text, kind })));
@@ -247,11 +261,20 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   const map = mapSlug ? data.maps.find((m) => m.slug === mapSlug) : null;
   const mapT = map ? theory?.maps?.[map.slug] : null;
   const enemyNames = new Set(enemyH.map((h) => h.name));
+  const allyNames = new Set(allyH.map((h) => h.name));
   const abil = [];
   const keyLines = []; // per il riepilogo
   for (const a of me?.abilities ?? []) {
     const label = `${a.name}${a.it ? ` (${a.it})` : ""}${a.ult ? " — ultimate" : ""}`;
-    const on = (a.targets ?? []).filter((n) => enemyNames.has(n));
+    // abilità da dare ai compagni (Nano Boost, Guardian Angel…): i "targets" sono alleati, non nemici
+    if (allyDirected(a)) {
+      const mates = (a.targets ?? []).filter((n) => allyNames.has(n));
+      if (mates.length) {
+        abil.push({ text: `${label}: dalla a ${names(mates)} (squadra tua). ${a.use ?? ""}${a.when ? ` Quando: ${a.when}` : ""}`.trim(), kind: "teoria", w: 2.5 + mates.length });
+        keyLines.push({ text: `${a.name} su ${names(mates)}${a.when ? ` (${a.when.replace(/\.$/, "")})` : ""}.`, kind: "teoria", w: 2.5 + mates.length });
+      }
+    }
+    const on = allyDirected(a) ? [] : (a.targets ?? []).filter((n) => enemyNames.has(n));
     if (on.length) {
       const t = `${label}: usala su ${names(on)}. ${a.use ?? ""}${a.when ? ` Quando: ${a.when}` : ""}`.trim();
       abil.push({ text: t, kind: "teoria", w: 3 + on.length });
@@ -289,7 +312,7 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
     const likes = (me?.mapFeatures?.likes ?? []).filter((f) => feats.includes(f));
     const dislikes = (me?.mapFeatures?.dislikes ?? []).filter((f) => feats.includes(f));
     if (likes.length) mapItems.push({ text: `La mappa ti favorisce: ${likes.map((f) => FEATURE_IT[f] ?? f).join(", ")}.`, kind: "teoria" });
-    if (dislikes.length) mapItems.push({ text: `La mappa ti sfavorisce: ${dislikes.map((f) => FEATURE_IT[f] ?? f).join(", ")}${me?.mapFeatures?.why ? ` — ${me.mapFeatures.why}` : ""}.`, kind: "teoria" });
+    if (dislikes.length) mapItems.push({ text: `La mappa ti sfavorisce: ${dislikes.map((f) => FEATURE_IT[f] ?? f).join(", ")}${me?.mapFeatures?.why ? ` — ${me.mapFeatures.why.replace(/[.\s]+$/, "")}` : ""}.`, kind: "teoria" });
     for (const tip of (mapT?.tips ?? []).slice(0, 2)) mapItems.push({ text: tip, kind: "teoria" });
   }
   if (side && (map?.mode === "Escort" || map?.mode === "Hybrid")) {

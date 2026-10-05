@@ -172,6 +172,7 @@ try {
     guide.includes("Mappa: King's Row") && guide.includes("Come muoverti")
     && (await page.locator("#guide-body .guide-sec").count()) >= 3 && (await page.locator("#guide-body .theory-badge").count()) > 0, guide.slice(0, 400));
   await shot(page, "05e-come-giocarla");
+  check("schede senza testi «null»/«undefined»", !/\b(null|undefined|NaN)\b/.test(guide + det), (guide + det).match(/.{0,40}\b(null|undefined|NaN)\b.{0,20}/)?.[0]);
   await page.click("#guide-dialog [data-close]");
   await page.click("#why-dialog [data-close]");
   await toTop(page);
@@ -265,11 +266,17 @@ try {
     await p7.click("#map-btn");
     await p7.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await p7.click("#side [data-side=attack]");
-    for (const [g, names] of [["bans", ["Ana", "Kiriko", "Widowmaker", "Tracer"]], ["enemies", ["Reinhardt", "Genji", "Pharah", "Mercy", "Lúcio"]], ["allies", ["Winston", "Sojourn", "Baptiste", "Zarya", "Moira"]]]) {
+    for (const [g, names] of [["bans", ["Ana", "Kiriko", "Widowmaker", "Tracer"]], ["enemies", ["Reinhardt", "Genji", "Pharah", "Mercy", "Lúcio"]], ["allies", ["Winston", "Sojourn", "Baptiste"]]]) {
       await toTop(p7);
       await p7.click(`#groups [data-group=${g}]`);
       for (const n of names) await hb(n).click();
     }
+    // e gli eroi presi da Fabio e Giulia (in 5: 3 alleati + i due giocatori)
+    await toTop(p7);
+    await p7.locator("#pickers .picker").nth(0).click();
+    await hb("Cassidy").click();
+    await hb("Moira").click();
+    await p7.waitForTimeout(2600); // il messaggio in basso sparisce
     const res = await p7.evaluate(async () => {
       const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const bad = [];
@@ -307,6 +314,9 @@ try {
       const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
       const tooLong = names.filter((n) => ctx2.measureText(n).width > avail);
       const gridCut = [...document.querySelectorAll("#grid .hero .nm")].filter((x) => x.scrollHeight > x.clientHeight + 1 || x.scrollWidth > x.clientWidth + 1).map((x) => x.textContent);
+      // nome spezzato a metà parola (es. "Widowmake/r"): più righe che parole
+      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
+      for (const x of document.querySelectorAll("#grid .hero .nm")) if (lines(x) > x.textContent.split(/\s+/).length) gridCut.push(`${x.textContent} (spezzato)`);
       return { tooLong, gridCut, overflow: document.documentElement.scrollWidth - window.innerWidth, avail: Math.round(avail) };
     });
     if (vp.name || vp.width >= 390) {
@@ -321,6 +331,136 @@ try {
     await toTop(p7);
     if (vp.height === 640) await shot(p7, "11-tutte-le-selezioni-in-cima");
     await c7.close();
+  }
+
+  // ---------- da 1 a 5 giocatori, ognuno col suo colore; "Chi ha preso cosa" ----------
+  {
+    const QUEUE = [["Fabio", "Damage"], ["Giulia", "Support"], ["Marco", "Tank"], ["Sara", "Support"], ["Luca", "Damage"]];
+    // eroe preso da ciascuno (scelto apposta diverso dal n. 1 consigliato, se possibile)
+    const TAKE = { Damage: ["Soldier: 76", "Sojourn"], Support: ["Ana", "Kiriko"], Tank: ["Reinhardt"] };
+    for (const n of [1, 2, 3, 4, 5]) {
+      for (const vp of n === 5 ? [{ width: 360, height: 640 }, { width: 407, height: 833, name: "Xiaomi 14T" }, { width: 420, height: 860, name: "Nothing Phone (3)" }]
+        : [{ width: 407, height: 833, name: "Xiaomi 14T" }, { width: 420, height: 860, name: "Nothing Phone (3)" }]) {
+        const { ctx: c9, page: p9 } = await newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 3, serviceWorkers: "block" });
+        lastPage = p9;
+        const label = `${n} giocator${n === 1 ? "e" : "i"}, ${vp.name ?? `${vp.width}×${vp.height}`}`;
+        const players = QUEUE.slice(0, n).map(([name, role]) => ({ name, rank: "", roles: [role], favorites: [] }));
+        await p9.addInitScript((pl) => localStorage.setItem("owc.profile", JSON.stringify({ players: pl })), players);
+        await p9.goto(BASE);
+        await p9.locator(".pick .sug.first .sug-name").first().waitFor();
+        const hb = (name) => p9.locator("#grid .hero", { has: p9.locator(".nm", { hasText: new RegExp(`^${name.replace(/[.:]/g, "\\$&")}$`) }) });
+        await p9.click("#map-btn");
+        await p9.locator("#map-list .map-opt", { hasText: "Ilios" }).click();
+        await p9.click("#groups [data-group=enemies]");
+        for (const e of ["Winston", "Genji", "Pharah"]) await hb(e).click();
+        await toTop(p9);
+
+        const st = await p9.evaluate(() => ({
+          cards: document.querySelectorAll("#picks .pick").length,
+          pickers: document.querySelectorAll("#pickers .picker").length,
+          guides: document.querySelectorAll("#guides .guide-btn").length,
+          firsts: [...document.querySelectorAll(".pick .sug.first .sug-name")].map((x) => x.textContent),
+          colors: [...document.querySelectorAll("#picks .pick")].map((x) => getComputedStyle(x).borderTopColor),
+          recs: [...document.querySelectorAll("#grid .hero.rec")].map((b) => [b.querySelector(".nm").textContent, getComputedStyle(b).outlineColor]),
+          alliesHidden: document.querySelector("#groups [data-group=allies]").hidden,
+        }));
+        check(`${label}: un riquadro, un «chi ha preso» e un «Come giocare» a testa`,
+          st.cards === n && st.pickers === n && st.guides === n, JSON.stringify(st));
+        check(`${label}: consigli tutti diversi, del ruolo di ciascuno`,
+          new Set(st.firsts).size === n && st.firsts.every((h, i) => data.heroes.find((x) => x.name === h)?.role === QUEUE[i][1]), st.firsts.join(", "));
+        check(`${label}: un colore diverso per giocatore (riquadri e griglia)`,
+          new Set(st.colors).size === n && st.recs.length === n && new Set(st.recs.map((r) => r[1])).size === n, JSON.stringify(st.recs));
+        check(`${label}: «Alleati» solo se c'è posto in squadra (5 − giocatori)`, st.alliesHidden === (n === 5));
+        if (n === 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-consigli`);
+
+        // ognuno segna l'eroe che ha preso: tocco sul giocatore, poi sull'eroe; si passa da soli al successivo
+        const used = { Damage: 0, Support: 0, Tank: 0 };
+        const taken = [];
+        await p9.locator("#pickers .picker").nth(0).click();
+        for (let i = 0; i < n; i++) {
+          const role = QUEUE[i][1];
+          const h = TAKE[role][used[role]++];
+          taken.push(h);
+          check(`${label}: tocca a ${QUEUE[i][0]}`, (await p9.locator("#pickers .picker").nth(i).getAttribute("aria-pressed")) === "true");
+          await hb(h).click();
+        }
+        await p9.waitForTimeout(150);
+        await toTop(p9);
+        const after = await p9.evaluate(() => ({
+          firsts: [...document.querySelectorAll(".pick .sug.first .sug-name")].map((x) => x.textContent),
+          notes: [...document.querySelectorAll(".pick .took-note")].map((x) => x.textContent),
+          pickers: [...document.querySelectorAll("#pickers .picker small, #pickers .picker b")].map((x) => x.textContent),
+          took: [...document.querySelectorAll("#grid .hero.took")].map((b) => [b.querySelector(".nm").textContent, b.querySelector(".tag")?.textContent]),
+          rec: document.querySelectorAll("#grid .hero.rec").length,
+          group: JSON.parse(localStorage.getItem("owc.match")).group,
+          seconds: [...document.querySelectorAll(".pick")].map((c) => [...c.querySelectorAll(".sug-name")].slice(1).map((x) => x.textContent)),
+        }));
+        check(`${label}: ogni riquadro mostra l'eroe preso, in cima`, after.firsts.join() === taken.join() && after.notes.length === n, JSON.stringify(after.firsts));
+        check(`${label}: griglia: eroi presi segnati col ✓ e l'iniziale di chi li ha presi`,
+          after.took.length === n && taken.every((h, i) => after.took.some(([nm, tag]) => nm === h && tag === `${QUEUE[i][0][0]}✓`)) && after.rec === 0,
+          JSON.stringify(after.took));
+        check(`${label}: alternative senza gli eroi presi dagli altri`,
+          after.seconds.every((alts, i) => alts.every((a) => !taken.some((t, j) => j !== i && t === a))), JSON.stringify(after.seconds));
+        check(`${label}: tutti hanno scelto → si torna agli avversari`, after.group === "enemies", after.group);
+        // barra minima e barra fissa: tutti visibili, non troppo alte
+        const bar = await p9.evaluate(async () => {
+          window.scrollTo(0, document.querySelector("#grid").offsetTop);
+          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+          const mini = document.querySelector("#mini");
+          const names = [...mini.querySelectorAll(".mini-txt b")];
+          return { shown: !mini.hidden, count: mini.querySelectorAll(".mini-pick").length,
+            stack: Math.round(Math.max(mini.getBoundingClientRect().bottom, document.querySelector(".groups").getBoundingClientRect().bottom)),
+            overflow: document.documentElement.scrollWidth - window.innerWidth,
+            cut: names.filter((b) => b.scrollWidth > b.clientWidth + 1).map((b) => b.textContent) };
+        });
+        check(`${label}: barra in alto con tutti i ${n} eroi, bassa (≤ 140 px)`, bar.shown && bar.count === n && bar.stack <= 140, JSON.stringify(bar));
+        check(`${label}: niente scorrimento orizzontale`, bar.overflow <= 0, `${bar.overflow}px`);
+        if (n === 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-scorso`);
+        // «Come giocarla» del primo giocatore: parla del suo eroe preso
+        await toTop(p9);
+        await p9.locator("#guides .guide-btn").first().click();
+        await p9.locator("#guide-dialog[open] .guide-sec").first().waitFor();
+        check(`${label}: «Come giocarla» sull'eroe preso`, (await text(p9, "#t-guide")).includes(taken[0]), await text(p9, "#t-guide"));
+        await p9.locator("#guide-dialog [data-close]").click();
+        await c9.close();
+      }
+    }
+
+    // segnare un eroe preso lo toglie dagli altri gruppi; ritoccarlo lo toglie; un tocco su un altro giocatore cambia chi sceglie
+    const { ctx: c10, page: p10 } = await newPage({ serviceWorkers: "block" });
+    lastPage = p10;
+    await p10.goto(BASE);
+    await p10.locator(".pick .sug.first .sug-name").first().waitFor();
+    await p10.click("#groups [data-group=enemies]");
+    await heroBtn(p10, "Mercy").click();
+    await p10.locator("#pickers .picker").nth(1).click();
+    await heroBtn(p10, "Mercy").click();
+    const m1 = await p10.evaluate(() => JSON.parse(localStorage.getItem("owc.match")));
+    check("eroe preso: tolto dagli avversari, assegnato al giocatore scelto",
+      !m1.enemies.length && String(m1.picked[1]) === String(data.heroes.find((h) => h.name === "Mercy").id) && m1.picked[0] === null, JSON.stringify(m1));
+    await p10.locator("#pickers .picker").nth(1).click();
+    await heroBtn(p10, "Mercy").click();
+    check("ritoccare l'eroe preso lo toglie", (await p10.evaluate(() => JSON.parse(localStorage.getItem("owc.match")).picked[1])) === null);
+
+    // Profilo: si aggiungono giocatori fino a 5 e si tolgono; la partita si adegua
+    await p10.click(".tabs [data-view=profile]");
+    for (let k = 0; k < 3; k++) await p10.click("#add-player");
+    const prof5 = await p10.evaluate(() => ({ cards: document.querySelectorAll("#players section.card [id$=-title]").length,
+      add: !!document.querySelector("#add-player"), roles: JSON.parse(localStorage.getItem("owc.profile")).players.map((p) => p.roles[0]) }));
+    check("profilo: si arriva a 5 giocatori, poi niente «Aggiungi»", prof5.cards === 5 && !prof5.add, JSON.stringify(prof5));
+    check("profilo: i nuovi prendono i ruoli che mancano (1 tank, 2 danni, 2 supporti)",
+      [...prof5.roles].sort().join() === ["Damage", "Damage", "Support", "Support", "Tank"].sort().join(), prof5.roles.join());
+    await shot(p10, "14-profilo-5-giocatori");
+    await p10.locator("#players [aria-label^='Rimuovi']").nth(1).click();
+    check("profilo: «Rimuovi» chiede conferma (dopo un tocco sono ancora 5)",
+      (await p10.locator("#players section.card [id$=-title]").count()) === 5
+      && (await p10.locator("#players [aria-label^='Rimuovi']").nth(1).innerText()).includes("conferma"));
+    await p10.locator("#players [aria-label^='Rimuovi']").nth(1).click();
+    await p10.click(".tabs [data-view=match]");
+    const four = await p10.evaluate(() => ({ cards: document.querySelectorAll("#picks .pick").length,
+      m: JSON.parse(localStorage.getItem("owc.match")) }));
+    check("rimosso un giocatore: 4 riquadri, partita adeguata", four.cards === 4 && four.m.roles.length === 4 && four.m.picked.length === 4, JSON.stringify(four));
+    await c10.close();
   }
 
   // ---------- dati riletti ogni 30 minuti, solo con l'app aperta (niente timer) ----------

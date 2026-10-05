@@ -106,8 +106,127 @@
    "https://rankedboost.com/overwatch/counters/ana/",
    "https://www.thegamer.com/overwatch-2-best-support-healers-heroes-combos/",
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-tank",
-   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
+   "https://mobalytics.gg/overwatch/heroes/ana-guide"
+  ],
+  "abilities": [
+   {
+    "name": "Sleep Dart",
+    "it": "Dardo soporifero",
+    "ult": false,
+    "tags": [
+     "sleep",
+     "cc"
+    ],
+    "use": "Addormenta chi ti si tuffa addosso o chi sta caricando un'ultimate; mira al corpo e segui col colpo.",
+    "when": "Quando un tuffatore ti raggiunge o un nemico avvia un'ultimate",
+    "targets": [
+     "Winston",
+     "Reinhardt",
+     "Doomfist",
+     "Junker Queen",
+     "Reaper",
+     "Genji"
+    ],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienilo per fermare la Dragonblade appena parte"
+     },
+     {
+      "hero": "Winston",
+      "why": "tienilo per quando Winston ti salta addosso"
+     },
+     {
+      "hero": "Reaper",
+      "why": "tienilo per interrompere la Death Blossom"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Genji",
+      "why": "non durante Deflect: il dardo torna indietro"
+     },
+     {
+      "hero": "D.Va",
+      "why": "non con Defense Matrix attiva: lo assorbe"
+     }
+    ]
+   },
+   {
+    "name": "Biotic Grenade",
+    "it": "Granata anti-cura",
+    "ult": false,
+    "tags": [
+     "anti-heal",
+     "heal"
+    ],
+    "use": "Sui nemici blocca le cure (anche le auto-cure); sugli alleati cura e aumenta le cure ricevute.",
+    "when": "Sul tank nemico mentre lo focalizzate o per spegnere cure/auto-cure",
+    "targets": [
+     "Roadhog",
+     "Mauga",
+     "Junker Queen",
+     "Winston",
+     "Moira"
+    ],
+    "saveFor": [
+     {
+      "hero": "Roadhog",
+      "why": "tienila per Take a Breather: annulla l'auto-cura"
+     },
+     {
+      "hero": "Mauga",
+      "why": "tienila per spegnere l'auto-cura di Mauga in mischia"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Kiriko",
+      "why": "se Kiriko ha Protection Suzu pronta, la anti-cura viene ripulita"
+     }
+    ]
+   },
+   {
+    "name": "Nano Boost",
+    "it": "Nano potenziamento",
+    "ult": true,
+    "tags": [
+     "damage-amp",
+     "heal"
+    ],
+    "use": "Dallo a un alleato che entra o ha un'ultimate: più danni e meno danni subiti, più una cura.",
+    "when": "Insieme a un'ultimate alleata o per salvare il tank in un duello",
+    "targets": [
+     "Reinhardt",
+     "Winston",
+     "Genji",
+     "Junker Queen",
+     "Soldier: 76",
+     "Sojourn"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Sleep Dart",
+   "why": "È la tua unica difesa personale e ferma ultimate decisive: sprecarlo ti lascia esposta."
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "high-ground"
+   ],
+   "dislikes": [
+    "flank-routes",
+    "close-quarters"
+   ],
+   "why": "Cecchina di supporto: vuole linee lunghe da posizione sicura, soffre i fiancheggiatori."
+  },
+  "abilitiesNote": "Kit 2026 invariato nei nomi; la cooldown della Biotic Grenade è scesa a 12 s (Season 2, 2026). Ignorate le modifiche del pesce d'aprile e della modalità Arcade 'Community Crafted'.",
+  "role": "Support"
  },
  "Anran": {
   "tags": [
@@ -196,8 +315,108 @@
    "https://1v9.gg/blog/anran-overwatch-guide",
    "https://rankedboost.com/overwatch/counters/anran/",
    "https://overbuddy.com/heroes/ANRAN/counters/",
-   "https://us.forums.blizzard.com/en/overwatch/t/how-to-counter-anran-as-dps-or-support/1021448"
-  ]
+   "https://us.forums.blizzard.com/en/overwatch/t/how-to-counter-anran-as-dps-or-support/1021448",
+   "https://www.dexerto.com/wikis/overwatch/heroes/damage/anran/",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/"
+  ],
+  "abilities": [
+   {
+    "name": "Inferno Rush",
+    "it": "Scatto infuocato",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape"
+    ],
+    "use": "Scatta sul supporto isolato e brucialo; tieni sempre una carica per uscire",
+    "when": "Per entrare quando il tank apre lo scontro, o per fuggire",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Fan the Flames",
+    "it": "Soffio che attizza",
+    "ult": false,
+    "tags": [
+     "burst",
+     "damage-amp"
+    ],
+    "use": "Prima accendi i nemici (Ignition) coi ventagli, poi il soffio amplifica la bruciatura",
+    "when": "Su bersagli già in fiamme, per chiudere l'uccisione",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Kiriko",
+      "why": "Suzu toglie la bruciatura: aspetta che l'abbia usata"
+     }
+    ]
+   },
+   {
+    "name": "Dancing Blaze",
+    "it": "Danza di fuoco",
+    "ult": false,
+    "tags": [
+     "immortality",
+     "burst"
+    ],
+    "use": "Colpisce tutti intorno a te e ti rende invulnerabile; raggio piccolo: solo a contatto",
+    "when": "Per schivare un'ultimate o finire un bersaglio vicino",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Vermillion Ascent",
+    "it": "Tuffo vermiglio",
+    "ult": true,
+    "tags": [
+     "engage",
+     "burst"
+    ],
+    "use": "Vola su e piomba sul gruppo: danno e incendio; segui con Fan the Flames",
+    "when": "Su nemici raggruppati in spazi stretti, con ~175 HP o più",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Vermillion Revival",
+    "it": "Rinascita vermiglia",
+    "ult": true,
+    "tags": [
+     "revive"
+    ],
+    "use": "Se muori con l'ult carica rinasci con un'esplosione; poi subito Inferno Rush o Dancing Blaze",
+    "when": "Solo se lo scontro è ancora aperto; spesso rende di più Ascent",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Inferno Rush",
+   "why": "È entrata e fuga insieme: senza una carica libera Anran resta bloccata in mezzo ai nemici"
+  },
+  "mapFeatures": {
+   "likes": [
+    "flank-routes",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Fiancheggiatrice a corta portata: le servono vie laterali e spazi stretti, soffre i campi aperti"
+  },
+  "abilitiesNote": "Ultimate doppia: Vermillion Ascent da viva, Vermillion Revival se muore con l'ult carica.",
+  "role": "Damage"
  },
  "Ashe": {
   "tags": [
@@ -283,8 +502,92 @@
    "https://fenixbazaar.com/2025/07/17/overwatch-2-ashe-guide/",
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
    "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
-   "https://www.esportsheaven.com/features/how-to-counter-pharah-in-overwatch-2"
-  ]
+   "https://www.esportsheaven.com/features/how-to-counter-pharah-in-overwatch-2",
+   "https://www.boostingfactory.com/overwatch/blog/overwatch-ashe-guide-tips-tricks",
+   "https://boosting-ground.com/overwatch-2-boosting/guides/heroes-guides/ashe-hero-guide",
+   "https://raidiant.gg/overwatch-2-beginner-s-guide-ashe/",
+   "https://esports.gg/news/overwatch/overwatch-2-season-13-sombra-rework/"
+  ],
+  "abilities": [
+   {
+    "name": "Coach Gun",
+    "it": "Doppietta",
+    "ult": false,
+    "tags": [
+     "knockback",
+     "escape",
+     "mobility",
+     "environmental-kill"
+    ],
+    "use": "Spara a terra dopo un salto per salire in alto o staccarti da chi ti è addosso",
+    "when": "Quando un fiancheggiatore ti raggiunge o per prendere l'altura",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienila per allontanarlo quando ti salta addosso"
+     },
+     {
+      "hero": "Tracer",
+      "why": "tienila per staccarti quando ti raggiunge"
+     },
+     {
+      "hero": "Winston",
+      "why": "tienila per uscire dal suo salto"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Dynamite",
+    "it": "Dinamite",
+    "ult": false,
+    "tags": [
+     "zone",
+     "burst"
+    ],
+    "use": "Lanciala su gruppo, choke o payload e falla esplodere sparandole",
+    "when": "Per costringere i nemici a muoversi o a lasciare il punto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "B.O.B.",
+    "it": "B.O.B.",
+    "ult": true,
+    "tags": [
+     "knockback",
+     "cc",
+     "zone"
+    ],
+    "use": "Carica in avanti, alza in aria chi colpisce e poi spara per 10 s",
+    "when": "Per aprire lo scontro sul gruppo o contestare il punto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Sombra",
+      "why": "Hack blocca B.O.B. per 3 s"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Coach Gun",
+   "why": "È la sua unica fuga e il modo di salire in alto: sprecata, Ashe resta esposta ai dive"
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "high-ground"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Fucile di precisione a media-lunga distanza: vuole linee lunghe e alture, soffre gli spazi chiusi"
+  },
+  "role": "Damage"
  },
  "Baptiste": {
   "tags": [
@@ -391,8 +694,107 @@
    "https://medium.com/@panshikar.pratyush/the-plat-players-perspective-hero-30-baptiste-2cc2dbe52a9b",
    "https://progameguides.com/overwatch/best-heroes-to-pair-with-lifeweaver-in-overwatch-2/",
    "https://mobalytics.gg/overwatch/heroes/jetpack-cat-guide",
-   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/",
+   "https://mobalytics.gg/overwatch/heroes/baptiste-guide",
+   "https://overwatch.blizzard.com/en-gb/heroes/baptiste/",
+   "https://liquipedia.net/overwatch/Baptiste"
+  ],
+  "abilities": [
+   {
+    "name": "Regenerative Burst",
+    "it": "Cura a esplosione",
+    "ult": false,
+    "tags": [
+     "heal",
+     "self-heal"
+    ],
+    "use": "Cura immediata più cura nel tempo a te e agli alleati vicini: vale di più con tanti feriti insieme.",
+    "when": "Dopo danni ad area o quando sei tu sotto pressione",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Immortality Field",
+    "it": "Campo d'immortalità",
+    "ult": false,
+    "tags": [
+     "immortality"
+    ],
+    "use": "Generatore che impedisce agli alleati vicini di morire; lancialo dietro copertura perché si può distruggere.",
+    "when": "Contro un'ultimate ad area o un burst concentrato su un alleato",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "D.Va",
+      "why": "tienilo per la Self-Destruct"
+     },
+     {
+      "hero": "Junkrat",
+      "why": "tienilo per la RIP-Tire"
+     },
+     {
+      "hero": "Reaper",
+      "why": "tienilo per la Death Blossom"
+     },
+     {
+      "hero": "Genji",
+      "why": "tienilo per la Dragonblade"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Lúcio",
+      "why": "non salva da una spinta nel vuoto: vicino ai bordi conta la posizione"
+     }
+    ]
+   },
+   {
+    "name": "Amplification Matrix",
+    "it": "Matrice amplificante",
+    "ult": true,
+    "tags": [
+     "damage-amp",
+     "heal"
+    ],
+    "use": "Raddoppia danni e cure dei proiettili che la attraversano: davanti ai tuoi DPS fermi o alla squadra in difesa.",
+    "when": "Quando la squadra spara tutta insieme, mai in ritirata",
+    "targets": [
+     "Soldier: 76",
+     "Bastion",
+     "Ashe",
+     "Cassidy",
+     "Sojourn"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix assorbe i colpi amplificati"
+     },
+     {
+      "hero": "Sigma",
+      "why": "Kinetic Grasp assorbe i colpi amplificati"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Immortality Field",
+   "why": "Annulla l'ultimate o il focus nemico: usarlo presto lascia la squadra scoperta per molti secondi."
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "flank-routes"
+   ],
+   "why": "Exo Boots gli danno salti verso l'alto; i punti stretti concentrano gli alleati per cure e matrice."
+  },
+  "abilitiesNote": "Exo Boots (salto potenziato) è passiva e non elencata. Lo scambio Immortality Field/ultimate visto in rete era del pesce d'aprile 2026, non è nel gioco normale.",
+  "role": "Support"
  },
  "Bastion": {
   "tags": [
@@ -478,8 +880,84 @@
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
    "https://us.forums.blizzard.com/en/overwatch/t/bastion-and-orisa-combo-how-counter-them/188287",
    "https://us.forums.blizzard.com/en/overwatch/t/whats-the-best-way-to-counter-orisa-bastion-rein-combo/262560",
-   "https://segmentnext.com/overwatch-2-symmetra/"
-  ]
+   "https://segmentnext.com/overwatch-2-symmetra/",
+   "https://overwatch.blizzard.com/en-us/heroes/bastion/",
+   "https://www.thegamer.com/overwatch-2-bastion-hero-play-guide-abilities-tips-tricks/",
+   "https://gamerant.com/overwatch-2-bastion-rework/",
+   "https://overwatch.weirdgloop.org/w/Bastion"
+  ],
+  "abilities": [
+   {
+    "name": "Reconfigure",
+    "it": "Modalità Assalto",
+    "ult": false,
+    "tags": [
+     "burst",
+     "zone"
+    ],
+    "use": "In Assalto (6 s) spari a raffica e subisci il 20% di danni in meno; trasformarti richiede tempo",
+    "when": "Dietro copertura o il tuo tank, quando i nemici sono davanti a te",
+    "targets": [
+     "Reinhardt",
+     "Sigma"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix assorbe i colpi: aspetta che finisca"
+     },
+     {
+      "hero": "Genji",
+      "why": "non sparare su Deflect: i colpi tornano a te"
+     }
+    ]
+   },
+   {
+    "name": "A-36 Tactical Grenade",
+    "it": "Granata tattica",
+    "ult": false,
+    "tags": [
+     "burst",
+     "mobility"
+    ],
+    "use": "Rimbalza sui muri ed esplode su nemici o terreno; anche per saltare in alto",
+    "when": "Per finire un bersaglio dietro un angolo o salire su un'altura",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Configuration: Artillery",
+    "it": "Artiglieria",
+    "ult": true,
+    "tags": [
+     "zone",
+     "burst"
+    ],
+    "use": "Fermo, spari 3 colpi ovunque nella mappa: mira a chi è fermo o bloccato",
+    "when": "Su nemici fermi sul punto o bloccati da una CC alleata",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Reconfigure",
+   "why": "Il danno di Bastion è in Assalto: usarla scoperto o a vuoto lo lascia lento e senza difese"
+  },
+  "mapFeatures": {
+   "likes": [
+    "chokepoints",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "flank-routes"
+   ],
+   "why": "Forte su choke e spazi stretti dove i nemici arrivano davanti; soffre cecchini e chi lo aggira"
+  },
+  "role": "Damage"
  },
  "Brigitte": {
   "tags": [
@@ -567,8 +1045,122 @@
    "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-brigitte",
    "https://fenixbazaar.com/2025/07/08/overwatch-2-brigitte-guide/",
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-tank",
-   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/"
-  ]
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
+   "https://mobalytics.gg/overwatch/heroes/brigitte-guide",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
+  ],
+  "abilities": [
+   {
+    "name": "Whip Shot",
+    "it": "Frustata",
+    "ult": false,
+    "tags": [
+     "knockback",
+     "boop",
+     "environmental-kill"
+    ],
+    "use": "Allontana chi si tuffa sui tuoi supporti o spingilo giù da un bordo.",
+    "when": "Quando un tuffatore entra nel retro o un nemico è vicino al vuoto",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Venture",
+     "Reaper",
+     "Lúcio",
+     "Winston"
+    ],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienila per staccare Genji dal tuo supporto"
+     },
+     {
+      "hero": "Tracer",
+      "why": "tienila per respingere Tracer prima del Pulse Bomb"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Repair Pack",
+    "it": "Kit di riparazione",
+    "ult": false,
+    "tags": [
+     "heal"
+    ],
+    "use": "Cura a distanza (con salute extra se pieno): dalla a chi sta subendo burst, non per rabboccare.",
+    "when": "Su un alleato che sta per morire",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Barrier Shield",
+    "it": "Scudo frontale",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Scudo piccolo per te e chi ti sta dietro in mischia; abbassalo per colpire e ricaricarlo.",
+    "when": "Mentre ti avvicini o proteggi un supporto dai colpi",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Shield Bash",
+    "it": "Carica con scudo",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape"
+    ],
+    "use": "Scatto breve con lo scudo: per raggiungere un alleato, finire un nemico o chiudere la distanza.",
+    "when": "Per inseguire un tuffatore ferito o raggiungere la squadra",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Venture"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Rally",
+    "it": "Raduno",
+    "ult": true,
+    "tags": [
+     "heal",
+     "speed",
+     "armor"
+    ],
+    "use": "Dà salute extra che cresce a tutta la squadra e più velocità: entra insieme al tank.",
+    "when": "Per un ingaggio in mischia o per reggere un'ultimate di danno",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Whip Shot",
+   "why": "È lo strumento che protegge i compagni dai tuffatori: va tenuto per chi entra nel retro."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints",
+    "env-kills"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Combatte in mischia e spinge giù dai bordi; in spazi aperti viene colpita da lontano."
+  },
+  "abilitiesNote": "Rally nel gioco attuale dà salute extra (overhealth) più che armatura vera. Barrier Shield portato a 300 PS nel 2026.",
+  "role": "Support"
  },
  "Cassidy": {
   "tags": [
@@ -659,8 +1251,99 @@
    "https://overwatch.blizzard.com/en-us/heroes/cassidy/",
    "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
    "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide",
-   "https://esports.gg/guides/overwatch/overwatch-shion-counters/"
-  ]
+   "https://esports.gg/guides/overwatch/overwatch-shion-counters/",
+   "https://overwatch.fandom.com/wiki/Cassidy",
+   "https://liquipedia.net/overwatch/Cassidy",
+   "https://gamerant.com/overwatch-2-cassidy-guide-tips-tricks-abilities-playstyle/",
+   "https://overwatch.fandom.com/wiki/Genji"
+  ],
+  "abilities": [
+   {
+    "name": "Flashbang",
+    "it": "Granata accecante",
+    "ult": false,
+    "tags": [
+     "cc"
+    ],
+    "use": "Rallenta del 50% e blocca le abilità di movimento: lanciala dove il fiancheggiatore arriva",
+    "when": "Quando un dive o un fiancheggiatore ti arriva addosso",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Sombra",
+     "Doomfist"
+    ],
+    "saveFor": [
+     {
+      "hero": "Tracer",
+      "why": "tienila per bloccare Blink: senza fuga la finisci"
+     },
+     {
+      "hero": "Genji",
+      "why": "tienila per fermarlo dopo Swift Strike"
+     },
+     {
+      "hero": "Sombra",
+      "why": "tienila dove apparirà col Translocator"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Combat Roll",
+    "it": "Capriola",
+    "ult": false,
+    "tags": [
+     "escape",
+     "mobility"
+    ],
+    "use": "Rotola dietro copertura: ricarica tutto il revolver e riduce i danni",
+    "when": "Per ricaricare in un duello o uscire dalla linea di tiro",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Deadeye",
+    "it": "Occhio di falco",
+    "ult": true,
+    "tags": [
+     "burst",
+     "zone"
+    ],
+    "use": "Da dietro copertura uccide chi resta in vista; anche solo per far nascondere i nemici",
+    "when": "Quando le difese nemiche sono finite o per togliere spazio",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Genji",
+      "why": "Deflect te la rimanda contro"
+     },
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix assorbe i colpi"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Flashbang",
+   "why": "È l'unica difesa contro i fiancheggiatori: sprecata, Cassidy non può fuggire dai dive"
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Hitscan a media distanza: forte tra angoli e choke, perde contro i cecchini sulle linee lunghe"
+  },
+  "abilitiesNote": "Flashbang attuale: si lancia come il vecchio ma ostacola (niente stordimento).",
+  "role": "Damage"
  },
  "D.Mon": {
   "tags": [
@@ -746,8 +1429,139 @@
    "https://www.sportskeeda.com/esports/how-play-d-mon-overwatch-abilities-playstyle",
    "https://mobalytics.gg/overwatch/heroes/dmon-guide",
    "https://www.counterwatch.gg/stats/overwatch/counters/dmon",
-   "https://esports.gg/news/overwatch/overwatch-domina-counters/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-domina-counters/",
+   "https://rankedow.com/blog/dmon-overwatch-tank-guide",
+   "https://allthings.how/overwatch-how-to-play-d-mon-abilities-and-playstyle/",
+   "https://us.forums.blizzard.com/en/overwatch/t/overwatch-retail-patch-notes-%E2%80%93-august-11-2026/1032368",
+   "https://x.com/OWCavalry/status/2087620545235792004"
+  ],
+  "abilities": [
+   {
+    "name": "Power Barrier",
+    "it": "barriera frontale",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Tienila alzata per far avanzare il team, abbassala per colpire con la Plasma Saber",
+    "when": "In avanzata e contro il poke a distanza",
+    "targets": [
+     "Widowmaker",
+     "Ashe",
+     "Hanzo",
+     "Cassidy"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Tracer",
+      "why": "è solo frontale: chi ti aggira ti colpisce alle spalle"
+     }
+    ]
+   },
+   {
+    "name": "Propulsors",
+    "it": "scatti a carburante",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape"
+    ],
+    "use": "Scatti orizzontali (anche indietro): chiudi la distanza, ma tieni carburante per rientrare",
+    "when": "Per entrare in mischia o uscire da un focus",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Surging Strike",
+    "it": "carica con lo scudo",
+    "ult": false,
+    "tags": [
+     "engage",
+     "knockback",
+     "burst"
+    ],
+    "use": "Con la barriera alzata lo scatto diventa una carica a scudo avanti: danni e spinta",
+    "when": "Come ingaggio coperto, non come fuga",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Fusion Repeater",
+    "it": "mitragliatrice a raffica",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Raffica a media distanza per colpire chi la spada non raggiunge (meno efficace da lontano)",
+    "when": "Contro bersagli in alto o che ti tengono a distanza",
+    "targets": [
+     "Pharah",
+     "Echo",
+     "Mercy"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Limit Break",
+    "it": "fendente devastante",
+    "ult": true,
+    "tags": [
+     "engage",
+     "burst",
+     "damage-amp"
+    ],
+    "use": "Fendente ampio che passa le barriere: ti dà fino a 300 di salute extra e fa subire più danni",
+    "when": "Per aprire lo scontro quando il team può seguire il focus",
+    "targets": [
+     "Reinhardt",
+     "Sigma",
+     "Domina"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Call Mech",
+    "it": "richiama il mech",
+    "ult": true,
+    "tags": [],
+    "use": "Da pilota sei fragilissima: resta coperta e richiama il mech appena la carica è pronta",
+    "when": "Dopo l'espulsione, quando sei al riparo",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Propulsors",
+   "why": "Il carburante decide tutto: con barriera alzata diventa Surging Strike per ingaggiare; senza carburante resti bloccata in mischia."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "high-ground",
+    "long-sightlines"
+   ],
+   "why": "Kit da mischia con scatti solo orizzontali: soffre la verticalità e il poke a distanza, brilla negli spazi stretti."
+  },
+  "abilitiesNote": "Eroina nuova (Season 4, 11/08/2026), Stalwart. Ritocchi l'8 e il 17/09/2026 (Fusion Repeater ricarica 5 s). Se il mech cade passa a pilota (Eject!) con la Portable Fusion Repeater.",
+  "role": "Tank"
  },
  "D.Va": {
   "tags": [
@@ -854,8 +1668,150 @@
    "https://www.esportstales.com/overwatch/one-of-the-best-pharah-counters-dva",
    "https://rankedboost.com/overwatch/counters/dva/",
    "https://www.icy-veins.com/overwatch/winston-synergies-and-matchups",
-   "https://gamerant.com/overwatch-2-hazard-guide-abilities-counters-more/"
-  ]
+   "https://gamerant.com/overwatch-2-hazard-guide-abilities-counters-more/",
+   "https://www.charlieintel.com/overwatch-2/overwatch-2-best-counters-for-each-tank-hero-266824/",
+   "https://medium.com/overlogs/overwatch-hero-counters-explained-1-tank-role-7747004ade58",
+   "https://x.com/OWCavalry/status/2031430108574060820",
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/"
+  ],
+  "abilities": [
+   {
+    "name": "Defense Matrix",
+    "it": "matrice difensiva",
+    "ult": false,
+    "tags": [
+     "block-projectiles"
+    ],
+    "use": "Mangia proiettili e colpi (anche ult a proiettile); non sprecarla in apertura",
+    "when": "Quando il nemico spara la sua abilità chiave",
+    "targets": [
+     "Pharah",
+     "Junkrat",
+     "Bastion",
+     "Ana",
+     "Cassidy",
+     "Soldier: 76"
+    ],
+    "saveFor": [
+     {
+      "hero": "Zarya",
+      "why": "tienila per mangiare la Graviton Surge"
+     },
+     {
+      "hero": "Ana",
+      "why": "tienila per il Sleep Dart e la Biotic Grenade"
+     },
+     {
+      "hero": "Pharah",
+      "why": "tienila per assorbire il Barrage"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Zarya",
+      "why": "non assorbe i raggi: il suo cannone passa"
+     },
+     {
+      "hero": "Moira",
+      "why": "non assorbe i raggi di Moira"
+     },
+     {
+      "hero": "Symmetra",
+      "why": "non assorbe il raggio di Symmetra"
+     },
+     {
+      "hero": "Winston",
+      "why": "non assorbe la scarica Tesla"
+     }
+    ]
+   },
+   {
+    "name": "Boosters",
+    "it": "propulsori",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape",
+     "boop"
+    ],
+    "use": "Vola addosso ai fragili o via dal pericolo; chi urti viene spinto",
+    "when": "Per tuffarti su bersagli isolati o rientrare",
+    "targets": [
+     "Widowmaker",
+     "Ana",
+     "Zenyatta",
+     "Pharah"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Micro Missiles",
+    "it": "micro missili",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Salva di razzi da combinare con Boosters e cannoni per finire i bersagli",
+    "when": "Su bersaglio già ferito o gruppo stretto",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Self-Destruct",
+    "it": "autodistruzione",
+    "ult": true,
+    "tags": [
+     "zone",
+     "burst"
+    ],
+    "use": "Lancia il mech dove i nemici non hanno copertura; ottima dopo una Graviton",
+    "when": "Su gruppo stretto o per cacciarli dal punto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Reinhardt",
+      "why": "lo scudo la para: mandala dietro o di lato"
+     },
+     {
+      "hero": "Sigma",
+      "why": "la barriera la para"
+     }
+    ]
+   },
+   {
+    "name": "Call Mech",
+    "it": "richiama il mech",
+    "ult": true,
+    "tags": [],
+    "use": "Da pilota stai al riparo e richiama il mech appena puoi",
+    "when": "Dopo aver perso il mech",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Defense Matrix",
+   "why": "È il motivo per cui scegli D.Va: usata sull'abilità giusta (sleep, granata, Graviton, Barrage) vince lo scontro."
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "flank-routes"
+   ],
+   "dislikes": [],
+   "why": "Il volo le fa raggiungere alture e fianchi; si adatta a quasi tutte le mappe."
+  },
+  "abilitiesNote": "Boosters ricarica 4 s (marzo 2026); salute del mech aumentata in Season 4.",
+  "role": "Tank"
  },
  "Domina": {
   "tags": [
@@ -955,8 +1911,131 @@
    "https://esports.gg/news/overwatch/overwatch-domina-counters/",
    "https://www.counterwatch.gg/stats/overwatch/counters/domina",
    "https://www.thegamer.com/overwatch-domina-hero-ability-tips-guide/",
-   "https://turboboost.gg/article/how-to-play-domina-overwatch-guide"
-  ]
+   "https://turboboost.gg/article/how-to-play-domina-overwatch-guide",
+   "https://games.gg/overwatch/guides/overwatch-domina-guide-master-the-poke-tank-and-dominate/",
+   "https://esports.gg/news/overwatch/overwatch-domina-release-date-release-time-abilities-and-lore/"
+  ],
+  "abilities": [
+   {
+    "name": "Barrier Array",
+    "it": "barriera a segmenti",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Barriera a segmenti che si rompono uno alla volta: coprila sulla linea di tiro del poke",
+    "when": "Per avanzare o tenere un angolo contro tiratori",
+    "targets": [
+     "Widowmaker",
+     "Ashe",
+     "Hanzo",
+     "Bastion"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ramattra",
+      "why": "Pummel attraversa le barriere"
+     }
+    ]
+   },
+   {
+    "name": "Sonic Repulsors",
+    "it": "onde respingenti",
+    "ult": false,
+    "tags": [
+     "knockback",
+     "stun",
+     "boop",
+     "environmental-kill"
+    ],
+    "use": "Spingi il nemico contro un muro (stordimento e danni extra) o giù da un bordo",
+    "when": "Quando un melee o un dive ti è addosso",
+    "targets": [
+     "Genji",
+     "Tracer",
+     "Winston",
+     "Reaper",
+     "Doomfist"
+    ],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienile per staccarti di dosso chi ti salta addosso"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Orisa",
+      "why": "con Fortify non si sposta"
+     }
+    ]
+   },
+   {
+    "name": "Crystal Charge",
+    "it": "cristallo esplosivo",
+    "ult": false,
+    "tags": [
+     "burst",
+     "self-heal"
+    ],
+    "use": "Gittata enorme: falla esplodere in aria sopra i nemici; i danni delle abilità ti ricaricano gli scudi",
+    "when": "Appena vedi nemici fuori portata del raggio, o con poca vita",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Panopticon",
+    "it": "prigione di luce",
+    "ult": true,
+    "tags": [
+     "cc",
+     "zone",
+     "burst"
+    ],
+    "use": "Gabbia di luce che imprigiona e poi esplode: punta i supporti, molti non riescono a romperla",
+    "when": "Con nemici allineati e niente muri o scudi davanti",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Kiriko",
+     "Mercy"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Reinhardt",
+      "why": "se colpisce uno scudo svanisce"
+     },
+     {
+      "hero": "Sigma",
+      "why": "se colpisce la barriera svanisce"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Barrier Array",
+   "why": "È la tua difesa e quella del team; senza (es. hackerata da Sombra) resti col solo raggio."
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "chokepoints",
+    "env-kills"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Tank da poke a media/lunga distanza; Sonic Repulsors stordisce solo contro i muri e butta giù dai bordi (es. ponte di Eichenwalde)."
+  },
+  "abilitiesNote": "Eroina nuova (Season 1, 10/02/2026), Stalwart. Passiva Reconstruction: i danni delle abilità ripristinano scudi.",
+  "role": "Tank"
  },
  "Doomfist": {
   "tags": [
@@ -1048,8 +2127,110 @@
    "https://dotesports.com/overwatch/news/best-doomfist-counters-in-overwatch-2",
    "https://counterpickgg.com/heroes/doomfist",
    "https://gamerant.com/overwatch-2-hazard-guide-abilities-counters-more/",
-   "https://us.forums.blizzard.com/en/overwatch/t/sigma-counters-and-synergies/375226"
-  ]
+   "https://us.forums.blizzard.com/en/overwatch/t/sigma-counters-and-synergies/375226",
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
+  ],
+  "abilities": [
+   {
+    "name": "Rocket Punch",
+    "it": "pugno a razzo",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape",
+     "knockback",
+     "stun",
+     "environmental-kill"
+    ],
+    "use": "Carica il pugno per sbattere il bersaglio su un muro (stordimento) o fuori mappa",
+    "when": "Su un fragile isolato, meglio se potenziato dal Power Block",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Widowmaker",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Orisa",
+      "why": "con Fortify non viene spinta né stordita"
+     }
+    ]
+   },
+   {
+    "name": "Seismic Slam",
+    "it": "schianto sismico",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage"
+    ],
+    "use": "Balzo in avanti che colpisce all'atterraggio: per entrare o cambiare posizione",
+    "when": "Per avvicinarti prima del pugno o raggiungere un'altura",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Power Block",
+    "it": "parata",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Para gran parte dei danni frontali; se assorbi abbastanza il prossimo Rocket Punch è potenziato",
+    "when": "Quando ti sparano addosso, prima di ingaggiare",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Bastion",
+      "why": "para la raffica della torretta e carica il pugno potenziato"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Meteor Strike",
+    "it": "meteora",
+    "ult": true,
+    "tags": [
+     "engage",
+     "escape",
+     "zone",
+     "burst"
+    ],
+    "use": "Salta in alto e atterra su gruppo o supporti; durante il salto sei intoccabile, salva la vita",
+    "when": "Per finire un gruppo ferito o per scappare da morte certa",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Rocket Punch",
+   "why": "È la tua mobilità e il tuo colpo letale: sprecarlo ti lascia senza via di fuga."
+  },
+  "mapFeatures": {
+   "likes": [
+    "env-kills",
+    "close-quarters",
+    "flank-routes",
+    "high-ground"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Muri vicini per lo stordimento del pugno e bordi per buttare fuori; negli spazi aperti è un bersaglio facile."
+  },
+  "abilitiesNote": "Seismic Slam più forte in Season 4 (60 danni).",
+  "role": "Tank"
  },
  "Echo": {
   "tags": [
@@ -1135,8 +2316,81 @@
    "https://rankedboost.com/overwatch/counters/echo/",
    "https://www.esportsheaven.com/features/how-to-counter-echo-in-overwatch-2/",
    "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
-   "https://esports.gg/news/overwatch/overwatch-venture-meta-guide-counters-synergies-balance-patch/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-venture-meta-guide-counters-synergies-balance-patch/",
+   "https://overwatch.fandom.com/wiki/Echo",
+   "https://www.pcgamesn.com/overwatch/echo-abilities"
+  ],
+  "abilities": [
+   {
+    "name": "Sticky Bombs",
+    "it": "Bombe adesive",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Sei bombe che si attaccano ed esplodono dopo poco: da media distanza, poi Focusing Beam",
+    "when": "Per aprire il danno su un bersaglio o sul payload",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Flight",
+    "it": "Volo",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape",
+     "engage"
+    ],
+    "use": "Scatto in volo in avanti: per prendere quota, entrare su un bersaglio o fuggire",
+    "when": "Per riposizionarti in alto o uscire da un dive",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Focusing Beam",
+    "it": "Raggio concentrato",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Sotto il 50% di vita fa 175 danni al secondo: solo per finire",
+    "when": "Su un bersaglio già ferito, mai per aprire lo scontro",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Duplicate",
+    "it": "Duplicazione",
+    "ult": true,
+    "tags": [
+     "burst"
+    ],
+    "use": "Copi un nemico e usi le sue abilità: caricane in fretta l'ult e usala con la squadra",
+    "when": "Su un nemico con ult forte, poco prima dello scontro",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Sticky Bombs",
+   "why": "È il suo danno principale e prepara Focusing Beam sotto il 50%"
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "open-spaces"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Eroe volante: sfrutta spazi aperti e verticali, soffre gli spazi chiusi"
+  },
+  "role": "Damage"
  },
  "Emre": {
   "tags": [
@@ -1206,8 +2460,70 @@
    "https://1v9.gg/blog/emre-overwatch-guide",
    "https://rankedboost.com/overwatch/counters/emre/",
    "https://overbuddy.com/heroes/EMRE/counters/",
-   "https://esports.gg/news/overwatch/overwatch-finally-welcomes-emre-as-a-playable-hero/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-finally-welcomes-emre-as-a-playable-hero/",
+   "https://mobalytics.gg/overwatch/heroes/emre-guide",
+   "https://www.dexerto.com/wikis/overwatch/heroes/damage/emre/"
+  ],
+  "abilities": [
+   {
+    "name": "Siphon Blaster",
+    "it": "Pistola che ruba vita",
+    "ult": false,
+    "tags": [
+     "self-heal",
+     "speed",
+     "mobility"
+    ],
+    "use": "Pistola a colpi esplosivi che rubano vita; corri più veloce e salti più in alto",
+    "when": "Quando sei ferito, per vincere un duello o per spostarti",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Cyber Frag",
+    "it": "Granata cyber",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Lancia la granata e spara subito un colpo in testa allo stesso bersaglio",
+    "when": "Su nemici raggruppati o in spazi stretti, dopo una raffica",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Override Protocol",
+    "it": "Protocollo override",
+    "ult": true,
+    "tags": [
+     "burst",
+     "zone"
+    ],
+    "use": "Voli in alto: raffica esplosiva da vicino o colpi caricati sui bersagli chiave",
+    "when": "Mai già ferito o esposto: in aria diventi il primo bersaglio",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Siphon Blaster",
+   "why": "È la sua unica cura e mobilità: senza, Emre non ha modo di uscire da un dive"
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "flank-routes"
+   ],
+   "why": "Fucile a raffica a media-lunga distanza con Take Aim; granata utile sui choke; teme chi lo aggira"
+  },
+  "abilitiesNote": "Eroe del 2026: kit confermato da più guide, consigli d'uso da poche guide. Take Aim (tasto secondario) stringe la rosa: usalo quasi sempre.",
+  "role": "Damage"
  },
  "Freja": {
   "tags": [
@@ -1275,8 +2591,89 @@
    "https://esports.gg/news/overwatch/overwatch-2-freja-abilities-ultimate-and-perks/",
    "https://rankedboost.com/overwatch/counters/freja/",
    "https://fenixbazaar.com/2025/07/15/overwatch-2-freja-guide/",
-   "https://nerdburglars.net/question/what-are-the-best-counters-to-freja/"
-  ]
+   "https://nerdburglars.net/question/what-are-the-best-counters-to-freja/",
+   "https://www.dexerto.com/overwatch/overwatch-freja-guide-abilities-ultimate-tips-3131604/",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/"
+  ],
+  "abilities": [
+   {
+    "name": "Take Aim",
+    "it": "Mira esplosiva",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Dardo esplosivo caricato, il suo colpo più forte; in aria rallenta la caduta",
+    "when": "Da posizione alta, dopo Updraft o Quick Dash",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix mangia i dardi: aspetta che finisca"
+     }
+    ]
+   },
+   {
+    "name": "Quick Dash",
+    "it": "Scatto rapido",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Scatto nella direzione di movimento (2 cariche) che ricarica Take Aim",
+    "when": "Tra un Take Aim e l'altro, o per sfuggire a un dive",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Updraft",
+    "it": "Corrente ascensionale",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Salto verso l'alto (2 cariche) che regala un Quick Dash: combo Updraft-Take Aim-Dash",
+    "when": "Per prendere quota o uscire da una mischia",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Bola Shot",
+    "it": "Bola esplosiva",
+    "ult": true,
+    "tags": [
+     "cc",
+     "burst"
+    ],
+    "use": "Colpisci un nemico: la bola lo lega e trascina i vicini, poi esplode",
+    "when": "Su un nemico vicino ad altri, poi finiscili con Take Aim",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Quick Dash",
+   "why": "Ricarica Take Aim ed è la sua fuga: gestirlo bene decide danno e sopravvivenza"
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Gioca dall'alto con molta mobilità verticale e colpi a distanza; negli spazi chiusi è vulnerabile"
+  },
+  "abilitiesNote": "Stagione 1 2026: Updraft ha una carica in più ma salta il 20% meno in alto.",
+  "role": "Damage"
  },
  "Genji": {
   "tags": [
@@ -1389,8 +2786,106 @@
    "https://esports.gg/news/overwatch/the-best-genji-counters-in-overwatch-2/",
    "https://gamerant.com/overwatch-2-genji-guide-tips-abilities-and-more/",
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
-   "https://segmentnext.com/overwatch-2-hanzo/"
-  ]
+   "https://segmentnext.com/overwatch-2-hanzo/",
+   "https://overwatch-archive.fandom.com/wiki/Deflect",
+   "https://www.thegamer.com/overwatch-2-genji-hero-play-guide-abilities-tips-tricks/",
+   "https://www.gamespot.com/articles/overwatch-2-genji-hero-guide/1100-6508354/"
+  ],
+  "abilities": [
+   {
+    "name": "Swift Strike",
+    "it": "Colpo rapido",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "burst",
+     "escape"
+    ],
+    "use": "Scatta attraverso il nemico; si ricarica a ogni eliminazione",
+    "when": "Per finire un bersaglio ferito o uscire dopo un'uccisione",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Deflect",
+    "it": "Deviazione",
+    "ult": false,
+    "tags": [
+     "block-projectiles"
+    ],
+    "use": "Rimanda proiettili e ult (Deadeye, Barrage, Pulse Bomb); i raggi non si deviano",
+    "when": "Contro un'abilità o ult nemica, non per qualche colpo qualsiasi",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Cassidy",
+      "why": "tienila per rimandare Deadeye"
+     },
+     {
+      "hero": "Pharah",
+      "why": "tienila per rimandare Barrage"
+     },
+     {
+      "hero": "Tracer",
+      "why": "tienila per la Pulse Bomb"
+     },
+     {
+      "hero": "Zarya",
+      "why": "tienila per Graviton Surge"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Symmetra",
+      "why": "il suo raggio non si devia"
+     },
+     {
+      "hero": "Winston",
+      "why": "la Tesla non si devia"
+     },
+     {
+      "hero": "Zarya",
+      "why": "il raggio non si devia"
+     }
+    ]
+   },
+   {
+    "name": "Dragonblade",
+    "it": "Lama del drago",
+    "ult": true,
+    "tags": [
+     "burst",
+     "engage"
+    ],
+    "use": "Spada da mischia; Swift Strike si ricarica a ogni uccisione e Deflect resta usabile",
+    "when": "Quando le difese nemiche sono finite, meglio con Nano Boost di Ana",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "con il Dardo soporifero pronto ti ferma la lama"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Deflect",
+   "why": "Salva Genji e può ribaltare le ult nemiche: usarla a vuoto lo lascia senza difese"
+  },
+  "mapFeatures": {
+   "likes": [
+    "flank-routes",
+    "high-ground",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Fiancheggiatore agile: gli servono angoli, alture e vie laterali per entrare e uscire"
+  },
+  "role": "Damage"
  },
  "Hanzo": {
   "tags": [
@@ -1488,8 +2983,106 @@
    "https://screenrant.com/hanzo-hero-best-tips-strategies-overwatch-2/",
    "https://rankedboost.com/overwatch/counters/hanzo/",
    "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
-   "https://segmentnext.com/overwatch-2-torbjorn/"
-  ]
+   "https://segmentnext.com/overwatch-2-torbjorn/",
+   "https://www.icy-veins.com/overwatch/hanzo-guide",
+   "https://www.gamespot.com/articles/overwatch-2-hanzo-hero-guide/1100-6508532/",
+   "https://www.exitlag.com/news/hanzo-overwatch/"
+  ],
+  "abilities": [
+   {
+    "name": "Sonic Arrow",
+    "it": "Freccia sonica",
+    "ult": false,
+    "tags": [
+     "vision"
+    ],
+    "use": "Rivela i nemici dietro i muri; mettila vicino ai tuoi supporti contro i fiancheggiatori",
+    "when": "Prima di ogni scontro, o dove arrivano i fiancheggiatori",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Sombra",
+      "why": "tienila per scoprirla quando arriva invisibile"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Storm Arrows",
+    "it": "Raffica di frecce",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "5 frecce rapide: per chi ti salta addosso, contro tank e barriere a media distanza",
+    "when": "Quando ti fanno dive o per finire bersagli feriti",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienile per difenderti quando ti salta addosso"
+     },
+     {
+      "hero": "Tracer",
+      "why": "tienile per difenderti quando ti raggiunge"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Genji",
+      "why": "non tirare su Deflect: le frecce tornano a te"
+     },
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix assorbe le frecce"
+     }
+    ]
+   },
+   {
+    "name": "Lunge",
+    "it": "Balzo",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Doppio salto in orizzontale: schiva abilità e cambia angolo di tiro",
+    "when": "Per schivare colpi ovvi o riposizionarti",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Dragonstrike",
+    "it": "Colpo del drago",
+    "ult": true,
+    "tags": [
+     "zone",
+     "burst"
+    ],
+    "use": "Draghi in linea retta: lanciali in corridoi, choke o sul payload",
+    "when": "Con Graviton Surge di Zarya, o per dividere e cacciare i nemici dal punto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Storm Arrows",
+   "why": "È la sua difesa ravvicinata e il danno contro i tank: va tenuta per i dive"
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "high-ground",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Arciere a distanza: vuole linee lunghe e alture; Dragonstrike rende sui choke; soffre gli spazi stretti"
+  },
+  "role": "Damage"
  },
  "Hazard": {
   "tags": [
@@ -1576,8 +3169,105 @@
    "https://www.counterwatch.gg/stats/overwatch/counters/hazard",
    "https://rankedboost.com/overwatch/counters/hazard/",
    "https://1v9.gg/blog/overwatch-2-how-to-play-hazard-hero-guide",
-   "https://overwatch.blizzard.com/en-us/heroes/hazard/"
-  ]
+   "https://overwatch.blizzard.com/en-us/heroes/hazard/",
+   "https://esports.gg/news/overwatch/overwatch-2-hazard-abilities-and-ultimate/",
+   "https://www.oneesports.gg/overwatch/overwatch-2-hazard-guide-abilities/",
+   "https://overwatch.fandom.com/wiki/June_16,_2026_Patch",
+   "https://x.com/OWCavalry/status/2031430108574060820"
+  ],
+  "abilities": [
+   {
+    "name": "Spike Guard",
+    "it": "guardia di spine",
+    "ult": false,
+    "tags": [
+     "armor",
+     "self-heal"
+    ],
+    "use": "Riduce i danni subiti, ricarica munizioni e lancia spine sui vicini (dura max 2,5 s)",
+    "when": "Quando ti concentrano il fuoco in mischia",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Violent Leap",
+    "it": "balzo violento",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape",
+     "knockback"
+    ],
+    "use": "Balzo in avanti, riattiva per un fendente che respinge; puoi aggrapparti ai muri",
+    "when": "Per raggiungere fragili o altura, o tornare dal team",
+    "targets": [
+     "Widowmaker",
+     "Ana",
+     "Zenyatta"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Jagged Wall",
+    "it": "muro di spine",
+    "ult": false,
+    "tags": [
+     "wall",
+     "knockback",
+     "zone",
+     "environmental-kill"
+    ],
+    "use": "Parete di spine su qualunque superficie: respinge e separa i nemici, anche fuori mappa",
+    "when": "Per dividere il team avversario o spingere giù da un bordo",
+    "targets": [
+     "Lúcio",
+     "Tracer",
+     "Genji"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Downpour",
+    "it": "pioggia di spine",
+    "ult": true,
+    "tags": [
+     "cc",
+     "zone"
+    ],
+    "use": "Pioggia di spine che immobilizza i nemici nell'area: entra e fai seguire il team",
+    "when": "Su gruppo stretto, appena il team è pronto a sfruttarla",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Spike Guard",
+   "why": "È la sua tenuta: usata bene ti fa sopravvivere e ricaricare; ora dura meno, quindi non tenerla aperta a vuoto."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "env-kills",
+    "high-ground",
+    "flank-routes"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Tuffi corti e muri di spine rendono al meglio tra muri, bordi e alture; soffre il poke a distanza."
+  },
+  "abilitiesNote": "Da marzo 2026 sotto-ruolo Initiator; Spike Guard ridotta a 2,5 s (16/06/2026). Contro forti: Ashe, Doomfist, Brigitte.",
+  "role": "Tank"
  },
  "Illari": {
   "tags": [
@@ -1662,8 +3352,100 @@
    "https://mobalytics.gg/overwatch/heroes/illari-guide",
    "https://www.counterwatch.gg/stats/overwatch/counters/illari",
    "https://fenixbazaar.com/2025/07/08/overwatch-2-illari-guide/",
-   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-illari"
-  ]
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-illari",
+   "https://overwatch.fandom.com/wiki/Illari",
+   "https://overwatch.fandom.com/wiki/June_16,_2026_Patch"
+  ],
+  "abilities": [
+   {
+    "name": "Healing Pylon",
+    "it": "Torretta di cura",
+    "ult": false,
+    "tags": [
+     "heal"
+    ],
+    "use": "Piazzala dietro copertura con vista sul fronte: cura da sola mentre tu spari.",
+    "when": "A inizio scontro e appena ritorna dopo che l'hanno distrutta",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Junkrat",
+      "why": "non metterla allo scoperto: le sue granate la distruggono subito"
+     }
+    ]
+   },
+   {
+    "name": "Outburst",
+    "it": "Salto esplosivo",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape",
+     "knockback"
+    ],
+    "use": "Salto spinto che respinge chi ti è vicino: per fuggire o salire in alto.",
+    "when": "Quando un tuffatore ti raggiunge o per prendere un punto alto",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Reaper"
+    ],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienilo per scappare quando Genji ti salta addosso"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Captive Sun",
+    "it": "Sole prigioniero",
+    "ult": true,
+    "tags": [
+     "burst",
+     "cc"
+    ],
+    "use": "Colpisci il gruppo nemico: rallenta e marca, poi la squadra spara sui marcati per farli esplodere.",
+    "when": "Con nemici raggruppati e i tuoi DPS pronti a sparare",
+    "targets": [
+     "Reinhardt",
+     "Junker Queen",
+     "Lúcio",
+     "Mauga",
+     "Pharah"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix può assorbire il sole"
+     },
+     {
+      "hero": "Kiriko",
+      "why": "Protection Suzu può ripulire i marcati"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Healing Pylon",
+   "why": "Fa gran parte delle tue cure: posizionarla bene e ricostruirla subito decide il tuo contributo."
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "high-ground"
+   ],
+   "dislikes": [
+    "close-quarters",
+    "flank-routes"
+   ],
+   "why": "Fucile a lunga distanza e torretta che vuole vista libera; soffre la mischia."
+  },
+  "abilitiesNote": "Le modifiche a Pylon/Outburst/Captive Sun del 1/4 e del 30/6/2026 erano pesce d'aprile e modalità Arcade 'Community Crafted': non applicate.",
+  "role": "Support"
  },
  "Jetpack Cat": {
   "tags": [
@@ -1762,8 +3544,115 @@
    "https://www.counterwatch.gg/stats/overwatch/counters/jetpackcat",
    "https://www.overpicker.com/heroes/jetpack-cat",
    "https://turboboost.gg/article/how-to-play-jetpack-cat-overwatch-guide",
-   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/",
+   "https://screenrant.com/overwatch-jetpack-cat-build-best-abilities-ultimate-perks-tips/",
+   "https://www.thegamer.com/overwatch-jetpack-cat-hero-ability-tips-guide/",
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/"
+  ],
+  "abilities": [
+   {
+    "name": "Frenetic Flight",
+    "it": "Volo frenetico",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape",
+     "speed"
+    ],
+    "use": "Accelera nella direzione di volo consumando carburante: tienine sempre un po' per scappare.",
+    "when": "Per riposizionarti o sfuggire a chi ti punta",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Lifeline",
+    "it": "Traino alleato",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "heal",
+     "speed"
+    ],
+    "use": "Trasporta un alleato (che accetta) curandolo: porta il tank dietro le linee o salva chi è isolato.",
+    "when": "Prima di un'ultimate alleata o per estrarre un alleato in pericolo",
+    "targets": [
+     "Roadhog",
+     "Reinhardt",
+     "Reaper"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Purr",
+    "it": "Fusa curative",
+    "ult": false,
+    "tags": [
+     "heal",
+     "knockback",
+     "zone"
+    ],
+    "use": "Cura ad area a impulsi sempre più rapidi; all'attivazione respinge i nemici vicini.",
+    "when": "Quando un tuffatore ti raggiunge o la squadra subisce danni ad area",
+    "targets": [
+     "Genji",
+     "Tracer",
+     "Winston",
+     "D.Va"
+    ],
+    "saveFor": [
+     {
+      "hero": "Winston",
+      "why": "tienila per respingere Winston quando ti salta addosso"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Catnapper",
+    "it": "Rapimento felino",
+    "ult": true,
+    "tags": [
+     "engage",
+     "cc",
+     "environmental-kill"
+    ],
+    "use": "Tuffati su un punto: atterri i nemici e leghi il più vicino; trascinalo nel vuoto o lontano dai suoi.",
+    "when": "Su nemici vicini ai bordi o isolati, con i compagni pronti a seguire",
+    "targets": [
+     "Reinhardt",
+     "Ana",
+     "Zenyatta",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Orisa",
+      "why": "con Fortify attiva è inarrestabile"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Lifeline",
+   "why": "È ciò che la rende unica: conta il momento giusto (ingaggio o salvataggio), non usarla spesso."
+  },
+  "mapFeatures": {
+   "likes": [
+    "env-kills",
+    "open-spaces",
+    "high-ground"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Vola sempre: vuole spazio aereo e bordi per l'ultimate; nei corridoi chiusi perde il vantaggio."
+  },
+  "abilitiesNote": "Eroe del 2026: fonti soprattutto guide di lancio. Jetpack (volo permanente) è passiva. Da agosto 2026 Purr ha 3 onde per impulso e la velocità bonus è scesa al 30%. Catnapper è solo offensiva. L'avviso su Orisa è dedotto dalla regola generale degli eroi inarrestabili.",
+  "role": "Support"
  },
  "Junker Queen": {
   "tags": [
@@ -1848,8 +3737,106 @@
    "https://segmentnext.com/overwatch-2-junker-queen/",
    "https://www.digitaltrends.com/gaming/overwatch-2-junker-queen-guide-abilities-strategies-counters/",
    "https://dotesports.com/overwatch/news/best-junker-queen-counters-in-overwatch-2",
-   "https://mobalytics.gg/overwatch/heroes/roadhog-guide"
-  ]
+   "https://mobalytics.gg/overwatch/heroes/roadhog-guide",
+   "https://esports.gg/guides/overwatch/overwatch-season-3-patch-notes-2026/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
+  ],
+  "abilities": [
+   {
+    "name": "Jagged Blade",
+    "it": "coltello",
+    "ult": false,
+    "tags": [
+     "hook",
+     "burst"
+    ],
+    "use": "Lancia il coltello, ferisci e richiamalo per tirare il nemico verso di te",
+    "when": "Su un fragile fuori posizione o vicino a un bordo",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Widowmaker",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Orisa",
+      "why": "con Fortify non viene tirata"
+     }
+    ]
+   },
+   {
+    "name": "Commanding Shout",
+    "it": "urlo di comando",
+    "ult": false,
+    "tags": [
+     "speed",
+     "heal"
+    ],
+    "use": "Velocità e salute extra a te e agli alleati vicini",
+    "when": "Per entrare insieme o ritirarvi; contro il burst nemico",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Carnage",
+    "it": "colpo d'ascia",
+    "ult": false,
+    "tags": [
+     "burst",
+     "self-heal"
+    ],
+    "use": "Colpo ad arco che ferisce: più nemici colpisci, più ti curi con le ferite",
+    "when": "In mischia su più nemici, dopo l'urlo",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Rampage",
+    "it": "furia",
+    "ult": true,
+    "tags": [
+     "engage",
+     "anti-heal",
+     "burst"
+    ],
+    "use": "Carica in avanti: ferisce e blocca le cure ai colpiti; segui con Carnage",
+    "when": "Per vincere uno scontro contro team che si cura tanto",
+    "targets": [
+     "Roadhog",
+     "Mauga",
+     "Mercy",
+     "Moira"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Kiriko",
+      "why": "con Suzu pronto annulla ferite e anti-cura"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Commanding Shout",
+   "why": "Velocità e salute extra a tutto il team: decide quando entrare e uscire dagli scontri (ora ricarica in 10 s)."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Brawler a corto raggio: vuole scontri ravvicinati, soffre il poke da lontano."
+  },
+  "abilitiesNote": "Commanding Shout ricarica 10 s (Season 3 2026). Stalwart.",
+  "role": "Tank"
  },
  "Junkrat": {
   "tags": [
@@ -1945,8 +3932,77 @@
    "https://boosting-ground.com/overwatch-2-boosting/guides/heroes-guides/junkrat-hero-guide",
    "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
    "https://theglobalgaming.com/overwatch/best-counter-for-mei",
-   "https://rankedboost.com/overwatch/counters/vendetta/"
-  ]
+   "https://rankedboost.com/overwatch/counters/vendetta/",
+   "https://mobalytics.gg/overwatch/heroes/junkrat-guide",
+   "https://www.icy-veins.com/overwatch/junkrat-strategy-gameplay-guide"
+  ],
+  "abilities": [
+   {
+    "name": "Concussion Mine",
+    "it": "Mina concussiva",
+    "ult": false,
+    "tags": [
+     "boop",
+     "knockback",
+     "mobility",
+     "escape",
+     "environmental-kill",
+     "burst"
+    ],
+    "use": "Salta in alto o butta i nemici giù dai bordi; dentro la trappola fa 200 danni",
+    "when": "Per uscire da un dive, saltare in alto o spingere giù dai bordi",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Steel Trap",
+    "it": "Tagliola",
+    "ult": false,
+    "tags": [
+     "cc"
+    ],
+    "use": "Mettila dietro un angolo, su scale o porte; con la mina dentro uccide quasi tutti",
+    "when": "All'inizio dello scontro, sulla via dei fiancheggiatori",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Vendetta"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "RIP-Tire",
+    "it": "Ruota esplosiva",
+    "ult": true,
+    "tags": [
+     "burst"
+    ],
+    "use": "Guida la ruota per vie nascoste e falla esplodere sui supporti",
+    "when": "Da posizione sicura, per eliminare i supporti",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Concussion Mine",
+   "why": "È fuga, mobilità e uccisioni ambientali: senza, Junkrat è un bersaglio facile"
+  },
+  "mapFeatures": {
+   "likes": [
+    "chokepoints",
+    "env-kills",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Granate ad arco: rende su choke e spazi stretti, la mina sfrutta i burroni; teme le linee lunghe"
+  },
+  "role": "Damage"
  },
  "Juno": {
   "tags": [
@@ -2045,8 +4101,107 @@
    "https://www.thegamer.com/overwatch-ow2-2-juno-hero-guide-tips-tricks-abilities/",
    "https://rankedboost.com/overwatch/counters/juno/",
    "https://esports.gg/news/overwatch/overwatch-2-juno-abilities-and-more/",
-   "https://turboboost.gg/article/how-to-play-juno-in-overwatch"
-  ]
+   "https://turboboost.gg/article/how-to-play-juno-in-overwatch",
+   "https://mobalytics.gg/overwatch/heroes/juno-guide",
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/",
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/"
+  ],
+  "abilities": [
+   {
+    "name": "Pulsar Torpedoes",
+    "it": "Siluri a ricerca",
+    "ult": false,
+    "tags": [
+     "heal",
+     "burst"
+    ],
+    "use": "Aggancia più bersagli e lancia: cura gli alleati e danneggia i nemici in un colpo solo.",
+    "when": "Quando più alleati sono feriti o per finire un nemico basso",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Pharah",
+     "Echo"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix assorbe i siluri"
+     }
+    ]
+   },
+   {
+    "name": "Glide Boost",
+    "it": "Planata rapida",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape",
+     "speed"
+    ],
+    "use": "Planata veloce: per scappare, cambiare angolo o raggiungere un alleato.",
+    "when": "Appena ti puntano o per tornare dalla squadra",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Hyper Ring",
+    "it": "Anello di velocità",
+    "ult": false,
+    "tags": [
+     "speed",
+     "engage"
+    ],
+    "use": "Anello che velocizza chi lo attraversa: mettilo sul percorso del push o della ritirata.",
+    "when": "All'inizio di un ingaggio o per far scappare la squadra",
+    "targets": [
+     "Reinhardt",
+     "Junker Queen",
+     "Mauga",
+     "Reaper"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Orbital Ray",
+    "it": "Raggio orbitale",
+    "ult": true,
+    "tags": [
+     "heal",
+     "damage-amp",
+     "zone"
+    ],
+    "use": "Raggio che avanza: cura e aumenta i danni degli alleati che ci restano sotto.",
+    "when": "Sotto la squadra in un ingaggio, dove gli alleati devono restare fermi a combattere",
+    "targets": [
+     "Reinhardt",
+     "Bastion",
+     "Soldier: 76",
+     "Mauga"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Pulsar Torpedoes",
+   "why": "È la sua cura e danno a scoppio principale: buona mira sugli agganci decide gli scontri."
+  },
+  "mapFeatures": {
+   "likes": [
+    "open-spaces",
+    "high-ground"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Si muove in aria e plana: vuole spazio verticale e linee di vista per agganciare."
+  },
+  "abilitiesNote": "2026: cooldown Pulsar Torpedoes 12 s, bonus velocità Glide Boost 40%, aggancio più rapido da agosto.",
+  "role": "Support"
  },
  "Kiriko": {
   "tags": [
@@ -2154,8 +4309,99 @@
    "https://expertgamereviews.com/overwatch-2-kiriko-guide/",
    "https://www.thegamer.com/overwatch-2-best-support-healers-heroes-combos/",
    "https://www.gamepur.com/guides/what-are-all-the-effects-kirikos-suzu-protection-purifies-in-overwatch-2",
-   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/",
+   "https://mobalytics.gg/overwatch/heroes/kiriko-guide",
+   "https://overwatch.fandom.com/wiki/February_10,_2026_Patch",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch"
+  ],
+  "abilities": [
+   {
+    "name": "Swift Step",
+    "it": "Teletrasporto",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Teletrasporto da un alleato anche dietro i muri: per salvarti o raggiungere chi va curato.",
+    "when": "Quando ti tuffano addosso o un alleato lontano sta morendo",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Tracer",
+      "why": "tienilo per sfuggire a Tracer o Genji sul retro"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Protection Suzu",
+    "it": "Campanella protettiva",
+    "ult": false,
+    "tags": [
+     "immortality",
+     "cleanse",
+     "heal"
+    ],
+    "use": "Rende invulnerabili per un attimo e toglie effetti negativi (sonno, anti-cura): non è per curare.",
+    "when": "Nell'istante di un'ultimate o di un controllo su un alleato",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Ana",
+      "why": "tienila per il Sleep Dart o la granata anti-cura"
+     },
+     {
+      "hero": "D.Va",
+      "why": "tienila per la Self-Destruct"
+     },
+     {
+      "hero": "Junkrat",
+      "why": "tienila per la RIP-Tire"
+     },
+     {
+      "hero": "Zarya",
+      "why": "tienila per rendere invulnerabili gli alleati nella Graviton Surge"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Kitsune Rush",
+    "it": "Corsa della volpe",
+    "ult": true,
+    "tags": [
+     "speed",
+     "engage"
+    ],
+    "use": "Strada che velocizza gli alleati e ne accelera le abilità: lanciala davanti al push.",
+    "when": "Per ingaggiare insieme o rispondere a un'ultimate nemica",
+    "targets": [
+     "Reinhardt",
+     "Junker Queen",
+     "Winston",
+     "Genji"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Protection Suzu",
+   "why": "Annulla ultimate e controlli: il tempismo sul colpo nemico vale più di qualsiasi cura."
+  },
+  "mapFeatures": {
+   "likes": [
+    "flank-routes",
+    "high-ground"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Si arrampica sui muri e si teletrasporta: vuole angoli e coperture, soffre gli spazi scoperti."
+  },
+  "abilitiesNote": "Dal 2026 Swift Step non ripulisce più dagli effetti (Season 1) e ha portata 30 m; Healing Ofuda (arma) più rapida. Kunai è l'arma secondaria, non elencata.",
+  "role": "Support"
  },
  "Lifeweaver": {
   "tags": [
@@ -2262,8 +4508,107 @@
    "https://kotaku.com/lifeweaver-overwatch-2-tips-best-hero-combos-life-grip-1850329178",
    "https://gamerant.com/overwatch-2-lifeweaver-roadhog-hook-counter-video-clip/",
    "https://gamerant.com/overwatch-2-lifeweaver-guide-tips-abilities-how-play-tricks-support/",
-   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-lifeweaver"
-  ]
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-lifeweaver",
+   "https://x.com/OWCavalry/status/2024984783084793974",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
+   "https://mobalytics.gg/overwatch/heroes/lifeweaver-guide"
+  ],
+  "abilities": [
+   {
+    "name": "Petal Platform",
+    "it": "Piattaforma di petali",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "zone"
+    ],
+    "use": "Piattaforma che sale quando ci salgono sopra: dà quota agli alleati o li solleva dal pericolo.",
+    "when": "Per dare altezza ai tuoi DPS o sollevare un alleato in un'area pericolosa",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Rejuvenating Dash",
+    "it": "Scatto rigenerante",
+    "ult": false,
+    "tags": [
+     "escape",
+     "mobility",
+     "self-heal"
+    ],
+    "use": "Scatto che ti cura: per schivare colpi e cambiare posizione.",
+    "when": "Quando ti focalizzano o devi raggiungere una copertura",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Life Grip",
+    "it": "Presa vitale",
+    "ult": false,
+    "tags": [
+     "escape",
+     "immortality",
+     "cleanse"
+    ],
+    "use": "Tira a te un alleato, invulnerabile durante il tiro, e dal 2026 lo ripulisce dagli effetti.",
+    "when": "Su chi è fuori posizione, sotto focus o colpito da un controllo",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Ana",
+      "why": "tienila per salvare un alleato addormentato"
+     },
+     {
+      "hero": "D.Va",
+      "why": "tienila per togliere un alleato dalla Self-Destruct"
+     },
+     {
+      "hero": "Reaper",
+      "why": "tienila per tirare via un alleato dalla Death Blossom"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Reinhardt",
+      "why": "non tirare via il tuo tank da un duello che sta vincendo"
+     }
+    ]
+   },
+   {
+    "name": "Tree of Life",
+    "it": "Albero della vita",
+    "ult": true,
+    "tags": [
+     "heal",
+     "wall",
+     "zone"
+    ],
+    "use": "Albero che cura a impulsi e fa da ostacolo: piazzalo dove la squadra combatte.",
+    "when": "Contro danni ad area prolungati o per tenere il punto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Life Grip",
+   "why": "Salva un alleato da morte certa: sprecarla o usarla male può anche rovinare un ingaggio."
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "flank-routes"
+   ],
+   "why": "La piattaforma sfrutta i dislivelli; è lento e vulnerabile ai fiancheggiatori."
+  },
+  "abilitiesNote": "Season 2 2026: Life Grip ora ripulisce dagli effetti (cleanse); da agosto chi viene tirato può annullare il tiro. Healing Blossom e Thorn Volley sono l'arma, non elencate. Modifiche di giugno (Arcade) ignorate.",
+  "role": "Support"
  },
  "Lúcio": {
   "tags": [
@@ -2366,8 +4711,131 @@
    "https://www.counterwatch.gg/stats/overwatch/heroes/lucio",
    "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-lucio",
    "https://www.thegamer.com/overwatch-2-best-support-healers-heroes-combos/",
-   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/",
+   "https://mobalytics.gg/overwatch/heroes/lucio-guide",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
+   "https://payloadwire.com/article/community-crafted-june-30-2026/"
+  ],
+  "abilities": [
+   {
+    "name": "Crossfade",
+    "it": "Cambia canzone",
+    "ult": false,
+    "tags": [
+     "heal",
+     "speed"
+    ],
+    "use": "Alterna cura e velocità: velocità per ingaggi e ritirate, cura quando la squadra è ferma.",
+    "when": "Velocità per entrare/uscire, cura durante lo scontro",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Amp It Up",
+    "it": "Potenzia canzone",
+    "ult": false,
+    "tags": [
+     "heal",
+     "speed"
+    ],
+    "use": "Potenzia per poco la canzone attiva: picco di cura o di velocità per tutti.",
+    "when": "Su un ingaggio (velocità) o contro un burst di danni (cura)",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Soundwave",
+    "it": "Onda d'urto",
+    "ult": false,
+    "tags": [
+     "boop",
+     "knockback",
+     "environmental-kill"
+    ],
+    "use": "Spinta sonora: allontana chi ti attacca o butta i nemici giù dai bordi.",
+    "when": "Con un nemico vicino al vuoto o un tuffatore addosso",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Mercy",
+     "Widowmaker",
+     "Tracer"
+    ],
+    "saveFor": [
+     {
+      "hero": "Reaper",
+      "why": "tienila per allontanare Reaper dal tuo supporto"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Wall Ride",
+    "it": "Corsa sui muri",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Corri sui muri per essere difficile da colpire e tornare al sicuro.",
+    "when": "Sempre quando ci sono muri, soprattutto sotto fuoco",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Sound Barrier",
+    "it": "Barriera sonora",
+    "ult": true,
+    "tags": [
+     "shield",
+     "heal"
+    ],
+    "use": "Salute extra enorme a tutta la squadra: annulla le ultimate di danno ad area.",
+    "when": "Nell'istante in cui parte un'ultimate nemica di danno",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Zarya",
+      "why": "tienila per la combo con la Graviton Surge"
+     },
+     {
+      "hero": "D.Va",
+      "why": "tienila per la Self-Destruct"
+     },
+     {
+      "hero": "Junkrat",
+      "why": "tienila per la RIP-Tire"
+     },
+     {
+      "hero": "Reaper",
+      "why": "tienila per la Death Blossom"
+     }
+    ],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Sound Barrier",
+   "why": "È la risposta diretta alle ultimate nemiche: usarla al momento giusto vince lo scontro."
+  },
+  "mapFeatures": {
+   "likes": [
+    "env-kills",
+    "close-quarters",
+    "flank-routes",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "open-spaces",
+    "long-sightlines"
+   ],
+   "why": "Ha bisogno di muri per Wall Ride e bordi per i boop; negli spazi aperti è un bersaglio facile."
+  },
+  "abilitiesNote": "Sound Barrier con spinta e senza salute extra per Lúcio era solo nella modalità Arcade del 30/6/2026: non applicato. Crossfade cura 18/s dal 2026.",
+  "role": "Support"
  },
  "Mauga": {
   "tags": [
@@ -2444,8 +4912,93 @@
    "https://www.counterwatch.gg/stats/overwatch/counters/mauga",
    "https://www.dexerto.com/overwatch/best-hero-counters-for-mauga-in-overwatch-2-2470817/",
    "https://www.counterwatch.gg/stats/overwatch/counters/wrecking-ball",
-   "https://esports.gg/guides/overwatch/overwatch-d-mon-guide-abilities-counters-combos-and-tips/"
-  ]
+   "https://esports.gg/guides/overwatch/overwatch-d-mon-guide-abilities-counters-combos-and-tips/",
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
+  ],
+  "abilities": [
+   {
+    "name": "Overrun",
+    "it": "carica inarrestabile",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape",
+     "knockback"
+    ],
+    "use": "Carica inarrestabile: travolgi e lancia via chi colpisci, o rientra al sicuro",
+    "when": "Per entrare sul gruppo o sfuggire a un focus",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Cardiac Overdrive",
+    "it": "sovraccarico cardiaco",
+    "ult": false,
+    "tags": [
+     "heal",
+     "self-heal",
+     "armor"
+    ],
+    "use": "Tu e gli alleati vicini vi curate coi danni e subite meno danni: spara mentre è attivo",
+    "when": "Quando il team è sotto pressione e tu puoi sparare",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "con la Biotic Grenade addosso non ti curi: aspetta che passi"
+     },
+     {
+      "hero": "Junker Queen",
+      "why": "dopo Rampage le cure sono bloccate"
+     }
+    ]
+   },
+   {
+    "name": "Cage Fight",
+    "it": "gabbia",
+    "ult": true,
+    "tags": [
+     "zone",
+     "cc"
+    ],
+    "use": "Gabbia che chiude dentro te e i nemici vicini, tagliando fuori chi è fuori",
+    "when": "Per isolare il tank o i supporti nemici dal resto",
+    "targets": [
+     "Reinhardt",
+     "Sigma",
+     "Ana",
+     "Zenyatta"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Cardiac Overdrive",
+   "why": "È la tua sopravvivenza e quella del team: sprecata sotto anti-cura o senza sparare non rende nulla."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "high-ground"
+   ],
+   "why": "Mitragliatrici a media distanza e carica: rende tra corridoi e porte, soffre chi tira dall'alto o da lontano."
+  },
+  "abilitiesNote": "Armatura ridotta a 125 in Season 4. Bruiser.",
+  "role": "Tank"
  },
  "Mei": {
   "tags": [
@@ -2535,8 +5088,90 @@
    "https://rankedboost.com/overwatch/counters/mei/",
    "https://segmentnext.com/overwatch-2-mei/",
    "https://gamerant.com/overwatch-2-sombra-rework-guide-abilities-counters-more/",
-   "https://www.dualshockers.com/overwatch-2-how-to-play-freja/"
-  ]
+   "https://www.dualshockers.com/overwatch-2-how-to-play-freja/",
+   "https://www.icy-veins.com/overwatch/mei-strategy-gameplay-guide",
+   "https://overwatch.fandom.com/wiki/Mei",
+   "https://www.gamespot.com/articles/overwatch-2-mei-hero-guide/1100-6508323/"
+  ],
+  "abilities": [
+   {
+    "name": "Cryo-Freeze",
+    "it": "Crio-congelamento",
+    "ult": false,
+    "tags": [
+     "immortality",
+     "cleanse",
+     "self-heal"
+    ],
+    "use": "Ti chiudi nel ghiaccio: invulnerabile, ti curi e togli gli effetti negativi",
+    "when": "Quando stai per morire o per schivare un'ultimate",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Ana",
+      "why": "pulisce la Granata biotica e cura comunque"
+     },
+     {
+      "hero": "Sombra",
+      "why": "cancella il Virus"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Ice Wall",
+    "it": "Muro di ghiaccio",
+    "ult": false,
+    "tags": [
+     "wall",
+     "zone"
+    ],
+    "use": "Dividi il tank dai supporti o blocca linea di tiro, rinforzi e ult",
+    "when": "A inizio scontro per dividere, o contro ult in linea",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "D.Va",
+      "why": "tienilo per bloccare Self-Destruct"
+     },
+     {
+      "hero": "Cassidy",
+      "why": "tienilo per bloccare Deadeye"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Blizzard",
+    "it": "Bufera",
+    "ult": true,
+    "tags": [
+     "cc",
+     "zone"
+    ],
+    "use": "Sul gruppo in spazi stretti o sul payload; col muro chiudi le vie di fuga",
+    "when": "Su nemici raggruppati con poche vie di fuga",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Ice Wall",
+   "why": "Divide gli scontri e ferma le ult nemiche: il suo strumento più potente"
+  },
+  "mapFeatures": {
+   "likes": [
+    "chokepoints",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Il muro rende in corridoi e choke dove chiude i passaggi; corta portata, soffre i campi aperti"
+  },
+  "role": "Damage"
  },
  "Mercy": {
   "tags": [
@@ -2621,8 +5256,114 @@
    "https://www.counterwatch.gg/stats/overwatch/counters/mercy",
    "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-mercy",
    "https://rankedboost.com/overwatch/counters/mercy/",
-   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/",
+   "https://overwatch.fandom.com/wiki/Mercy",
+   "https://overwatch.fandom.com/wiki/June_16,_2026_Patch",
+   "https://gamerant.com/overwatch-season-2-update-patch-notes-april-2026/"
+  ],
+  "abilities": [
+   {
+    "name": "Caduceus Staff",
+    "it": "Bastone cura/potenzia",
+    "ult": false,
+    "tags": [
+     "heal",
+     "damage-amp"
+    ],
+    "use": "Cura il tank; potenzia i DPS che stanno vincendo il duello (danno +25% dal 2026).",
+    "when": "Potenziamento sui DPS che hanno bersagli, cura su chi è basso",
+    "targets": [
+     "Ashe",
+     "Sojourn",
+     "Soldier: 76",
+     "Pharah",
+     "Cassidy",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Guardian Angel",
+    "it": "Volo verso alleato",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Vola verso un alleato: restare in movimento tra coperture è la tua difesa.",
+    "when": "Appena ti puntano o per raggiungere chi va curato",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Flash Heal",
+    "it": "Cura lampo",
+    "ult": false,
+    "tags": [
+     "heal"
+    ],
+    "use": "Cura istantanea, doppia su un alleato sotto metà vita: salvavita, non rabbocco.",
+    "when": "Su un alleato che sta per morire (ricarica 12 s)",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Resurrect",
+    "it": "Resurrezione",
+    "ult": false,
+    "tags": [
+     "revive"
+    ],
+    "use": "Riporta in vita un alleato morto da poco: fallo dietro copertura o durante Valkyrie.",
+    "when": "Con la squadra che ti copre o dopo uno scontro vinto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Widowmaker",
+      "why": "non rianimare allo scoperto se Widowmaker guarda"
+     },
+     {
+      "hero": "Ashe",
+      "why": "non rianimare allo scoperto davanti ad Ashe"
+     }
+    ]
+   },
+   {
+    "name": "Valkyrie",
+    "it": "Valchiria",
+    "ult": true,
+    "tags": [
+     "heal",
+     "damage-amp",
+     "mobility"
+    ],
+    "use": "Volo libero e cure/potenziamento a catena: rianima in sicurezza o sostieni un ingaggio.",
+    "when": "Per un ingaggio decisivo o per salvarti da un tuffo",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Guardian Angel",
+   "why": "Mercy vale finché è viva: spostarsi tra alleati e coperture è ciò che la tiene in gioco."
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Sfrutta i dislivelli con Guardian Angel; le linee lunghe la espongono ai cecchini."
+  },
+  "abilitiesNote": "Season 2 2026: Flash Heal ora è nel kit base (12 s, 60 cure, x2 sotto metà vita). Angelic Descent è passiva. Potenziamento danni ridotto al 25% (giugno 2026), ultimate più cara del 7%.",
+  "role": "Support"
  },
  "Mizuki": {
   "tags": [
@@ -2710,8 +5451,137 @@
    "https://www.overpicker.com/heroes/mizuki",
    "https://1v9.gg/blog/mizuki-overwatch-guide",
    "https://us.forums.blizzard.com/en/overwatch/t/why-does-ana-counter-mizuki-so-hard/1004789",
-   "https://turboboost.gg/article/how-to-play-mizuki-overwatch-guide"
-  ]
+   "https://turboboost.gg/article/how-to-play-mizuki-overwatch-guide",
+   "https://overwatch.blizzard.com/en-us/heroes/mizuki/",
+   "https://www.thegamer.com/overwatch-mizuki-tips-tricks-hero-guide/",
+   "https://overwatch.fandom.com/wiki/June_16,_2026_Patch"
+  ],
+  "abilities": [
+   {
+    "name": "Healing Kasa",
+    "it": "Cappello curativo",
+    "ult": false,
+    "tags": [
+     "heal"
+    ],
+    "use": "Il cappello rimbalza tra gli alleati curandoli: lancialo dove sono vicini.",
+    "when": "Quando più alleati vicini sono feriti",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Binding Chain",
+    "it": "Catena vincolante",
+    "ult": false,
+    "tags": [
+     "cc"
+    ],
+    "use": "Lega un nemico: lo rallenta e gli blocca le abilità di movimento (non è uno stun, può sparare).",
+    "when": "Su chi ti si tuffa addosso o su un bersaglio da finire",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Winston",
+     "Doomfist",
+     "Venture",
+     "Reaper",
+     "Lúcio"
+    ],
+    "saveFor": [
+     {
+      "hero": "Tracer",
+      "why": "tienila per il tuffatore che ti punta: vinci il duello"
+     },
+     {
+      "hero": "Genji",
+      "why": "tienila per Genji, ma dopo che ha usato Deflect"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Genji",
+      "why": "non durante Deflect: la catena viene bloccata"
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "le barriere bloccano la catena"
+     },
+     {
+      "hero": "Sigma",
+      "why": "le barriere bloccano la catena"
+     }
+    ]
+   },
+   {
+    "name": "Katashiro Return",
+    "it": "Bambola di ritorno",
+    "ult": false,
+    "tags": [
+     "escape",
+     "mobility",
+     "speed"
+    ],
+    "use": "Scatta avanti lasciando una bambola di carta; riattiva per tornarci.",
+    "when": "Per entrare a curare o finire un nemico e poi rientrare al sicuro",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Kekkai Sanctuary",
+    "it": "Santuario",
+    "ult": true,
+    "tags": [
+     "heal",
+     "block-projectiles",
+     "zone"
+    ],
+    "use": "Zona che cura e blocca i colpi sparati da fuori; non ferma raggi, mischia e onde d'urto.",
+    "when": "Contro ultimate a distanza o per avanzare sul punto",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Sojourn",
+      "why": "tienila per l'Overclock di Sojourn"
+     },
+     {
+      "hero": "Pharah",
+      "why": "tienila per la Barrage di Pharah da fuori"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Reinhardt",
+      "why": "non ferma la Earthshatter (onda d'urto)"
+     },
+     {
+      "hero": "Zarya",
+      "why": "non ferma il raggio"
+     },
+     {
+      "hero": "Moira",
+      "why": "non ferma i raggi di Moira"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Binding Chain",
+   "why": "È il suo strumento di duello e di difesa: usata sul tuffatore giusto vince lo scontro."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "long-sightlines"
+   ],
+   "why": "Arma e catena a corto-medio raggio; il santuario rende di più in spazi raccolti."
+  },
+  "abilitiesNote": "Eroe del 2026. Spirit Glaive (arma) e Remedy Aura (passiva) non elencate. Katashiro Return: ricarica 11 s e durata 5,5 s da giugno 2026. Pharah in saveFor è dedotto dalla regola 'blocca i proiettili da fuori'.",
+  "role": "Support"
  },
  "Moira": {
   "tags": [
@@ -2802,8 +5672,95 @@
    "https://www.counterwatch.gg/stats/overwatch/heroes/moira",
    "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-moira",
    "https://rankedboost.com/overwatch/counters/wuyang/",
-   "https://www.gamersdecide.com/articles/overwatch-2-best-support-combos"
-  ]
+   "https://www.gamersdecide.com/articles/overwatch-2-best-support-combos",
+   "https://mobalytics.gg/overwatch/heroes/moira-guide",
+   "https://overwatch.fandom.com/wiki/February_10,_2026_Patch",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/"
+  ],
+  "abilities": [
+   {
+    "name": "Biotic Orb",
+    "it": "Sfera biotica",
+    "ult": false,
+    "tags": [
+     "heal",
+     "zone"
+    ],
+    "use": "Scegli sfera di cura o di danno; rimbalza sui muri: rende di più in spazi chiusi.",
+    "when": "Cura su un gruppo ferito, danno su nemici raggruppati",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Reaper"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Fade",
+    "it": "Dissolvenza",
+    "ult": false,
+    "tags": [
+     "escape",
+     "mobility"
+    ],
+    "use": "Svanisci per un attimo, intoccabile: schiva controlli e burst, poi riposizionati.",
+    "when": "Appena vedi arrivare un controllo o un burst su di te",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Ana",
+      "why": "tienila per schivare il Sleep Dart"
+     },
+     {
+      "hero": "Roadhog",
+      "why": "tienila per evitare il gancio"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Coalescence",
+    "it": "Raggio coalescente",
+    "ult": true,
+    "tags": [
+     "heal",
+     "burst"
+    ],
+    "use": "Raggio lungo che cura gli alleati e danneggia i nemici attraversando le barriere.",
+    "when": "In uno scontro lungo o per sostenere un'ultimate alleata",
+    "targets": [
+     "Reinhardt",
+     "Sigma",
+     "Orisa"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "con l'anti-cura sui tuoi alleati la cura non funziona"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Fade",
+   "why": "È l'unica fuga: sprecarla per muoversi ti lascia senza difesa contro controlli e tuffatori."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints",
+    "flank-routes"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Raggio a corto raggio e sfere che rimbalzano nei corridoi; soffre le lunghe distanze."
+  },
+  "abilitiesNote": "2026: Moira nella sotto-classe Medic (curare con l'arma cura anche te). Biotic Grasp è l'arma, non elencata.",
+  "role": "Support"
  },
  "Orisa": {
   "tags": [
@@ -2876,8 +5833,135 @@
    "https://rankedboost.com/overwatch/counters/orisa/",
    "https://www.counterwatch.gg/stats/overwatch/counters/orisa",
    "https://www.charlieintel.com/overwatch-2/overwatch-2-best-counters-for-each-tank-hero-266824/",
-   "https://dotesports.com/overwatch/news/best-doomfist-counters-in-overwatch-2"
-  ]
+   "https://dotesports.com/overwatch/news/best-doomfist-counters-in-overwatch-2",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
+   "https://medium.com/overlogs/overwatch-hero-counters-explained-1-tank-role-7747004ade58"
+  ],
+  "abilities": [
+   {
+    "name": "Energy Javelin",
+    "it": "giavellotto",
+    "ult": false,
+    "tags": [
+     "stun",
+     "knockback",
+     "environmental-kill"
+    ],
+    "use": "Stordisce e respinge; contro un muro fa più danni, da un bordo butta fuori",
+    "when": "Per fermare chi ti salta addosso",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Lúcio",
+     "Doomfist",
+     "Winston"
+    ],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienilo per fermarlo quando entra con la Dragonblade"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Fortify",
+    "it": "fortificazione",
+    "ult": false,
+    "tags": [
+     "armor"
+    ],
+    "use": "Meno danni subiti, salute extra e immunità a stordimenti e spinte",
+    "when": "Quando arriva il controllo nemico o il burst",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Ana",
+      "why": "rende inutile il Sleep Dart"
+     },
+     {
+      "hero": "Roadhog",
+      "why": "il gancio non ti tira"
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Earthshatter non ti abbatte"
+     },
+     {
+      "hero": "Doomfist",
+      "why": "il pugno non ti sposta"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Javelin Spin",
+    "it": "rotazione",
+    "ult": false,
+    "tags": [
+     "block-projectiles",
+     "speed",
+     "knockback"
+    ],
+    "use": "Gira il giavellotto: distrugge proiettili, ti velocizza e respinge chi tocchi",
+    "when": "Contro esplosivi e proiettili, o per avanzare",
+    "targets": [
+     "Pharah",
+     "Junkrat",
+     "Hanzo"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Zarya",
+      "why": "non assorbe i raggi: il suo cannone passa"
+     },
+     {
+      "hero": "Moira",
+      "why": "non assorbe i raggi di Moira"
+     },
+     {
+      "hero": "Symmetra",
+      "why": "non assorbe il raggio di Symmetra"
+     }
+    ]
+   },
+   {
+    "name": "Terra Surge",
+    "it": "impeto della terra",
+    "ult": true,
+    "tags": [
+     "cc",
+     "zone",
+     "burst"
+    ],
+    "use": "Attira i nemici vicini e carica il colpo finale; intanto resti fortificata",
+    "when": "Sul punto o in spazi stretti, con il team a seguire",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Fortify",
+   "why": "È la sua resistenza al controllo: tenerla per sleep, gancio o Earthshatter decide chi vince."
+  },
+  "mapFeatures": {
+   "likes": [
+    "chokepoints",
+    "env-kills"
+   ],
+   "dislikes": [
+    "high-ground"
+   ],
+   "why": "Tiene gli ingressi e butta giù dai bordi col giavellotto; soffre chi tira dall'alto."
+  },
+  "abilitiesNote": "Bruiser. Kit base invariato nel 2026 (modifiche solo a perk/6v6).",
+  "role": "Tank"
  },
  "Pharah": {
   "tags": [
@@ -2982,8 +6066,97 @@
    "https://segmentnext.com/overwatch-2-symmetra/",
    "https://segmentnext.com/overwatch-2-torbjorn/",
    "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide",
-   "https://www.boostingfactory.com/overwatch/blog/overwatch-2-venture-guide"
-  ]
+   "https://www.boostingfactory.com/overwatch/blog/overwatch-2-venture-guide",
+   "https://overwatch.fandom.com/wiki/Pharah",
+   "http://www.icy-veins.com/overwatch/pharah-strategy-gameplay-guide",
+   "https://esports.gg/news/overwatch/pharah-rework-overwatch-2-season-9/",
+   "https://www.charlieintel.com/overwatch-2/overwatch-2-pharah-rework-explained-new-ability-movement-changes-more-300499/"
+  ],
+  "abilities": [
+   {
+    "name": "Concussive Blast",
+    "it": "Esplosione concussiva",
+    "ult": false,
+    "tags": [
+     "knockback",
+     "boop",
+     "environmental-kill",
+     "mobility"
+    ],
+    "use": "Spingi i nemici giù dai bordi o lontano dai tuoi; o lancia te stessa più in alto",
+    "when": "Per un'uccisione ambientale, staccare un nemico o salire",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Jump Jet",
+    "it": "Getto verticale",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Salto verticale: prendi quota o esci dalla portata",
+    "when": "Per salire all'inizio dello scontro o schivare",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Jet Dash",
+    "it": "Scatto a reazione",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape",
+     "engage"
+    ],
+    "use": "Scatto orizzontale che ridà metà carburante: entra e esci di lato",
+    "when": "Per sfuggire agli hitscan o entrare da un fianco",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Barrage",
+    "it": "Raffica di razzi",
+    "ult": true,
+    "tags": [
+     "burst"
+    ],
+    "use": "Ferma per 3 s: combinala con CC alleate (Graviton di Zarya) o da un fianco nascosto",
+    "when": "Su nemici raggruppati e con gli hitscan distratti",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Genji",
+      "why": "Deflect rimanda i razzi su di te"
+     },
+     {
+      "hero": "Ana",
+      "why": "il Dardo soporifero la interrompe"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Concussive Blast",
+   "why": "Fa uccisioni ambientali, spezza gli ingaggi e la salva: il suo strumento più incisivo"
+  },
+  "mapFeatures": {
+   "likes": [
+    "open-spaces",
+    "env-kills",
+    "high-ground"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Volante: vuole spazio aperto e cielo libero, e i burroni per l'esplosione; al chiuso perde il vantaggio"
+  },
+  "role": "Damage"
  },
  "Ramattra": {
   "tags": [
@@ -3076,8 +6249,109 @@
    "https://www.counterwatch.gg/stats/overwatch/counters/ramattra",
    "https://dotesports.com/overwatch/news/the-best-ramattra-counters-in-overwatch-2",
    "https://segmentnext.com/overwatch-2-ramattra/",
-   "https://gamerant.com/overwatch-2-ramattra-guide-tips-abilities-combos-counters/"
-  ]
+   "https://gamerant.com/overwatch-2-ramattra-guide-tips-abilities-combos-counters/",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
+   "https://x.com/OWCavalry/status/2031430108574060820"
+  ],
+  "abilities": [
+   {
+    "name": "Void Barrier",
+    "it": "barriera del vuoto",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Barriera piazzata a distanza: copri l'avanzata o un alleato in difficoltà",
+    "when": "In forma Omnic, prima di passare a Nemesis",
+    "targets": [
+     "Widowmaker",
+     "Ashe",
+     "Bastion"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Nemesis Form",
+    "it": "forma Nemesis",
+    "ult": false,
+    "tags": [
+     "armor",
+     "burst"
+    ],
+    "use": "Pugni che attraversano le barriere e più armatura; con il blocco riduci i danni",
+    "when": "Quando sei a contatto con il tank nemico o dietro scudi",
+    "targets": [
+     "Reinhardt",
+     "Sigma",
+     "Domina",
+     "Winston"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Ravenous Vortex",
+    "it": "vortice",
+    "ult": false,
+    "tags": [
+     "zone",
+     "cc"
+    ],
+    "use": "Campo che rallenta e tira giù chi vola o salta; puoi farlo esplodere in aria",
+    "when": "Per bloccare fughe o dive",
+    "targets": [
+     "Pharah",
+     "Echo",
+     "Mercy",
+     "Winston",
+     "D.Va",
+     "Lúcio"
+    ],
+    "saveFor": [
+     {
+      "hero": "Pharah",
+      "why": "tienilo per tirarla giù dall'aria"
+     },
+     {
+      "hero": "Winston",
+      "why": "tienilo per bloccargli il salto"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Annihilation",
+    "it": "annientamento",
+    "ult": true,
+    "tags": [
+     "zone",
+     "burst"
+    ],
+    "use": "Sciame che danneggia tutti intorno; dura finché continui a colpire qualcuno",
+    "when": "In mezzo al team nemico, su gruppo stretto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Nemesis Form",
+   "why": "Alternare Omnic e Nemesis al momento giusto è tutto il suo gioco: i pugni passano le barriere."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Pugni a corto raggio e vortice: rende tra corridoi e porte, soffre il poke da lontano."
+  },
+  "abilitiesNote": "Da aprile 2026 il vortice esplode toccando terra e si può far esplodere in aria (Vengeful Vortex reso base). Void Barrier 12 s.",
+  "role": "Tank"
  },
  "Reaper": {
   "tags": [
@@ -3157,8 +6431,80 @@
    "https://www.esportsheaven.com/features/how-to-counter-reaper",
    "https://rankedboost.com/overwatch/counters/reaper/",
    "https://boosting-ground.com/overwatch-2-boosting/guides/heroes-guides/reaper-guide",
-   "https://www.digitaltrends.com/gaming/overwatch-2-sojourn-guide-abilities-strategies-counters-and-more/"
-  ]
+   "https://www.digitaltrends.com/gaming/overwatch-2-sojourn-guide-abilities-strategies-counters-and-more/",
+   "https://www.dexerto.com/overwatch/the-ultimate-overwatch-reaper-guide-1567972/",
+   "https://buffnerfrepeat.com/guides/reaper-guide-how-to-play-reaper-overwatch"
+  ],
+  "abilities": [
+   {
+    "name": "Wraith Form",
+    "it": "Forma spettrale",
+    "ult": false,
+    "tags": [
+     "escape",
+     "immortality",
+     "speed"
+    ],
+    "use": "Per 3 s non subisci danni e vai più veloce, ma non spari",
+    "when": "Per uscire dopo un attacco o attraversare i nemici",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Shadow Step",
+    "it": "Passo d'ombra",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage"
+    ],
+    "use": "Teletrasporto fino a 35 m: arriva alle spalle senza essere visto",
+    "when": "Prima dello scontro, fuori dalla vista nemica",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Death Blossom",
+    "it": "Fiore della morte",
+    "ult": true,
+    "tags": [
+     "burst",
+     "zone"
+    ],
+    "use": "Gira sparando intorno a te: entra da un angolo o con Shadow Step sui gruppi fragili",
+    "when": "Sui gruppi di eroi fragili, poi esci con Wraith Form",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "il Dardo soporifero interrompe l'ult"
+     },
+     {
+      "hero": "Sombra",
+      "why": "Hack interrompe l'ult"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Wraith Form",
+   "why": "È l'unica fuga di Reaper: se la spreca muore in mischia"
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "flank-routes"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Fucili a pompa a corta portata: vuole angoli stretti e vie laterali, soffre le linee lunghe"
+  },
+  "role": "Damage"
  },
  "Reinhardt": {
   "tags": [
@@ -3246,8 +6592,139 @@
    "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-reinhardt",
    "https://gamerant.com/overwatch-2-reinhardt-guide-tips-tricks-abilities-playstyle/",
    "https://www.esportstales.com/overwatch/how-to-counter-reinhardt-heroes-strategies-and-tips",
-   "https://mobalytics.gg/overwatch/heroes/domina-guide"
-  ]
+   "https://mobalytics.gg/overwatch/heroes/domina-guide",
+   "https://esports.gg/guides/overwatch/overwatch-season-3-patch-notes-2026/",
+   "https://overwatch.fandom.com/wiki/June_16,_2026_Patch",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
+  ],
+  "abilities": [
+   {
+    "name": "Barrier Field",
+    "it": "scudo",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Scudo grande: tienilo contro poke e ult, abbassalo per colpire col martello",
+    "when": "Avanzando e quando arriva un'ult a colpo diretto",
+    "targets": [
+     "Widowmaker",
+     "Ashe",
+     "Hanzo",
+     "Bastion",
+     "Pharah"
+    ],
+    "saveFor": [
+     {
+      "hero": "Cassidy",
+      "why": "tieni lo scudo per bloccare Deadeye"
+     },
+     {
+      "hero": "D.Va",
+      "why": "lo scudo para la Self-Destruct"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Ramattra",
+      "why": "Pummel attraversa lo scudo"
+     },
+     {
+      "hero": "D.Mon",
+      "why": "Limit Break passa le barriere"
+     }
+    ]
+   },
+   {
+    "name": "Charge",
+    "it": "carica",
+    "ult": false,
+    "tags": [
+     "engage",
+     "mobility",
+     "environmental-kill"
+    ],
+    "use": "Carica che inchioda il nemico al muro; buttalo fuori mappa vicino ai bordi",
+    "when": "Su un nemico isolato vicino a un muro o a un bordo",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Orisa",
+      "why": "con Fortify non la inchiodi"
+     }
+    ]
+   },
+   {
+    "name": "Fire Strike",
+    "it": "colpo infuocato",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Proiettile di fuoco che attraversa i nemici; due cariche, buono per caricare l'ult",
+    "when": "Tra un colpo di martello e l'altro",
+    "targets": [
+     "Zenyatta",
+     "Ana"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Earthshatter",
+    "it": "spaccaterra",
+    "ult": true,
+    "tags": [
+     "stun",
+     "cc"
+    ],
+    "use": "Abbatte a terra tutti davanti: segui subito con colpi di martello",
+    "when": "Quando i nemici sono in fila e senza scudi",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Orisa",
+      "why": "con Fortify non viene abbattuta"
+     },
+     {
+      "hero": "Sigma",
+      "why": "la barriera la blocca"
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "lo scudo la blocca"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Barrier Field",
+   "why": "Gestire la vita dello scudo (alzarlo per le ult, abbassarlo per colpire) è il cuore del Reinhardt."
+  },
+  "mapFeatures": {
+   "likes": [
+    "chokepoints",
+    "close-quarters",
+    "env-kills"
+   ],
+   "dislikes": [
+    "high-ground",
+    "open-spaces"
+   ],
+   "why": "Lo scudo blocca gli ingressi e la carica butta fuori dai bordi; soffre alture e spazi aperti con poke."
+  },
+  "abilitiesNote": "Fire Strike più forte e veloce (16/06/2026). Stalwart.",
+  "role": "Tank"
  },
  "Roadhog": {
   "tags": [
@@ -3344,8 +6821,149 @@
    "https://games.gg/overwatch/guides/overwatch-roadhog-guide-master-the-hook-combo-and-dominate/",
    "https://www.esportsheaven.com/features/how-to-counter-roadhog-in-overwatch-2",
    "https://overwatch.fandom.com/wiki/Roadhog",
-   "https://www.counterwatch.gg/stats/overwatch/counters/doomfist"
-  ]
+   "https://www.counterwatch.gg/stats/overwatch/counters/doomfist",
+   "https://dotesports.com/overwatch/guides/overwatch-sombra-roadhog-rework",
+   "https://gamerant.com/overwatch-roadhog-sombra-reworks-abilities-kit-changes/",
+   "https://www.theclick.gg/overwatch-roadhog-rework/",
+   "https://www.threads.com/@owcavalry_/post/DNq9o8d2rrl/roadhog-rework-reverted-his-pig-pen-ability-has-been-removed-with-take-a-breathe"
+  ],
+  "abilities": [
+   {
+    "name": "Chain Hook",
+    "it": "gancio",
+    "ult": false,
+    "tags": [
+     "hook",
+     "cc"
+    ],
+    "use": "Aggancia un fragile fuori posizione e tiralo a te; interrompe anche le ult",
+    "when": "Su un bersaglio isolato, con colpi pronti a seguire",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Widowmaker",
+     "Mercy",
+     "Baptiste"
+    ],
+    "saveFor": [
+     {
+      "hero": "Reaper",
+      "why": "tienilo per interrompere Death Blossom"
+     },
+     {
+      "hero": "Pharah",
+      "why": "tienilo per interrompere il Barrage"
+     },
+     {
+      "hero": "Cassidy",
+      "why": "tienilo per interrompere Deadeye"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Orisa",
+      "why": "con Fortify non viene tirata"
+     }
+    ]
+   },
+   {
+    "name": "Take a Breather",
+    "it": "rifiatare",
+    "ult": false,
+    "tags": [
+     "self-heal",
+     "armor"
+    ],
+    "use": "Ti curi e subisci meno danni; è una riserva: non svuotarla tutta",
+    "when": "Prima di scendere troppo in basso di vita",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "con la Biotic Grenade addosso non ti curi"
+     },
+     {
+      "hero": "Junker Queen",
+      "why": "dopo Rampage le cure sono bloccate"
+     }
+    ]
+   },
+   {
+    "name": "Trash Compactor",
+    "it": "compattatore",
+    "ult": false,
+    "tags": [
+     "block-projectiles",
+     "burst"
+    ],
+    "use": "Assorbe i proiettili nemici e li rilancia come palla esplosiva",
+    "when": "Contro esplosivi e proiettili diretti verso di te",
+    "targets": [
+     "Pharah",
+     "Junkrat",
+     "Hanzo"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Zarya",
+      "why": "non assorbe i raggi: il suo cannone passa"
+     },
+     {
+      "hero": "Moira",
+      "why": "non assorbe i raggi di Moira"
+     },
+     {
+      "hero": "Symmetra",
+      "why": "non assorbe il raggio di Symmetra"
+     }
+    ]
+   },
+   {
+    "name": "Whole Hog",
+    "it": "tutto il maiale",
+    "ult": true,
+    "tags": [
+     "knockback",
+     "zone",
+     "burst",
+     "environmental-kill"
+    ],
+    "use": "Raffica che respinge: caccia i nemici dal punto o giù da un bordo",
+    "when": "Per liberare il punto o separare il team avversario",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Reinhardt",
+      "why": "lo scudo assorbe la raffica"
+     },
+     {
+      "hero": "Orisa",
+      "why": "con Fortify non si sposta"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Chain Hook",
+   "why": "Il gancio crea i pick e interrompe le ult nemiche: sprecato, Roadhog resta un grande bersaglio."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "flank-routes",
+    "env-kills"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Il gancio rende negli angoli stretti e vicino ai bordi; soffre il poke a lunga distanza."
+  },
+  "abilitiesNote": "Rework dal 6/10/2026 (Season 5): nuova Trash Compactor al posto del fuoco secondario dello Scrap Gun; combo gancio-colpo meno letale. Pig Pen era già stato rimosso nel 2025.",
+  "role": "Tank"
  },
  "Shion": {
   "tags": [
@@ -3412,8 +7030,90 @@
    "https://www.exitlag.com/blog/overwatch-shion/",
    "https://1v9.gg/blog/overwatch-shion-guide",
    "https://www.pcgamesn.com/overwatch/shion-abilities",
-   "https://gamerant.com/overwatch-shion-abilities-gameplay/"
-  ]
+   "https://gamerant.com/overwatch-shion-abilities-gameplay/",
+   "https://dotesports.com/overwatch/news/overwatch-shion-abilities"
+  ],
+  "abilities": [
+   {
+    "name": "Joyride",
+    "it": "Corsa in moto",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape",
+     "burst"
+    ],
+    "use": "Sali in moto per aggirare in fretta; riattiva per lanciarla sul bersaglio",
+    "when": "Per fiancheggiare, colpire un supporto isolato o fuggire",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Reinhardt",
+      "why": "la barriera blocca la moto lanciata"
+     }
+    ]
+   },
+   {
+    "name": "Execution",
+    "it": "Raffica a X",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Raffica a X; tieni premuto per stringerla e colpire più lontano",
+    "when": "Per finire un bersaglio o colpire a media distanza",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Evade",
+    "it": "Schivata",
+    "ult": false,
+    "tags": [
+     "escape",
+     "mobility"
+    ],
+    "use": "Scatto che dà subito 75 di vita extra: per uscire, non solo per entrare",
+    "when": "Per sopravvivere a un burst o riposizionarti",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Satsuriku Spree",
+    "it": "Furia assassina",
+    "ult": true,
+    "tags": [
+     "engage",
+     "burst",
+     "mobility"
+    ],
+    "use": "Tre scatti in avanti sparando: entra quando i nemici hanno usato fughe e difese",
+    "when": "Dopo che stun, knockback e difese nemiche sono stati usati",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Joyride",
+   "why": "È il suo ingaggio, il suo danno a sorpresa e la sua fuga"
+  },
+  "mapFeatures": {
+   "likes": [
+    "flank-routes",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "long-sightlines"
+   ],
+   "why": "Fiancheggiatrice veloce: sfrutta vie laterali per arrivare alle spalle; teme le linee lunghe"
+  },
+  "abilitiesNote": "Uscita a giugno 2026: poche guide sull'uso.",
+  "role": "Damage"
  },
  "Sierra": {
   "tags": [
@@ -3458,8 +7158,90 @@
    "https://1v9.gg/blog/overwatch-sierra-guide",
    "https://turboboost.gg/article/how-to-play-sierra-overwatch-guide",
    "https://www.sportskeeda.com/esports/how-master-sierra-overwatch-season-2",
-   "https://us.forums.blizzard.com/en/overwatch/t/any-tips-for-how-to-counter-sierra/1014991"
-  ]
+   "https://us.forums.blizzard.com/en/overwatch/t/any-tips-for-how-to-counter-sierra/1014991",
+   "https://esports.gg/news/overwatch/overwatch-sierra-abilities-ultimate-perks-and-synergies/",
+   "https://dotesports.com/overwatch/news/sierra-abilities-overwatch"
+  ],
+  "abilities": [
+   {
+    "name": "Tracking Shot",
+    "it": "Colpo traccianti",
+    "ult": false,
+    "tags": [
+     "engage"
+    ],
+    "use": "Marchia un nemico: i colpi del fucile lo inseguono da soli",
+    "when": "Come segnale d'attacco su un bersaglio isolato",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Reinhardt",
+      "why": "la barriera blocca il colpo"
+     },
+     {
+      "hero": "Sigma",
+      "why": "la barriera blocca il colpo"
+     }
+    ]
+   },
+   {
+    "name": "Anchor Drone",
+    "it": "Drone d'ancoraggio",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Lancia il drone in un punto alto e protetto, poi aggancialo per spostarti",
+    "when": "Per prendere un angolo alto o ritirarti in fretta",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Tremor Charge",
+    "it": "Carica sismica",
+    "ult": false,
+    "tags": [
+     "knockback",
+     "zone"
+    ],
+    "use": "Onda d'urto che sbalza e stana i nemici dalle coperture",
+    "when": "Per chiudere: nega la copertura a chi scappa",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Trailblazer",
+    "it": "Apripista",
+    "ult": true,
+    "tags": [
+     "zone",
+     "burst"
+    ],
+    "use": "Drone che vola avanti sganciando esplosivi: mira in anticipo",
+    "when": "Su un choke o un gruppo raggruppato",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Anchor Drone",
+   "why": "Senza drone Sierra non ha fuga: va messo in un punto sicuro"
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "flank-routes"
+   ],
+   "dislikes": [],
+   "why": "Usa angoli alti e laterali raggiunti col drone; mappe con strutture alte la aiutano"
+  },
+  "abilitiesNote": "Uscita ad aprile 2026: kit confermato, consigli d'uso da poche guide.",
+  "role": "Damage"
  },
  "Sigma": {
   "tags": [
@@ -3541,8 +7323,151 @@
    "https://us.forums.blizzard.com/en/overwatch/t/sigma-counters-and-synergies/375226",
    "https://us.forums.blizzard.com/en/overwatch/t/my-thoughts-on-sigma-pros-cons-counters-synergies-etc/404008",
    "https://counterpickgg.com/heroes/sigma",
-   "https://www.esportsheaven.com/features/how-to-counter-sigma/"
-  ]
+   "https://www.esportsheaven.com/features/how-to-counter-sigma/",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
+   "https://www.notebookcheck.net/Overwatch-2-update-alters-core-hero-kits-in-Community-Crafted-patch.1332611.0.html",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
+  ],
+  "abilities": [
+   {
+    "name": "Experimental Barrier",
+    "it": "barriera sperimentale",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Barriera mobile: mandala avanti a coprire e richiamala per farla ricaricare",
+    "when": "Contro il poke e per coprire l'avanzata",
+    "targets": [
+     "Widowmaker",
+     "Ashe",
+     "Hanzo",
+     "Bastion"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ramattra",
+      "why": "Pummel attraversa la barriera"
+     },
+     {
+      "hero": "D.Mon",
+      "why": "Limit Break passa le barriere"
+     }
+    ]
+   },
+   {
+    "name": "Kinetic Grasp",
+    "it": "presa cinetica",
+    "ult": false,
+    "tags": [
+     "block-projectiles",
+     "armor"
+    ],
+    "use": "Assorbe i proiettili davanti a te e li trasforma in salute extra",
+    "when": "Quando arriva un'abilità o un'ult a proiettile",
+    "targets": [
+     "Pharah",
+     "Junkrat",
+     "Bastion",
+     "Cassidy"
+    ],
+    "saveFor": [
+     {
+      "hero": "Cassidy",
+      "why": "tienila per assorbire Deadeye"
+     },
+     {
+      "hero": "Pharah",
+      "why": "tienila per assorbire il Barrage"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Zarya",
+      "why": "non assorbe i raggi: il suo cannone passa"
+     },
+     {
+      "hero": "Moira",
+      "why": "non assorbe i raggi di Moira"
+     },
+     {
+      "hero": "Symmetra",
+      "why": "non assorbe il raggio di Symmetra"
+     },
+     {
+      "hero": "Winston",
+      "why": "non assorbe la scarica Tesla"
+     }
+    ]
+   },
+   {
+    "name": "Accretion",
+    "it": "accrezione",
+    "ult": false,
+    "tags": [
+     "stun",
+     "cc",
+     "burst"
+    ],
+    "use": "Masso che abbatte a terra il bersaglio: interrompe ult e mobilità",
+    "when": "Su chi entra in mischia o sta per usare l'ult",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Doomfist",
+     "Reaper",
+     "Lúcio"
+    ],
+    "saveFor": [
+     {
+      "hero": "Reaper",
+      "why": "tienilo per fermare Death Blossom"
+     },
+     {
+      "hero": "Genji",
+      "why": "tienilo per fermarlo durante la Dragonblade"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Gravitic Flux",
+    "it": "flusso gravitazionale",
+    "ult": true,
+    "tags": [
+     "cc",
+     "zone",
+     "burst"
+    ],
+    "use": "Solleva i nemici in un'area e li sbatte a terra: combina con danni ad area del team",
+    "when": "Su gruppo stretto, appena il team può seguire",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Kinetic Grasp",
+   "why": "Toglie il burst e le ult a proiettile e ti dà salute extra: usata bene vince gli scontri."
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "flank-routes",
+    "close-quarters"
+   ],
+   "why": "Tank da poke e barriera: rende sulle lunghe linee di tiro, soffre i fianchi e i dive a corto raggio."
+  },
+  "abilitiesNote": "Barriera 650 HP (Season 1 2026). Le modifiche alla Flux del 30/06/2026 erano solo per la modalità temporanea Community Crafted. Stalwart.",
+  "role": "Tank"
  },
  "Sojourn": {
   "tags": [
@@ -3619,8 +7544,78 @@
    "https://rankedboost.com/overwatch/counters/sojourn/",
    "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-sojourn",
    "https://segmentnext.com/overwatch-2-torbjorn/",
-   "https://www.esportsheaven.com/features/how-to-counter-pharah-in-overwatch-2"
-  ]
+   "https://www.esportsheaven.com/features/how-to-counter-pharah-in-overwatch-2",
+   "https://www.windowscentral.com/overwatch-2-sojourn-ultimate-guide",
+   "https://www.thegamer.com/overwatch-2-sojourn-hero-play-guide-abilities-tips-tricks/",
+   "https://www.pcgamesn.com/overwatch-2/sojourn-abilities"
+  ],
+  "abilities": [
+   {
+    "name": "Power Slide",
+    "it": "Scivolata",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Scivola veloce; salta durante la scivolata per un salto alto",
+    "when": "Per schivare ult a terra o riposizionarti in alto",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Reinhardt",
+      "why": "tienila per saltare sopra Earthshatter"
+     },
+     {
+      "hero": "Bastion",
+      "why": "tienila per schivare l'Artiglieria"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Disruptor Shot",
+    "it": "Colpo disgregatore",
+    "ult": false,
+    "tags": [
+     "zone",
+     "cc"
+    ],
+    "use": "Campo che rallenta e danneggia: poi colpo caricato in testa a chi c'è dentro",
+    "when": "Su un bersaglio da bloccare prima del colpo caricato",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Overclock",
+    "it": "Sovraccarico",
+    "ult": true,
+    "tags": [
+     "burst"
+    ],
+    "use": "Il railgun si carica da solo e trapassa i nemici",
+    "when": "Su nemici allineati o in gruppo",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Power Slide",
+   "why": "È la sua unica fuga e schiva le ult a terra"
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "long-sightlines"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Railgun a distanza: rende da alture e angoli laterali con linee lunghe"
+  },
+  "role": "Damage"
  },
  "Soldier: 76": {
   "tags": [
@@ -3708,8 +7703,97 @@
    "https://rankedboost.com/overwatch/counters/soldier-76/",
    "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-soldier-76",
    "https://expertgamereviews.com/overwatch-2-soldier-76-guide/",
-   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/"
-  ]
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
+   "https://www.icy-veins.com/overwatch/soldier-76-guide-strategy-gameplay",
+   "https://www.thegamer.com/overwatch-2-soldier-76-play-guide/",
+   "https://boosting-ground.com/overwatch-2-boosting/guides/heroes-guides/soldier-hero-guide"
+  ],
+  "abilities": [
+   {
+    "name": "Sprint",
+    "it": "Corsa",
+    "ult": false,
+    "tags": [
+     "speed",
+     "mobility",
+     "escape"
+    ],
+    "use": "+50% di velocità: torna in fretta o cambia posizione",
+    "when": "Fuori dallo scontro, per riposizionarti o fuggire",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Biotic Field",
+    "it": "Campo biotico",
+    "ult": false,
+    "tags": [
+     "heal",
+     "self-heal"
+    ],
+    "use": "Cura in un'area per circa 5 s; mettila dietro copertura o sul payload",
+    "when": "Prima di un duello o di Tactical Visor",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "con la Granata biotica addosso il campo non cura"
+     }
+    ]
+   },
+   {
+    "name": "Helix Rockets",
+    "it": "Razzi elicoidali",
+    "ult": false,
+    "tags": [
+     "burst",
+     "mobility"
+    ],
+    "use": "Tre razzi per aprire o finire; a terra e salto per salire in alto",
+    "when": "All'inizio del duello o per finire un nemico ferito",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Tactical Visor",
+    "it": "Visore tattico",
+    "ult": true,
+    "tags": [
+     "burst"
+    ],
+    "use": "Mira automatica e caricatore pieno; prima piazza il Biotic Field",
+    "when": "Quando i nemici sono in vista e senza difese",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Genji",
+      "why": "Deflect rimanda i colpi"
+     },
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix assorbe i colpi"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Helix Rockets",
+   "why": "È il suo danno istantaneo: decide i duelli e le uccisioni"
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "dislikes": [],
+   "why": "Hitscan versatile e mobile: sfrutta alture e linee lunghe"
+  },
+  "role": "Damage"
  },
  "Sombra": {
   "tags": [
@@ -3814,8 +7898,98 @@
    "https://www.gamesradar.com/games/fps/overwatch-season-5-turns-sombra-into-a-support-hero-reworks-roadhog-to-be-less-annoying-and-adds-cool-vampire-doctrine-to-the-roster/",
    "https://www.thegamer.com/overwatch-sombra-roadhog-reworks-blizzcon-2026/",
    "https://www.esportsheaven.com/features/how-to-counter-junkrat-in-overwatch-2/",
-   "https://esports.gg/guides/overwatch/overwatch-shion-counters/"
-  ]
+   "https://esports.gg/guides/overwatch/overwatch-shion-counters/",
+   "https://esports.gg/news/overwatch/overwatch-2-season-13-sombra-rework/",
+   "https://gamerant.com/overwatch-2-reaper-guide-tips-tricks-abilities-playstyle/",
+   "https://blizzardwatch.com/2026/09/13/sombra-support-now/",
+   "https://dotesports.com/overwatch/guides/overwatch-sombra-roadhog-rework"
+  ],
+  "abilities": [
+   {
+    "name": "Hack",
+    "it": "Hack",
+    "ult": false,
+    "tags": [
+     "hack",
+     "cc"
+    ],
+    "use": "Blocca le abilità del nemico per 1 s; da invisibile prima che ti notino",
+    "when": "Su un bersaglio chiave appena prima di attaccarlo",
+    "targets": [
+     "Shion",
+     "Genji"
+    ],
+    "saveFor": [
+     {
+      "hero": "Reaper",
+      "why": "Hack interrompe Death Blossom"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Virus",
+    "it": "Virus",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "Proiettile a danno nel tempo, più veloce sui bersagli hackerati",
+    "when": "Subito dopo un Hack, su un bersaglio fragile",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Mei",
+      "why": "Cryo-Freeze cancella il Virus"
+     }
+    ]
+   },
+   {
+    "name": "Translocator",
+    "it": "Traslocatore",
+    "ult": false,
+    "tags": [
+     "escape",
+     "mobility"
+    ],
+    "use": "Lancia e teletrasportati; ti rende invisibile per 5 s",
+    "when": "Per entrare non vista o fuggire prima di morire",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "EMP",
+    "it": "EMP",
+    "ult": true,
+    "tags": [
+     "hack",
+     "cc"
+    ],
+    "use": "Hackera tutti i nemici nell'area e ne toglie le difese",
+    "when": "Per aprire lo scontro insieme alla squadra",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Hack",
+   "why": "Toglie le abilità ai bersagli chiave e prepara Virus"
+  },
+  "mapFeatures": {
+   "likes": [
+    "flank-routes",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Fiancheggiatrice invisibile: le servono vie laterali e angoli per entrare non vista"
+  },
+  "abilitiesNote": "Kit Danni valido fino al 5/10/2026. Dal 6/10/2026 (Stagione 5) Sombra diventa Supporto: Hotfix (cura, hackera medikit e oggetti) sostituisce Hack, Cyberspace (zona che cura gli alleati e indebolisce i nemici) sostituisce Virus; Translocator ed EMP restano.",
+  "role": "Damage"
  },
  "Symmetra": {
   "tags": [
@@ -3890,8 +8064,73 @@
    "https://gamerant.com/overwatch-2-symmetra-guide-tips-abilities-tricks/",
    "https://theglobalgaming.com/overwatch/best-counter-for-symmetra",
    "https://www.esportsheaven.com/features/how-to-counter-symmetra/",
-   "https://dotesports.com/overwatch/news/best-genji-counters-in-overwatch-2"
-  ]
+   "https://dotesports.com/overwatch/news/best-genji-counters-in-overwatch-2",
+   "https://www.thegamer.com/overwatch-2-symmetra-hero-play-guide-abilities-tips-tricks/",
+   "https://immortalboost.com/blog/overwatch-2/symmetra-guide/"
+  ],
+  "abilities": [
+   {
+    "name": "Sentry Turret",
+    "it": "Torrette",
+    "ult": false,
+    "tags": [
+     "zone",
+     "cc"
+    ],
+    "use": "Fino a 3 torrette che rallentano: su porte, angoli alti o dietro le linee",
+    "when": "Prima dello scontro, sulle vie dei fiancheggiatori",
+    "targets": [
+     "Tracer",
+     "Genji"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Teleporter",
+    "it": "Teletrasporto",
+    "ult": false,
+    "tags": [
+     "mobility"
+    ],
+    "use": "Vicino allo spawn o per portare la squadra in posizione; lontano dal fronte",
+    "when": "Prima dello scontro o per rientrare in fretta dallo spawn",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Photon Barrier",
+    "it": "Barriera fotonica",
+    "ult": true,
+    "tags": [
+     "shield",
+     "block-projectiles"
+    ],
+    "use": "Barriera enorme su tutta la mappa: assorbe le ult e divide i nemici",
+    "when": "Per fermare le ult nemiche o salvare tempo sul punto",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Sentry Turret",
+   "why": "Le torrette sono il suo danno e la sua difesa dai fiancheggiatori"
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints",
+    "flank-routes"
+   ],
+   "dislikes": [
+    "open-spaces",
+    "long-sightlines"
+   ],
+   "why": "Corta portata e torrette: rende in spazi chiusi e choke, soffre i campi aperti"
+  },
+  "role": "Damage"
  },
  "Torbjörn": {
   "tags": [
@@ -3985,8 +8224,81 @@
    "https://www.gamespot.com/articles/overwatch-2-torbjorn-hero-guide/1100-6508434/",
    "https://gamerant.com/overwatch-2-torbjorn-guide-tips-abilities-tricks/",
    "https://rankedboost.com/overwatch/counters/torbjorn/",
-   "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide"
-  ]
+   "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide",
+   "https://www.furiouspaul.com/overwatch/torbjorn.php",
+   "https://overwatch.fandom.com/wiki/Torbj%C3%B6rn",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/"
+  ],
+  "abilities": [
+   {
+    "name": "Deploy Turret",
+    "it": "Torretta",
+    "ult": false,
+    "tags": [
+     "zone"
+    ],
+    "use": "Mettila vicino ai supporti: colpisce da sola chi entra e cambia bersaglio con te",
+    "when": "Prima dello scontro, sulla via dei fiancheggiatori",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Sombra",
+     "Vendetta"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Overload",
+    "it": "Sovraccarico",
+    "ult": false,
+    "tags": [
+     "armor",
+     "speed"
+    ],
+    "use": "+100 armatura, più cadenza e velocità: per i duelli ravvicinati",
+    "when": "Quando un dive ti salta addosso o per tenere il punto",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Winston",
+      "why": "tienilo per difenderti quando ti salta addosso"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Molten Core",
+    "it": "Nucleo fuso",
+    "ult": true,
+    "tags": [
+     "zone"
+    ],
+    "use": "Pozze di lava su punto e choke; più danni all'armatura",
+    "when": "Per togliere il punto ai nemici o fermare un'avanzata",
+    "targets": [
+     "Reinhardt",
+     "Orisa"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Deploy Turret",
+   "why": "La torretta protegge i supporti dai fiancheggiatori e fa danni continui"
+  },
+  "mapFeatures": {
+   "likes": [
+    "chokepoints",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "long-sightlines"
+   ],
+   "why": "Forte in difesa su choke e spazi stretti; la torretta soffre i cecchini"
+  },
+  "role": "Damage"
  },
  "Tracer": {
   "tags": [
@@ -4067,8 +8379,78 @@
    "https://segmentnext.com/overwatch-2-tracer/",
    "https://www.icy-veins.com/overwatch/tracer-abilities-strategy",
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
-   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-widowmaker"
-  ]
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-widowmaker",
+   "https://overwatch.fandom.com/wiki/Tracer",
+   "https://immortalboost.com/blog/overwatch-2/tracer-guide/"
+  ],
+  "abilities": [
+   {
+    "name": "Blink",
+    "it": "Traslazione",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape",
+     "engage"
+    ],
+    "use": "Tre scatti brevi (uno ogni ~3 s): non sprecarli tutti senza un piano",
+    "when": "Per entrare, schivare e uscire",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Recall",
+    "it": "Richiamo",
+    "ult": false,
+    "tags": [
+     "escape",
+     "self-heal"
+    ],
+    "use": "Torni indietro di 3 s riprendendo la vita; serve un attimo senza colpi",
+    "when": "Dopo un Blink dietro un angolo, quando sei ferita",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Pulse Bomb",
+    "it": "Bomba a impulsi",
+    "ult": true,
+    "tags": [
+     "burst"
+    ],
+    "use": "Blink vicino, attaccala e scappa con Blink o Recall",
+    "when": "Sui bersagli che caricano ult o per un'uccisione decisiva",
+    "targets": [
+     "Ana",
+     "Widowmaker",
+     "Echo"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Genji",
+      "why": "Deflect la rimanda indietro"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Recall",
+   "why": "La tiene in vita e le ridà tutta la vita: senza, Tracer muore al primo errore"
+  },
+  "mapFeatures": {
+   "likes": [
+    "flank-routes",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Fiancheggiatrice rapida: vive di vie laterali e angoli"
+  },
+  "role": "Damage"
  },
  "Vendetta": {
   "tags": [
@@ -4177,8 +8559,113 @@
    "https://eloking.com/blog/how-to-counter-vandetta-in-ow2",
    "https://rankedboost.com/overwatch/counters/vendetta/",
    "https://esports.gg/news/overwatch/overwatch-2-vendetta-abilities/",
-   "https://www.thegamer.com/overwatch-2-ow2-vendetta-melee-hero-interview/"
-  ]
+   "https://www.thegamer.com/overwatch-2-ow2-vendetta-melee-hero-interview/",
+   "https://mobalytics.gg/overwatch/heroes/vendetta-guide",
+   "https://overwatch.fandom.com/wiki/Vendetta"
+  ],
+  "abilities": [
+   {
+    "name": "Soaring Slice",
+    "it": "Fendente volante",
+    "ult": false,
+    "tags": [
+     "engage",
+     "mobility",
+     "burst"
+    ],
+    "use": "Lancia la spada in alto e saltaci: colpo dall'alto sui supporti isolati",
+    "when": "Per entrare su un supporto isolato da un angolo alto",
+    "targets": [
+     "Mercy",
+     "Kiriko",
+     "Lifeweaver"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Sigma",
+      "why": "Accretion ti ferma durante il salto"
+     }
+    ]
+   },
+   {
+    "name": "Warding Stance",
+    "it": "Guardia",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Para di fronte: -75% danni e mischia annullata; per avvicinarti",
+    "when": "Per avvicinarti sotto il fuoco",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Projected Edge",
+    "it": "Lama proiettata",
+    "ult": false,
+    "tags": [
+     "burst"
+    ],
+    "use": "In guardia spara un fendente largo che passa le barriere",
+    "when": "Per colpire a distanza o dietro una barriera",
+    "targets": [
+     "Reinhardt"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Whirlwind Dash",
+    "it": "Scatto vorticoso",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape",
+     "burst"
+    ],
+    "use": "Scatto con fendente circolare: per uscire o finire più nemici",
+    "when": "Per uscire dopo un'uccisione o schivare",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Sundering Blade",
+    "it": "Lama dirompente",
+    "ult": true,
+    "tags": [
+     "burst"
+    ],
+    "use": "Carica 2,5 s al riparo o dall'alto dopo Soaring Slice; colpo frontale",
+    "when": "Su un choke, quando sei coperta da un riparo o una barriera",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "il Dardo soporifero ti ferma mentre carichi"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Soaring Slice",
+   "why": "È il suo ingaggio: senza non arriva ai supporti; tieni Whirlwind Dash per uscire"
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "flank-routes",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Mischia: le servono angoli alti e laterali per entrare di sorpresa"
+  },
+  "role": "Damage"
  },
  "Venture": {
   "tags": [
@@ -4271,8 +8758,81 @@
    "https://gamerant.com/overwatch-2-ow2-how-play-venture-abilities-counters-tips-guide/",
    "https://www.boostingfactory.com/overwatch/blog/overwatch-2-venture-guide",
    "https://fenixbazaar.com/2025/07/09/overwatch-2-venture-guide/",
-   "https://1v9.gg/blog/best-overwatch-2-heroes-to-counter-venture"
-  ]
+   "https://1v9.gg/blog/best-overwatch-2-heroes-to-counter-venture",
+   "https://esports.gg/news/overwatch/overwatch-2-venture-guide-abilities-ultimate-and-story/",
+   "https://www.thegamer.com/overwatch-2-venture-hero-guide-tips-tricks/"
+  ],
+  "abilities": [
+   {
+    "name": "Burrow",
+    "it": "Scavo",
+    "ult": false,
+    "tags": [
+     "immortality",
+     "escape",
+     "cleanse",
+     "engage"
+    ],
+    "use": "Sotto terra per 4 s invulnerabile; uscendo fai danni; toglie effetti come Discord",
+    "when": "Per entrare, uscire o pulirti da un effetto negativo",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Zenyatta",
+      "why": "tienilo per toglierti l'Orbe della discordia"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Drill Dash",
+    "it": "Scatto trivella",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "knockback",
+     "burst"
+    ],
+    "use": "Spara e subito Drill Dash: combo che uccide Tracer in un secondo",
+    "when": "Per finire un bersaglio o spostarti (più rapido da sotto terra)",
+    "targets": [
+     "Tracer"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Tectonic Shock",
+    "it": "Scossa tettonica",
+    "ult": true,
+    "tags": [
+     "knockback",
+     "zone",
+     "burst"
+    ],
+    "use": "4 onde a terra che sbalzano i nemici; non si interrompe con CC",
+    "when": "Su nemici raggruppati a terra",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Burrow",
+   "why": "È ingaggio, fuga e invulnerabilità in un colpo: va tenuto per uscire"
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "flank-routes"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Corta portata: rende in spazi chiusi e vie laterali, soffre le linee lunghe"
+  },
+  "role": "Damage"
  },
  "Widowmaker": {
   "tags": [
@@ -4369,8 +8929,84 @@
    "https://sportskeeda.com/esports/how-counter-widowmaker-overwatch-2",
    "https://segmentnext.com/overwatch-2-widowmaker/",
    "https://www.icy-veins.com/overwatch/pharah-synergies-and-matchups",
-   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
-  ]
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
+   "https://www.icy-veins.com/overwatch/widowmaker-guide-strategy-gameplay",
+   "https://overwatch.fandom.com/wiki/Widowmaker"
+  ],
+  "abilities": [
+   {
+    "name": "Grappling Hook",
+    "it": "Rampino",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Sali su posizioni alte; tienilo per fuggire da chi ti aggira",
+    "when": "Per prendere un nido da cecchino o scappare",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Tracer",
+      "why": "tienilo per fuggire quando ti raggiunge"
+     },
+     {
+      "hero": "Genji",
+      "why": "tienilo per fuggire quando ti salta addosso"
+     },
+     {
+      "hero": "Winston",
+      "why": "tienilo per uscire dal suo salto"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Venom Mine",
+    "it": "Mina velenosa",
+    "ult": false,
+    "tags": [
+     "vision",
+     "zone"
+    ],
+    "use": "Mettila sull'angolo da cui arrivano i fiancheggiatori: avvisa e li rivela",
+    "when": "Sulla via di accesso al tuo nido",
+    "targets": [
+     "Tracer",
+     "Genji"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Infra-Sight",
+    "it": "Visione infrarossa",
+    "ult": true,
+    "tags": [
+     "vision"
+    ],
+    "use": "Mostra tutti i nemici alla squadra per 15 s",
+    "when": "Prima di uno scontro, per preparare i colpi",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Grappling Hook",
+   "why": "È l'unica fuga: con il rampino scarico Widowmaker è preda dei fiancheggiatori"
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "high-ground"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Cecchina: vuole linee lunghe e posizioni alte, è inutile negli spazi stretti"
+  },
+  "role": "Damage"
  },
  "Winston": {
   "tags": [
@@ -4470,8 +9106,103 @@
    "https://segmentnext.com/overwatch-2-winston/",
    "https://www.counterwatch.gg/stats/overwatch/heroes/winston",
    "https://dotesports.com/overwatch/news/winston-overwatch-2-strategy-guide-15189",
-   "https://www.gamepur.com/guides/overwatch-2-winston-guide-tips-strategies-counters-and-more"
-  ]
+   "https://www.gamepur.com/guides/overwatch-2-winston-guide-tips-strategies-counters-and-more",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
+   "https://www.charlieintel.com/overwatch-2/overwatch-2-best-counters-for-each-tank-hero-266824/",
+   "https://medium.com/overlogs/overwatch-hero-counters-explained-1-tank-role-7747004ade58"
+  ],
+  "abilities": [
+   {
+    "name": "Jump Pack",
+    "it": "salto",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "escape"
+    ],
+    "use": "Salta sui bersagli in alto o via dal pericolo; l'atterraggio fa danni",
+    "when": "Per tuffarti su fragili isolati o ritirarti",
+    "targets": [
+     "Widowmaker",
+     "Ashe",
+     "Zenyatta",
+     "Ana",
+     "Hanzo"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Barrier Projector",
+    "it": "bolla",
+    "ult": false,
+    "tags": [
+     "shield"
+    ],
+    "use": "Bolla che copre te e il team mentre combatti dentro; chi sta fuori non ti colpisce",
+    "when": "Appena atterri sul bersaglio",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Ana",
+      "why": "la bolla ferma Sleep Dart e granata da fuori"
+     },
+     {
+      "hero": "Cassidy",
+      "why": "la bolla blocca Deadeye"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Reaper",
+      "why": "dentro la bolla ti spara lo stesso"
+     },
+     {
+      "hero": "Ramattra",
+      "why": "Pummel la attraversa"
+     }
+    ]
+   },
+   {
+    "name": "Primal Rage",
+    "it": "furia primordiale",
+    "ult": true,
+    "tags": [
+     "knockback",
+     "mobility",
+     "environmental-kill",
+     "engage"
+    ],
+    "use": "Più salute e salti frequenti: butta i nemici fuori mappa o salvati",
+    "when": "Per finire un dive o sopravvivere",
+    "targets": [
+     "Widowmaker",
+     "Ana",
+     "Zenyatta"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Barrier Projector",
+   "why": "La bolla decide se il tuffo riesce: senza, i fragili ti sfuggono e muori."
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "flank-routes",
+    "env-kills",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "open-spaces"
+   ],
+   "why": "Il salto sfrutta alture e fianchi, l'ult butta giù dai bordi; negli spazi aperti è un bersaglio facile."
+  },
+  "abilitiesNote": "Kit base invariato nel 2026 (cambi a perk; quelli del 30/06 erano solo Community Crafted).",
+  "role": "Tank"
  },
  "Wrecking Ball": {
   "tags": [
@@ -4545,8 +9276,117 @@
    "https://www.counterwatch.gg/stats/overwatch/counters/wrecking-ball",
    "https://www.icy-veins.com/overwatch/wrecking-ball-synergies-and-matchups",
    "https://rankedboost.com/overwatch/counters/wrecking-ball/",
-   "https://www.esportsheaven.com/features/how-to-counter-wrecking-ball-in-overwatch-2"
-  ]
+   "https://www.esportsheaven.com/features/how-to-counter-wrecking-ball-in-overwatch-2",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
+  ],
+  "abilities": [
+   {
+    "name": "Roll",
+    "it": "palla",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "speed",
+     "escape"
+    ],
+    "use": "Rotola per muoverti veloce, disturbare le retrovie e rientrare",
+    "when": "Per fiancheggiare o cambiare posizione",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Grappling Claw",
+    "it": "rampino",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "engage",
+     "knockback",
+     "environmental-kill"
+    ],
+    "use": "Aggancia e gira: colpi ad alta velocità respingono e possono buttare fuori mappa",
+    "when": "Per entrare forte sul gruppo o vicino ai bordi",
+    "targets": [
+     "Widowmaker",
+     "Ana",
+     "Zenyatta"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Adaptive Shield",
+    "it": "scudo adattivo",
+    "ult": false,
+    "tags": [
+     "armor",
+     "escape"
+    ],
+    "use": "Salute extra temporanea, maggiore con più nemici vicini",
+    "when": "Appena entri in mezzo ai nemici o sotto focus",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Cassidy",
+      "why": "tienilo per sopravvivere al burst"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Piledriver",
+    "it": "schianto",
+    "ult": false,
+    "tags": [
+     "engage",
+     "knockback",
+     "burst"
+    ],
+    "use": "Schianto dall'alto che danneggia e lancia in aria i nemici",
+    "when": "Per aprire o finire un gruppo",
+    "targets": [
+     "Zenyatta",
+     "Ana",
+     "Widowmaker"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Minefield",
+    "it": "campo minato",
+    "ult": true,
+    "tags": [
+     "zone",
+     "burst"
+    ],
+    "use": "Campo di mine: ottimo per difendere il punto o isolare i nemici",
+    "when": "Sul punto o in un passaggio obbligato",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Adaptive Shield",
+   "why": "È la sua tenuta in mezzo ai nemici: senza, ogni ingresso finisce male."
+  },
+  "mapFeatures": {
+   "likes": [
+    "flank-routes",
+    "env-kills",
+    "open-spaces",
+    "high-ground"
+   ],
+   "dislikes": [
+    "close-quarters"
+   ],
+   "why": "Ha bisogno di spazio per il rampino e bordi per buttare fuori; i corridoi stretti lo bloccano."
+  },
+  "abilitiesNote": "Salute ridotta (Season 2 2026). Modifiche del 30/06 solo Community Crafted.",
+  "role": "Tank"
  },
  "Wuyang": {
   "tags": [
@@ -4619,8 +9459,99 @@
    "https://www.counterwatch.gg/stats/overwatch/heroes/wuyang",
    "https://us.forums.blizzard.com/en/overwatch/t/wuyang-support-synergies/981204",
    "https://www.thegamer.com/overwatch-2-wuyang-hero-guide/",
-   "https://turboboost.gg/article/wuyang-overwatch-guide"
-  ]
+   "https://turboboost.gg/article/wuyang-overwatch-guide",
+   "https://esports.gg/news/overwatch/overwatch-2-wuyang-trial-abilities-and-release-date/"
+  ],
+  "abilities": [
+   {
+    "name": "Restorative Stream",
+    "it": "Flusso curativo",
+    "ult": false,
+    "tags": [
+     "heal"
+    ],
+    "use": "Cura passiva su un alleato (di solito il tank); guidala a mano per curare di più.",
+    "when": "Sempre su qualcuno; spostala su chi è basso",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Rushing Torrent",
+    "it": "Corsa sull'acqua",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "speed",
+     "escape"
+    ],
+    "use": "Cavalca l'acqua: più veloce e salti più alti per riposizionarti o fuggire.",
+    "when": "Per raggiungere un punto alto o scappare da un tuffatore",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Guardian Wave",
+    "it": "Onda protettrice",
+    "ult": false,
+    "tags": [
+     "heal",
+     "knockback",
+     "boop"
+    ],
+    "use": "Onda che aumenta le cure ricevute dagli alleati e respinge i nemici.",
+    "when": "Per un alleato in pericolo; la spinta è secondaria",
+    "targets": [
+     "Tracer",
+     "Genji",
+     "Winston"
+    ],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienila per un alleato sotto Dragonblade: aumenta le cure ricevute"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Tidal Blast",
+    "it": "Bolla esplosiva",
+    "ult": true,
+    "tags": [
+     "heal",
+     "knockback",
+     "cc"
+    ],
+    "use": "Bolla d'acqua su te o un alleato: poi esplode, atterra i nemici vicini e cura molto l'ospite.",
+    "when": "Sul tank che entra in mischia o su un alleato sotto focus",
+    "targets": [
+     "Reinhardt",
+     "Junker Queen",
+     "Winston",
+     "D.Va"
+    ],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Guardian Wave",
+   "why": "Le guide consigliano di tenerla per le emergenze di cura invece di sprecarla per la spinta."
+  },
+  "mapFeatures": {
+   "likes": [
+    "chokepoints",
+    "close-quarters"
+   ],
+   "dislikes": [
+    "long-sightlines"
+   ],
+   "why": "Sfera d'acqua a medio raggio e spinte; i punti stretti raccolgono nemici per onda e ultimate."
+  },
+  "abilitiesNote": "Xuanwu Staff è l'arma (sfera d'acqua guidabile + Restorative Stream). Preferenze mappa dedotte dal kit, poche fonti specifiche.",
+  "role": "Support"
  },
  "Zarya": {
   "tags": [
@@ -4708,8 +9639,99 @@
    "https://segmentnext.com/overwatch-2-zarya/",
    "https://rankedboost.com/overwatch/counters/zarya/",
    "https://www.furiouspaul.com/overwatch/zarya.php",
-   "https://counterpickgg.com/heroes/sigma"
-  ]
+   "https://counterpickgg.com/heroes/sigma",
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
+   "https://medium.com/overlogs/overwatch-hero-counters-explained-1-tank-role-7747004ade58"
+  ],
+  "abilities": [
+   {
+    "name": "Particle Barrier",
+    "it": "bolla personale",
+    "ult": false,
+    "tags": [
+     "shield",
+     "cleanse"
+    ],
+    "use": "Bolla su di te: assorbe danni, ti carica energia e libera dai controlli",
+    "when": "Quando ti focalizzano o arriva un controllo",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Roadhog",
+      "why": "tienila per liberarti dal gancio"
+     },
+     {
+      "hero": "Ana",
+      "why": "tienila contro il Sleep Dart"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Projected Barrier",
+    "it": "bolla su alleato",
+    "ult": false,
+    "tags": [
+     "shield",
+     "cleanse"
+    ],
+    "use": "Bolla su un alleato: lo salva da burst e controlli e ti dà energia",
+    "when": "Quando un alleato viene preso di mira",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Ana",
+      "why": "tienila per salvare chi viene addormentato"
+     },
+     {
+      "hero": "Genji",
+      "why": "tienila per l'alleato attaccato con la Dragonblade"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Graviton Surge",
+    "it": "gravitone",
+    "ult": true,
+    "tags": [
+     "cc",
+     "zone"
+    ],
+    "use": "Attira i nemici in un punto: combina con ult ad area dei compagni",
+    "when": "Su gruppo stretto, con un'ult alleata pronta",
+    "targets": [
+     "Ana",
+     "Zenyatta",
+     "Baptiste"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "D.Va",
+      "why": "Defense Matrix la mangia"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Projected Barrier",
+   "why": "Le bolle sono la sua forza: salvano alleati e la caricano di energia, sprecarle la lascia scoperta."
+  },
+  "mapFeatures": {
+   "likes": [
+    "close-quarters",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "long-sightlines",
+    "open-spaces"
+   ],
+   "why": "Il cannone ha corto raggio: rende negli spazi stretti, soffre le lunghe linee di tiro."
+  },
+  "abilitiesNote": "Danno massimo del cannone ridotto a 175/s (Season 1 2026). Bruiser.",
+  "role": "Tank"
  },
  "Zenyatta": {
   "tags": [
@@ -4815,7 +9837,881 @@
    "https://1v9.gg/blog/best-overwatch-2-heroes-to-counter-zenyatta",
    "https://www.sportskeeda.com/esports/5-overwatch-2-heroes-duo-zenyatta",
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-tank",
-   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
-  ]
- }
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/",
+   "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
+   "https://payloadwire.com/article/community-crafted-june-30-2026/",
+   "https://www.gfinityesports.com/article/overwatch-2-zenyatta-rework-sparks-outrage",
+   "https://overwatch.blizzard.com/en-us/heroes/zenyatta/"
+  ],
+  "abilities": [
+   {
+    "name": "Orb of Harmony",
+    "it": "Sfera dell'armonia",
+    "ult": false,
+    "tags": [
+     "heal"
+    ],
+    "use": "Sfera che cura un alleato nel tempo finché lo vedi: tienila sul più esposto.",
+    "when": "Sempre attiva; spostala su chi subisce danni",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Orb of Discord",
+    "it": "Sfera della discordia",
+    "ult": false,
+    "tags": [
+     "damage-amp"
+    ],
+    "use": "Marca un nemico: subisce il 25% di danni in più. Mettila sul bersaglio che la squadra focalizza.",
+    "when": "Su tank e tuffatori che la squadra sta colpendo",
+    "targets": [
+     "Winston",
+     "D.Va",
+     "Wrecking Ball",
+     "Tracer",
+     "Genji",
+     "Roadhog"
+    ],
+    "saveFor": [],
+    "avoidOn": [
+     {
+      "hero": "Kiriko",
+      "why": "Protection Suzu la rimuove: rimettila subito dopo"
+     }
+    ],
+    "on": "enemies"
+   },
+   {
+    "name": "Transcendence",
+    "it": "Trascendenza",
+    "ult": true,
+    "tags": [
+     "heal",
+     "immortality",
+     "speed"
+    ],
+    "use": "Diventi invulnerabile e curi moltissimo intorno: annulla le ultimate di danno.",
+    "when": "Nell'istante in cui parte un'ultimate nemica di danno",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Genji",
+      "why": "tienila per la Dragonblade"
+     },
+     {
+      "hero": "Reaper",
+      "why": "tienila per la Death Blossom"
+     },
+     {
+      "hero": "Soldier: 76",
+      "why": "tienila per il Tactical Visor"
+     },
+     {
+      "hero": "Zarya",
+      "why": "tienila per la combo con la Graviton Surge"
+     }
+    ],
+    "avoidOn": [
+     {
+      "hero": "Ana",
+      "why": "con l'anti-cura sui tuoi la Trascendenza non cura"
+     }
+    ]
+   }
+  ],
+  "priority": {
+   "ability": "Transcendence",
+   "why": "È l'unica difesa della squadra contro le ultimate di danno: va tenuta per quella."
+  },
+  "mapFeatures": {
+   "likes": [
+    "long-sightlines",
+    "high-ground",
+    "chokepoints"
+   ],
+   "dislikes": [
+    "flank-routes",
+    "close-quarters"
+   ],
+   "why": "Spara da lontano senza mobilità: vuole posizioni coperte e soffre i fiancheggiatori."
+  },
+  "abilitiesNote": "Discord al 25% dal 2026. La rielaborazione di giugno 2026 (Harmony che velocizza, Discord a colpo) era solo nella modalità Arcade 'Community Crafted' (30/6-13/7): non applicata. Snap Kick passiva non elencata.",
+  "role": "Support"
+ },
+ "_maps": {
+  "aatlis": {
+   "features": [
+    "close-quarters",
+    "flank-routes"
+   ],
+   "envKills": "",
+   "tips": [
+    "Mappa Flashpoint compatta: punti vicini e senza lunghe linee di tiro tra uno e l'altro.",
+    "Restate uniti: in Flashpoint chi arriva da solo sul punto lo perde in fretta.",
+    "Eroi mobili e da tuffo (Winston, Tracer, D.Va) e la velocità di Lúcio rendono bene."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "DIVE",
+    "RUSH"
+   ],
+   "uncertain": true,
+   "note": "Mappa del 2025 con poche guide: confermato solo che è compatta, senza lunghe linee di tiro tra i punti e adatta a eroi mobili. Nessuna fonte sulle uccisioni ambientali.",
+   "sources": [
+    "https://overwatch.fandom.com/wiki/Aatlis",
+    "https://liquipedia.net/overwatch/Aatlis",
+    "https://overwatchmaps.gg/aatlis",
+    "https://us.forums.blizzard.com/en/overwatch/t/aatlis-ahh-the-new-map/975447"
+   ]
+  },
+  "antarctic-peninsula": {
+   "features": [
+    "close-quarters",
+    "high-ground",
+    "chokepoints"
+   ],
+   "envKills": "",
+   "tips": [
+    "Soffitti bassi, spazi stretti e linee di tiro corte: favoriti gli scontri ravvicinati.",
+    "Icebreaker: il tetto stretto sopra la nave è un'altura importante da controllare.",
+    "Sublevel: chi vola troppo in alto viene congelato e precipita (Pharah, Echo attenti)."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "RUSH"
+   ],
+   "uncertain": false,
+   "note": "Labs ha una lunga linea di tiro aperta verso il punto. Nessuna fonte sulle uccisioni ambientali.",
+   "sources": [
+    "https://esports.gg/guides/overwatch/5-locations-to-know-on-the-new-overwatch-2-map-antarctic-peninsula/",
+    "https://www.pcgamer.com/games/fps/antarctic-peninsulas-long-awaited-rework-adds-a-new-environmental-hazard-to-overwatch-thatll-be-a-pain-for-flyers/",
+    "https://overwatch.fandom.com/wiki/Antarctic_Peninsula"
+   ]
+  },
+  "blizzard-world": {
+   "features": [
+    "open-spaces",
+    "long-sightlines",
+    "chokepoints",
+    "flank-routes"
+   ],
+   "envKills": "",
+   "tips": [
+    "Punti A e B ampi e aperti, con poca verticalità.",
+    "Strade lunghe: gli eroi a lunga gittata rendono bene, soprattutto in difesa.",
+    "Il punto finale è difficile: serve una composizione solida per sfondare."
+   ],
+   "attack": "Tuffatevi sul punto con Winston o D.Va; Reinhardt per sfondare sull'ultimo tratto.",
+   "defense": "Tenete il primo varco vicino alla porta di Stormwind e sorvegliate il fianco destro.",
+   "goodStyles": [
+    "POKE",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://www.metabomb.net/overwatch/map-guides/overwatch-blizzard-world-guide",
+    "https://game8.co/games/Overwatch2/archives/376879",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
+   ]
+  },
+  "busan": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "long-sightlines",
+    "close-quarters"
+   ],
+   "envKills": "MEKA Base: lato aperto sulla pista; Downtown: caduta dai binari del treno.",
+   "tips": [
+    "MEKA Base: il punto è circondato da alture, conta più tenerle che stare sul punto.",
+    "Sanctuary: piatto con lunghe linee di tiro, buono per cecchini e fiancheggiatori.",
+    "Downtown: tetti piatti raggiungibili dai cecchini sopra strade strette."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "RUSH",
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "Brawl indicato per MEKA Base, poke/cecchini per Sanctuary e Downtown. Bordi mortali da fonte di guida minore (ggclan).",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391357",
+    "https://ggclan.com/news/overwatch-2-busan-map-tips",
+    "https://www.redbull.com/int-en/overwatch-how-to-master-busan-map"
+   ]
+  },
+  "circuit-royal": {
+   "features": [
+    "long-sightlines",
+    "high-ground",
+    "chokepoints",
+    "open-spaces"
+   ],
+   "envKills": "",
+   "tips": [
+    "Mappa da cecchini: lunghe linee di tiro con poca copertura (Widowmaker, Ashe, Hanzo).",
+    "Il secondo tratto, la lunga strada in salita, è il più esposto per chi attacca.",
+    "Sull'ultimo tratto contano i balconi dell'hotel: vanno conquistati o aggirati."
+   ],
+   "attack": "Eroi con mobilità verticale (Pharah, Echo) per contestare le alture; aggirate l'hotel.",
+   "defense": "La difesa è favorita all'inizio: arco d'ingresso e alture ai lati con Widowmaker e Sigma.",
+   "goodStyles": [
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391180",
+    "https://www.sportskeeda.com/esports/how-play-circuit-royal-map-overwatch-2",
+    "https://overwatch.fandom.com/wiki/Circuit_Royal"
+   ]
+  },
+  "colosseo": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "flank-routes"
+   ],
+   "envKills": "Grandi burroni dopo il primo checkpoint su ogni lato, lungo il percorso del robot.",
+   "tips": [
+    "Muri bassi e cielo alto: Pharah, Echo e Winston aggirano gli ostacoli dall'alto.",
+    "Attenti ai burroni dopo il primo checkpoint: Lúcio e Pharah possono spingervi giù.",
+    "L'altura a metà di ogni lato è decisiva: tenetela o contestatela con fiancheggiatori."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "DIVE",
+    "RUSH"
+   ],
+   "uncertain": false,
+   "note": "Le guide consigliano di disturbare i danni a media gittata con eroi da mischia; il controllo folla conta oltre il Colosseo.",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391291",
+    "https://www.sportskeeda.com/esports/how-play-colosseo-map-overwatch-2"
+   ]
+  },
+  "dorado": {
+   "features": [
+    "high-ground",
+    "chokepoints",
+    "long-sightlines"
+   ],
+   "envKills": "",
+   "tips": [
+    "Le alture decidono gli scontri: tetti e archi offrono angoli di tiro sicuri.",
+    "Dopo il primo checkpoint linee di tiro lunghe: Widowmaker e Ana rendono bene.",
+    "Secondo e terzo tratto: cielo alto e copertura, ottimi per Pharah ed Echo."
+   ],
+   "attack": "Eroi mobili (Genji, Winston) per superare il varco e colpire i bersagli chiave.",
+   "defense": "Tenete il varco (Ashe, Zarya) e usate le due alture vicine allo spawn sul carico.",
+   "goodStyles": [
+    "DIVE",
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391182",
+    "https://sportskeeda.com/esports/how-play-dorado-map-overwatch-2",
+    "https://overwatch.fandom.com/wiki/Dorado"
+   ]
+  },
+  "eichenwalde": {
+   "features": [
+    "env-kills",
+    "chokepoints",
+    "high-ground",
+    "close-quarters"
+   ],
+   "envKills": "Bordi lungo il ponte verso le porte del castello e ai lati della mappa.",
+   "tips": [
+    "Molti varchi stretti e buone alture per chi difende.",
+    "Sul ponte del castello spinte di Reinhardt, Orisa e Lúcio possono buttare giù i nemici.",
+    "La porta del castello è il momento chiave: preparate le ultimate per sfondarla."
+   ],
+   "attack": "Eroi molto mobili (Genji, Winston) per usare le vie laterali; prendete il tetto a sinistra.",
+   "defense": "Sfruttate varchi e alture; Hanzo con la freccia sonica rivela i movimenti nemici.",
+   "goodStyles": [
+    "RUSH",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391311",
+    "https://overwatch.fandom.com/wiki/Eichenwalde",
+    "https://www.sportskeeda.com/esports/how-play-eichenwalde-map-overwatch-2"
+   ]
+  },
+  "esperanca": {
+   "features": [
+    "high-ground",
+    "flank-routes",
+    "long-sightlines"
+   ],
+   "envKills": "",
+   "tips": [
+    "Il punto più alto è al centro: chi spinge il robot verso lo spawn nemico ha spesso l'altura.",
+    "Le alture al centro sono decisive; il tetto del Café Caravela è ottimo per cecchini.",
+    "Molti edifici e vie alte: fiancheggiatori e Wrecking Ball rendono bene."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "POKE",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391292",
+    "https://www.sportskeeda.com/esports/how-play-esperana-map-overwatch-2"
+   ]
+  },
+  "havana": {
+   "features": [
+    "long-sightlines",
+    "open-spaces",
+    "high-ground",
+    "close-quarters",
+    "env-kills"
+   ],
+   "envKills": "Scogliere attorno al forte finale.",
+   "tips": [
+    "Primo tratto: lungo viale aperto, ottimo per cecchini e tuffatori.",
+    "Secondo tratto (distilleria): spazi stretti e passerelle alte, favoriti gli scontri ravvicinati.",
+    "Ultimo tratto in salita verso il forte: poca copertura contro il fuoco a distanza."
+   ],
+   "attack": "Sull'ultimo tratto la difesa è favorita: di solito serve eliminarla tutta per avanzare.",
+   "defense": "Tenete le alture con eroi a lunga gittata (Widowmaker, Ashe, Hanzo, Zenyatta).",
+   "goodStyles": [
+    "POKE",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "Le scogliere del forte sono citate da una sintesi generica: dettaglio non verificato su guida specifica.",
+   "sources": [
+    "https://www.thegamer.com/overwatch-map-guide-havana/",
+    "https://immortalboost.com/blog/overwatch-2/havana-map-guide/",
+    "https://overwatch.fandom.com/wiki/Havana"
+   ]
+  },
+  "hollywood": {
+   "features": [
+    "high-ground",
+    "chokepoints",
+    "close-quarters",
+    "long-sightlines"
+   ],
+   "envKills": "",
+   "tips": [
+    "Set western (secondo tratto): l'altura è fondamentale, due ascensori portano su.",
+    "Il set western ha molti punti alti e linee lunghe: buono per Ashe, Widowmaker, Hanzo.",
+    "Ultimo tratto chiuso e stretto, con molti varchi."
+   ],
+   "attack": "Primo punto: Pharah, Echo o D.Va per salire sulle alture e sfondare il varco iniziale.",
+   "defense": "Cecchini nell'edificio a destra sul primo punto; nei corridoi stretti Roadhog rende bene.",
+   "goodStyles": [
+    "POKE",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391316",
+    "https://sportskeeda.com/esports/how-play-hollywood-map-overwatch-2",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
+   ]
+  },
+  "ilios": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "long-sightlines"
+   ],
+   "envKills": "Well: buco al centro del punto; Lighthouse e Ruins: bordi sul mare.",
+   "tips": [
+    "Well: le uccisioni nel buco decidono il round, Lúcio, Pharah e Orisa sono ottimi.",
+    "Lighthouse: controllate i balconi alti attorno al punto, più del punto stesso.",
+    "Ruins: aperto con linee di tiro lunghe, adatto a cecchini e poke."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "DIVE",
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "Dot Esports la indica come la miglior mappa per le spinte di Lúcio.",
+   "sources": [
+    "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
+    "https://www.sportskeeda.com/esports/how-play-ilios-map-overwatch-2",
+    "https://note.com/ow_kinako/n/ne2b19929daf2?hl=en"
+   ]
+  },
+  "junkertown": {
+   "features": [
+    "high-ground",
+    "chokepoints",
+    "long-sightlines"
+   ],
+   "envKills": "",
+   "tips": [
+    "In tutti e tre i tratti chi tiene l'altura vince: prendetela subito.",
+    "Primo tratto adatto a Widowmaker; nei tratti successivi meglio eroi da corta distanza.",
+    "Junkrat e Pharah sono buone alternative con danno ad area sui varchi."
+   ],
+   "attack": "Sull'ultimo tratto aggirate dal passaggio sotto la piattaforma girevole verso le alture.",
+   "defense": "Prendete le alture prima che arrivi il carico; edifici ai lati offrono buone posizioni.",
+   "goodStyles": [
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "Alcune sintesi citano zone di caduta, non confermate da una guida specifica: non riportate.",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391166",
+    "https://sportskeeda.com/esports/how-play-junkertown-map-overwatch-2",
+    "https://www.invenglobal.com/articles/3019/its-over-anakin-i-have-the-high-ground-overwatch-junkertown-guide"
+   ]
+  },
+  "kings-row": {
+   "features": [
+    "chokepoints",
+    "close-quarters",
+    "high-ground"
+   ],
+   "envKills": "",
+   "tips": [
+    "Il varco stretto subito fuori dallo spawn d'attacco detta il ritmo di tutto il round.",
+    "Scontri ravvicinati: Reinhardt, Junkrat e Reaper rendono bene sui varchi.",
+    "Il primo punto è il più aperto: lì i cecchini hanno le linee più lunghe."
+   ],
+   "attack": "Composizione brawl (Reinhardt + Brigitte) al varco; Genji e Tracer per aggirare.",
+   "defense": "Non fermatevi sul primo varco: arretrate dove i fianchi sono coperti e c'è altura.",
+   "goodStyles": [
+    "RUSH"
+   ],
+   "uncertain": false,
+   "note": "Citata come mappa buona per le spinte di Lúcio, ma senza indicare i punti esatti: envKills lasciato vuoto.",
+   "sources": [
+    "https://sportskeeda.com/esports/how-play-king-s-row-map-overwatch-2",
+    "https://immortalboost.com/blog/overwatch-2/kings-row-complete-map-guide/",
+    "https://guides.cheatcc.com/overwatch-guide-walkthrough/guide_sections/king-s-row"
+   ]
+  },
+  "lijiang-tower": {
+   "features": [
+    "env-kills",
+    "close-quarters",
+    "chokepoints",
+    "flank-routes"
+   ],
+   "envKills": "Night Market e Garden: grandi burroni attorno al punto.",
+   "tips": [
+    "Night Market e Garden: Lúcio e Roadhog possono mandare i nemici nei burroni.",
+    "Night Market: tante entrate, i fiancheggiatori colpiscono chi resta isolato.",
+    "Control Center: linee di tiro corte e varchi stretti, serve una composizione brawl."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "RUSH",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391352",
+    "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
+    "https://dignitas.gg/articles/overwatch-maps-and-you-lijiang-tower"
+   ]
+  },
+  "midtown": {
+   "features": [
+    "high-ground",
+    "chokepoints",
+    "close-quarters"
+   ],
+   "envKills": "",
+   "tips": [
+    "Primo punto: la caserma dei pompieri accanto al punto domina il varco vicino.",
+    "Nei passaggi stretti eroi da corta distanza rendono bene (Brigitte, Junkrat).",
+    "Ingresso della stazione finale: molti punti alti per cecchini, angoli stretti contro i tuffi."
+   ],
+   "attack": "Zarya e D.Va sono consigliate per spingere il carico verso le alture.",
+   "defense": "Usate le alture all'imbocco del tunnel con Sigma, Ashe o Sojourn.",
+   "goodStyles": [
+    "RUSH",
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "Fonti in parte poco dettagliate; consigli limitati a quelli citati da Game8/Sportskeeda.",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391308",
+    "https://www.sportskeeda.com/esports/how-play-midtown-map-overwatch-2",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
+   ]
+  },
+  "neon-junction": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "close-quarters"
+   ],
+   "envKills": "Il treno sul cavalcavia del secondo tratto uccide chi resta sui binari.",
+   "tips": [
+    "Il cavalcavia sopra il percorso è un'ottima altura, ma va lasciato quando arriva il treno.",
+    "Secondo tratto piuttosto piatto: adatto agli eroi di terra, i cecchini non lo bloccano.",
+    "Primo tratto: alveari in un negozio, se colpiti le api danneggiano chi è vicino."
+   ],
+   "attack": "",
+   "defense": "Sull'ultimo punto difendete nella stanza precedente, tenendo l'ultimo angolo.",
+   "goodStyles": [],
+   "uncertain": true,
+   "note": "Mappa Ibrida recente (Tokyo) con poche guide; consiglio di difesa da forum. Nessuna fonte affidabile sugli stili.",
+   "sources": [
+    "https://overwatch.fandom.com/wiki/Neon_Junction",
+    "https://overwatch.blizzard.com/en-us/news/24293050/weekly-recall-neon-junction-ama-recap/",
+    "https://us.forums.blizzard.com/en/overwatch/t/neon-junction-tokyo-new-hybrid-map-showmatch-live-now/1020733",
+    "https://us.forums.blizzard.com/en/overwatch/t/i-cant-ever-defend-on-neon-junction/1025894"
+   ]
+  },
+  "nepal": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "chokepoints",
+    "close-quarters"
+   ],
+   "envKills": "Village: fossa attorno al punto; Sanctum: bordi del punto (spinte e ganci).",
+   "tips": [
+    "In tutte e tre le parti chi controlla le alture ha il vantaggio.",
+    "Sanctum è tra le migliori mappe per le uccisioni ambientali: occhio a Lúcio e Roadhog.",
+    "Village: spazi stretti, adatti a tank e danni da mischia."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "RUSH"
+   ],
+   "uncertain": false,
+   "note": "Shrine è più aperta e adatta a eroi mobili.",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391339",
+    "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
+    "https://www.pcgamer.com/learn-how-to-play-overwatchs-nepal-map-from-the-pros/"
+   ]
+  },
+  "new-junk-city": {
+   "features": [
+    "open-spaces",
+    "close-quarters",
+    "flank-routes"
+   ],
+   "envKills": "",
+   "tips": [
+    "Mappa grande: imparate percorsi e kit medici, contano più che in altre modalità.",
+    "Restate uniti: un punto si cattura in circa 70 secondi di controllo.",
+    "Punti molto diversi: The Ducts e Refinery stretti, Junkyard aperto con linee lunghe."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [],
+   "uncertain": true,
+   "note": "Mappa rielaborata da Blizzard; le guide non indicano uno stile preferito né punti per uccisioni ambientali.",
+   "sources": [
+    "https://overwatch.fandom.com/wiki/New_Junk_City",
+    "https://overwatch.blizzard.com/en-us/news/24215719/weekly-recall-flashpoint-map-reworks/",
+    "https://www.dualshockers.com/overwatch-2-tips-and-tricks-for-flashpoint/",
+    "https://sportskeeda.com/esports/beginner-tips-new-junk-city-map-overwatch-2"
+   ]
+  },
+  "new-queen-street": {
+   "features": [
+    "close-quarters",
+    "flank-routes",
+    "chokepoints"
+   ],
+   "envKills": "",
+   "tips": [
+    "Mappa più piatta delle altre Push, con corridoi larghi e alcune posizioni rialzate.",
+    "Strada lunga con curve: favoriti scontri ravvicinati (Reinhardt, Zarya).",
+    "Poco adatta ai cecchini; molte vie e kit medici per i fiancheggiatori."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "RUSH"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://dotesports.com/overwatch/news/everything-to-know-about-new-queen-street-in-overwatch-2",
+    "https://sportskeeda.com/esports/how-play-new-queen-street-map-overwatch-2",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
+   ]
+  },
+  "numbani": {
+   "features": [
+    "long-sightlines",
+    "high-ground",
+    "flank-routes"
+   ],
+   "envKills": "",
+   "tips": [
+    "Linee di tiro lunghe: Cassidy, Soldier: 76, Hanzo e Widowmaker rendono bene.",
+    "Passerelle e cornicioni sono la chiave: controllate le alture.",
+    "Il primo punto ha 4 vie d'attacco invece di un solo varco."
+   ],
+   "attack": "Squadra veloce e mobile: prendete passerelle e cornicioni prima del carico.",
+   "defense": "Non spingetevi troppo avanti: lo spawn nemico è più vicino. Difendete dalle alture.",
+   "goodStyles": [
+    "POKE",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://overwatch.fandom.com/wiki/Numbani",
+    "https://immortalboost.com/blog/overwatch-2/numbani-map-guide-complete/",
+    "https://us.forums.blizzard.com/en/overwatch/t/how-the-f-do-you-defend-on-numbani/390786?page=2"
+   ]
+  },
+  "oasis": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "flank-routes"
+   ],
+   "envKills": "City Center: autostrada con auto in corsa; University: buco al centro.",
+   "tips": [
+    "City Center: la passerella sopra il punto decide molti round; usate il trampolino.",
+    "City Center e Gardens: cielo alto e copertura, ottimi per Pharah ed Echo.",
+    "University: passaggi sotterranei collegano le zone, utili ai fiancheggiatori."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391349",
+    "https://www.pcgamer.com/overwatch-oasis-tips/",
+    "https://www.dexerto.com/overwatch/little-known-environmental-spot-for-lucio-discovered-in-overwatch-1362472/"
+   ]
+  },
+  "paraiso": {
+   "features": [
+    "high-ground",
+    "flank-routes",
+    "chokepoints",
+    "close-quarters"
+   ],
+   "envKills": "",
+   "tips": [
+    "Molte vie laterali ed edifici aperti: Genji, Reaper e Sombra colpiscono da angoli inattesi.",
+    "Secondo tratto: strade strette tra palazzi alti, conta la mobilità verticale.",
+    "Preparatevi a scontri ravvicinati quando il carico passa nelle vie strette."
+   ],
+   "attack": "Prendete prima un'altura a destra o a sinistra, con Genji o Tracer.",
+   "defense": "Il punto A è circondato da alture; un tank con barriera tiene il varco (Orisa, Reinhardt).",
+   "goodStyles": [
+    "DIVE",
+    "RUSH"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391309",
+    "https://www.sportskeeda.com/esports/how-play-paraso-map-overwatch-2"
+   ]
+  },
+  "rialto": {
+   "features": [
+    "high-ground",
+    "long-sightlines",
+    "open-spaces",
+    "env-kills"
+   ],
+   "envKills": "Canali e ponte: possibili ma rare.",
+   "tips": [
+    "Secondo tratto: lungo ponte scoperto dopo lo spawn d'attacco, conta molto l'altura.",
+    "Le linee aperte favoriscono gli eroi hitscan a lunga gittata.",
+    "Genji contesta le alture in pochi secondi grazie alla mobilità."
+   ],
+   "attack": "Sul ponte non andate di fronte: c'è un fianco a sinistra dello spawn.",
+   "defense": "Prendete a ogni costo l'altura sul secondo punto: l'attacco deve attraversare spazio aperto.",
+   "goodStyles": [
+    "POKE",
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://www.redbull.com/int-en/overwatch-rialto-tips",
+    "https://us.forums.blizzard.com/en/overwatch/t/how-do-you-win-on-rialto/764659",
+    "https://www.gamersdecide.com/articles/overwatch-2-best-heroes-for-each-map"
+   ]
+  },
+  "route-66": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "long-sightlines",
+    "flank-routes"
+   ],
+   "envKills": "Primo tratto: canyon accanto al percorso; via bassa a destra della stazione di servizio.",
+   "tips": [
+    "Molti tetti piatti con linee lunghe: ottimi per cecchini.",
+    "Nel primo tratto le spinte (Lúcio) possono mandare i nemici nel canyon.",
+    "Dopo la stazione di servizio la difesa forma un fuoco incrociato dalle alture."
+   ],
+   "attack": "Non sfondate solo di fronte: dividete la squadra tra carico e fianco (motel/tunnel).",
+   "defense": "Tenete il tetto della stazione di servizio con una composizione poke protetta da Sigma o Orisa.",
+   "goodStyles": [
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391250",
+    "https://www.metabomb.net/overwatch/map-guides/overwatch-route-66-map-guide",
+    "https://note.com/ow_kinako/n/ne56271d22dc4?hl=en"
+   ]
+  },
+  "runasapi": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "long-sightlines"
+   ],
+   "envKills": "Scogliere a strapiombo vicino ad alcuni scontri (ganci di Roadhog).",
+   "tips": [
+    "Alcuni scontri avvengono vicino a scogliere: occhio a spinte e ganci.",
+    "Le passerelle di pietra rialzate sopra il percorso del robot sono le posizioni chiave.",
+    "Gli eroi da tuffo sono indicati per mobilità e capacità di ribaltare gli scontri."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "DIVE"
+   ],
+   "uncertain": true,
+   "note": "Mappa Push del 2024 con poche guide affidabili; dettagli sulle passerelle da overwatchmaps.gg/overwatchcentral.gg.",
+   "sources": [
+    "https://esports.gg/news/overwatch/everything-we-know-about-the-new-runasapi-push-map-coming-to-overwatch-2/",
+    "https://overwatch.fandom.com/wiki/Runasapi",
+    "https://overwatchmaps.gg/runasapi/guide",
+    "https://overwatchcentral.gg/runasapi/"
+   ]
+  },
+  "samoa": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "open-spaces"
+   ],
+   "envKills": "Volcano: fossato di lava attorno al punto.",
+   "tips": [
+    "Volcano: la lava attorno al punto rende Lúcio fortissimo con le spinte.",
+    "Beach: il punto è in basso, circondato da alture.",
+    "Spazi aperti e alture premiano i tuffatori (Winston, Genji)."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "DIVE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://www.sportskeeda.com/esports/overwatch-2-samoa-guide-how-play-best-heroes",
+    "https://www.sportskeeda.com/esports/overwatch-2-best-dive-heroes-samoa-map",
+    "https://esports.gg/news/overwatch/overwatch-2-reveals-samoa-map-details-during-owl-grand-finals-2023/"
+   ]
+  },
+  "shambali-monastery": {
+   "features": [
+    "env-kills",
+    "high-ground",
+    "chokepoints",
+    "flank-routes"
+   ],
+   "envKills": "Burroni lungo diversi bordi, soprattutto attorno al punto A e sul sentiero.",
+   "tips": [
+    "Il primo tratto (villaggio) è il più difficile: balconi dominano il percorso.",
+    "Ingresso e uscita della miniera sono varchi: un'eliminazione di squadra decide spesso.",
+    "Usate le spinte vicino ai bordi (Lúcio, Roadhog, Orisa, Winston)."
+   ],
+   "attack": "Se perdete lo scontro al villaggio, usate le vie laterali per aggirare il blocco.",
+   "defense": "Controllate le alture (D.Va, Winston, Widowmaker) per pressare chi spinge.",
+   "goodStyles": [],
+   "uncertain": false,
+   "note": "Le guide non indicano uno stile di squadra preferito.",
+   "sources": [
+    "https://hard-drive.net/guides/overwatch-2/overwatch-2-how-to-win-on-shambali-monastery-best-strategy/",
+    "https://gamerant.com/overwatch-2-shambali-monastery-preview/"
+   ]
+  },
+  "suravasa": {
+   "features": [
+    "open-spaces",
+    "long-sightlines"
+   ],
+   "envKills": "",
+   "tips": [
+    "Una delle mappe più grandi: imparate percorsi e kit medici.",
+    "Il primo punto è sempre quello centrale; dopo la rielaborazione è più facile salire in alto.",
+    "Poca altura e qualche linea lunga: una squadra compatta con Lúcio rende bene."
+   ],
+   "attack": "",
+   "defense": "",
+   "goodStyles": [
+    "RUSH"
+   ],
+   "uncertain": true,
+   "note": "Brawl consigliato da una sola fonte (Sportskeeda); nessuna fonte sulle uccisioni ambientali.",
+   "sources": [
+    "https://www.sportskeeda.com/esports/overwatch-2-suravasa-map-how-play-features",
+    "https://overwatch.blizzard.com/en-us/news/24215719/weekly-recall-flashpoint-map-reworks/",
+    "https://liquipedia.net/overwatch/Suravasa"
+   ]
+  },
+  "watchpoint-gibraltar": {
+   "features": [
+    "long-sightlines",
+    "high-ground",
+    "chokepoints",
+    "open-spaces"
+   ],
+   "envKills": "",
+   "tips": [
+    "Linee di tiro lunghe e molti punti alti: Ashe, Ana e Widowmaker rendono bene.",
+    "Secondo tratto: quasi tutti possono salire sopra lo shuttle, ottima altura.",
+    "Primo checkpoint favorevole alla difesa: hangar stretto e alture ai due lati."
+   ],
+   "attack": "Eroi mobili (Genji, Winston) per superare le linee aperte; contestate subito l'altura.",
+   "defense": "Sigma controlla l'altura meglio di tutti; sfruttate i lunghi corridoi.",
+   "goodStyles": [
+    "POKE"
+   ],
+   "uncertain": false,
+   "note": "",
+   "sources": [
+    "https://game8.co/games/Overwatch2/archives/391265",
+    "https://www.sportskeeda.com/esports/how-play-watchpoint-gibraltar-map-overwatch-2",
+    "https://www.esportstales.com/overwatch/best-widowmaker-sniping-spots-watchpoint-gibraltar"
+   ]
+  }
+ },
+ "_researched": "2026-10-05"
 }
