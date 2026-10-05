@@ -17,11 +17,13 @@ print(f"sitemap: {len(urls)} url, overwatch {len(ow)}")
 print("con 'perk':", [u for u in urls if "perk" in u.lower()][:20])
 kinds = sorted({re.sub(r"/[^/]+$", "/…", u) for u in ow})
 print("tipi di pagina overwatch:", kinds[:40])
-hero = next((u for u in ow if re.search(r"/heroes?/ana\b|/ana$", u)), None) or next((u for u in ow if "/heroes/" in u), None)
+hero = next((u for u in ow if u.rstrip("/").endswith("/stats/overwatch/heroes/ana")), None) \
+    or next((u for u in ow if "/stats/overwatch/heroes/" in u), None)
+print("pagine eroe:", [u for u in ow if "/stats/overwatch/heroes/" in u][:5])
 print("pagina eroe di prova:", hero)
 if hero:
     html = get(hero)
     hits = [m.group(0) for m in re.finditer(r".{100}[Pp]erk.{160}", html)]
     print(f"'perk' nella pagina: {len(hits)}")
-    for h in hits[:12]:
+    for h in hits[:25]:
         print("  ", h.replace("\n", " ")[:260])
