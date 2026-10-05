@@ -25,8 +25,10 @@ BASES = ["https://counterwatch.gg/stats/overwatch", "https://www.counterwatch.gg
 UA = {"User-Agent": "Mozilla/5.0 (personal counterpick helper)"}
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MIN_HEROES, MIN_MAPS = 35, 15
-RANKED_QUERIES = ["gameType=Ranked", "game_type=Ranked", "type=Ranked", "queue=Ranked",
-                  "gameMode=Ranked", "mode=Ranked", "gameType=ranked", "ranked=true"]
+# Il parametro vero del sito è "type" (diagnosi del 2026-10-05), ma oggi la pagina servita dal server
+# lo ignora: i dati Ranked il sito li carica nel browser dal suo database. Lo proviamo comunque
+# (1 richiesta al giorno al massimo) nel caso il server cominci a rispettarlo.
+RANKED_QUERIES = ["type=Ranked"]
 RETRY_DISCOVERY_HOURS = 24  # se il filtro non si trova, riprovare al massimo una volta al giorno
 
 

@@ -57,6 +57,15 @@ parametro anche per le pagine delle mappe). Se nessuno funziona: dati di tutte l
 = "All"`, nuova ricerca al massimo ogni 24 h; l'app mostra "tutte le partite (filtro Ranked non trovato)".
 Se un filtro già noto smette di funzionare → `problems` (uscita 2, mail).
 
+**Diagnosi del 2026-10-05** (`tools/discover_ranked.py`, workflow "Diagnosi filtro Ranked"): nell'URL i filtri
+sono `mode` (5V5), `type` (All/Ranked/Unranked), `division`. Ma la pagina servita dal server ignora `type`:
+"All" viene da file di statistiche pubblicati, mentre Ranked/divisioni il sito li legge **nel browser** dal suo
+database Supabase (`/rest/v1/community_stats_counters_current`, `…_synergies_current`, `…_current` per le
+mappe, filtri `game`, `stat_category`, `game_type`, `division`) con la chiave pubblica del sito.
+Una prova con la prima chiave trovata nel JS ha dato 401 (probabilmente era quella sbagliata: il sito usa
+`supabasePublishableKey`). **In sospeso**: l'utente deve decidere se interrogare direttamente quel database
+(è ciò che fa il browser, ma è un passo oltre la lettura delle pagine). Finché non decide: dati "All".
+
 ## I dati (formato di app/data.json)
 
 ```
