@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Diagnosi: come counterwatch carica i dati Ranked/divisione. Gira in GitHub Actions; non serve all'app.
-La chiave pubblica (anon) del database del sito viene usata solo per le prove e non viene stampata."""
-import json, re, time, urllib.parse, urllib.request
+"""Diagnosi: dati Ranked dal database pubblico di counterwatch (sola lettura). Gira in GitHub Actions.
+Le chiavi non vengono mai stampate (mascherate come <KEY>)."""
+import json, re, time, urllib.request
 
 BASE = "https://counterwatch.gg"
 UA = {"User-Agent": "Mozilla/5.0 (personal counterpick helper)"}
+mask = lambda s: re.sub(r'(sb_publishable_|eyJ)[\w.-]+', "<KEY>", s)
 
 
 def get(url, headers=None):
@@ -14,36 +15,48 @@ def get(url, headers=None):
         return r.read().decode("utf-8", "ignore"), dict(r.headers)
 
 
-html, _ = get(BASE + "/stats/overwatch/team-builder?type=Ranked")
-m = re.search(r'UsedAllFallback\\?":(true|false)', html)
-print("SSR ?type=Ranked → UsedAllFallback:", m and m.group(1))
+html, _ = get(BASE + "/stats/overwatch/team-builder")
 chunks = sorted(set(re.findall(r'/_next/static/chunks/[^"\\ ]+?\.js', html)))
-url = key = None
-queries = set()
+keys, url = [], None
 for c in chunks:
     js, _ = get(BASE + c)
-    for mm in re.finditer(r'https://[a-z0-9]+\.supabase\.co', js):
-        url = url or mm.group(0)
-    for mm in re.finditer(r'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}', js):
-        key = key or mm.group(0)
-    if "rest/v1" in js or "community_stats" in js:
-        print(f"\n===== {c}")
-        for mm in re.finditer(r'.{120}(?:rest/v1|community_stats_[a-z_]+\?select).{260}', js):
-            print("  ", mm.group(0)[:400])
-        for mm in re.finditer(r'(community_stats_[a-z_]+)\?select=([^&`$]+)', js):
-            queries.add((mm.group(1), mm.group(2)))
-        for mm in re.finditer(r'.{40}[,;\s]v=\(?[a-z,]*\)?=>.{120}', js):
-            print("   v():", mm.group(0)[:200])
-print("\nsupabase url:", url, "| chiave anon trovata:", bool(key), len(key or ""))
-print("tabelle:", sorted(queries))
-if url and key:
-    hdr = {"apikey": key, "Authorization": f"Bearer {key}", "Prefer": "count=exact"}
-    for table, sel in sorted(queries):
-        for gt in ["Ranked", "All"]:
-            q = (f"{url}/rest/v1/{table}?select={sel}&game=eq.Overwatch&stat_category=eq.5V5"
-                 f"&game_type=eq.{gt}&division=eq.All&limit=2")
+    url = url or (re.search(r'https://[a-z0-9]+\.supabase\.co', js) or [None])[0]
+    keys += re.findall(r'sb_publishable_[\w-]+', js) + re.findall(r'eyJ[\w-]{10,}\.[\w-]{20,}\.[\w-]{10,}', js)
+    for w in ["supabasePublishableKey", "shrinkWinRate", "shrinkCounterRows", "expandDivisions"]:
+        for m in list(re.finditer(r'.{150}' + w + r'.{350}', js))[:2]:
+            print(f"[{c[-18:]}] {w}: {mask(m.group(0))[:500]}\n")
+keys = list(dict.fromkeys(keys))
+print("url:", url, "| chiavi trovate:", [("sb_publishable" if k.startswith("sb_") else "jwt", len(k)) for k in keys])
+
+
+def rest(key, q):
+    h = {"apikey": key, "Authorization": f"Bearer {key}", "Prefer": "count=exact"}
+    return get(f"{url}/rest/v1/{q}", h)
+
+
+for i, key in enumerate(keys):
+    for game in ["overwatch", "Overwatch"]:
+        q = (f"community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches"
+             f"&game=eq.{game}&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All&limit=3")
+        try:
+            body, h = rest(key, q)
+            print(f"chiave {i} game={game}: {h.get('Content-Range')} {body[:300]}")
+        except Exception as e:
+            print(f"chiave {i} game={game}: {e}")
+            continue
+        if not body.startswith("[") or body == "[]":
+            continue
+        for q2 in [f"community_stats_counters_current?select=game_type,division&game=eq.{game}&stat_category=eq.5V5&limit=1000",
+                   f"community_stats_current?select=*&game=eq.{game}&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All&limit=1",
+                   f"community_stats_synergies_current?select=hero_id,ally_hero_id,win_rate,total_matches&game=eq.{game}&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All&limit=2",
+                   f"community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches&game=eq.{game}&stat_category=eq.5V5&game_type=eq.All&division=eq.All&limit=2"]:
             try:
-                body, h = get(q, hdr)
-                print(f"\n{table} [{gt}] count={h.get('Content-Range')} → {body[:300]}")
+                b, h = rest(key, q2)
+                if "select=game_type,division" in q2:
+                    rows = json.loads(b)
+                    print("combinazioni game_type/division:", sorted({(r["game_type"], r["division"]) for r in rows}), h.get("Content-Range"))
+                else:
+                    print(q2.split("?")[0], h.get("Content-Range"), b[:400])
             except Exception as e:
-                print(f"\n{table} [{gt}] ERRORE {e}")
+                print(q2.split("?")[0], "ERRORE", e)
+        raise SystemExit(0)

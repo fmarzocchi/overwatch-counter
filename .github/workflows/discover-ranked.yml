@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [tools/discover_perks.py]
+    paths: [tools/discover_ranked.py]
 
 permissions:
   contents: read
@@ -16,4 +16,4 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/discover_perks.py
+      - run: python3 tools/discover_ranked.py
