@@ -159,6 +159,10 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   **Niente scroll dentro i riquadri** (liste complete e distese; si scorre solo pagina o scheda). Collaudo e2e:
   "tutte le selezioni: ogni eroe toccabile" su 360×640 e 390×844 + "nessuno scroll interno" (falliscono sulla
   versione precedente, verificato). Schermi ≤ 380 px: layout compatto via media query.
+- **Telefoni dell'utente**: Nothing Phone (3) (1260×2800, 460 ppi, ~420×860 CSS utili) e Xiaomi 14T della ragazza
+  (1220×2712, 446 ppi, ~407×833 CSS utili). e2e li prova (tocchi, nomi non troncati per tutti i 53 eroi, griglia,
+  niente scorrimento orizzontale); l'emulatore li imita con `wm size`/`wm density 480` + prova con carattere 130%.
+  Stima sotto il volto (il nome ha tutta la riga), nomi della griglia su 2 righe.
 
 ## L'app (PWA) — come deve essere
 

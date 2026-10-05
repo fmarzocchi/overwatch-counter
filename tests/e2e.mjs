@@ -252,8 +252,11 @@ try {
   check("aggiorna senza token: spiega come attivarlo", (await text(page, "#toast")).includes("token"));
 
   // ---------- tutte le selezioni fatte: ogni eroe resta toccabile (schermo piccolo e normale) ----------
-  for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }]) {
-    const { ctx: c7, page: p7 } = await newPage({ viewport: vp, serviceWorkers: "block" });
+  // schermi: piccolo di riferimento, Xiaomi 14T (407×905 meno barre di sistema), Nothing Phone (3) (≈420×933 meno barre)
+  for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 407, height: 833, name: "Xiaomi 14T" },
+    { width: 420, height: 860, name: "Nothing Phone (3)" }]) {
+    const { ctx: c7, page: p7 } = await newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 3, serviceWorkers: "block" });
+    const label = vp.name ? `${vp.name} (${vp.width}×${vp.height})` : `${vp.width}×${vp.height}`;
     await p7.addInitScript(() => localStorage.setItem("owc.profile", JSON.stringify({ useTheory: true,
       players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] })));
     await p7.goto(BASE);
@@ -288,8 +291,30 @@ try {
       }
       return { bad, maxStack: Math.round(maxStack), tabs: Math.round(tabs) };
     });
-    check(`${vp.width}×${vp.height}, tutte le selezioni: ogni eroe toccabile`, res.bad.length === 0, res.bad.join(", "));
-    check(`${vp.width}×${vp.height}: barra fissa in alto bassa (≤ 140 px)`, res.maxStack <= 140, `${res.maxStack}px`);
+    check(`${label}, tutte le selezioni: ogni eroe toccabile`, res.bad.length === 0, res.bad.join(", "));
+    check(`${label}: barra fissa in alto bassa (≤ 140 px)`, res.maxStack <= 140, `${res.maxStack}px`);
+    // nessun nome di eroe troncato nei consigli (tutti i 53, anche i più lunghi) e niente scorrimento orizzontale
+    const fit = await p7.evaluate(async () => {
+      window.scrollTo(0, 0);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const nameEl = document.querySelector(".pick .sug:not(.first) .sug-name");
+      const top = nameEl.parentElement;
+      const est = top.querySelector(".sug-est"); // se la stima è sulla stessa riga del nome, toglie spazio
+      const avail = top.getBoundingClientRect().width - (est ? est.getBoundingClientRect().width + 6 : 0);
+      const ctx2 = document.createElement("canvas").getContext("2d");
+      const cs = getComputedStyle(nameEl);
+      ctx2.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
+      const tooLong = names.filter((n) => ctx2.measureText(n).width > avail);
+      const gridCut = [...document.querySelectorAll("#grid .hero .nm")].filter((x) => x.scrollHeight > x.clientHeight + 1 || x.scrollWidth > x.clientWidth + 1).map((x) => x.textContent);
+      return { tooLong, gridCut, overflow: document.documentElement.scrollWidth - window.innerWidth, avail: Math.round(avail) };
+    });
+    if (vp.name || vp.width >= 390) {
+      check(`${label}: nessun nome troncato nei consigli`, fit.tooLong.length === 0, `spazio ${fit.avail}px, troncati: ${fit.tooLong.join(", ")}`);
+      check(`${label}: nomi nella griglia interi`, fit.gridCut.length === 0, fit.gridCut.join(", "));
+    }
+    check(`${label}: niente scorrimento orizzontale`, fit.overflow <= 0, `${fit.overflow}px`);
+    if (vp.name) await shot(p7, `12-${vp.name.replace(/\W+/g, "-")}`);
     await p7.evaluate(() => window.scrollTo(0, 900));
     await p7.waitForTimeout(100);
     if (vp.height === 640) await shot(p7, "11-tutte-le-selezioni-scorso");

@@ -413,9 +413,11 @@ function renderPicks() {
             "aria-label": `${k + 1}°: ${r.hero.name}, stima ${est(r)}, ${breakdown(r, partner).map((b) => b.text).join(", ")}. Tocca per i dettagli`,
             onclick: () => openDetails(i, r),
           },
-          el("span", { class: "sug-face" }, face(r.hero), el("span", { class: "sug-n", "aria-hidden": "true" }, String(k + 1))),
+          // percentuale sotto il volto: il nome ha tutta la riga (niente nomi troncati)
+          el("span", { class: "sug-face" }, face(r.hero), el("span", { class: "sug-n", "aria-hidden": "true" }, String(k + 1)),
+            el("span", { class: "sug-est" }, est(r))),
           el("span", { class: "sug-body" },
-            el("span", { class: "sug-top" }, el("span", { class: "sug-name" }, r.hero.name), el("span", { class: "sug-est" }, est(r))),
+            el("span", { class: "sug-top" }, el("span", { class: "sug-name" }, r.hero.name)),
             breakdown(r, partner).map((b) => el("span", { class: `sug-why ${b.good ? "good" : "bad"}` }, b.text)),
             theoryLine(r)),
           )))),

@@ -37,3 +37,32 @@ adb logcat -d | grep -E "chromium|CONSOLE|FATAL|AndroidRuntime: (FATAL|Process)"
 if [ -z "$pid" ]; then echo "ERRORE: l'app non è più in esecuzione"; exit 1; fi
 if grep -E "CONSOLE.*Uncaught" "$OUT/logcat.txt"; then echo "ERRORE: errori JavaScript nell'app (vedi sopra)"; exit 1; fi
 echo "app in esecuzione (pid $pid)"
+
+# Schermi dei telefoni dell'utente: stessa risoluzione e densità (≈ fattore 3 → 480 dpi logici).
+# Nothing Phone (3): 1260×2800, 460 ppi. Xiaomi 14T: 1220×2712, 446 ppi. Più una prova con il carattere
+# di sistema ingrandito (130%), che la WebView applica anche all'app.
+device_shot() { # nome larghezza altezza scala_carattere
+  adb shell wm size "$2x$3"
+  adb shell wm density 480
+  adb shell settings put system font_scale "$4"
+  adb shell am force-stop "$PKG"
+  adb shell am start -W -n "$PKG/.MainActivity" > /dev/null
+  for i in $(seq 1 18); do
+    sleep 5
+    shot "$1"
+    if [ "$(stat -c %s "$OUT/$1.png")" -gt 250000 ]; then break; fi
+  done
+  sleep 6
+  shot "$1"
+  adb shell input swipe $(($2 / 2)) $(($3 * 80 / 100)) $(($2 / 2)) $(($3 * 30 / 100)) 300
+  sleep 2
+  shot "$1-scorso"
+}
+device_shot 4-nothing-phone-3 1260 2800 1.0
+device_shot 5-xiaomi-14t 1220 2712 1.0
+device_shot 6-xiaomi-14t-carattere-130 1220 2712 1.3
+adb shell wm size reset; adb shell wm density reset; adb shell settings put system font_scale 1.0
+adb logcat -d | grep -E "chromium|CONSOLE|FATAL|AndroidRuntime: (FATAL|Process)" > "$OUT/logcat.txt" || true
+if grep -E "CONSOLE.*Uncaught" "$OUT/logcat.txt"; then echo "ERRORE: errori JavaScript sugli schermi dei telefoni"; exit 1; fi
+if [ -z "$(adb shell pidof "$PKG" || true)" ]; then echo "ERRORE: l'app si è chiusa"; exit 1; fi
+echo "schermi dei telefoni: ok"
