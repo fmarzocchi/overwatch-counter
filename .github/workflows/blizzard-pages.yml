@@ -11,12 +11,14 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/fetch_blizzard.py --out /tmp/blizzard
+      - run: python3 -u tools/fetch_blizzard.py --out /tmp/blizzard --budget 1200
       - name: Salva la copia nel ramo fixtures-blizzard
+        if: always()
         run: |
+          ls /tmp/blizzard | head -5 && [ -n "$(ls -A /tmp/blizzard)" ] || exit 1
           tar czf /tmp/blizzard.tar.gz -C /tmp blizzard
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
