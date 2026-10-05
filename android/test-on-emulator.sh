@@ -9,7 +9,16 @@ shot() { adb exec-out screencap -p > "$OUT/$1.png"; echo "screenshot $1"; }
 
 adb install -r "$APK"
 adb shell am start -W -n "$PKG/.MainActivity"
-sleep 35                                    # caricamento dal sito + icone
+# attende che la pagina sia disegnata: una schermata vuota (solo sfondo) è un PNG piccolo
+loaded=""
+for i in $(seq 1 24); do
+  sleep 5
+  shot 1-avvio
+  if [ "$(stat -c %s "$OUT/1-avvio.png")" -gt 200000 ]; then loaded=1; break; fi
+  if [ "$i" = 12 ]; then echo "pagina ancora vuota dopo 60 s: riavvio l'app"; adb shell am force-stop "$PKG"; adb shell am start -W -n "$PKG/.MainActivity"; fi
+done
+if [ -z "$loaded" ]; then echo "ERRORE: dopo 2 minuti l'app è ancora una schermata vuota"; exit 1; fi
+sleep 10                                    # icone degli eroi
 shot 1-avvio
 size=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1); W=${size%x*}; H=${size#*x}
 echo "schermo ${W}x${H}"
