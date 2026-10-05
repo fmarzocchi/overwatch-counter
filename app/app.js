@@ -466,7 +466,7 @@ function buildHeroGrid(container, onTap) {
       el("h2", { class: `role-title r-${role}` }, label),
       el("div", { class: "grid" }, heroes.map((h) =>
         el("button", { type: "button", class: "hero", "data-id": sid(h.id), "aria-pressed": "false", onclick: () => onTap(sid(h.id)) },
-          face(h), el("span", { class: "nm" }, h.name)))),
+          face(h), el("span", { class: `nm${h.name.length >= 10 ? " long" : ""}` }, h.name)))),
     );
   }
 }
