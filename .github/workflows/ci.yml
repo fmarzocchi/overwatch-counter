@@ -20,6 +20,8 @@ jobs:
           node-version: 22
       - run: python3 tests/test_fetch.py
       - run: node --test tests/*.test.js
+      # sintassi compatibile con le WebView Android meno recenti (niente ES2021+ come "??=")
+      - run: npx --yes es-check@7 es2020 --module "app/*.js"
       - name: Playwright
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1

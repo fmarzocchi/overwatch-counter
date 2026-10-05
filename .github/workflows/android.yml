@@ -7,6 +7,11 @@ on:
   push:
     branches: [main]
     paths: [android/**, .github/workflows/android.yml]
+  # dopo ogni pubblicazione del sito dovuta a un push (non ai giri dei dati ogni 3 ore):
+  # l'APK apre il sito, quindi il collaudo sull'emulatore va rifatto sulla versione nuova
+  workflow_run:
+    workflows: ["Aggiorna dati e pubblica"]
+    types: [completed]
 
 permissions:
   contents: write
@@ -17,6 +22,7 @@ concurrency:
 
 jobs:
   apk:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:

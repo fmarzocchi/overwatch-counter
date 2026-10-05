@@ -24,6 +24,7 @@ adb shell input tap $((W * 12 / 100)) $((H * 60 / 100))  # tocca un eroe (avvers
 sleep 3
 shot 3-tocco-eroe
 pid=$(adb shell pidof "$PKG" || true)
-adb logcat -d | grep -iE "chromium|console|AndroidRuntime" | tail -80 > "$OUT/logcat.txt" || true
+adb logcat -d | grep -E "chromium|CONSOLE|FATAL|AndroidRuntime: (FATAL|Process)" > "$OUT/logcat.txt" || true
 if [ -z "$pid" ]; then echo "ERRORE: l'app non è più in esecuzione"; exit 1; fi
+if grep -E "CONSOLE.*Uncaught" "$OUT/logcat.txt"; then echo "ERRORE: errori JavaScript nell'app (vedi sopra)"; exit 1; fi
 echo "app in esecuzione (pid $pid)"

@@ -148,7 +148,8 @@ async function loadDivisions() {
 function playerData(i) {
   const k = RANK_DIV[profile.players[i].rank];
   if (!k || !divFiles[k]) return data;
-  return (divData[k] ??= withDivision(data, divFiles[k]));
+  if (!divData[k]) divData[k] = withDivision(data, divFiles[k]); // niente "??=": WebView vecchie non lo conoscono
+  return divData[k];
 }
 
 function dataLabel(i) {
