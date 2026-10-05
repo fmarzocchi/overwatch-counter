@@ -1,62 +1,67 @@
 #!/usr/bin/env python3
-"""Diagnosi: dati Ranked dal database pubblico di counterwatch (sola lettura). Gira in GitHub Actions.
-Le chiavi non vengono mai stampate (mascherate come <KEY>)."""
-import json, re, time, urllib.request
+"""Diagnosi: formula di shrinkage di counterwatch + copia dei dati Ranked per i test offline.
+Sola lettura. Le chiavi non vengono mai stampate né salvate."""
+import json, pathlib, re, statistics, sys, time, urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import fetch_data as fd  # riusa estrazione delle pagine
 
 BASE = "https://counterwatch.gg"
 UA = {"User-Agent": "Mozilla/5.0 (personal counterpick helper)"}
-mask = lambda s: re.sub(r'(sb_publishable_|eyJ)[\w.-]+', "<KEY>", s)
+OUT = pathlib.Path("tests/fixtures_rest")
 
 
 def get(url, headers=None):
     time.sleep(1.0)
-    req = urllib.request.Request(url, headers={**UA, **(headers or {})})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read().decode("utf-8", "ignore"), dict(r.headers)
+    with urllib.request.urlopen(urllib.request.Request(url, headers={**UA, **(headers or {})}), timeout=30) as r:
+        return r.read().decode("utf-8", "ignore")
 
 
-html, _ = get(BASE + "/stats/overwatch/team-builder")
-chunks = sorted(set(re.findall(r'/_next/static/chunks/[^"\\ ]+?\.js', html)))
-keys, url = [], None
-for c in chunks:
-    js, _ = get(BASE + c)
+html = get(BASE + "/stats/overwatch/team-builder")
+key = url = None
+for c in sorted(set(re.findall(r'/_next/static/chunks/[^"\\ ]+?\.js', html))):
+    js = get(BASE + c)
+    if "shrinkWinRate" in js and '"shrinkWinRate",0,r' in js:
+        i = js.index('"shrinkWinRate",0,r')
+        print("DEFINIZIONE shrinkWinRate (prima del nome):\n", js[max(0, i - 900):i + 40], "\n")
+    key = key or (re.search(r'sb_publishable_[\w-]+', js) or [None])[0]
     url = url or (re.search(r'https://[a-z0-9]+\.supabase\.co', js) or [None])[0]
-    keys += re.findall(r'sb_publishable_[\w-]+', js) + re.findall(r'eyJ[\w-]{10,}\.[\w-]{20,}\.[\w-]{10,}', js)
-    for w in ["supabasePublishableKey", "shrinkWinRate", "shrinkCounterRows", "expandDivisions"]:
-        for m in list(re.finditer(r'.{150}' + w + r'.{350}', js))[:2]:
-            print(f"[{c[-18:]}] {w}: {mask(m.group(0))[:500]}\n")
-keys = list(dict.fromkeys(keys))
-print("url:", url, "| chiavi trovate:", [("sb_publishable" if k.startswith("sb_") else "jwt", len(k)) for k in keys])
+print("url:", url, "chiave:", bool(key))
+H = {"apikey": key, "Authorization": f"Bearer {key}"}
 
 
-def rest(key, q):
-    h = {"apikey": key, "Authorization": f"Bearer {key}", "Prefer": "count=exact"}
-    return get(f"{url}/rest/v1/{q}", h)
+def rest_all(q):
+    rows, off = [], 0
+    while True:
+        page = json.loads(get(f"{url}/rest/v1/{q}&limit=1000&offset={off}", H))
+        rows += page
+        if len(page) < 1000:
+            return rows
+        off += 1000
 
 
-for i, key in enumerate(keys):
-    for game in ["overwatch", "Overwatch"]:
-        q = (f"community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches"
-             f"&game=eq.{game}&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All&limit=3")
-        try:
-            body, h = rest(key, q)
-            print(f"chiave {i} game={game}: {h.get('Content-Range')} {body[:300]}")
-        except Exception as e:
-            print(f"chiave {i} game={game}: {e}")
-            continue
-        if not body.startswith("[") or body == "[]":
-            continue
-        for q2 in [f"community_stats_counters_current?select=game_type,division&game=eq.{game}&stat_category=eq.5V5&limit=1000",
-                   f"community_stats_current?select=*&game=eq.{game}&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All&limit=1",
-                   f"community_stats_synergies_current?select=hero_id,ally_hero_id,win_rate,total_matches&game=eq.{game}&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.All&limit=2",
-                   f"community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches&game=eq.{game}&stat_category=eq.5V5&game_type=eq.All&division=eq.All&limit=2"]:
-            try:
-                b, h = rest(key, q2)
-                if "select=game_type,division" in q2:
-                    rows = json.loads(b)
-                    print("combinazioni game_type/division:", sorted({(r["game_type"], r["division"]) for r in rows}), h.get("Content-Range"))
-                else:
-                    print(q2.split("?")[0], h.get("Content-Range"), b[:400])
-            except Exception as e:
-                print(q2.split("?")[0], "ERRORE", e)
-        raise SystemExit(0)
+OUT.mkdir(parents=True, exist_ok=True)
+common = "game=eq.Overwatch&stat_category=eq.5V5&division=eq.All"
+data = {}
+for gt in ["Ranked", "All"]:
+    for name, sel in [("counters", "community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches"),
+                      ("synergies", "community_stats_synergies_current?select=hero_id,ally_hero_id,win_rate,total_matches"),
+                      ("current", "community_stats_current?select=hero_id,map_name,game_mode_name,win_rate,total_matches")]:
+        rows = rest_all(f"{sel}&{common}&game_type=eq.{gt}")
+        data[(gt, name)] = rows
+        (OUT / f"{gt.lower()}_{name}.json").write_text(json.dumps(rows, separators=(",", ":")))
+        print(f"{gt} {name}: {len(rows)} righe")
+
+# confronto con i dati "shrunk" della pagina (All) per ricavare la forza k della correzione verso 50%
+_, page_counters, _, _ = fd.extract_team_builder(fd.payload(html))
+ks = []
+for r in data[("All", "counters")]:
+    s = page_counters.get(str(r["hero_id"]), {}).get(str(r["opponent_hero_id"]))
+    n, w = r["total_matches"], r["win_rate"]
+    if s is not None and abs(s - 0.5) > 0.003 and n > 0:
+        ks.append(n * (w - s) / (s - 0.5))
+print(f"stima k (verso 50%): {len(ks)} celle, mediana {statistics.median(ks):.1f}, "
+      f"quartili {statistics.quantiles(ks, n=4)}" if ks else "nessuna cella confrontabile")
+ex = [(r, page_counters.get(str(r["hero_id"]), {}).get(str(r["opponent_hero_id"]))) for r in data[("All", "counters")][:8]]
+for r, s in ex:
+    print("  esempio", r, "→ pagina", s)

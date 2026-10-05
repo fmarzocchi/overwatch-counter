@@ -1,6 +1,7 @@
 name: Diagnosi counterwatch
 
-# Strumento manuale: stampa nel log come counterwatch codifica i filtri (Ranked, divisione).
+# Strumento manuale: stampa nel log come counterwatch fornisce i dati e salva una copia per i test
+# nel ramo "fixtures-rest" (non tocca main).
 on:
   workflow_dispatch:
   push:
@@ -8,7 +9,7 @@ on:
     paths: [tools/discover_ranked.py]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   discover:
@@ -17,3 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 tools/discover_ranked.py
+      - name: Salva la copia dei dati nel ramo fixtures-rest
+        run: |
+          tar czf /tmp/fixtures_rest.tar.gz -C tests fixtures_rest
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan fixtures-rest
+          git rm -rq --cached .
+          cp /tmp/fixtures_rest.tar.gz fixtures_rest.tar.gz
+          git add fixtures_rest.tar.gz
+          git commit -qm "Copia dei dati Ranked/All dal database di counterwatch (per i test)"
+          git push -f origin fixtures-rest
