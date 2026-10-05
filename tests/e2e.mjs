@@ -613,7 +613,9 @@ try {
 
   // ---------- dati vecchi e con problemi ----------
   {
-    const { ctx: c2, page: p2 } = await newPage();
+    // service worker bloccato: con skipWaiting/claim prenderebbe la pagina e scaricherebbe data.json da sé,
+    // scavalcando i dati "vecchi" simulati qui (page.route non vede le sue richieste) → controllo instabile
+    const { ctx: c2, page: p2 } = await newPage({ serviceWorkers: "block" });
     const old = { ...data, checked: new Date(Date.now() - 3 * 86400e3).toISOString(), problems: ["mappa x: rotta"] };
     await p2.route("**/data.json*", (r) => r.fulfill({ json: old }));
     await p2.goto(BASE);
