@@ -65,6 +65,18 @@ jobs:
             android/app/build/outputs/apk/debug/app-debug.apk
             android-shots/
 
+      - name: Esito del collaudo nel ramo "apk-test" (anche se fallisce)
+        if: always()
+        run: |
+          mkdir -p /tmp/t && cp -r android-shots /tmp/t/ 2>/dev/null || echo "nessuno screenshot" > /tmp/t/vuoto.txt
+          cd /tmp/t
+          git init -q -b apk-test
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "Collaudo APK n. ${{ github.run_number }}: ${{ job.status }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" apk-test
+
       - name: Pubblica l'ultima APK nel ramo "apk"
         run: |
           mkdir -p /tmp/apk && cp android/app/build/outputs/apk/debug/app-debug.apk /tmp/apk/OW-Counter.apk
