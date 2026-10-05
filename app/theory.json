@@ -1,0 +1,4821 @@
+{
+ "_info": "Teoria di gioco per eroe (sinergie, counter, come si gioca), raccolta il 2026-10-05 da guide e siti di Overwatch tramite ricerca web (riassunti dei risultati; le pagine non sono state aperte per intero). Le voci basate solo su statistiche sono state tolte. Si può correggere a mano: chiave = nome dell'eroe.",
+ "Ana": {
+  "tags": [
+   "sniper",
+   "long-range",
+   "anti-heal",
+   "cc",
+   "main-healer",
+   "squishy"
+  ],
+  "synergies": [
+   {
+    "hero": "Genji",
+    "why": "Nano Boost di Ana su Dragonblade di Genji: il classico Nanoblade"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "Nano Boost su Reinhardt: pochi colpi di martello per più uccisioni"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Kitsune Rush + Nano Boost: due ultimate che si sommano"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Ana è poco mobile: la velocità di Lúcio la aiuta a spostarsi"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Sleep Dart di Ana + Orb of Discord di Zenyatta sul bersaglio addormentato"
+   },
+   {
+    "hero": "Lifeweaver",
+    "why": "Petal Platform dà ad Ana posizioni alte, Life Grip la salva dai tuffi"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Roadhog",
+    "why": "Anti-nade (Biotic Grenade) annulla Take a Breather di Roadhog"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Anti-nade blocca le cure che tengono in vita Mauga"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Lúcio combatte da vicino: facile Sleep Dart, l'anti-nade lo fa scappare"
+   },
+   {
+    "hero": "Winston",
+    "why": "Sleep Dart ferma Winston che salta sulla backline"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Doomfist",
+    "why": "Doomfist arriva da angoli che Sleep Dart non copre e uccide in una combo"
+   },
+   {
+    "hero": "Genji",
+    "why": "Deflect di Genji rimanda Sleep Dart e gli apre la strada"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Blink e Recall di Tracer rendono difficilissimo colpirla con Sleep Dart"
+   },
+   {
+    "hero": "Moira",
+    "why": "Fade di Moira schiva Sleep Dart e i colpi del fucile di Ana"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Wraith Form di Reaper schiva Sleep Dart e l'anti-nade"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Protection Suzu di Kiriko ripulisce l'anti-nade di Ana"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "tanky",
+    "dive"
+   ],
+   "avoidTargets": [
+    "mobile"
+   ],
+   "tips": [
+    "Tieni Sleep Dart per chi si tuffa su di te (Winston, Doomfist, Genji)",
+    "Biotic Grenade nel momento chiave: blocca le cure nemiche e cura i tuoi",
+    "Sei poco mobile: resta dietro, in vista del tank, con una via di fuga",
+    "Nano Boost su chi ha l'ultimate pronta (Genji, Reinhardt)"
+   ],
+   "attack": "All'ingresso anti-nade sul tank nemico: senza cure la difesa crolla",
+   "defense": "Resta protetta dietro al tank e addormenta chi entra per primo"
+  },
+  "uncertain": false,
+  "note": "Kit 2026: Biotic Grenade ricarica 12 s (patch Season 2). Pagine lette tramite i riassunti della ricerca web (WebFetch bloccato).",
+  "sources": [
+   "https://gamerant.com/overwatch-2-ana-guide/",
+   "https://gamelevate.com/overwatch-heroes-counter-ana/",
+   "https://www.gamersdecide.com/articles/overwatch-ana-counter",
+   "https://rankedboost.com/overwatch/counters/ana/",
+   "https://www.thegamer.com/overwatch-2-best-support-healers-heroes-combos/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-tank",
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
+  ]
+ },
+ "Anran": {
+  "tags": [
+   "projectile",
+   "dive",
+   "mobile",
+   "squishy",
+   "burst",
+   "short-range",
+   "immortality"
+  ],
+  "synergies": [
+   {
+    "hero": "Zarya",
+    "why": "Barriera proiettata di Zarya la copre mentre entra alle spalle senza subire CC"
+   },
+   {
+    "hero": "D.Va",
+    "why": "D.Va entra con Matrice e burst: assassinio coordinato in dive"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Ana",
+    "why": "Supporto poco mobile: Inferno Rush la raggiunge e la bruciatura la finisce"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Debole da vicino: Anran la raggiunge di lato con Inferno Rush"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Nessuna mobilità: bersaglio facile per un fiancheggiatore che brucia"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "In aria resta fuori dalla portata corta dei ventagli di Anran"
+   },
+   {
+    "hero": "Echo",
+    "why": "In volo schiva gli attacchi ravvicinati di Anran"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Suzu purifica la bruciatura di Ignition"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Le barriere di Zarya assorbono il danno e tolgono la bruciatura"
+   },
+   {
+    "hero": "Moira",
+    "why": "Indicata dalle guide tra i counter più duri di Anran"
+   },
+   {
+    "hero": "Winston",
+    "why": "Insegue ogni scatto e la Tesla non richiede mira"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "tanky",
+    "flyer"
+   ],
+   "tips": [
+    "Tieni sempre una carica di Inferno Rush: una per entrare, una per uscire",
+    "Marchia con due colpi (Ignition), poi Fan the Flames per amplificare la bruciatura",
+    "Dancing Blaze rende invulnerabile: usala per schivare ultimate o finire un bersaglio",
+    "Il raggio di Dancing Blaze è piccolo: usala solo a contatto"
+   ],
+   "attack": "Aggira il punto e colpisci i supporti mentre il tank apre lo scontro",
+   "defense": "Aspetta di lato e punisci chi resta isolato, poi rientra con Inferno Rush"
+  },
+  "uncertain": true,
+  "note": "Eroe del 2026: kit confermato da più guide, counter e sinergie in parte da dati aggregati di guide recenti; poche sinergie motivate trovate.",
+  "sources": [
+   "https://www.thegamer.com/overwatch-anran-abilities-explanation-hero-guide-tips-tricks/",
+   "https://www.pcgamer.com/games/fps/overwatch-anran-abilities-perks/",
+   "https://turboboost.gg/article/how-to-play-anran-overwatch-guide",
+   "https://1v9.gg/blog/anran-overwatch-guide",
+   "https://rankedboost.com/overwatch/counters/anran/",
+   "https://overbuddy.com/heroes/ANRAN/counters/",
+   "https://us.forums.blizzard.com/en/overwatch/t/how-to-counter-anran-as-dps-or-support/1021448"
+  ]
+ },
+ "Ashe": {
+  "tags": [
+   "hitscan",
+   "long-range",
+   "high-ground",
+   "burst"
+  ],
+  "synergies": [
+   {
+    "hero": "Mercy",
+    "why": "Danno potenziato rende certo il colpo doppio; Mercy la segue sui salti del Coach Gun"
+   },
+   {
+    "hero": "Sigma",
+    "why": "Barriera piazzata a distanza protegge un DPS da lontano isolato"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Matrice amplificatrice moltiplica i colpi della Viper e la Dinamite"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Pharah",
+    "why": "I colpi mirati della Viper uccidono Pharah in due tiri da terra"
+   },
+   {
+    "hero": "Echo",
+    "why": "Hitscan a lunga distanza punisce Echo in volo"
+   },
+   {
+    "hero": "Mercy",
+    "why": "Mercy in volo dietro a Pharah è un bersaglio facile per un hitscan"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Widowmaker",
+    "why": "Vince il duello a distanza: più portata e colpo singolo letale"
+   },
+   {
+    "hero": "Genji",
+    "why": "Segue Ashe in alto dopo il Coach Gun e respinge i colpi con Deflect"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Fiancheggiatrice rapida che la prende da vicino"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera assorbe i colpi della Viper"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Chiude la distanza su una sniper poco mobile"
+   }
+  ],
+  "play": {
+   "position": "high-ground",
+   "targets": [
+    "squishy",
+    "flyer"
+   ],
+   "avoidTargets": [
+    "shield",
+    "tanky"
+   ],
+   "tips": [
+    "Usa il Coach Gun per salire in alto o per scappare",
+    "Spara alla Dinamite per farla esplodere subito e caricare B.O.B.",
+    "B.O.B. lancia in aria i nemici: approfittane per colpi in testa"
+   ],
+   "attack": "Prendi una posizione alta con il Coach Gun e colpisci i supporti da lontano",
+   "defense": "Tieni le linee lunghe e lancia Dinamite sul choke all'ingresso nemico"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://gamerant.com/overwatch-2-ashe-guide-tips-abilities-tricks-playstyle/",
+   "https://rankedboost.com/overwatch/counters/ashe/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-ashe",
+   "https://fenixbazaar.com/2025/07/17/overwatch-2-ashe-guide/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
+   "https://www.esportsheaven.com/features/how-to-counter-pharah-in-overwatch-2"
+  ]
+ },
+ "Baptiste": {
+  "tags": [
+   "hitscan",
+   "immortality",
+   "main-healer",
+   "high-ground",
+   "deployable",
+   "burst"
+  ],
+  "synergies": [
+   {
+    "hero": "Soldier: 76",
+    "why": "Amplification Matrix su Tactical Visor di Soldier: 76 raddoppia i danni"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Baptiste e Cassidy: coppia hitscan che regge contro dive e poke"
+   },
+   {
+    "hero": "Lifeweaver",
+    "why": "Exo Boots + Petal Platform: posizioni alte e tanta cura insieme"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "Reinhardt chiede tante cure: Baptiste gliele dà, Immortality Field lo salva"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Mauga chiede tante cure: meglio un healer forte come Baptiste"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Junkrat",
+    "why": "Immortality Field annulla RIP-Tire; Junkrat in volo è facile per l'hitscan"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Immortality Field salva gli alleati dalla bomba di D.Va"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Pulse Bomb su Immortality Field distrugge solo il campo, non l'alleato"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Roadhog",
+    "why": "Chain Hook tira fuori da Immortality Field; Whole Hog sfonda le cure"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix nega le cure, Micro Missiles distruggono Immortality Field"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Orisa spinge i nemici fuori dal raggio di Immortality Field"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Il pugno di Doomfist butta fuori dal campo; Baptiste ha poche risposte"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Widowmaker distrugge Immortality Field da lontano appena compare"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Concussive Blast di Pharah spinge fuori da Immortality Field"
+   },
+   {
+    "hero": "Echo",
+    "why": "Sticky Bombs di Echo forzano o distruggono Immortality Field"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack di Sombra blocca le abilità di Baptiste nel momento chiave"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Usa Exo Boots per salire sulle posizioni alte",
+    "Immortality Field ha un cooldown lungo: tienilo per le ultimate a raffica nemiche",
+    "Amplification Matrix quando un alleato usa l'ultimate (es. Tactical Visor)",
+    "Regenerative Burst per restare in vita nei duelli"
+   ],
+   "attack": "Tieni Immortality Field per la prima mischia: salva chi entra per primo",
+   "defense": "Dall'alto (Exo Boots) punisci chi avanza; Matrix davanti alla strozzatura"
+  },
+  "uncertain": false,
+  "note": "Kit 2026 (patch Season 4): Immortality Field 25% di soglia, 20 s di ricarica, 150 HP.",
+  "sources": [
+   "https://primagames.com/tips/how-to-counter-baptiste-in-overwatch-2",
+   "https://www.pcgamesn.com/overwatch/baptiste-abilities-counters",
+   "https://rankedboost.com/overwatch/counters/baptiste/",
+   "https://medium.com/@panshikar.pratyush/the-plat-players-perspective-hero-30-baptiste-2cc2dbe52a9b",
+   "https://progameguides.com/overwatch/best-heroes-to-pair-with-lifeweaver-in-overwatch-2/",
+   "https://mobalytics.gg/overwatch/heroes/jetpack-cat-guide",
+   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/"
+  ]
+ },
+ "Bastion": {
+  "tags": [
+   "projectile",
+   "burst",
+   "spam"
+  ],
+  "synergies": [
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera copre Bastion fermo in Configurazione: Assalto"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Coppia classica: Orisa fa da scudo e prende l'attenzione davanti a Bastion"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "Bastion copre la distanza, Symmetra i nemici vicini: si coprono a vicenda"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Reinhardt",
+    "why": "L'Assalto scioglie barriere e tank grossi con il suo ritmo di fuoco"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "Bersaglio grande che l'Assalto colpisce sempre"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Sigma",
+    "why": "Presa cinetica assorbe i colpi dell'Assalto e li trasforma in scudo"
+   },
+   {
+    "hero": "Genji",
+    "why": "Deflect respinge i colpi e Genji lo prende alle spalle"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Lo aggira e lo colpisce quando è lento in Assalto"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Danno esplosivo ad area punisce un bersaglio lento"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Razzi dall'alto mentre Bastion è fermo e lento"
+   },
+   {
+    "hero": "Ana",
+    "why": "Dardo soporifero colpisce facilmente un bersaglio lento"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Le barriere assorbono l'Assalto e caricano l'energia di Zarya"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "tanky",
+    "shield"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Entra in Assalto da dietro il tuo tank: ricevi il 20% di danno in meno",
+    "Non restare in Assalto in campo aperto: sei lento e facile da colpire",
+    "Usa l'Assalto quando i nemici non hanno barriere o mangia-proiettili pronti"
+   ],
+   "attack": "Accompagna il tank sul punto e usa l'Assalto per rompere la loro difesa",
+   "defense": "Gioca dietro una barriera o un angolo e falcia chi entra dal choke"
+  },
+  "uncertain": false,
+  "note": "Pochi counter a favore motivati nelle fonti. Le modifiche del 30 giu 2026 (modalità Community Crafted) non riguardano il 5v5 Ranked.",
+  "sources": [
+   "https://www.sportskeeda.com/esports/best-overwatch-2-heroes-counter-bastion",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
+   "https://us.forums.blizzard.com/en/overwatch/t/bastion-and-orisa-combo-how-counter-them/188287",
+   "https://us.forums.blizzard.com/en/overwatch/t/whats-the-best-way-to-counter-orisa-bastion-rein-combo/262560",
+   "https://segmentnext.com/overwatch-2-symmetra/"
+  ]
+ },
+ "Brigitte": {
+  "tags": [
+   "melee",
+   "short-range",
+   "shield",
+   "cc",
+   "sustain"
+  ],
+  "synergies": [
+   {
+    "hero": "Reinhardt",
+    "why": "Kit da mischia complementari: Rally dà armatura prima di Earthshatter"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Brawl ravvicinato: Brigitte cura con Inspire mentre Junker Queen picchia"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "La velocità di Lúcio porta Brigitte a contatto; cure che si sommano"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Rally dà a Roadhog armatura e vita extra"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Tracer",
+    "why": "Shield Bash e Whip Shot puniscono Tracer che entra in mischia"
+   },
+   {
+    "hero": "Winston",
+    "why": "Stun e respinte fermano Winston che si tuffa sui supporti"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Brigitte protegge i compagni da chi li attacca da vicino come Sombra"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Brigitte regge bene i tuffi ravvicinati di D.Va"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "Pharah in aria è sempre fuori portata del Rocket Flail di Brigitte"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Le granate di Junkrat girano attorno a scudo e angoli"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Ramattra vince il brawl ravvicinato contro Brigitte"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "dive",
+    "melee"
+   ],
+   "avoidTargets": [
+    "flyer",
+    "long-range"
+   ],
+   "tips": [
+    "Colpisci entro 6 m: Rocket Flail e Shield Bash attivano Inspire, la tua cura",
+    "Proteggi gli altri supporti da chi si tuffa (Tracer, Winston)",
+    "Rally prima dell'ultimate del tank (es. Earthshatter)",
+    "Contro squadre a distanza o volanti rendi poco: valuta un cambio"
+   ],
+   "attack": "Entra con il tank e Rally per vincere la mischia sul carico",
+   "defense": "Resta vicina ai supporti e respingi i tuffatori con Shield Bash"
+  },
+  "uncertain": false,
+  "note": "Kit 2026 (Season 4): 175 HP + 75 armatura. 'counters' su D.Va e Sombra in parte da statistiche counterwatch citate dalle guide.",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/brigitte",
+   "https://gamertweak.com/counter-brigitte-in-overwatch-2/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-brigitte",
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-brigitte",
+   "https://fenixbazaar.com/2025/07/08/overwatch-2-brigitte-guide/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-tank",
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/"
+  ]
+ },
+ "Cassidy": {
+  "tags": [
+   "hitscan",
+   "burst",
+   "cc"
+  ],
+  "synergies": [
+   {
+    "hero": "Genji",
+    "why": "La granata di Cassidy blocca il bersaglio per lo Swift Strike di Genji"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "Piledriver lancia in aria i nemici: colpo in testa facile per Cassidy"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Cassidy finisce in fretta i bersagli hackerati da Sombra"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Echo",
+    "why": "Hitscan e granata colpiscono Echo anche in volo"
+   },
+   {
+    "hero": "Vendetta",
+    "why": "La granata la insegue e il Peacekeeper la uccide tra un fendente e l'altro"
+   },
+   {
+    "hero": "Shion",
+    "why": "Gli effetti di controllo interrompono le combo di Shion"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Widowmaker",
+    "why": "Lo uccide prima che arrivi alla sua distanza utile"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Più portata: Cassidy perde contro chi spara da lontano"
+   },
+   {
+    "hero": "Genji",
+    "why": "Deflect gli rimanda indietro i colpi del Peacekeeper"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera assorbe i colpi singoli di Cassidy"
+   },
+   {
+    "hero": "Winston",
+    "why": "Salta sopra di lui e la Tesla non si schiva rotolando"
+   },
+   {
+    "hero": "Ana",
+    "why": "Dardo soporifero e granata lo fermano a media distanza"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "flyer",
+    "squishy",
+    "dive"
+   ],
+   "avoidTargets": [
+    "shield",
+    "eat-projectiles"
+   ],
+   "tips": [
+    "Granata più un colpo di Peacekeeper è una combo quasi sempre letale",
+    "Tieni la granata per i fiancheggiatori che vengono sulla tua linea",
+    "Stai a media distanza: perdi contro chi spara più lontano"
+   ],
+   "attack": "Segui il tank e punisci i difensori che si affacciano dagli angoli",
+   "defense": "Proteggi i supporti dai fiancheggiatori e colpisci chi vola sopra il choke"
+  },
+  "uncertain": false,
+  "note": "La granata del 2026 si lancia come il vecchio Flashbang ma ostacola (niente stordimento).",
+  "sources": [
+   "https://www.dualshockers.com/overwatch-2-cassidy-tips-tricks/",
+   "https://rankedboost.com/overwatch/counters/cassidy/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-cassidy",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
+   "https://overwatch.blizzard.com/en-us/heroes/cassidy/",
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
+   "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide",
+   "https://esports.gg/guides/overwatch/overwatch-shion-counters/"
+  ]
+ },
+ "D.Mon": {
+  "tags": [
+   "tanky",
+   "shield",
+   "melee",
+   "short-range",
+   "mobile"
+  ],
+  "synergies": [
+   {
+    "hero": "Zenyatta",
+    "why": "Orb della Discordia aiuta D.Mon a chiudere i bersagli raggiunti coi Propulsori"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Velocità e cure di Lúcio sostengono il brawl ravvicinato di D.Mon"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "La torretta tiene lo spazio preso"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Domina",
+    "why": "Coi Propulsori D.Mon prende il lato ed entra nel raggio corto dove Domina è debole"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "Vola: Propulsori e Limit Break funzionano solo in orizzontale"
+   },
+   {
+    "hero": "Echo",
+    "why": "Vola: D.Mon non ha movimento verticale per raggiungerla"
+   },
+   {
+    "hero": "Juno",
+    "why": "Resta in aria fuori dalla portata dei Propulsori di D.Mon"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Distrugge in fretta la Power Barrier e vince l'1 contro 1"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Pummel (forma Nemesis) passa attraverso la Power Barrier"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Danni alti e continui: la Power Barrier cade in pochi secondi"
+   },
+   {
+    "hero": "Ana",
+    "why": "Il Dardo soporifero ferma D.Mon che vive di mobilità"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "flyer",
+    "high-ground"
+   ],
+   "tips": [
+    "Entra coi Propulsori a Power Barrier alzata: protegge e costa il 30% di carburante in meno",
+    "Combo chiave: Propulsori + Surging Strike con barriera alzata, poi esci",
+    "A metà scontro usa i Propulsori per finire i nemici bassi di vita",
+    "Evita chi sta in alto o vola: D.Mon si muove solo in orizzontale"
+   ],
+   "attack": "Usa Limit Break per sfondare: passa gli scudi e fa subire più danni ai nemici",
+   "defense": "Tieni la Power Barrier sui corridoi e punisci chi avanza con Propulsori e spada"
+  },
+  "uncertain": true,
+  "note": "Eroe uscito l'11/08/2026 (Stagione 4): fonti solo guide recenti lette tramite estratti di ricerca; pochi counter teorici confermati. Le statistiche citano anche Torbjörn, Illari e D.Va come counter.",
+  "sources": [
+   "https://www.dexerto.com/wikis/overwatch/heroes/tank/dmon/",
+   "https://esports.gg/guides/overwatch/overwatch-d-mon-guide-abilities-counters-combos-and-tips/",
+   "https://www.sportskeeda.com/esports/how-play-d-mon-overwatch-abilities-playstyle",
+   "https://mobalytics.gg/overwatch/heroes/dmon-guide",
+   "https://www.counterwatch.gg/stats/overwatch/counters/dmon",
+   "https://esports.gg/news/overwatch/overwatch-domina-counters/"
+  ]
+ },
+ "D.Va": {
+  "tags": [
+   "tanky",
+   "dive",
+   "mobile",
+   "eat-projectiles",
+   "short-range"
+  ],
+  "synergies": [
+   {
+    "hero": "Tracer",
+    "why": "Dive: D.Va segue coi Boosters e Micro Missiles finisce chi scappa"
+   },
+   {
+    "hero": "Genji",
+    "why": "Dive sulla backline: D.Va copre Genji con Defense Matrix"
+   },
+   {
+    "hero": "Mercy",
+    "why": "Cure mirate e Guardian Angel seguono il tank che si tuffa"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Pharah",
+    "why": "Defense Matrix mangia i razzi e i Boosters la raggiungono in aria"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Defense Matrix mangia granate e mine di Junkrat"
+   },
+   {
+    "hero": "Hanzo",
+    "why": "Defense Matrix mangia le frecce di Hanzo"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Non ha fuga contro i Boosters di D.Va"
+   },
+   {
+    "hero": "Ana",
+    "why": "Ana non sfugge ai Boosters; Defense Matrix mangia dardi e granata"
+   },
+   {
+    "hero": "Hazard",
+    "why": "Defense Matrix mangia i proiettili di Hazard e D.Va è troppo mobile per lui"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Zarya",
+    "why": "Il raggio di Zarya non viene assorbito da Defense Matrix"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "Raggio continuo: Defense Matrix non lo blocca"
+   },
+   {
+    "hero": "Moira",
+    "why": "Il raggio di Moira ignora Defense Matrix"
+   },
+   {
+    "hero": "Winston",
+    "why": "Il Tesla Cannon non viene assorbito da Defense Matrix"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Pummel passa attraverso Defense Matrix"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "Il martello ignora Defense Matrix e la blocca in posizioni scomode"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Corpo a corpo e cure non si assorbono"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "squishy",
+    "sniper",
+    "flyer"
+   ],
+   "avoidTargets": [
+    "beam"
+   ],
+   "tips": [
+    "Usa Defense Matrix su razzi, frecce, granate e ultimate: non ferma i raggi",
+    "Tuffati su Widowmaker e Ana: senza fuga contro i Boosters",
+    "Micro Missiles per finire chi scappa basso di vita",
+    "Non sprecare Matrix: tienila per i colpi pesanti"
+   ],
+   "attack": "Prendi l'high ground coi Boosters e tuffati sulla backline con i tuoi DPS",
+   "defense": "Mangia con Defense Matrix lo spam alla porta e caccia i fiancheggiatori"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.icy-veins.com/overwatch/dva-synergies-and-matchups",
+   "https://www.counterwatch.gg/stats/overwatch/counters/dva",
+   "https://www.esportstales.com/overwatch/one-of-the-best-pharah-counters-dva",
+   "https://rankedboost.com/overwatch/counters/dva/",
+   "https://www.icy-veins.com/overwatch/winston-synergies-and-matchups",
+   "https://gamerant.com/overwatch-2-hazard-guide-abilities-counters-more/"
+  ]
+ },
+ "Domina": {
+  "tags": [
+   "tanky",
+   "shield",
+   "beam",
+   "cc",
+   "deployable"
+  ],
+  "synergies": [
+   {
+    "hero": "Ashe",
+    "why": "Poke a distanza dietro la grande Barrier Array"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Spara da dietro Barrier Array: stessa posizione di poke"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Cura e poke da dietro la barriera, stessa distanza di Domina"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Discordia e poke a distanza dietro lo scudo"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Wrecking Ball",
+    "why": "Sonic Repulsors respinge chi entra e stordisce contro i muri"
+   },
+   {
+    "hero": "Winston",
+    "why": "Sonic Repulsors respinge il tuffo e lo stordisce contro i muri"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Sonic Repulsors respinge chi si tuffa in mischia"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Sombra",
+    "why": "L'Hack disattiva del tutto Barrier Array"
+   },
+   {
+    "hero": "Mei",
+    "why": "Il congelamento passa le barriere e blocca Domina sul posto"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio la tira oltre i segmenti della barriera per la combo"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "La barriera ricarica il raggio di Symmetra; le torrette sono difficili da togliere"
+   },
+   {
+    "hero": "Ana",
+    "why": "Dardo e anti-cure: Domina non ha mobilità per scappare"
+   },
+   {
+    "hero": "Reaper",
+    "why": "A corto raggio la scioglie: Domina non ha fughe"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Danni ad area rompono più segmenti di Barrier Array insieme"
+   },
+   {
+    "hero": "D.Mon",
+    "why": "Prende il lato coi Propulsori e la combatte da vicino, dove è debole"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "squishy",
+    "deployable"
+   ],
+   "avoidTargets": [],
+   "tips": [
+    "Piazza Barrier Array davanti alle porte e nei corridoi per coprire più linee di tiro",
+    "Barriera + Sonic Repulsors: spingi i nemici contro i muri per stordirli",
+    "Crystal Charge ha portata enorme: usalo per ricaricare gli scudi (Reconstruction)",
+    "Panopticon su supporti con pochi danni (Ana, Kiriko): l'esplosione li elimina"
+   ],
+   "attack": "Avanza a tappe dietro Barrier Array e logora con Photon Magnum prima di entrare",
+   "defense": "Chiudi la porta con Barrier Array e respingi chi entra con Sonic Repulsors"
+  },
+  "uncertain": false,
+  "note": "Uscita a inizio 2026: fonti guide recenti lette tramite estratti di ricerca. Photon Magnum è un raggio a 25 m.",
+  "sources": [
+   "https://mobalytics.gg/overwatch/heroes/domina-guide",
+   "https://www.pcgamer.com/games/fps/overwatch-domina-abilities-perks/",
+   "https://esports.gg/news/overwatch/overwatch-domina-counters/",
+   "https://www.counterwatch.gg/stats/overwatch/counters/domina",
+   "https://www.thegamer.com/overwatch-domina-hero-ability-tips-guide/",
+   "https://turboboost.gg/article/how-to-play-domina-overwatch-guide"
+  ]
+ },
+ "Doomfist": {
+  "tags": [
+   "dive",
+   "mobile",
+   "cc",
+   "burst",
+   "short-range"
+  ],
+  "synergies": [
+   {
+    "hero": "Zenyatta",
+    "why": "Orb della Discordia rende letali le combo di Rocket Punch"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Zenyatta",
+    "why": "Senza fughe: bersaglio facile per Rocket Punch e Hand Cannon"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Doomfist la raggiunge in fretta e la punisce più di tutti"
+   },
+   {
+    "hero": "Ana",
+    "why": "Tra i suoi bersagli preferiti se schiva il Dardo soporifero"
+   },
+   {
+    "hero": "Hazard",
+    "why": "Rocket Punch interrompe Violent Leap a metà salto"
+   },
+   {
+    "hero": "Sigma",
+    "why": "Sigma non può assorbire i pugni con Kinetic Grasp"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Orisa",
+    "why": "Energy Javelin e Fortify negano i movimenti di Doomfist"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio lo blocca e lo tira fuori dal tuffo"
+   },
+   {
+    "hero": "Sombra",
+    "why": "L'Hack lo lascia senza abilità"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Flashbang rallenta e blocca le abilità di movimento"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Resta in aria fuori dalla sua portata"
+   },
+   {
+    "hero": "Ana",
+    "why": "Dardo soporifero + granata lo lasciano scoperto"
+   },
+   {
+    "hero": "Domina",
+    "why": "Sonic Repulsors respinge chi si tuffa in mischia"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy",
+    "sniper"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Entra con Rocket Punch sui supporti isolati, poi esci prima che arrivino i CC",
+    "Usa Power Block sui colpi in arrivo per caricare il pugno",
+    "Attento a Sombra, Ana e Cassidy: un CC e sei morto"
+   ],
+   "attack": "Tuffati sulla backline da un lato mentre il team spinge il carico",
+   "defense": "Punisci chi esce dalla copertura e torna indietro prima di finire senza abilità"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/doomfist",
+   "https://dotesports.com/overwatch/news/best-doomfist-counters-in-overwatch-2",
+   "https://counterpickgg.com/heroes/doomfist",
+   "https://gamerant.com/overwatch-2-hazard-guide-abilities-counters-more/",
+   "https://us.forums.blizzard.com/en/overwatch/t/sigma-counters-and-synergies/375226"
+  ]
+ },
+ "Echo": {
+  "tags": [
+   "flyer",
+   "projectile",
+   "beam",
+   "mobile",
+   "squishy",
+   "burst"
+  ],
+  "synergies": [
+   {
+    "hero": "Winston",
+    "why": "Echo tiene il passo del salto di Winston: insieme travolgono le retrovie"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack blocca i nemici: Sticky Bombs e Duplicate sul bersaglio hackerato"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Orb della Discordia marca il bersaglio da finire con Focusing Beam"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Junkrat",
+    "why": "In volo Echo sta dove le granate non arrivano"
+   },
+   {
+    "hero": "Venture",
+    "why": "Venture non raggiunge un bersaglio in volo"
+   },
+   {
+    "hero": "Anran",
+    "why": "In volo schiva gli attacchi a corto raggio di Anran"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Cassidy",
+    "why": "Hitscan e granata colpiscono Echo anche in volo"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Hitscan a lunga distanza punisce chi vola"
+   },
+   {
+    "hero": "Soldier: 76",
+    "why": "Fuoco hitscan continuo su un bersaglio in aria"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack interrompe il volo e la fa cadere"
+   },
+   {
+    "hero": "Illari",
+    "why": "Tra i counter principali indicati dalle guide"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield",
+    "tanky"
+   ],
+   "tips": [
+    "Sticky Bombs, poi Focusing Beam: il raggio fa molto di più sotto il 50% di vita",
+    "Caccia i nemici a metà vita: anche se muori ne porti via uno",
+    "Duplicate: copia un eroe utile alla situazione (tank o ultimate forte)"
+   ],
+   "attack": "Vola sopra il punto con il dive e finisci i supporti indeboliti",
+   "defense": "Dall'alto punisci chi esce dal choke e finisci i nemici feriti"
+  },
+  "uncertain": false,
+  "note": "Le modifiche a Echo del 30 giu 2026 erano della modalità Community Crafted, non del 5v5 Ranked.",
+  "sources": [
+   "https://gamerant.com/overwatch-2-echo-guide-tips-abilities-tricks/",
+   "https://www.gamespot.com/articles/overwatch-2-echo-hero-guide/1100-6508188/",
+   "https://rankedboost.com/overwatch/counters/echo/",
+   "https://www.esportsheaven.com/features/how-to-counter-echo-in-overwatch-2/",
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
+   "https://esports.gg/news/overwatch/overwatch-venture-meta-guide-counters-synergies-balance-patch/"
+  ]
+ },
+ "Emre": {
+  "tags": [
+   "burst",
+   "sustain"
+  ],
+  "synergies": [],
+  "counters": [
+   {
+    "hero": "Pharah",
+    "why": "Take Aim stringe la rosa e allunga la portata: punisce chi vola"
+   },
+   {
+    "hero": "Jetpack Cat",
+    "why": "Bersaglio in volo raggiungibile con le raffiche mirate di Take Aim"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Sombra",
+    "why": "Hack gli toglie Siphon Blaster e granata: resta solo il fucile"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix annulla il suo kit"
+   },
+   {
+    "hero": "Winston",
+    "why": "Tank da dive: Emre non ha abilità di movimento per scappare"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Lo batte a distanza"
+   },
+   {
+    "hero": "Genji",
+    "why": "Fiancheggiatore che punisce un eroe senza mobilità"
+   },
+   {
+    "hero": "Venture",
+    "why": "Lo raggiunge da sotto terra: Emre non ha fughe"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Resta a media distanza dietro copertura e spara a raffiche brevi",
+    "Mira con Take Aim quasi sempre; toglila solo a distanza ravvicinata",
+    "Cyber Frag e subito un colpo in testa: la combo più letale",
+    "Siphon Blaster ruba vita: usalo per vincere un duello o per spostarti"
+   ],
+   "attack": "Avanza in mezzo alla squadra e tieni la pressione dalle coperture",
+   "defense": "Tieni le linee lunghe con Take Aim e lancia Cyber Frag sul choke"
+  },
+  "uncertain": true,
+  "note": "Eroe del 2026: kit confermato da più guide; sinergie trovate solo come statistiche senza motivo, quindi omesse. Counter a favore in parte da dati aggregati.",
+  "sources": [
+   "https://turboboost.gg/article/how-to-play-emre-overwatch-guide",
+   "https://www.thegamer.com/overwatch-emre-abilities-tips-guide/",
+   "https://games.gg/overwatch/guides/overwatch-guide-emre-best-tips-and-tricks-for-ranked-play/",
+   "https://1v9.gg/blog/emre-overwatch-guide",
+   "https://rankedboost.com/overwatch/counters/emre/",
+   "https://overbuddy.com/heroes/EMRE/counters/",
+   "https://esports.gg/news/overwatch/overwatch-finally-welcomes-emre-as-a-playable-hero/"
+  ]
+ },
+ "Freja": {
+  "tags": [
+   "projectile",
+   "mobile",
+   "burst",
+   "squishy",
+   "high-ground"
+  ],
+  "synergies": [
+   {
+    "hero": "Sombra",
+    "why": "Hack rivela i bersagli a Freja"
+   },
+   {
+    "hero": "Mei",
+    "why": "Il Muro di ghiaccio intrappola i nemici per i colpi caricati"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Reinhardt",
+    "why": "Bersaglio grande e lento per i dardi esplosivi di Take Aim"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Bersaglio grande e lento per i dardi esplosivi di Take Aim"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix mangia i dardi di Freja"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack blocca Updraft e Quick Dash: Freja resta senza fuga"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio la prende durante l'arco prevedibile di Updraft"
+   }
+  ],
+  "play": {
+   "position": "high-ground",
+   "targets": [
+    "squishy",
+    "tanky"
+   ],
+   "avoidTargets": [
+    "eat-projectiles"
+   ],
+   "tips": [
+    "Combo: Updraft, Take Aim, Quick Dash, Take Aim",
+    "Take Aim rallenta la caduta: mira in aria, poi riposizionati",
+    "Tieni una mobilità pronta per scappare dai dive"
+   ],
+   "attack": "Usa Updraft per colpire da posizioni alte sopra il punto",
+   "defense": "Prendi angoli alti e punisci chi avanza in campo aperto"
+  },
+  "uncertain": false,
+  "note": "Fonti in disaccordo su Pharah ed Echo (vantaggio o svantaggio): omessi. Counter a favore da dati aggregati.",
+  "sources": [
+   "https://www.dualshockers.com/overwatch-2-how-to-play-freja/",
+   "https://esports.gg/news/overwatch/overwatch-2-freja-abilities-ultimate-and-perks/",
+   "https://rankedboost.com/overwatch/counters/freja/",
+   "https://fenixbazaar.com/2025/07/15/overwatch-2-freja-guide/",
+   "https://nerdburglars.net/question/what-are-the-best-counters-to-freja/"
+  ]
+ },
+ "Genji": {
+  "tags": [
+   "projectile",
+   "dive",
+   "mobile",
+   "squishy",
+   "burst",
+   "eat-projectiles",
+   "melee"
+  ],
+  "synergies": [
+   {
+    "hero": "Ana",
+    "why": "Nano Boost più Dragonblade (Nanoblade): +50% danno e -50% danno subito"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Bolla di Zarya lo protegge; Gravitone più Dragonblade spazza la squadra"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Due fiancheggiatori che attaccano insieme le retrovie"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "La granata di Cassidy blocca il bersaglio per lo Swift Strike"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Widowmaker",
+    "why": "Deflect le rimanda i colpi; da vicino Widowmaker è indifesa"
+   },
+   {
+    "hero": "Ashe",
+    "why": "La segue in alto dopo il Coach Gun e respinge i colpi"
+   },
+   {
+    "hero": "Hanzo",
+    "why": "Deflect rimanda indietro le Storm Arrows e perfino il Dragonstrike"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Deflect respinge l'Assalto e Genji lo prende alle spalle"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Deflect rimanda i colpi del Peacekeeper"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Fiancheggiatore che punisce una DPS da lontano"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Winston",
+    "why": "La Tesla passa attraverso Deflect e Winston lo insegue con il salto"
+   },
+   {
+    "hero": "Moira",
+    "why": "Il raggio non si respinge con Deflect"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Il raggio non si respinge e le bolle assorbono la sua burst"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "Il raggio non si respinge con Deflect"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack gli toglie Deflect e Swift Strike"
+   },
+   {
+    "hero": "Mei",
+    "why": "Il getto di ghiaccio non si respinge con Deflect"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "La torretta punisce i fiancheggiatori che entrano nelle retrovie"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy",
+    "sniper"
+   ],
+   "avoidTargets": [
+    "tanky",
+    "beam"
+   ],
+   "tips": [
+    "Swift Strike si ricarica con un'uccisione: entra per finire bersagli feriti",
+    "Deflect respinge solo i proiettili: non usarlo contro i raggi",
+    "Aspetta Nano Boost di Ana per lanciare Dragonblade"
+   ],
+   "attack": "Entra alle spalle dei difensori e punisci cecchini e supporti",
+   "defense": "Gioca di lato e colpisci i supporti che seguono il carico"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.highgroundgaming.com/overwatch-2-how-to-play-genji/",
+   "https://www.icy-veins.com/overwatch/genji-synergies-and-matchups",
+   "https://dotesports.com/overwatch/news/best-genji-counters-in-overwatch-2",
+   "https://esports.gg/news/overwatch/the-best-genji-counters-in-overwatch-2/",
+   "https://gamerant.com/overwatch-2-genji-guide-tips-abilities-and-more/",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
+   "https://segmentnext.com/overwatch-2-hanzo/"
+  ]
+ },
+ "Hanzo": {
+  "tags": [
+   "projectile",
+   "sniper",
+   "long-range",
+   "burst",
+   "high-ground"
+  ],
+  "synergies": [
+   {
+    "hero": "Zarya",
+    "why": "Gravitone più Dragonstrike: uccisione certa per chi è dentro"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack rivela le posizioni: Storm Arrows e Dragonstrike a colpo sicuro"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Pharah",
+    "why": "Un colpo caricato più Storm Arrows la abbatte in volo"
+   },
+   {
+    "hero": "Ana",
+    "why": "Ana ferma a curare col mirino è un bersaglio facile per un colpo in testa"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Testa grande e lenta, nessuna mobilità"
+   },
+   {
+    "hero": "Mercy",
+    "why": "In volo dietro a Pharah è un bersaglio lento"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "Distrugge la torretta in due colpi da distanza sicura"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Winston",
+    "why": "Raggiunge le posizioni alte e vince da vicino"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix annulla frecce e Storm Arrows"
+   },
+   {
+    "hero": "Genji",
+    "why": "Deflect rimanda Storm Arrows e Dragonstrike"
+   },
+   {
+    "hero": "Echo",
+    "why": "Indicata tra i counter: lo raggiunge dall'alto"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "Arriva in fretta sulla sua posizione"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Chiude la distanza su un cecchino"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Le bolle assorbono le frecce e le caricano energia"
+   }
+  ],
+  "play": {
+   "position": "high-ground",
+   "targets": [
+    "squishy",
+    "flyer",
+    "shield"
+   ],
+   "avoidTargets": [
+    "eat-projectiles"
+   ],
+   "tips": [
+    "Storm Arrows: ottime per rompere scudi e muri",
+    "Sonic Arrow rivela i nemici dietro i muri: usala prima di ogni scontro",
+    "Usa la scalata dei muri per prendere posizioni alte a sorpresa"
+   ],
+   "attack": "Sali in alto e cerca colpi in testa sui supporti prima dell'ingaggio",
+   "defense": "Sonic Arrow sul choke e Storm Arrows su barriere e tank in avanzata"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.icy-veins.com/overwatch/hanzo-synergies-and-matchups",
+   "https://segmentnext.com/overwatch-2-hanzo/",
+   "https://screenrant.com/hanzo-hero-best-tips-strategies-overwatch-2/",
+   "https://rankedboost.com/overwatch/counters/hanzo/",
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
+   "https://segmentnext.com/overwatch-2-torbjorn/"
+  ]
+ },
+ "Hazard": {
+  "tags": [
+   "tanky",
+   "short-range",
+   "mobile",
+   "cc"
+  ],
+  "synergies": [
+   {
+    "hero": "Reaper",
+    "why": "Jagged Wall crea high ground per il Teletrasporto e la Death Blossom di Reaper"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Suzu pulisce l'anti-cure che spegne Hazard"
+   },
+   {
+    "hero": "Juno",
+    "why": "Torpedini curative e anello di velocità danno sostegno e riposizionamento"
+   },
+   {
+    "hero": "Mei",
+    "why": "Muro di Mei + Jagged Wall: doppio muro per chiudere i passaggi"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Widowmaker",
+    "why": "Violent Leap raggiunge in fretta i cecchini isolati"
+   },
+   {
+    "hero": "Genji",
+    "why": "Genji deve combattere a corto raggio"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Doomfist",
+    "why": "Rocket Punch interrompe Violent Leap a metà salto"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Lo punisce da lontano, dove la rosa di Bonespur perde danno"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Lo colpisce da distanze dove Bonespur non arriva"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix mangia i suoi proiettili ed è troppo mobile per lui"
+   },
+   {
+    "hero": "Ana",
+    "why": "L'anti-cure punisce molto Hazard"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Orb della Discordia annulla le sue riduzioni di danno, da lontano"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "squishy",
+    "sniper"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Violent Leap senza Slash: -2 s di ricarica e sovrasalute agli alleati vicini",
+    "Jagged Wall respinge i nemici e crea high ground per il team",
+    "Non duellare a distanza: la rosa di Bonespur perde danno"
+   ],
+   "attack": "Entra con Violent Leap dietro Jagged Wall e spezza la difesa a corto raggio",
+   "defense": "Chiudi i passaggi stretti con Jagged Wall e respingi chi entra"
+  },
+  "uncertain": false,
+  "note": "Pochi 'batte' con motivazione teorica: le guide citano soprattutto statistiche (Genji, Illari, Widowmaker).",
+  "sources": [
+   "https://gamerant.com/overwatch-2-hazard-guide-abilities-counters-more/",
+   "https://www.counterwatch.gg/stats/overwatch/counters/hazard",
+   "https://rankedboost.com/overwatch/counters/hazard/",
+   "https://1v9.gg/blog/overwatch-2-how-to-play-hazard-hero-guide",
+   "https://overwatch.blizzard.com/en-us/heroes/hazard/"
+  ]
+ },
+ "Illari": {
+  "tags": [
+   "deployable",
+   "burst",
+   "long-range",
+   "squishy"
+  ],
+  "synergies": [
+   {
+    "hero": "Orisa",
+    "why": "Captive Sun + Terra Surge di Orisa: combo di ultimate devastante"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Captive Sun prepara Overclock di Sojourn per finire i marchiati"
+   },
+   {
+    "hero": "Sigma",
+    "why": "Il gioco lento di Sigma lascia piazzare la Pylon e colpire tra gli scudi"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Healing Pylon cura Doomfist nei tuffi senza doverlo seguire"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Zenyatta",
+    "why": "Illari ha danni a distanza per punire Zenyatta lento e fragile"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix assorbe colpi, cure della Pylon e Captive Sun"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Protection Suzu ripulisce i marchi di Captive Sun"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Wraith Form rende Reaper immune a Captive Sun"
+   },
+   {
+    "hero": "Winston",
+    "why": "Winston si tuffa su Illari, che ha poca cura e una sola mobilità"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Sojourn la batte nel duello a distanza"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "I cecchini puniscono Illari quando si espone"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Pylon dietro un muro: invisibile ai nemici, in vista dei tuoi",
+    "Se la Pylon viene colpita o distrutta la ricarica raddoppia (14 s)",
+    "Outburst (tieni premuto) per salire in alto o su angoli laterali",
+    "Captive Sun sui nemici raggruppati, insieme a un'altra ultimate"
+   ],
+   "attack": "Pylon al riparo vicino al carico e colpi dai lati prima dell'ingresso",
+   "defense": "Colpisci da lontano chi avanza e tieni Captive Sun per il gruppo nemico"
+  },
+  "uncertain": false,
+  "note": "La sua cura è limitata (una sola linea + Pylon): spesso è il secondo supporto.",
+  "sources": [
+   "https://gamerant.com/overwatch-2-illari-hero-support-guide-tips-abilities-how-play-moves/",
+   "https://www.esportsheaven.com/features/how-to-counter-illari-in-overwatch-2/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-illari",
+   "https://mobalytics.gg/overwatch/heroes/illari-guide",
+   "https://www.counterwatch.gg/stats/overwatch/counters/illari",
+   "https://fenixbazaar.com/2025/07/08/overwatch-2-illari-guide/",
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-illari"
+  ]
+ },
+ "Jetpack Cat": {
+  "tags": [
+   "flyer",
+   "mobile",
+   "squishy",
+   "projectile",
+   "cc",
+   "speed"
+  ],
+  "synergies": [
+   {
+    "hero": "Cassidy",
+    "why": "Lifeline porta Cassidy in volo durante Deadeye: ultimate a sorpresa"
+   },
+   {
+    "hero": "Ana",
+    "why": "Con tank affamati di cure serve un secondo healer forte come Ana"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Baptiste copre le cure al tank mentre Jetpack Cat sposta gli alleati"
+   },
+   {
+    "hero": "D.Va",
+    "why": "D.Va vola: Jetpack Cat la segue facilmente nei tuffi"
+   },
+   {
+    "hero": "Echo",
+    "why": "Echo vola: Jetpack Cat la segue e la cura in aria"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Lifeline porta B.O.B. o Ashe su posizioni alte"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Wuyang",
+    "why": "Dall'alto Jetpack Cat evita Guardian Wave, che spinge solo in avanti"
+   },
+   {
+    "hero": "Mizuki",
+    "why": "Mizuki ha poca risposta contro chi vola"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Ashe",
+    "why": "Hitscan: i colpi mirati di Ashe la colpiscono sempre in volo"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Hitscan: Cassidy colpisce facilmente un bersaglio sempre in aria"
+   },
+   {
+    "hero": "Soldier: 76",
+    "why": "Il tiro continuo di Soldier: 76 la segue anche durante Frenetic Flight"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Il Railgun di Sojourn la colpisce in volo; ha solo 225 HP"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack interrompe Lifeline, Frenetic Flight e Catnapper"
+   },
+   {
+    "hero": "D.Va",
+    "why": "D.Va la insegue in aria e Defense Matrix assorbe i suoi colpi"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Hai 225 HP: non restare fermo nel mirino degli hitscan nemici",
+    "Lifeline per portare un alleato in alto, salvarlo o farlo entrare dai lati",
+    "Con Lifeline il carburante si ricarica più lento: non sprecare Frenetic Flight",
+    "Purr respinge chi ti è vicino: usalo per scappare"
+   ],
+   "attack": "Porta un DPS con l'ultimate pronta dietro le linee nemiche con Lifeline",
+   "defense": "Riporta in salvo gli alleati isolati con Lifeline e cura dall'alto"
+  },
+  "uncertain": true,
+  "note": "Eroe del 2026: fonti soprattutto guide di lancio e statistiche; 'counters' brevi e prudenti. Kit 2026: stun sul trasportato stacca Lifeline (Season 4).",
+  "sources": [
+   "https://www.pcgamer.com/games/fps/overwatch-jetpack-cat-abilities-perks/",
+   "https://mobalytics.gg/overwatch/heroes/jetpack-cat-guide",
+   "https://esports.gg/news/overwatch/overwatch-jetpack-cat-counters/",
+   "https://www.counterwatch.gg/stats/overwatch/counters/jetpackcat",
+   "https://www.overpicker.com/heroes/jetpack-cat",
+   "https://turboboost.gg/article/how-to-play-jetpack-cat-overwatch-guide",
+   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/"
+  ]
+ },
+ "Junker Queen": {
+  "tags": [
+   "tanky",
+   "short-range",
+   "melee",
+   "anti-heal",
+   "speed",
+   "sustain"
+  ],
+  "synergies": [
+   {
+    "hero": "Lúcio",
+    "why": "La velocità di Lúcio si somma a Commanding Shout per entrare insieme"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Brawl ravvicinato con cure e armatura"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Discordia sui bersagli feriti da JQ"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Roadhog",
+    "why": "L'anti-cure di Rampage blocca le cure di Take a Breather"
+   },
+   {
+    "hero": "Winston",
+    "why": "Lo punisce nel corpo a corpo"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "Ferite e anti-cure contro il suo sustain"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Tra gli eroi che batte di più quando si tuffa in mischia"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Ana",
+    "why": "Biotic Grenade annulla le cure di Adrenaline Rush"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Suzu pulisce le ferite e toglie la cura di JQ"
+   },
+   {
+    "hero": "Mei",
+    "why": "Il fuoco primario rallenta un tank che deve muoversi per ferire"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Spam ad area da distanza"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "squishy",
+    "tanky"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Ferisci più nemici possibile: Adrenaline Rush ti cura sulle ferite",
+    "Commanding Shout al momento dell'ingaggio per entrare tutti insieme",
+    "Rampage nega le cure: usala quando i nemici si raggruppano"
+   ],
+   "attack": "Commanding Shout + Rampage per sfondare la difesa tutti insieme",
+   "defense": "Combatti nel corpo a corpo alla porta: l'anti-cure di Rampage ribalta gli scontri"
+  },
+  "uncertain": false,
+  "note": "Le guide citano anche Sierra tra i counter (solo dato statistico).",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/junker-queen",
+   "https://segmentnext.com/overwatch-2-junker-queen/",
+   "https://www.digitaltrends.com/gaming/overwatch-2-junker-queen-guide-abilities-strategies-counters/",
+   "https://dotesports.com/overwatch/news/best-junker-queen-counters-in-overwatch-2",
+   "https://mobalytics.gg/overwatch/heroes/roadhog-guide"
+  ]
+ },
+ "Junkrat": {
+  "tags": [
+   "projectile",
+   "spam",
+   "burst",
+   "deployable",
+   "cc",
+   "mobile"
+  ],
+  "synergies": [
+   {
+    "hero": "Zarya",
+    "why": "Gravitone raggruppa i nemici: una mina li fa saltare tutti"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "Earthshatter atterra i nemici: granate e mina sul gruppo"
+   },
+   {
+    "hero": "Mercy",
+    "why": "Danno potenziato rende le granate quasi una pulizia di squadra"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Matrice amplificatrice raddoppia il danno delle granate"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Mei",
+    "why": "Le granate scavalcano il Muro di ghiaccio"
+   },
+   {
+    "hero": "Vendetta",
+    "why": "Granate scavalcano Warding Stance; trappola durante Soaring Slice"
+   },
+   {
+    "hero": "Venture",
+    "why": "Steel Trap sui punti di uscita dal Burrow la prende sempre"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Danno esplosivo ad area punisce Bastion lento in Assalto"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "In volo sta dove le granate non arrivano"
+   },
+   {
+    "hero": "Echo",
+    "why": "In volo sta dove le granate non arrivano"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Lo colpisce da una distanza che le granate non coprono"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack gli toglie la mina: niente fuga né trappole"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Movimento imprevedibile che schiva le granate"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "tanky",
+    "squishy"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Steel Trap più Concussion Mine: 220 danni, uccide quasi tutti i 200 HP",
+    "Spamma granate sui choke e sui nemici raggruppati",
+    "Tieni una mina per scappare quando ti raggiungono"
+   ],
+   "attack": "Spamma granate sul choke dei difensori mentre il tank avanza",
+   "defense": "Trappola sul fianco o sull'uscita del choke e granate sul gruppo che entra"
+  },
+  "uncertain": false,
+  "note": "La rielaborazione di Junkrat del 30 giu 2026 era della modalità Community Crafted, non del 5v5 Ranked.",
+  "sources": [
+   "https://www.gamespot.com/articles/overwatch-2-junkrat-hero-guide/1100-6508480/",
+   "https://rankedboost.com/overwatch/counters/junkrat/",
+   "https://www.esportsheaven.com/features/how-to-counter-junkrat-in-overwatch-2/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-junkrat",
+   "https://boosting-ground.com/overwatch-2-boosting/guides/heroes-guides/junkrat-hero-guide",
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
+   "https://theglobalgaming.com/overwatch/best-counter-for-mei",
+   "https://rankedboost.com/overwatch/counters/vendetta/"
+  ]
+ },
+ "Juno": {
+  "tags": [
+   "mobile",
+   "speed",
+   "squishy",
+   "projectile"
+  ],
+  "synergies": [
+   {
+    "hero": "Winston",
+    "why": "Hyper Ring accelera Winston nei tuffi; lui ti protegge quando entri"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Tank da tuffo + Hyper Ring: entrano veloci e insieme"
+   },
+   {
+    "hero": "Genji",
+    "why": "Genji sfrutta la velocità dell'anello per entrare e uscire"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Tracer mobile sfrutta Hyper Ring e i siluri curativi"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Juno e Pharah stanno in aria insieme; Orbital Ray aumenta i danni"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Pulsar Torpedoes seguono bene Overrun di Mauga sui nemici colpiti"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Bastion",
+    "why": "Squadre lente e statiche soffrono la mobilità di Juno"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "Juno aggira le difese statiche di Torbjörn con la sua mobilità"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "La mobilità di Juno annulla il gioco statico di Symmetra"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Pulsar Torpedoes a ricerca puniscono Zenyatta lento"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Sombra",
+    "why": "Hack annulla Glide Boost e Hyper Ring e lascia Juno a terra"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Hitscan a distanza colpisce Juno anche mentre plana"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Fortify ignora Orbital Ray e il giavellotto la blocca in volo"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Bastion la distrugge prima che i siluri aggancino i bersagli"
+   },
+   {
+    "hero": "Winston",
+    "why": "Winston salta su Juno e la sua barriera blocca il suo supporto"
+   }
+  ],
+  "play": {
+   "position": "high-ground",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Hyper Ring davanti alla squadra quando si entra o si scappa",
+    "Pulsar Torpedoes: aggancia più bersagli possibile, alleati e nemici",
+    "Orbital Ray su una strozzatura per cure e danni extra ai tuoi",
+    "Usa le posizioni alte: Juno rende di più sulle mappe con molti piani"
+   ],
+   "attack": "Orbital Ray e Hyper Ring sulla strozzatura per sfondare insieme",
+   "defense": "Dall'alto colpisci con i siluri e tieni l'anello per rientrare in fretta"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://gamerant.com/overwatch-2-juno-guide-abilities-counters-more/",
+   "https://www.thegamer.com/overwatch-ow2-2-juno-hero-guide-tips-tricks-abilities/",
+   "https://rankedboost.com/overwatch/counters/juno/",
+   "https://esports.gg/news/overwatch/overwatch-2-juno-abilities-and-more/",
+   "https://turboboost.gg/article/how-to-play-juno-in-overwatch"
+  ]
+ },
+ "Kiriko": {
+  "tags": [
+   "cleanse",
+   "mobile",
+   "projectile",
+   "squishy",
+   "speed",
+   "main-healer"
+  ],
+  "synergies": [
+   {
+    "hero": "Genji",
+    "why": "Kitsune Rush velocizza gli attacchi: più fendenti durante Dragonblade"
+   },
+   {
+    "hero": "Ana",
+    "why": "Kitsune Rush + Nano Boost: un alleato con due potenziamenti"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Due supporti veloci per il dive; Suzu salva, Lúcio ricura tutti"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Kitsune Rush ricarica più spesso i Boosters di D.Va"
+   },
+   {
+    "hero": "Winston",
+    "why": "Wall Climb e Swift Step per seguire Winston nei tuffi"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Kiriko segue e salva i DPS mobili come Tracer"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Ana",
+    "why": "Protection Suzu ripulisce l'anti-nade di Ana"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Suzu toglie le ferite di Junker Queen e la sua cura da danni"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "Suzu rende invulnerabili gli alleati colpiti da Earthshatter"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Suzu protegge da Meteor Strike e toglie il rallentamento"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Testa grande: i Kunai di Kiriko colpiscono facilmente"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Testa grande: Kunai a distanza la logorano in sicurezza"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Sombra",
+    "why": "Hack blocca Swift Step e Suzu, le sue vie di salvezza"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Widowmaker la uccide in un colpo prima di Swift Step"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Chain Hook la tira fuori dalla posizione sicura"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Brigitte protegge i suoi e regge i duelli ravvicinati con Kiriko"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "squishy",
+    "tanky"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Tieni Protection Suzu per anti-nade, stun e ultimate nemiche",
+    "Swift Step su un alleato per scappare dai tuffatori",
+    "Mira alla testa con i Kunai: i tank hanno teste grandi",
+    "Kitsune Rush insieme alle ultimate dei compagni"
+   ],
+   "attack": "Kitsune Rush per far entrare tutta la squadra sul carico insieme",
+   "defense": "Suzu pronta contro l'ultimate d'ingresso dei nemici"
+  },
+  "uncertain": false,
+  "note": "Kit 2026 (Season 4): Ofuda più lenti, Suzu con raggio 4 m e invulnerabilità 0,5 s.",
+  "sources": [
+   "https://rankedboost.com/overwatch/counters/kiriko/",
+   "https://1v9.gg/blog/best-overwatch-2-heroes-to-counter-kiriko",
+   "https://gamerant.com/overwatch-2-kiriko-guide/",
+   "https://expertgamereviews.com/overwatch-2-kiriko-guide/",
+   "https://www.thegamer.com/overwatch-2-best-support-healers-heroes-combos/",
+   "https://www.gamepur.com/guides/what-are-all-the-effects-kirikos-suzu-protection-purifies-in-overwatch-2",
+   "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/"
+  ]
+ },
+ "Lifeweaver": {
+  "tags": [
+   "projectile",
+   "main-healer",
+   "mobile",
+   "high-ground",
+   "squishy"
+  ],
+  "synergies": [
+   {
+    "hero": "Ana",
+    "why": "Petal Platform porta Ana in alto; Life Grip la salva dai tuffi"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Exo Boots + Petal Platform; tanta cura e utilità insieme"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Life Grip + Suzu: due modi per salvare gli alleati"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Life Grip tira fuori Tracer dai guai dopo l'attacco"
+   },
+   {
+    "hero": "Genji",
+    "why": "Life Grip riporta indietro Genji quando si spinge troppo"
+   },
+   {
+    "hero": "Moira",
+    "why": "Moira copre la cura mentre Lifeweaver salva e sposta"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Roadhog",
+    "why": "Life Grip annulla Chain Hook di Roadhog sul compagno agganciato"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Life Grip salva dalle ferite di JQ e le toglie cura; Platform in alto"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Life Grip salva l'alleato colpito da Meteor Strike"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Petal Platform sotto Orisa che carica Terra Surge la annulla"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Petal Platform sotto Reaper in Death Blossom lo porta via"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix assorbe i proiettili di Lifeweaver"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Tracer lo uccide prima che possa usare Life Grip"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack blocca tutte le abilità; la sua arma fa pochi danni"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "Wrecking Ball lo disturba di continuo nella backline"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Zarya sfrutta i suoi punti deboli nel combattimento ravvicinato"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield",
+    "tanky"
+   ],
+   "tips": [
+    "Life Grip salva da hook, ultimate e ferite: non sprecarlo",
+    "Petal Platform per dare posizioni alte o rovinare ultimate nemiche",
+    "Healing Blossom carico è la tua cura principale: resta in linea di vista",
+    "Rejuvenating Dash per scappare dai tuffatori"
+   ],
+   "attack": "Petal Platform per dare una posizione alta ai DPS prima dello scontro",
+   "defense": "Tieni Life Grip per chi viene agganciato o isolato davanti"
+  },
+  "uncertain": false,
+  "note": "Kit 2026 (Season 1): Tree of Life converte il 100% dell'eccesso di cura in vita extra.",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/lifeweaver",
+   "https://www.thegamer.com/overwatch-2-how-to-counter-lifeweaver-guide/",
+   "https://progameguides.com/overwatch/best-heroes-to-pair-with-lifeweaver-in-overwatch-2/",
+   "https://kotaku.com/lifeweaver-overwatch-2-tips-best-hero-combos-life-grip-1850329178",
+   "https://gamerant.com/overwatch-2-lifeweaver-roadhog-hook-counter-video-clip/",
+   "https://gamerant.com/overwatch-2-lifeweaver-guide-tips-abilities-how-play-tricks-support/",
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-lifeweaver"
+  ]
+ },
+ "Lúcio": {
+  "tags": [
+   "speed",
+   "mobile",
+   "projectile",
+   "short-range",
+   "sustain",
+   "cc"
+  ],
+  "synergies": [
+   {
+    "hero": "Reinhardt",
+    "why": "La velocità di Lúcio porta Reinhardt addosso ai nemici con lo scudo su"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Velocità per chiudere le distanze; cure che si sommano nel brawl"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Coppia veloce per il dive; Suzu salva, Lúcio ricura tutti"
+   },
+   {
+    "hero": "Ana",
+    "why": "Ana è poco mobile: la velocità di Lúcio la sposta con la squadra"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Lúcio accelera la squadra e tiene lontani gli assassini da Zenyatta"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Wrecking Ball",
+    "why": "Soundwave respinge Wrecking Ball che rotola su di te"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Lúcio è veloce e difficile da colpire per le sfere lente di Zenyatta"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Mobilità e velocità rendono difficile il gioco di Roadhog"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Sombra",
+    "why": "Hack lo zittisce; EMP toglie la vita extra di Sound Barrier"
+   },
+   {
+    "hero": "Winston",
+    "why": "Jump Pack lo insegue facilmente; Primal Rage lo spinge via"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Chain Hook punisce Lúcio che si avvicina troppo"
+   },
+   {
+    "hero": "Ana",
+    "why": "Anti-nade blocca le sue cure; da vicino Sleep Dart è facile"
+   },
+   {
+    "hero": "Mei",
+    "why": "Mei rallenta e Ice Wall blocca i movimenti della squadra veloce"
+   },
+   {
+    "hero": "Soldier: 76",
+    "why": "Hitscan con tiro continuo segue Lúcio anche sui muri"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Pharah dall'alto è fuori portata della sua arma corta"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Crossfade: velocità per entrare o scappare, cura durante lo scontro",
+    "Soundwave per respingere i tuffatori o buttare nemici giù dai bordi",
+    "Sound Barrier contro le ultimate a raffica dei nemici",
+    "Corri sui muri per essere difficile da colpire"
+   ],
+   "attack": "Velocità per arrivare tutti insieme sul carico; Amp It Up all'ingresso",
+   "defense": "Cura sul punto e Soundwave per respingere chi sale sul carico"
+  },
+  "uncertain": false,
+  "note": "Kit 2026 (Season 2): cura di Crossfade 18. Le 'counters' su Roadhog e Zenyatta sono anche statistiche citate dalle guide.",
+  "sources": [
+   "https://theglobalgaming.com/overwatch/best-counter-for-lucio",
+   "https://segmentnext.com/overwatch-2-lucio/",
+   "https://gamertweak.com/best-lucio-counters-ow2/",
+   "https://www.counterwatch.gg/stats/overwatch/heroes/lucio",
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-lucio",
+   "https://www.thegamer.com/overwatch-2-best-support-healers-heroes-combos/",
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
+  ]
+ },
+ "Mauga": {
+  "tags": [
+   "tanky",
+   "hitscan",
+   "sustain"
+  ],
+  "synergies": [
+   {
+    "hero": "Kiriko",
+    "why": "Suzu pulisce l'anti-cure su Mauga e lo cura di colpo"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Comp brawl tipica: insieme sciolgono i nemici a corto raggio"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Comp tipica con Mauga: Ashe copre la media distanza"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Wrecking Ball",
+    "why": "Il counter più forte su Ball: le mitragliatrici lo distruggono"
+   },
+   {
+    "hero": "Winston",
+    "why": "Lo scudo di Winston cade in fretta e Cardiac Overdrive lo tiene in vita"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Regge i tuffi con Cardiac Overdrive"
+   },
+   {
+    "hero": "D.Mon",
+    "why": "Distrugge la Power Barrier e vince l'1 contro 1"
+   },
+   {
+    "hero": "Domina",
+    "why": "Le mitragliatrici abbattono in fretta Barrier Array"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Ana",
+    "why": "Biotic Grenade (anti-cure) toglie il valore di Cardiac Overdrive"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack ed EMP: CC che ferma Mauga"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "tanky",
+    "shield",
+    "dive"
+   ],
+   "avoidTargets": [],
+   "tips": [
+    "Cardiac Overdrive è la chiave: usalo quando il team spara insieme",
+    "Diffida di Ana: tieni Kiriko o copertura per l'anti-cure",
+    "Overrun per entrare o rompere le linee nemiche"
+   ],
+   "attack": "Entra con Overrun e tieni Cardiac Overdrive per lo scontro decisivo",
+   "defense": "Tieni la porta col fuoco continuo e punisci i tank che si tuffano"
+  },
+  "uncertain": false,
+  "note": "Le guide citano anche Sierra tra i counter (solo dato statistico).",
+  "sources": [
+   "https://mobalytics.gg/overwatch/heroes/mauga-guide",
+   "https://www.counterwatch.gg/stats/overwatch/counters/mauga",
+   "https://www.dexerto.com/overwatch/best-hero-counters-for-mauga-in-overwatch-2-2470817/",
+   "https://www.counterwatch.gg/stats/overwatch/counters/wrecking-ball",
+   "https://esports.gg/guides/overwatch/overwatch-d-mon-guide-abilities-counters-combos-and-tips/"
+  ]
+ },
+ "Mei": {
+  "tags": [
+   "projectile",
+   "short-range",
+   "cc",
+   "immortality",
+   "sustain"
+  ],
+  "synergies": [
+   {
+    "hero": "Reinhardt",
+    "why": "Blizzard prepara l'Earthshatter; il Muro protegge la sua Charge"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Gravitone più Blizzard: una delle combo di ultimate più letali"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Le cure di Lúcio tengono Mei in vita tra un Cryo-Freeze e l'altro"
+   },
+   {
+    "hero": "Freja",
+    "why": "Il Muro intrappola i nemici per i colpi caricati di Freja"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Genji",
+    "why": "Il getto di ghiaccio non si respinge con Deflect"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Cryo-Freeze cancella il Virus di Sombra"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "Vola fuori dalla portata e la colpisce dall'alto"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Le granate scavalcano il Muro di ghiaccio"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack blocca Cryo-Freeze e Muro di ghiaccio"
+   },
+   {
+    "hero": "Winston",
+    "why": "Salta oltre il Muro e la Tesla ignora i giochi col Cryo-Freeze"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Si carica sui compagni lenti di Mei e combatte a distanza sicura"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Tra i counter principali indicati dalle guide"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "dive",
+    "melee",
+    "short-range"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Usa il Muro per dividere la squadra nemica o bloccare una fuga",
+    "Cryo-Freeze ti rende invulnerabile ma ferma: attento all'agguato all'uscita",
+    "Blizzard combina bene con le ultimate ad area dei compagni"
+   ],
+   "attack": "Muro per tagliare fuori parte dei difensori e prendere spazio sul punto",
+   "defense": "Stalla sul punto con Cryo-Freeze e chiudi i choke con il Muro"
+  },
+  "uncertain": false,
+  "note": "Fonti diverse sulle modifiche 2026 al rallentamento (30 giu 2026, legate alla modalità Community Crafted): per il 5v5 ho tenuto il kit standard.",
+  "sources": [
+   "https://gamerant.com/overwatch-2-mei-guide-tips-abilities-tricks/",
+   "https://theglobalgaming.com/overwatch/best-counter-for-mei",
+   "https://rankedboost.com/overwatch/counters/mei/",
+   "https://segmentnext.com/overwatch-2-mei/",
+   "https://gamerant.com/overwatch-2-sombra-rework-guide-abilities-counters-more/",
+   "https://www.dualshockers.com/overwatch-2-how-to-play-freja/"
+  ]
+ },
+ "Mercy": {
+  "tags": [
+   "beam",
+   "pocket",
+   "main-healer",
+   "mobile",
+   "squishy"
+  ],
+  "synergies": [
+   {
+    "hero": "Pharah",
+    "why": "Guardian Angel segue Pharah in volo; Damage Boost potenzia razzi e Barrage"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Damage Boost sui colpi mirati di Ashe nelle squadre a distanza"
+   },
+   {
+    "hero": "Soldier: 76",
+    "why": "Damage Boost +30% su ogni danno, ultimate comprese"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Zenyatta",
+    "why": "Mercy tiene in vita il bersaglio di Orb of Discord"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Soldier: 76",
+    "why": "Tiro continuo e Helix Rockets la uccidono prima di Guardian Angel"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Sojourn la uccide prima che Guardian Angel la sposti"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Widowmaker punisce le posizioni esposte di Mercy"
+   },
+   {
+    "hero": "Hanzo",
+    "why": "Hanzo punisce le posizioni esposte di Mercy"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack blocca Resurrect e la fuga con Guardian Angel"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Cassidy colpisce bene Mercy anche mentre plana"
+   },
+   {
+    "hero": "Ana",
+    "why": "Anti-nade annulla le cure di Mercy sul suo bersaglio"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Damage Boost su chi colpisce bene da lontano (Pharah, Ashe, Soldier: 76)",
+    "Guardian Angel da un alleato all'altro per non farti prendere",
+    "Resurrect solo in posizione sicura",
+    "Flash Heal (base dal 2026) per salvare chi è sotto metà vita"
+   ],
+   "attack": "Damage Boost sul DPS che apre la strada prima dell'ingresso",
+   "defense": "Resta dietro con Guardian Angel pronto e cura il tank sulla strozzatura"
+  },
+  "uncertain": false,
+  "note": "Kit 2026 (Season 2): Flash Heal diventa abilità base (12 s). 'counters' quasi solo statistiche.",
+  "sources": [
+   "https://www.icy-veins.com/overwatch/mercy-guide",
+   "https://gamerant.com/overwatch-mercy-guide/",
+   "https://www.counterwatch.gg/stats/overwatch/counters/mercy",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-mercy",
+   "https://rankedboost.com/overwatch/counters/mercy/",
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
+  ]
+ },
+ "Mizuki": {
+  "tags": [
+   "projectile",
+   "cc",
+   "sustain",
+   "mobile",
+   "eat-projectiles"
+  ],
+  "synergies": [
+   {
+    "hero": "Doomfist",
+    "why": "Healing Kasa cura Doomfist tra i tuffi; Binding Chain blocca il bersaglio"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Squadra rush: Katashiro Return per spingere con JQ e tornare al sicuro"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Pharah",
+    "why": "Kekkai Sanctuary assorbe i proiettili da fuori, anche la Barrage"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Kekkai Sanctuary blocca i colpi di Bastion da fuori dell'area"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Mizuki va bene contro i tank da brawl come Mauga (dati e guide)"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "Pharah colpisce dall'alto e i danni ad area aggirano la sua cura"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Le granate di Junkrat travolgono la zona di cura di Mizuki"
+   },
+   {
+    "hero": "Genji",
+    "why": "Deflect blocca Binding Chain; il dive lo costringe a usare Katashiro"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Il dive costringe Mizuki a bruciare presto Katashiro Return"
+   },
+   {
+    "hero": "Winston",
+    "why": "Kekkai Sanctuary è debole contro dive e mischia"
+   },
+   {
+    "hero": "Ana",
+    "why": "Ana è tra i counter più citati di Mizuki dai giocatori"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "dive",
+    "tanky"
+   ],
+   "avoidTargets": [
+    "shield",
+    "flyer"
+   ],
+   "tips": [
+    "Fai danni: la cura di Remedy Aura cresce con i danni e le cure fatte",
+    "Binding Chain per chi supera il tuo tank (dopo il Deflect di Genji)",
+    "Katashiro Return: salta avanti e torna alla bambola se va male",
+    "Kekkai Sanctuary contro squadre di proiettili e ultimate da lontano"
+   ],
+   "attack": "Spingi con il tank grazie a Katashiro Return e torna alla bambola",
+   "defense": "Kekkai Sanctuary sul punto contro il poke e le ultimate a proiettili"
+  },
+  "uncertain": true,
+  "note": "Eroe del 2026: fonti di lancio e statistiche, a volte in disaccordo (es. Pharah). Liste corte di proposito.",
+  "sources": [
+   "https://www.pcgamer.com/games/fps/overwatch-mizuki-abilities-perks/",
+   "https://rankedboost.com/overwatch/counters/mizuki/",
+   "https://www.counterwatch.gg/stats/overwatch/counters/mizuki",
+   "https://www.overpicker.com/heroes/mizuki",
+   "https://1v9.gg/blog/mizuki-overwatch-guide",
+   "https://us.forums.blizzard.com/en/overwatch/t/why-does-ana-counter-mizuki-so-hard/1004789",
+   "https://turboboost.gg/article/how-to-play-mizuki-overwatch-guide"
+  ]
+ },
+ "Moira": {
+  "tags": [
+   "beam",
+   "short-range",
+   "sustain",
+   "main-healer",
+   "mobile"
+  ],
+  "synergies": [
+   {
+    "hero": "Zenyatta",
+    "why": "Orb of Discord + Biotic Orb di danno: due supporti che uccidono"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Moira e Reaper fanno danni e si curano insieme a corta distanza"
+   },
+   {
+    "hero": "Lifeweaver",
+    "why": "Moira copre la cura mentre Lifeweaver salva e sposta gli alleati"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Genji",
+    "why": "Biotic Grasp è un raggio: Genji non lo può rimandare con Deflect"
+   },
+   {
+    "hero": "Wuyang",
+    "why": "Biotic Grasp lo segue anche in Rushing Torrent; Fade evita Guardian Wave"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "D.Va",
+    "why": "D.Va la insegue dopo Fade e Defense Matrix assorbe le sue sfere"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Chain Hook e Scrap Gun la uccidono in una combo"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Jagged Blade la tira vicino e Scattergun la finisce"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Widowmaker la elimina da lontano con un colpo carico"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Hack blocca Fade mentre Moira cura"
+   },
+   {
+    "hero": "Ana",
+    "why": "Ana resta fuori portata e Sleep Dart ferma Coalescence"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Brigitte in prima linea protegge i suoi da Moira"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "squishy",
+    "mobile"
+   ],
+   "avoidTargets": [
+    "long-range"
+   ],
+   "tips": [
+    "Fade è la tua unica fuga: non usarlo per entrare",
+    "Biotic Grasp segue i bersagli: ottimo contro chi si muove molto",
+    "Biotic Orb di danno insieme a Orb of Discord di Zenyatta",
+    "Coalescence cura e fa danni in linea: mettiti dietro al tank"
+   ],
+   "attack": "Entra con il tank e cura nella mischia; Fade per uscire",
+   "defense": "Cura sul punto a corta distanza e scappa con Fade dai tuffi"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.thegamer.com/overwatch-2-best-moira-counters/",
+   "https://www.dbltap.com/posts/how-to-counter-moira-in-overwatch-2-01ggavd3pqh5",
+   "https://gamertweak.com/how-to-counter-moira-ow2/",
+   "https://www.counterwatch.gg/stats/overwatch/heroes/moira",
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-moira",
+   "https://rankedboost.com/overwatch/counters/wuyang/",
+   "https://www.gamersdecide.com/articles/overwatch-2-best-support-combos"
+  ]
+ },
+ "Orisa": {
+  "tags": [
+   "tanky",
+   "projectile",
+   "cc"
+  ],
+  "synergies": [
+   {
+    "hero": "Pharah",
+    "why": "Javelin Spin e Terra Surge raggruppano i nemici per razzi e Barrage"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Suzu pulisce l'anti-cure che Ana lancia durante Fortify"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Doomfist",
+    "why": "Energy Javelin e Fortify negano i suoi movimenti"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Fortify annulla il rallentamento di Ravenous Vortex"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Zarya",
+    "why": "Il raggio colpisce anche durante Javelin Spin"
+   },
+   {
+    "hero": "Ana",
+    "why": "Anti-cure durante Fortify annulla le cure della combo"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Troppo mobile per essere presa con Energy Javelin"
+   },
+   {
+    "hero": "Genji",
+    "why": "Troppo mobile per essere preso con Energy Javelin"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Railgun e scivolata: difficile da bloccare per Orisa"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "dive",
+    "tanky"
+   ],
+   "avoidTargets": [],
+   "tips": [
+    "Fortify si usa insieme a Javelin Spin senza interromperlo",
+    "Lancia Energy Javelin con Fortify: la velocità annulla il rallentamento",
+    "Attenta all'anti-cure di Ana quando sei in Fortify"
+   ],
+   "attack": "Avanza con Fortify e Javelin Spin per assorbire i colpi e spingere il carico",
+   "defense": "Respingi i tuffatori con Energy Javelin e tieni la porta con Fortify"
+  },
+  "uncertain": false,
+  "note": "Le guide citano anche Mizuki, Lúcio e Brigitte tra i counter (solo dato statistico).",
+  "sources": [
+   "https://dotesports.com/overwatch/news/the-best-orisa-counters-in-overwatch-2",
+   "https://gamerant.com/overwatch-2-orisa-guide-tips-abilities/",
+   "https://rankedboost.com/overwatch/counters/orisa/",
+   "https://www.counterwatch.gg/stats/overwatch/counters/orisa",
+   "https://www.charlieintel.com/overwatch-2/overwatch-2-best-counters-for-each-tank-hero-266824/",
+   "https://dotesports.com/overwatch/news/best-doomfist-counters-in-overwatch-2"
+  ]
+ },
+ "Pharah": {
+  "tags": [
+   "flyer",
+   "projectile",
+   "spam",
+   "burst",
+   "high-ground"
+  ],
+  "synergies": [
+   {
+    "hero": "Mercy",
+    "why": "Pocket classico: Mercy la cura e potenzia in volo (Pharmercy)"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Venture",
+    "why": "Gioca in aria: il Burrow di Venture non la raggiunge"
+   },
+   {
+    "hero": "Vendetta",
+    "why": "Vendetta non può raggiungerla in aria"
+   },
+   {
+    "hero": "Anran",
+    "why": "Fuori portata in aria per i ventagli di Anran"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "Distrugge la torretta con i razzi dall'alto"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "Resta fuori portata e distrugge le torrette a terra"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Gioca dove le granate non arrivano"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Razzi dall'alto su un bersaglio lento"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Soldier: 76",
+    "why": "Hitscan; Tactical Visor la colpisce anche in volo"
+   },
+   {
+    "hero": "Ashe",
+    "why": "I colpi mirati la uccidono in due da terra"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Può ucciderla con un colpo in volo"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Hitscan forte contro chi vola"
+   },
+   {
+    "hero": "Ana",
+    "why": "Il counter principale tra i supporti"
+   },
+   {
+    "hero": "Echo",
+    "why": "La raggiunge in aria"
+   },
+   {
+    "hero": "Illari",
+    "why": "Tra i counter principali indicati dalle guide"
+   }
+  ],
+  "play": {
+   "position": "high-ground",
+   "targets": [
+    "squishy",
+    "short-range",
+    "deployable"
+   ],
+   "avoidTargets": [
+    "hitscan",
+    "eat-projectiles"
+   ],
+   "tips": [
+    "Usa le coperture anche in aria: gli hitscan ti puniscono allo scoperto",
+    "Attenta al carburante: quando cadi sei un bersaglio facile",
+    "Gioca con una Mercy che ti segue in volo"
+   ],
+   "attack": "Razzi dall'alto sul punto e Concussive Blast per spostare i difensori",
+   "defense": "Colpisci dall'alto chi esce dal choke, restando vicino a una copertura"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.esportsheaven.com/features/how-to-counter-pharah-in-overwatch-2",
+   "https://rankedboost.com/overwatch/counters/pharah/",
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-counter-pharah",
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/",
+   "https://segmentnext.com/overwatch-2-symmetra/",
+   "https://segmentnext.com/overwatch-2-torbjorn/",
+   "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide",
+   "https://www.boostingfactory.com/overwatch/blog/overwatch-2-venture-guide"
+  ]
+ },
+ "Ramattra": {
+  "tags": [
+   "tanky",
+   "shield",
+   "melee",
+   "projectile"
+  ],
+  "synergies": [
+   {
+    "hero": "Juno",
+    "why": "Hyper Ring dà velocità proprio quando Ramattra entra in forma Nemesis"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Cure e velocità sostengono il brawl in forma Nemesis"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Cure forti per tenerlo vivo mentre colpisce con Pummel"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Reinhardt",
+    "why": "Alterna Block e Pummel contro i colpi lenti del martello"
+   },
+   {
+    "hero": "Sigma",
+    "why": "Lo combatte da vicino, dove le barriere di Sigma servono poco"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Pummel passa attraverso Defense Matrix"
+   },
+   {
+    "hero": "Domina",
+    "why": "Pummel passa attraverso Barrier Array"
+   },
+   {
+    "hero": "D.Mon",
+    "why": "Pummel passa attraverso la Power Barrier"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Ana",
+    "why": "Dardo soporifero: Ramattra non ha modo di evitare gli stordimenti"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Discordia sul suo grande corpo"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Il raggio passa attraverso il Block della forma Nemesis"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "Il raggio passa attraverso il Block"
+   },
+   {
+    "hero": "Moira",
+    "why": "Il raggio passa attraverso il Block"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Fortify annulla il rallentamento di Ravenous Vortex"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "tanky",
+    "shield"
+   ],
+   "avoidTargets": [],
+   "tips": [
+    "Pummel passa barriere e Defense Matrix: entra in Nemesis contro i tank con scudo",
+    "Alterna Block e Pummel contro i colpi lenti (Reinhardt, Sigma)",
+    "Annihilation: rompi la linea di vista e l'ultimate finisce prima"
+   ],
+   "attack": "Void Barrier per avanzare, poi forma Nemesis per sfondare a corto raggio",
+   "defense": "Ravenous Vortex sulla porta per rallentare chi entra e farlo scendere dall'alto"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://mobalytics.gg/overwatch/heroes/ramattra-guide",
+   "https://www.counterwatch.gg/stats/overwatch/counters/ramattra",
+   "https://dotesports.com/overwatch/news/the-best-ramattra-counters-in-overwatch-2",
+   "https://segmentnext.com/overwatch-2-ramattra/",
+   "https://gamerant.com/overwatch-2-ramattra-guide-tips-abilities-combos-counters/"
+  ]
+ },
+ "Reaper": {
+  "tags": [
+   "short-range",
+   "burst",
+   "sustain",
+   "mobile"
+  ],
+  "synergies": [
+   {
+    "hero": "Ana",
+    "why": "Nano Boost rende Death Blossom più resistente e letale"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Gravitone raggruppa i nemici nel raggio di Death Blossom"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Speed Boost lo porta subito addosso ai nemici"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Commanding Shout gli dà velocità per entrare"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Sojourn",
+    "why": "Fiancheggiatore che la punisce da vicino"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "D.Va",
+    "why": "Defense Matrix e il suo volume rendono difficile Death Blossom"
+   },
+   {
+    "hero": "Sigma",
+    "why": "Accretion lo ferma e la barriera blocca Death Blossom"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Javelin lo respinge, Spin copre Blossom, Fortify la rende dura"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera blocca gran parte di Death Blossom"
+   },
+   {
+    "hero": "Pharah",
+    "why": "In aria resta fuori dalla portata dei fucili a pompa"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "tanky",
+    "squishy"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Gioca vicino: a distanza i fucili non fanno danno",
+    "Non usare Wraith Form per entrare con Death Blossom: se lo aspettano",
+    "Death Blossom con Gravitone o Nano Boost alleati"
+   ],
+   "attack": "Aggira i difensori con Shadow Step e colpisci i tank da vicino",
+   "defense": "Aspetta dietro un angolo vicino al punto e punisci chi entra"
+  },
+  "uncertain": false,
+  "note": "Pochi counter a favore motivati nelle fonti (gli altri erano solo statistiche).",
+  "sources": [
+   "https://segmentnext.com/overwatch-2-reaper/",
+   "https://gamerant.com/overwatch-2-reaper-guide-tips-tricks-abilities-playstyle/",
+   "https://www.esportsheaven.com/features/how-to-counter-reaper",
+   "https://rankedboost.com/overwatch/counters/reaper/",
+   "https://boosting-ground.com/overwatch-2-boosting/guides/heroes-guides/reaper-guide",
+   "https://www.digitaltrends.com/gaming/overwatch-2-sojourn-guide-abilities-strategies-counters-and-more/"
+  ]
+ },
+ "Reinhardt": {
+  "tags": [
+   "tanky",
+   "shield",
+   "melee",
+   "short-range",
+   "cc"
+  ],
+  "synergies": [
+   {
+    "hero": "Ana",
+    "why": "Nano Boost su Reinhardt: martello letale e quasi immortale"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "La velocità porta Reinhardt avanti a scudo alzato e nel corpo a corpo"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Immortality Field lo salva; Amp Matrix dietro il suo scudo"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Protegge e cura la prima linea nel brawl insieme a Reinhardt"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "D.Va",
+    "why": "Il martello ignora Defense Matrix"
+   },
+   {
+    "hero": "Domina",
+    "why": "Il martello (danno ad area) rompe più segmenti di Barrier Array"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "Lo colpisce dall'alto, dove lo scudo non serve"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Passa oltre lo scudo e lo scioglie da vicino col furto vita"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Discordia sul tank; Transcendence annulla Earthshatter"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "Danni continui sullo scudo"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Pummel passa lo scudo; Block contro i colpi lenti del martello"
+   },
+   {
+    "hero": "Ana",
+    "why": "Il Dardo soporifero interrompe Charge e lo lascia fuori posizione"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "tanky",
+    "squishy"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Avanza a scudo alzato con Lúcio, abbassalo solo per colpire",
+    "Charge è rischiosa: qualsiasi CC la interrompe",
+    "Earthshatter: stordimento ad area di 2,5 s, aspetta che i nemici siano senza scudo"
+   ],
+   "attack": "Spingi a scudo alzato con la velocità di Lúcio e Nano Boost per sfondare",
+   "defense": "Tieni la porta con lo scudo e punisci col martello chi entra nel corpo a corpo"
+  },
+  "uncertain": false,
+  "note": "Pochi 'batte' motivati nelle fonti lette.",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/reinhardt",
+   "https://www.sportskeeda.com/esports/5-best-overwatch-2-heroes-duo-reinhardt",
+   "https://gamerant.com/overwatch-2-reinhardt-guide-tips-tricks-abilities-playstyle/",
+   "https://www.esportstales.com/overwatch/how-to-counter-reinhardt-heroes-strategies-and-tips",
+   "https://mobalytics.gg/overwatch/heroes/domina-guide"
+  ]
+ },
+ "Roadhog": {
+  "tags": [
+   "tanky",
+   "sustain",
+   "short-range",
+   "cc",
+   "burst"
+  ],
+  "synergies": [
+   {
+    "hero": "Zenyatta",
+    "why": "Orb della Discordia rende sicure le combo di Chain Hook"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Suzu pulisce l'anti-cure che spegne Take a Breather"
+   },
+   {
+    "hero": "Ana",
+    "why": "Nano Boost durante la combo; la granata aumenta le cure di Breather"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Doomfist",
+    "why": "Il gancio lo blocca e lo tira fuori dal tuffo"
+   },
+   {
+    "hero": "Winston",
+    "why": "Il gancio annulla i suoi movimenti"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Chain Hook uccide di colpo gli eroi agili da 250 PV o meno"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Chain Hook tira giù e uccide Pharah"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Combo di Chain Hook: bersaglio da 250 PV senza fughe"
+   },
+   {
+    "hero": "Domina",
+    "why": "Il gancio la tira oltre i segmenti di Barrier Array"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Ana",
+    "why": "Biotic Grenade blocca le cure di Take a Breather"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Rampage applica anti-cure su Take a Breather"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Grande bersaglio per i fucili; il furto vita tiene vivo Reaper"
+   },
+   {
+    "hero": "Sombra",
+    "why": "L'Hack impedisce Take a Breather e arriva dall'invisibilità"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Immortality Field salva chi è agganciato; Exo Boots evitano il gancio"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "squishy",
+    "flyer",
+    "mobile"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Aggancia supporti ed eroi da 250 PV: la combo li uccide",
+    "Take a Breather riduce i danni del 40% anche con l'anti-cure",
+    "Tieni d'occhio Ana e Baptiste prima di sprecare il gancio"
+   ],
+   "attack": "Cerca ganci sui difensori isolati per aprire la porta",
+   "defense": "Aggancia chi si espone alla porta e reggi il fronte con Take a Breather"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://mobalytics.gg/overwatch/heroes/roadhog-guide",
+   "https://games.gg/overwatch/guides/overwatch-roadhog-guide-master-the-hook-combo-and-dominate/",
+   "https://www.esportsheaven.com/features/how-to-counter-roadhog-in-overwatch-2",
+   "https://overwatch.fandom.com/wiki/Roadhog",
+   "https://www.counterwatch.gg/stats/overwatch/counters/doomfist"
+  ]
+ },
+ "Shion": {
+  "tags": [
+   "mobile",
+   "dive",
+   "burst",
+   "squishy",
+   "short-range"
+  ],
+  "synergies": [
+   {
+    "hero": "Lifeweaver",
+    "why": "Life Grip la riporta in salvo dopo un attacco in moto"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Speed Boost la rende ancora più letale"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Commanding Shout dà velocità alle sue entrate"
+   }
+  ],
+  "counters": [],
+  "counteredBy": [
+   {
+    "hero": "Sombra",
+    "why": "Hack la butta giù dalla moto"
+   },
+   {
+    "hero": "Ana",
+    "why": "Dardo soporifero la ferma e la toglie dalla moto"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera blocca il lancio della moto (Joyride)"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Il controllo delle trappole spezza le sue combo"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Non caricare frontalmente: aggira, isola un bersaglio e scappa",
+    "Joyride a bruciapelo: urto più lancio della moto fa molto danno",
+    "Tieni premuto Execution per stringere la X e colpire da lontano",
+    "Evade dà scudo extra: usalo per uscire, non solo per entrare"
+   ],
+   "attack": "Aggira i difensori e colpisci i supporti con Joyride, poi esci con Evade",
+   "defense": "Punisci dal fianco chi resta isolato e ritirati prima della risposta"
+  },
+  "uncertain": true,
+  "note": "Uscita a giugno 2026: poche guide. Counter a favore trovati solo come statistiche senza motivo, quindi omessi.",
+  "sources": [
+   "https://esports.gg/guides/overwatch/overwatch-shion-counters/",
+   "https://www.exitlag.com/blog/overwatch-shion/",
+   "https://1v9.gg/blog/overwatch-shion-guide",
+   "https://www.pcgamesn.com/overwatch/shion-abilities",
+   "https://gamerant.com/overwatch-shion-abilities-gameplay/"
+  ]
+ },
+ "Sierra": {
+  "tags": [
+   "mobile",
+   "high-ground",
+   "squishy"
+  ],
+  "synergies": [],
+  "counters": [],
+  "counteredBy": [
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera blocca Tracking Shot"
+   },
+   {
+    "hero": "Sigma",
+    "why": "La barriera blocca Tracking Shot"
+   }
+  ],
+  "play": {
+   "position": "high-ground",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Metti l'Anchor Drone in un punto protetto: senza drone non hai fuga",
+    "Ciclo: aggancio, Tracking Shot e Tremor, poi via",
+    "Usa Tracking Shot come segnale d'attacco, non a ricarica finita",
+    "Cerca supporti senza mobilità o DPS fermi su angoli prevedibili"
+   ],
+   "attack": "Usa il drone per prendere angoli alti e laterali sopra il punto",
+   "defense": "Drone in posizione sicura per isolare chi avanza e ritirarti in fretta"
+  },
+  "uncertain": true,
+  "note": "Uscita ad aprile 2026: kit e stile confermati da più guide; counter e sinergie trovati solo come statistiche senza motivo, quindi omessi. Contro di lei: rompere il drone, restare uniti.",
+  "sources": [
+   "https://gamerant.com/overwatch-sierra-gameplay-abilities/",
+   "https://games.gg/overwatch/guides/overwatch-2-sierra-abilities/",
+   "https://1v9.gg/blog/overwatch-sierra-guide",
+   "https://turboboost.gg/article/how-to-play-sierra-overwatch-guide",
+   "https://www.sportskeeda.com/esports/how-master-sierra-overwatch-season-2",
+   "https://us.forums.blizzard.com/en/overwatch/t/any-tips-for-how-to-counter-sierra/1014991"
+  ]
+ },
+ "Sigma": {
+  "tags": [
+   "tanky",
+   "shield",
+   "eat-projectiles",
+   "cc",
+   "projectile"
+  ],
+  "synergies": [
+   {
+    "hero": "Zenyatta",
+    "why": "Poke a distanza al riparo della barriera"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "Torretta e Torbjörn protetti dalla barriera"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Cassidy",
+    "why": "Kinetic Grasp assorbe anche Deadeye"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Experimental Barrier blocca le linee dei cecchini"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Experimental Barrier è fortissima contro gli hitscan"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Accretion punisce chi usa abilità di movimento"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Doomfist",
+    "why": "Kinetic Grasp non può assorbire i pugni"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Da vicino lo mette in grande difficoltà"
+   },
+   {
+    "hero": "Mei",
+    "why": "Forte contro Sigma da vicino"
+   },
+   {
+    "hero": "Symmetra",
+    "why": "La barriera ricarica il suo raggio"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Lo combatte da vicino, dove le barriere servono poco"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "squishy",
+    "mobile"
+   ],
+   "avoidTargets": [],
+   "tips": [
+    "Experimental Barrier contro hitscan e cecchini, ritirala per non perderla",
+    "Kinetic Grasp assorbe proiettili e alcune ultimate (es. Deadeye)",
+    "Accretion per punire chi usa abilità di movimento"
+   ],
+   "attack": "Avanza dietro la barriera e poke con Hyperspheres prima di entrare",
+   "defense": "Tieni le linee lunghe con la barriera e ferma i tuffi con Accretion"
+  },
+  "uncertain": false,
+  "note": "Le sinergie sono soprattutto da statistiche: in 5v5 non esistono coppie di tank.",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/sigma",
+   "https://us.forums.blizzard.com/en/overwatch/t/sigma-counters-and-synergies/375226",
+   "https://us.forums.blizzard.com/en/overwatch/t/my-thoughts-on-sigma-pros-cons-counters-synergies-etc/404008",
+   "https://counterpickgg.com/heroes/sigma",
+   "https://www.esportsheaven.com/features/how-to-counter-sigma/"
+  ]
+ },
+ "Sojourn": {
+  "tags": [
+   "projectile",
+   "hitscan",
+   "burst",
+   "mobile",
+   "long-range"
+  ],
+  "synergies": [
+   {
+    "hero": "Zarya",
+    "why": "Le bolle la fanno giocare aggressiva; Gravitone prepara colpi di Railgun"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Torbjörn",
+    "why": "Il colpo caricato del Railgun distrugge la torretta in un colpo"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Hitscan a lunga distanza: colpisce chi vola senza cadute di danno"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Winston",
+    "why": "La raggiunge in dive e la Tesla non richiede mira"
+   },
+   {
+    "hero": "D.Va",
+    "why": "La raggiunge e la mette sotto pressione"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Fiancheggiatrice: punisce una DPS da lontano"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Fiancheggiatrice: la prende alle spalle"
+   },
+   {
+    "hero": "Genji",
+    "why": "Fiancheggiatore che la raggiunge e respinge i proiettili"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Fiancheggiatore che la punisce da vicino"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "tanky",
+    "squishy"
+   ],
+   "avoidTargets": [
+    "eat-projectiles"
+   ],
+   "tips": [
+    "Carica il Railgun sparando ai tank, poi colpo caricato in testa a un fragile",
+    "Disruptor Shot rallenta: dentro la zona il colpo caricato è più facile",
+    "Tieni Power Slide per scappare dai fiancheggiatori"
+   ],
+   "attack": "Carica sui tank in prima linea e cerca il colpo in testa sui supporti",
+   "defense": "Disruptor Shot sul choke e colpi caricati su chi ne esce"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.digitaltrends.com/gaming/overwatch-2-sojourn-guide-abilities-strategies-counters-and-more/",
+   "https://segmentnext.com/overwatch-2-sojourn/",
+   "https://rankedboost.com/overwatch/counters/sojourn/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-sojourn",
+   "https://segmentnext.com/overwatch-2-torbjorn/",
+   "https://www.esportsheaven.com/features/how-to-counter-pharah-in-overwatch-2"
+  ]
+ },
+ "Soldier: 76": {
+  "tags": [
+   "hitscan",
+   "sustain",
+   "speed",
+   "long-range"
+  ],
+  "synergies": [
+   {
+    "hero": "Ana",
+    "why": "Nano Boost più Tactical Visor: danno rapido senza sprecare colpi"
+   },
+   {
+    "hero": "Mercy",
+    "why": "Danno potenziato sul Visore e sul fuoco continuo"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Attira l'attenzione mentre Soldier tiene la pressione costante"
+   },
+   {
+    "hero": "Genji",
+    "why": "Attira l'attenzione mentre Soldier tiene la pressione costante"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Pharah",
+    "why": "Hitscan; Tactical Visor la colpisce anche in volo"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Tactical Visor colpisce con certezza chi schiva"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Tactical Visor colpisce con certezza chi schiva"
+   },
+   {
+    "hero": "Echo",
+    "why": "Fuoco hitscan continuo su un bersaglio in aria"
+   },
+   {
+    "hero": "Genji",
+    "why": "Tactical Visor colpisce anche un bersaglio sfuggente"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Brigitte",
+    "why": "Shield Bash interrompe il Visore e l'armatura di Rally assorbe il danno"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera assorbe il fuoco continuo"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Colpi più forti e la Dinamite lo caccia dal Biotic Field"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "flyer",
+    "mobile",
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield"
+   ],
+   "tips": [
+    "Biotic Field cura te e i compagni: usalo per tenere una posizione",
+    "Sprint per ruotare in fretta verso posizioni alte",
+    "Tactical Visor sui bersagli sfuggenti o in volo, meglio con Nano o Mercy"
+   ],
+   "attack": "Sprint verso un angolo alto e colpisci i difensori in continuo",
+   "defense": "Tieni la linea media con Biotic Field e punisci chi vola sopra il punto"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://gamerant.com/overwatch-2-soldier-76-guide-tips-abilities-and-more/",
+   "https://rankedboost.com/overwatch/counters/soldier-76/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-soldier-76",
+   "https://expertgamereviews.com/overwatch-2-soldier-76-guide/",
+   "https://esports.gg/news/overwatch/overwatch-2-hero-counters/"
+  ]
+ },
+ "Sombra": {
+  "tags": [
+   "stealth",
+   "mobile",
+   "cc",
+   "squishy"
+  ],
+  "synergies": [
+   {
+    "hero": "Wrecking Ball",
+    "why": "Segue l'ingaggio di Sombra e la copre in fuga"
+   },
+   {
+    "hero": "Winston",
+    "why": "Segue l'ingaggio di Sombra e insegue i bersagli hackerati"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Segue l'ingaggio di Sombra e insegue i bersagli feriti"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Burst rapido sui bersagli hackerati o col Virus"
+   },
+   {
+    "hero": "Soldier: 76",
+    "why": "Burst rapido sui bersagli hackerati o col Virus"
+   },
+   {
+    "hero": "Echo",
+    "why": "Sticky Bombs e Duplicate sul bersaglio hackerato"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Junkrat",
+    "why": "Hack gli toglie la mina: niente fuga né trappole"
+   },
+   {
+    "hero": "Shion",
+    "why": "Hack la butta giù dalla moto"
+   },
+   {
+    "hero": "Echo",
+    "why": "Hack interrompe il volo e la fa cadere"
+   },
+   {
+    "hero": "Genji",
+    "why": "Hack gli toglie Deflect"
+   },
+   {
+    "hero": "Emre",
+    "why": "Hack gli toglie Siphon Blaster e granata"
+   },
+   {
+    "hero": "Freja",
+    "why": "Hack blocca Updraft e Quick Dash"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Brigitte",
+    "why": "Protegge le retrovie da vicino"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Tra i counter più duri indicati dalle guide"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "La torretta punisce chi fiancheggia le retrovie"
+   },
+   {
+    "hero": "Mei",
+    "why": "Cryo-Freeze cancella il Virus"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy",
+    "mobile"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Non combattere di fronte: entra dalle retrovie",
+    "Hack da invisibile, prima che ti notino",
+    "Virus su un bersaglio hackerato fa danno più in fretta"
+   ],
+   "attack": "Entra invisibile dietro i difensori e hacka un supporto all'inizio dello scontro",
+   "defense": "Aggira chi attacca e colpisci i supporti mentre spingono il carico"
+  },
+  "uncertain": true,
+  "note": "Dal 6 ottobre 2026 (Stagione 5) Sombra passa al ruolo Supporto con abilità nuove: questa teoria descrive il kit Danni precedente e va rivista. Teoria sul kit Danni attuale. Annunciato: dalla Stagione 5 (6 ott 2026) Sombra diventa Supporto con kit nuovo (Hotfix, Cyberspace): questa scheda va rifatta.",
+  "sources": [
+   "https://gamerant.com/overwatch-2-sombra-rework-guide-abilities-counters-more/",
+   "https://www.gamespot.com/articles/overwatch-2-sombra-hero-guide/1100-6508437/",
+   "https://rankedboost.com/overwatch/counters/sombra/",
+   "https://www.gamesradar.com/games/fps/overwatch-season-5-turns-sombra-into-a-support-hero-reworks-roadhog-to-be-less-annoying-and-adds-cool-vampire-doctrine-to-the-roster/",
+   "https://www.thegamer.com/overwatch-sombra-roadhog-reworks-blizzcon-2026/",
+   "https://www.esportsheaven.com/features/how-to-counter-junkrat-in-overwatch-2/",
+   "https://esports.gg/guides/overwatch/overwatch-shion-counters/"
+  ]
+ },
+ "Symmetra": {
+  "tags": [
+   "beam",
+   "deployable",
+   "short-range"
+  ],
+  "synergies": [
+   {
+    "hero": "Torbjörn",
+    "why": "Le torrette dei due si proteggono a vicenda: difesa durissima"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Bastion copre la distanza, Symmetra i nemici vicini"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio porta i nemici dentro le torrette"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Dà mobilità e cure che a Symmetra mancano"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Genji",
+    "why": "Il raggio di Symmetra non si respinge con Deflect"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Winston",
+    "why": "La Tesla distrugge le torrette senza mirarle"
+   },
+   {
+    "hero": "Sigma",
+    "why": "I suoi attacchi spazzano via le torrette"
+   },
+   {
+    "hero": "Pharah",
+    "why": "Resta fuori portata e distrugge le torrette a terra"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Resiste a lungo, la uccide col fuoco rapido e sfugge alle torrette"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "dive",
+    "melee",
+    "shield"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Piazza le torrette dove i nemici passano, non in vista",
+    "Il raggio si carica: tienilo su barriere e tank",
+    "Il Teletrasporto sposta tutta la squadra: usalo per aggirare o ruotare"
+   ],
+   "attack": "Teletrasporto su un fianco per far entrare tutta la squadra a sorpresa",
+   "defense": "Torrette sul choke e vicino ai supporti contro i fiancheggiatori"
+  },
+  "uncertain": false,
+  "note": "Le modifiche a Symmetra del 30 giu 2026 erano della modalità Community Crafted.",
+  "sources": [
+   "https://segmentnext.com/overwatch-2-symmetra/",
+   "https://gamerant.com/overwatch-2-symmetra-guide-tips-abilities-tricks/",
+   "https://theglobalgaming.com/overwatch/best-counter-for-symmetra",
+   "https://www.esportsheaven.com/features/how-to-counter-symmetra/",
+   "https://dotesports.com/overwatch/news/best-genji-counters-in-overwatch-2"
+  ]
+ },
+ "Torbjörn": {
+  "tags": [
+   "projectile",
+   "deployable"
+  ],
+  "synergies": [
+   {
+    "hero": "Symmetra",
+    "why": "Le torrette dei due si proteggono a vicenda"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "La barriera mobile permette di piazzare la torretta più avanti"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Può proteggere la torretta con una bolla"
+   },
+   {
+    "hero": "Baptiste",
+    "why": "Tiene in vita Torbjörn e la sua torretta"
+   },
+   {
+    "hero": "Ana",
+    "why": "Tiene in vita Torbjörn e la sua torretta"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Tracer",
+    "why": "La torretta punisce i fiancheggiatori nelle retrovie"
+   },
+   {
+    "hero": "Genji",
+    "why": "La torretta punisce i fiancheggiatori nelle retrovie"
+   },
+   {
+    "hero": "Sombra",
+    "why": "La torretta scopre e colpisce chi fiancheggia"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "La torretta segnala e punisce i suoi ingaggi dal fianco"
+   },
+   {
+    "hero": "Vendetta",
+    "why": "La torretta la colpisce mentre entra"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Hanzo",
+    "why": "Distrugge la torretta in due colpi da distanza sicura"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Elimina la torretta da lontano"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Il Railgun caricato distrugge la torretta in un colpo"
+   },
+   {
+    "hero": "Pharah",
+    "why": "La torretta non la ferma: la distrugge coi razzi dall'alto"
+   }
+  ],
+  "play": {
+   "position": "near-tank",
+   "targets": [
+    "dive",
+    "mobile",
+    "tanky"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Piazza la torretta a protezione dei supporti contro i dive",
+    "Overload aumenta velocità e ritmo di fuoco: usalo nei duelli",
+    "Molten Core per negare il punto o chiudere le vie di fuga"
+   ],
+   "attack": "Torretta dietro il tank appena prendete spazio, Molten Core sul punto",
+   "defense": "Torretta che copre il choke e i fianchi dei supporti"
+  },
+  "uncertain": false,
+  "note": "Le modifiche a Torbjörn del 30 giu 2026 erano della modalità Community Crafted.",
+  "sources": [
+   "https://segmentnext.com/overwatch-2-torbjorn/",
+   "https://www.gamespot.com/articles/overwatch-2-torbjorn-hero-guide/1100-6508434/",
+   "https://gamerant.com/overwatch-2-torbjorn-guide-tips-abilities-tricks/",
+   "https://rankedboost.com/overwatch/counters/torbjorn/",
+   "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide"
+  ]
+ },
+ "Tracer": {
+  "tags": [
+   "mobile",
+   "dive",
+   "squishy",
+   "burst",
+   "short-range"
+  ],
+  "synergies": [
+   {
+    "hero": "Zarya",
+    "why": "Gravitone più Pulse Bomb spazza quasi tutta la squadra"
+   },
+   {
+    "hero": "Genji",
+    "why": "Due fiancheggiatori: Swift Strike e Shuriken insieme alle sue raffiche"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Widowmaker",
+    "why": "Da vicino la sniper è indifesa"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Fiancheggiatrice rapida che la prende da vicino"
+   },
+   {
+    "hero": "Sojourn",
+    "why": "Fiancheggiatrice: punisce una DPS da lontano"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Lo aggira e lo colpisce quando è lento in Assalto"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Moira",
+    "why": "Biotic Grasp la colpisce senza mira e cura Moira"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "La torretta le rovina gli attacchi alle retrovie"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Flagello e armatura annullano il suo danno"
+   },
+   {
+    "hero": "Soldier: 76",
+    "why": "Tactical Visor la colpisce anche mentre schiva"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy",
+    "sniper"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Gestisci i 3 Blink: tienine uno per scappare",
+    "Recall ti ridà vita e posizione di pochi secondi fa",
+    "Pulse Bomb: Blink addosso, attacca la bomba, poi Recall"
+   ],
+   "attack": "Entra dal fianco sui supporti all'inizio dello scontro",
+   "defense": "Disturba le retrovie nemiche mentre spingono il carico"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.thegamer.com/overwatch-2-tracer-hero-tips-tricks-play-guide/",
+   "https://gamerant.com/overwatch-2-tracer-guide-tips-abilities-tricks-playstyles/",
+   "https://segmentnext.com/overwatch-2-tracer/",
+   "https://www.icy-veins.com/overwatch/tracer-abilities-strategy",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-widowmaker"
+  ]
+ },
+ "Vendetta": {
+  "tags": [
+   "melee",
+   "dive",
+   "mobile",
+   "burst"
+  ],
+  "synergies": [
+   {
+    "hero": "Zarya",
+    "why": "Barriera proiettata: entra, prendi la bolla, colpisci, esci"
+   },
+   {
+    "hero": "Winston",
+    "why": "Comp dive: entrano insieme sulle retrovie"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Comp dive: entrano insieme sulle retrovie"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Velocità per entrare e uscire in fretta nella comp dive"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Può salvarla dopo un attacco rischioso"
+   },
+   {
+    "hero": "Lifeweaver",
+    "why": "Può salvarla dopo un attacco rischioso"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Mercy",
+    "why": "Supporto fragile nelle retrovie: Soaring Slice la raggiunge"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Supporto fragile nelle retrovie: Soaring Slice la raggiunge"
+   },
+   {
+    "hero": "Lifeweaver",
+    "why": "Supporto isolato: Vendetta lo prende prima che scappi"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Ana",
+    "why": "Dardo soporifero la ferma, granata le toglie le cure"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio la prende durante l'animazione d'ingaggio"
+   },
+   {
+    "hero": "Sigma",
+    "why": "Accretion la ferma durante Soaring Slice"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "La granata la insegue e il Peacekeeper la uccide"
+   },
+   {
+    "hero": "Pharah",
+    "why": "In aria Vendetta non la raggiunge"
+   },
+   {
+    "hero": "Torbjörn",
+    "why": "La torretta la colpisce mentre entra"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Granate scavalcano Warding Stance; trappola su Soaring Slice"
+   },
+   {
+    "hero": "Brigitte",
+    "why": "Shield Bash e Whip Shot la tengono lontana dalle retrovie"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "flyer",
+    "tanky"
+   ],
+   "tips": [
+    "Uccisioni rapide e ritirata: niente scontri lunghi",
+    "Parti da angoli alti e laterali che il nemico non vede",
+    "Cerca i bersagli isolati di valore, come un supporto staccato",
+    "Warding Stance blocca il danno frontale: usala per avvicinarti"
+   ],
+   "attack": "Entra con Soaring Slice sui supporti isolati, poi esci",
+   "defense": "Punisci chi si stacca dal gruppo partendo da un angolo alto"
+  },
+  "uncertain": false,
+  "note": "Counter a favore in parte da dati aggregati (supporti delle retrovie).",
+  "sources": [
+   "https://turboboost.gg/article/how-to-play-vendetta-overwatch-guide",
+   "https://overgear.com/guides/overwatch/how-to-play-vendetta/",
+   "https://eloking.com/blog/how-to-counter-vandetta-in-ow2",
+   "https://rankedboost.com/overwatch/counters/vendetta/",
+   "https://esports.gg/news/overwatch/overwatch-2-vendetta-abilities/",
+   "https://www.thegamer.com/overwatch-2-ow2-vendetta-melee-hero-interview/"
+  ]
+ },
+ "Venture": {
+  "tags": [
+   "dive",
+   "mobile",
+   "burst",
+   "short-range",
+   "immortality"
+  ],
+  "synergies": [
+   {
+    "hero": "Winston",
+    "why": "Segue Venture nelle retrovie o apre la strada sul fianco"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "Pressione di dive che apre i percorsi sul fianco"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Segue Venture nelle retrovie o apre la strada sul fianco"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Teletrasporto e Suzu la tengono in vita nelle giocate rischiose"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Tracer",
+    "why": "Colpo più Drill Dash uccide Tracer in meno di un secondo"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Doomfist",
+    "why": "Resiste alla combo di Drill Dash e la batte da vicino"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "Martello sul punto di uscita e Charge dopo il Burrow"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio la prende appena esce da sotto terra"
+   },
+   {
+    "hero": "Pharah",
+    "why": "In aria ignora il Burrow"
+   },
+   {
+    "hero": "Echo",
+    "why": "In volo è fuori dalla sua portata"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Steel Trap sui punti di uscita dal Burrow"
+   },
+   {
+    "hero": "Kiriko",
+    "why": "Consigliata dalle guide contro Venture"
+   },
+   {
+    "hero": "Ana",
+    "why": "Una buona granata la mette fuori gioco"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "shield",
+    "flyer"
+   ],
+   "tips": [
+    "Sparo e subito Drill Dash: la combo di danno più forte",
+    "Drill Dash da sotto terra ha ricarica dimezzata",
+    "Le barriere bloccano danno del Burrow e ultimate: aggirale"
+   ],
+   "attack": "Scava sotto le linee nemiche ed esci sui supporti raggruppati",
+   "defense": "Esci dal Burrow alle spalle di chi spinge il carico"
+  },
+  "uncertain": false,
+  "note": "Pochi counter a favore motivati nelle fonti.",
+  "sources": [
+   "https://esports.gg/news/overwatch/overwatch-venture-meta-guide-counters-synergies-balance-patch/",
+   "https://www.gamespot.com/articles/overwatch-2-venture-hero-guide/1100-6522743/",
+   "https://gamerant.com/overwatch-2-ow2-how-play-venture-abilities-counters-tips-guide/",
+   "https://www.boostingfactory.com/overwatch/blog/overwatch-2-venture-guide",
+   "https://fenixbazaar.com/2025/07/09/overwatch-2-venture-guide/",
+   "https://1v9.gg/blog/best-overwatch-2-heroes-to-counter-venture"
+  ]
+ },
+ "Widowmaker": {
+  "tags": [
+   "hitscan",
+   "sniper",
+   "long-range",
+   "high-ground",
+   "burst",
+   "squishy"
+  ],
+  "synergies": [
+   {
+    "hero": "Sigma",
+    "why": "Piazza la barriera a distanza per proteggere un cecchino isolato"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Pharah",
+    "why": "Può ucciderla con un colpo in volo"
+   },
+   {
+    "hero": "Mercy",
+    "why": "Lenta e indifesa in volo: priorità per la Resurrezione"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Testa grande, nessuna mobilità"
+   },
+   {
+    "hero": "Ashe",
+    "why": "Vince il duello a distanza con colpo singolo letale"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "Lo uccide prima che arrivi alla sua distanza utile"
+   },
+   {
+    "hero": "Junkrat",
+    "why": "Lo colpisce da una distanza che le granate non coprono"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Winston",
+    "why": "Salta sulla sua posizione e la Tesla non richiede mira"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "La insegue anche dopo il Grappling Hook"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Chiude la distanza e la costringe al corpo a corpo"
+   },
+   {
+    "hero": "Genji",
+    "why": "Deflect le rimanda i colpi; da vicino è indifesa"
+   },
+   {
+    "hero": "Tracer",
+    "why": "La aggira: il fuoco ravvicinato di Widowmaker è debole"
+   },
+   {
+    "hero": "Sombra",
+    "why": "La aggira: il fuoco ravvicinato di Widowmaker è debole"
+   }
+  ],
+  "play": {
+   "position": "high-ground",
+   "targets": [
+    "squishy",
+    "flyer",
+    "sniper"
+   ],
+   "avoidTargets": [
+    "tanky",
+    "shield"
+   ],
+   "tips": [
+    "Priorità: supporti come Zenyatta e Mercy",
+    "Cambia posizione col Grappling Hook dopo ogni uccisione",
+    "Tieni il rampino per scappare dai dive"
+   ],
+   "attack": "Prendi una linea lunga sul punto e colpisci i supporti prima dello scontro",
+   "defense": "Tieni le linee lunghe sul choke e abbatti chi vola"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://gamerant.com/overwatch-2-widowmaker-guide-tips-abilities-playstyle-tricks/",
+   "https://rankedboost.com/overwatch/counters/widowmaker/",
+   "https://1v9.gg/blog/overwatch-2-best-heroes-to-counter-widowmaker",
+   "https://sportskeeda.com/esports/how-counter-widowmaker-overwatch-2",
+   "https://segmentnext.com/overwatch-2-widowmaker/",
+   "https://www.icy-veins.com/overwatch/pharah-synergies-and-matchups",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero"
+  ]
+ },
+ "Winston": {
+  "tags": [
+   "tanky",
+   "dive",
+   "mobile",
+   "beam",
+   "shield"
+  ],
+  "synergies": [
+   {
+    "hero": "Tracer",
+    "why": "DPS veloce che segue i tuffi di Winston"
+   },
+   {
+    "hero": "Genji",
+    "why": "DPS veloce che segue i tuffi di Winston sulla backline"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Supporto mobile che segue Winston nel dive"
+   },
+   {
+    "hero": "Mercy",
+    "why": "Cura mirata e Guardian Angel per raggiungerlo nei guai"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Armonia lo cura da lontano, Discordia aumenta i danni del Tesla"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Widowmaker",
+    "why": "Jump Pack la raggiunge e il Tesla Cannon la finisce"
+   },
+   {
+    "hero": "Genji",
+    "why": "Il Tesla mira da solo e Deflect non lo blocca; Primal Rage spezza Dragonblade"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Tesla Cannon e Jump Pack la prendono nonostante la mobilità"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Senza fughe: Winston lo blocca e lo elimina"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Reaper",
+    "why": "I fucili distruggono la cupola e i 500 PV di Winston"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio annulla i suoi movimenti"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Fuoco continuo sul grande bersaglio"
+   },
+   {
+    "hero": "Bastion",
+    "why": "Danni enormi su bersagli grandi"
+   },
+   {
+    "hero": "Ana",
+    "why": "Il Dardo soporifero lo ferma, anche in Primal Rage"
+   },
+   {
+    "hero": "Domina",
+    "why": "Sonic Repulsors respinge il tuffo e lo stordisce contro i muri"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy",
+    "sniper"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Tuffati con Jump Pack sui bersagli fragili e alzaci sopra la cupola",
+    "Il Tesla mira da solo: ottimo contro Genji e Tracer",
+    "Entra insieme ai DPS mobili, non da solo"
+   ],
+   "attack": "Salta sull'high ground della difesa e tuffati sui supporti",
+   "defense": "Usa Jump Pack per punire chi si espone e torna indietro con la cupola"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.icy-veins.com/overwatch/winston-synergies-and-matchups",
+   "https://segmentnext.com/overwatch-2-winston/",
+   "https://www.counterwatch.gg/stats/overwatch/heroes/winston",
+   "https://dotesports.com/overwatch/news/winston-overwatch-2-strategy-guide-15189",
+   "https://www.gamepur.com/guides/overwatch-2-winston-guide-tips-strategies-counters-and-more"
+  ]
+ },
+ "Wrecking Ball": {
+  "tags": [
+   "tanky",
+   "dive",
+   "mobile",
+   "cc"
+  ],
+  "synergies": [
+   {
+    "hero": "Zenyatta",
+    "why": "Discordia per finire chi Ball disturba"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Widowmaker",
+    "why": "Grappling Claw la raggiunge e la palla è immune ai colpi alla testa"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Lento e fragile: Ball lo raggiunge e lo elimina"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Sombra",
+    "why": "L'Hack annulla Adaptive Shield e la palla: resta fermo e grosso"
+   },
+   {
+    "hero": "Domina",
+    "why": "Sonic Repulsors lo respinge e stordisce contro i muri"
+   },
+   {
+    "hero": "Mei",
+    "why": "Il congelamento lo tira fuori dalla forma di palla"
+   },
+   {
+    "hero": "Roadhog",
+    "why": "Il gancio lo blocca durante i tuffi"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Tra i tank che lo contrastano meglio"
+   },
+   {
+    "hero": "Cassidy",
+    "why": "CC: Ball soffre stordimenti e blocchi"
+   }
+  ],
+  "play": {
+   "position": "flank",
+   "targets": [
+    "squishy",
+    "sniper"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Crea caos e ruota: non restare fermo, i CC ti puniscono",
+    "Piledriver sui supporti isolati, poi esci col rampino",
+    "Evita Sombra e i CC: se sei fermo sei un bersaglio grosso"
+   ],
+   "attack": "Disturba la difesa alle spalle per far avanzare il team sul carico",
+   "defense": "Ruota sul carico e spezza le spinte con Piledriver"
+  },
+  "uncertain": false,
+  "note": "Poche sinergie motivate nelle fonti: Zenyatta, Mei e Torbjörn vengono soprattutto da statistiche.",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/wrecking-ball",
+   "https://www.icy-veins.com/overwatch/wrecking-ball-synergies-and-matchups",
+   "https://rankedboost.com/overwatch/counters/wrecking-ball/",
+   "https://www.esportsheaven.com/features/how-to-counter-wrecking-ball-in-overwatch-2"
+  ]
+ },
+ "Wuyang": {
+  "tags": [
+   "projectile",
+   "cc",
+   "mobile",
+   "sustain"
+  ],
+  "synergies": [
+   {
+    "hero": "Kiriko",
+    "why": "Indicata dai giocatori come il miglior supporto da affiancare a Wuyang"
+   },
+   {
+    "hero": "Ana",
+    "why": "Coppia di supporti usata anche nel gioco pro"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Coppia di supporti usata anche nel gioco pro"
+   }
+  ],
+  "counters": [],
+  "counteredBy": [
+   {
+    "hero": "Moira",
+    "why": "Biotic Grasp lo segue in Rushing Torrent e Fade evita Guardian Wave"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Seismic Slam atterra dietro l'onda, che copre solo davanti"
+   },
+   {
+    "hero": "Wrecking Ball",
+    "why": "Piledriver arriva dall'alto, dove Guardian Wave non respinge"
+   },
+   {
+    "hero": "Winston",
+    "why": "Il dive mette in crisi Wuyang quando Rushing Torrent è in ricarica"
+   },
+   {
+    "hero": "Jetpack Cat",
+    "why": "Jetpack Cat attacca dall'alto, fuori dall'onda frontale"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "dive",
+    "squishy"
+   ],
+   "avoidTargets": [
+    "flyer"
+   ],
+   "tips": [
+    "Guardian Wave a terra: in aria resti bloccato nell'animazione",
+    "Tieni Guardian Wave per chi minaccia di più o per fermare un'ultimate",
+    "Rushing Torrent è la tua sola mobilità: se lo usi per entrare non scappi",
+    "Tidal Blast insieme alle ultimate dei compagni, non appena è pronta"
+   ],
+   "attack": "Tidal Blast sul tank che entra: lo protegge e butta giù i nemici",
+   "defense": "Guardian Wave per respingere chi sale sul punto o sul carico"
+  },
+  "uncertain": true,
+  "note": "Eroe del 2025-26: sinergie e 'counters' poco documentate dalla teoria; 'counters' soprattutto da statistiche (dati).",
+  "sources": [
+   "https://www.windowscentral.com/gaming/xbox/overwatch-2-wuyang-support-gameplay-reveal",
+   "https://www.fragster.com/how-to-play-wuyang-in-overwatch-2-abilities-and-perks-complete-guide/",
+   "https://rankedboost.com/overwatch/counters/wuyang/",
+   "https://www.counterwatch.gg/stats/overwatch/heroes/wuyang",
+   "https://us.forums.blizzard.com/en/overwatch/t/wuyang-support-synergies/981204",
+   "https://www.thegamer.com/overwatch-2-wuyang-hero-guide/",
+   "https://turboboost.gg/article/wuyang-overwatch-guide"
+  ]
+ },
+ "Zarya": {
+  "tags": [
+   "tanky",
+   "beam",
+   "short-range",
+   "cc"
+  ],
+  "synergies": [
+   {
+    "hero": "Genji",
+    "why": "Graviton Surge blocca tutti per la Dragonblade di Genji"
+   },
+   {
+    "hero": "Hanzo",
+    "why": "Graviton Surge + Dragonstrike: uccisione sicura dei presi"
+   },
+   {
+    "hero": "Zenyatta",
+    "why": "Discordia sul gruppo in Graviton"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Genji",
+    "why": "Il raggio non si devia"
+   },
+   {
+    "hero": "Doomfist",
+    "why": "Le bolle assorbono i suoi colpi"
+   },
+   {
+    "hero": "Winston",
+    "why": "Tra gli eroi che batte di più, specie con Graviton Surge"
+   },
+   {
+    "hero": "D.Va",
+    "why": "Il raggio non viene assorbito da Defense Matrix"
+   },
+   {
+    "hero": "Orisa",
+    "why": "Il raggio colpisce anche durante Javelin Spin"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Il raggio passa attraverso il Block della forma Nemesis"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Pharah",
+    "why": "Combatte oltre i 15 m del raggio e non le dà carica"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Da lontano nega la carica di Zarya"
+   },
+   {
+    "hero": "Bastion",
+    "why": "La batte da fuori dalla portata del raggio"
+   }
+  ],
+  "play": {
+   "position": "frontline",
+   "targets": [
+    "dive",
+    "tanky"
+   ],
+   "avoidTargets": [
+    "flyer",
+    "sniper"
+   ],
+   "tips": [
+    "Usa le bolle sui colpi in arrivo: ogni danno assorbito dà carica",
+    "Con carica alta Zarya fa più danni di molti DPS: spingi allora",
+    "Graviton Surge insieme a ultimate ad area dei compagni"
+   ],
+   "attack": "Bolla al tank o al tuffatore per caricarti, poi Graviton sul gruppo",
+   "defense": "Bolla chi entra per primo e tieni la carica alta per lo scontro"
+  },
+  "uncertain": false,
+  "note": "",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/counters/zarya",
+   "https://segmentnext.com/overwatch-2-zarya/",
+   "https://rankedboost.com/overwatch/counters/zarya/",
+   "https://www.furiouspaul.com/overwatch/zarya.php",
+   "https://counterpickgg.com/heroes/sigma"
+  ]
+ },
+ "Zenyatta": {
+  "tags": [
+   "projectile",
+   "squishy",
+   "long-range",
+   "burst"
+  ],
+  "synergies": [
+   {
+    "hero": "Genji",
+    "why": "Orb of Discord fa cadere anche i tank sotto i colpi di Genji"
+   },
+   {
+    "hero": "Ana",
+    "why": "Sleep Dart di Ana + Orb of Discord sul bersaglio addormentato"
+   },
+   {
+    "hero": "Moira",
+    "why": "Orb of Discord + Biotic Orb di danno di Moira"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Lúcio velocizza la squadra e tiene lontani gli assassini da Zenyatta"
+   }
+  ],
+  "counters": [
+   {
+    "hero": "Roadhog",
+    "why": "Orb of Discord taglia la grande vita di Roadhog"
+   },
+   {
+    "hero": "Mauga",
+    "why": "Orb of Discord aiuta a sfondare la vita enorme di Mauga"
+   },
+   {
+    "hero": "Reinhardt",
+    "why": "Senza scudo, Orb of Discord scioglie Reinhardt in fretta"
+   },
+   {
+    "hero": "Zarya",
+    "why": "Orb of Discord su Zarya senza bolle la fa cadere subito"
+   },
+   {
+    "hero": "Ramattra",
+    "why": "Zenyatta punisce bene Ramattra (dati citati dalle guide)"
+   }
+  ],
+  "counteredBy": [
+   {
+    "hero": "Winston",
+    "why": "Winston salta su Zenyatta, che non ha mobilità"
+   },
+   {
+    "hero": "D.Va",
+    "why": "D.Va lo raggiunge subito e Defense Matrix assorbe le sue sfere"
+   },
+   {
+    "hero": "Sombra",
+    "why": "Sombra lo prende alle spalle: Zenyatta non ha fuga"
+   },
+   {
+    "hero": "Junker Queen",
+    "why": "Rampage blocca la cura di Transcendence"
+   },
+   {
+    "hero": "Widowmaker",
+    "why": "Testa lenta e grande: facile colpo alla testa per Widowmaker"
+   },
+   {
+    "hero": "Lúcio",
+    "why": "Lúcio è veloce e difficile da colpire con le sfere"
+   },
+   {
+    "hero": "Juno",
+    "why": "I siluri a ricerca di Juno puniscono Zenyatta lento"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "tanky",
+    "squishy"
+   ],
+   "avoidTargets": [
+    "mobile"
+   ],
+   "tips": [
+    "Orb of Discord sul bersaglio che la squadra sta colpendo (tank o tuffatore)",
+    "Senza mobilità: resta dietro e vicino a chi può proteggerti",
+    "Transcendence contro le ultimate nemiche a raffica",
+    "Carica le sfere secondarie per i colpi a raffica sui fragili"
+   ],
+   "attack": "Discord sul tank nemico all'ingresso per sfondare la difesa",
+   "defense": "Discord su chi avanza per primo e Transcendence contro l'ultimate d'ingresso"
+  },
+  "uncertain": false,
+  "note": "Kit 2026 (Season 2): Orb of Discord +25% danni subiti.",
+  "sources": [
+   "https://www.counterwatch.gg/stats/overwatch/heroes/zenyatta",
+   "https://rankedboost.com/overwatch/counters/zenyatta/",
+   "https://segmentnext.com/overwatch-2-zenyatta/",
+   "https://1v9.gg/blog/best-overwatch-2-heroes-to-counter-zenyatta",
+   "https://www.sportskeeda.com/esports/5-overwatch-2-heroes-duo-zenyatta",
+   "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-tank",
+   "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/"
+  ]
+ }
+}

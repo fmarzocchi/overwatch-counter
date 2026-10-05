@@ -43,6 +43,7 @@ writeFileSync(path.join(SITE, "data.json"), JSON.stringify({ ...data, divisions:
 const server = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1", "--directory", SITE], { stdio: "ignore" });
 const browser = await chromium.launch();
 const errors = [];
+let lastPage = null; // per lo screenshot in caso di errore
 
 async function newPage(ctxOpts = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "it-IT", ...ctxOpts });
@@ -54,6 +55,8 @@ async function newPage(ctxOpts = {}) {
 const shot = (page, name) => page.screenshot({ path: path.join(SHOTS, `${name}.png`) });
 const text = (page, sel) => page.locator(sel).innerText();
 const heroBtn = (page, name) => page.locator("#grid .hero", { has: page.locator(".nm", { hasText: new RegExp(`^${name}$`) }) });
+// in cima alla pagina il riquadro dei consigli è completo (scorrendo si compatta)
+const toTop = async (page) => { await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(50); };
 const pickNames = (page) => page.locator(".pick .sug.first .sug-name").allInnerTexts();
 
 try {
@@ -61,8 +64,10 @@ try {
 
   // ---------- primo avvio ----------
   const { ctx, page } = await newPage();
+  lastPage = page;
   await page.goto(BASE);
   await page.locator(".pick .sug.first .sug-name").first().waitFor();
+  await toTop(page);
   check("primo avvio: due consigli (Io e Lei)", (await page.locator(".pick").count()) === 2
     && (await text(page, ".picks")).includes("Io") && (await text(page, ".picks")).includes("Lei"));
   check("primo avvio: 53 eroi in griglia", (await page.locator("#grid .hero").count()) === data.heroes.length);
@@ -94,6 +99,7 @@ try {
   check("profilo: preferiti salvati", favOk, await page.locator("section.card").nth(1).innerText());
   await shot(page, "03-profilo");
   await page.click(".tabs [data-view=match]");
+  await toTop(page);
   check("profilo: nomi nei consigli", (await text(page, ".picks")).includes("Fabio") && (await text(page, ".picks")).includes("Giulia"));
 
   // ---------- inizio partita: mappa, lato, ban ----------
@@ -109,9 +115,11 @@ try {
   await heroBtn(page, "Ana").click();
   await heroBtn(page, "Kiriko").click();
   check("2 ban contati", (await text(page, "[data-count=bans]")) === "2");
+  await toTop(page);
   const afterBans = await pickNames(page);
   check("consigli senza eroi bannati", !afterBans.includes("Ana") && !afterBans.includes("Kiriko"), afterBans.join());
   check("consigli: Fabio e Giulia hanno eroi diversi", afterBans[0] !== afterBans[1], afterBans.join());
+  await toTop(page);
   check("motivo mappa nei consigli", /Mappa [+−]\d/.test(await text(page, ".picks")));
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "05-inizio-partita");
@@ -120,15 +128,20 @@ try {
   await page.click("#groups [data-group=enemies]");
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
   check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
+  await toTop(page);
   check("motivi 'Avversari' nei consigli", /Avversari [+−]\d/.test(await text(page, ".picks")), await text(page, ".picks"));
+  check("pulsanti «Come giocare» per i due eroi consigliati", (await page.locator("#guides .guide-btn").count()) === 2);
+  await toTop(page);
   check("3 consigli per giocatore, in ordine", (await page.locator(".pick").nth(0).locator(".sug").count()) === 3
     && (await page.locator(".pick").nth(1).locator(".sug").count()) === 3
     && (await page.locator(".pick").nth(0).locator(".sug-n").allInnerTexts()).join() === "1,2,3");
   const order = await page.evaluate(() => [...document.querySelectorAll(".pick")].map((p) =>
     [...p.querySelectorAll(".sug-est")].map((e) => parseFloat(e.textContent))));
   check("ordinati dal migliore (stima non crescente, salvo bonus preferiti)", order.every((l) => l.length === 3), JSON.stringify(order));
+  await toTop(page);
   const why = await page.locator(".pick").nth(0).locator(".sug").first().innerText();
   check("perché: vantaggio su mappa e su comp avversaria", /Mappa [+−]\d/.test(why) && /Avversari [+−]\d/.test(why), why);
+  await toTop(page);
   await page.locator(".pick").nth(0).locator(".sug").nth(1).click();
   const det = await text(page, "#why-body");
   check("tocco su un consiglio: dettaglio per ogni avversario", ["contro Pharah", "contro Winston", "contro Reinhardt", "King's Row"].every((t) => det.includes(t)), det);
@@ -137,7 +150,29 @@ try {
   for (const t of ["Forte contro", "In difficoltà contro", "Mappe migliori", "Funziona bene con"]) {
     check(`scheda eroe: sezione «${t}» con eroi/mappe e percentuali`, await page.locator(".prof-sec", { hasText: t }).locator("li").count() > 0);
   }
+  const firstList = await page.locator("#why-body .prof-sec").first().locator("li").count();
+  check("statistiche nella scheda: lista completa (più di 5), scorrevole", firstList > 5
+    && await page.locator("#why-body .prof-list").first().evaluate((x) => getComputedStyle(x).overflowY === "auto"), `${firstList} voci`);
+  check("teoria nella scheda: stile Rush/Dive/Poke e tre riquadri «Teoria»", (await page.locator("#why-body .theory-style").count()) === 1
+    && (await page.locator("#why-body .theory-sec").count()) === 3
+    && (await page.locator("#why-body .theory-sec .theory-badge").count()) === 3);
+  check("riquadri teoria in viola, diversi dalle statistiche", await page.evaluate(() => {
+    const a = getComputedStyle(document.querySelector("#why-body .theory-sec")).backgroundColor;
+    const b = getComputedStyle(document.querySelector("#why-body .prof-sec:not(.theory-sec)")).backgroundColor;
+    return a !== b;
+  }));
+  await page.locator("#why-body .theory-sec").first().scrollIntoViewIfNeeded();
+  await shot(page, "05d-teoria");
+  await page.click("#why-body .guide-btn");
+  await page.locator("#guide-dialog[open]").waitFor();
+  const guide = await text(page, "#guide-body");
+  check("come giocarla: scheda con sezioni per questa partita (mappa, lato, come muoverti)",
+    guide.includes("Mappa: King's Row") && guide.includes("Come muoverti")
+    && (await page.locator("#guide-body .guide-sec").count()) >= 3 && (await page.locator("#guide-body .theory-badge").count()) > 0, guide.slice(0, 400));
+  await shot(page, "05e-come-giocarla");
+  await page.click("#guide-dialog [data-close]");
   await page.click("#why-dialog [data-close]");
+  await toTop(page);
   await page.locator(".pick").nth(1).locator(".sug").first().click();
   const detG = await text(page, "#why-body");
   check("scheda eroe di Giulia (rank Oro): usa i dati della divisione", detG.includes("dati: Ranked Oro"), detG);
@@ -148,7 +183,9 @@ try {
     !/Alleati [+−]/.test(await page.locator(".pick").nth(0).innerText()) && /Con Giulia [+−]/.test(await page.locator(".pick").nth(0).innerText()));
   await page.click("#groups [data-group=allies]");
   await heroBtn(page, "Lúcio").click();
+  await toTop(page);
   check("con alleati: riga Alleati nei perché", /Alleati [+−]\d/.test(await page.locator(".pick").nth(0).locator(".sug").first().innerText()));
+  await toTop(page);
   const picks = await pickNames(page);
   check("alleato non consigliato", !picks.includes("Lúcio"), picks.join());
   await page.click("#groups [data-group=enemies]");
@@ -160,11 +197,15 @@ try {
   await heroBtn(page, "Mercy").click();
   check("tocco sposta tra gruppi", (await text(page, "[data-count=enemies]")) === "4" && (await text(page, "[data-count=allies]")) === "2");
   // ruolo cambiato al volo
+  await toTop(page);
   await page.locator(".pick").nth(1).locator(".role-btn").click();
+  await toTop(page);
   check("ruolo di Giulia cambiato al volo (Supporto → Danni)", (await page.locator(".pick").nth(1).locator(".role-btn").innerText()) === "Danni");
+  await toTop(page);
   const duo = await pickNames(page);
   const role = (n) => data.heroes.find((h) => h.name === n)?.role;
   check("con lo stesso ruolo eroi diversi", duo[0] !== duo[1] && role(duo[0]) === "Damage" && role(duo[1]) === "Damage", duo.join());
+  await toTop(page);
   await page.locator(".pick").nth(1).locator(".role-btn").click();
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "06-durante-partita");
@@ -175,8 +216,10 @@ try {
   await page.click(".tabs [data-view=profile]");
   await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
   await page.click(".tabs [data-view=match]");
+  await toTop(page);
   const giulia = await page.locator(".pick").nth(1).locator(".sug-name").allInnerTexts();
   check("solo preferiti: Giulia vede solo Mercy/Juno (Mercy è alleata → solo Juno)", giulia.join() === "Juno", giulia.join());
+  await toTop(page);
   const fabio = await page.locator(".pick").nth(0).innerText();
   check("solo preferiti: Fabio senza preferiti → tutti, con avviso", fabio.includes("nessun preferito disponibile")
     && (await page.locator(".pick").nth(0).locator(".sug").count()) === 3, fabio);
@@ -323,6 +366,10 @@ try {
 
   check("nessun errore JavaScript", errors.length === 0, errors.join("\n"));
 } catch (e) {
+  if (lastPage) {
+    await lastPage.screenshot({ path: path.join(SHOTS, "zz-errore.png") }).catch(() => {});
+    console.log("finestre aperte:", await lastPage.evaluate(() => [...document.querySelectorAll("dialog[open]")].map((d) => d.id)).catch(() => "?"));
+  }
   check("collaudo completato senza eccezioni", false, e.stack);
 } finally {
   await browser.close();

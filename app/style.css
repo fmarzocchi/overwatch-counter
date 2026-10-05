@@ -16,6 +16,10 @@
   --support: #3e9e6c;
   --warn-bg: #4a3b0b;
   --warn-text: #ffe28a;
+  --theory: #c4a7ff;       /* tutto ciò che è "Teoria" (guide, siti, stili) è viola */
+  --theory-bg: #231a38;
+  --theory-line: #5d4494;
+  --data: #8fc3ff;
   --tap: 48px;
   --radius: 12px;
   color-scheme: dark;
@@ -44,8 +48,9 @@ a { color: var(--allies); }
 [hidden] { display: none !important; }
 
 /* ---------- consigli (fissi in alto) ---------- */
+/* fisso in alto con uno spazio riservato sotto: quando si scorre si compatta senza far saltare la pagina */
 .picks {
-  position: sticky; top: 0; z-index: 10;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
   padding: calc(8px + env(safe-area-inset-top)) 8px 8px;
   background: var(--bg);
@@ -241,3 +246,47 @@ dialog::backdrop { background: rgb(0 0 0 / .6); }
 @media (prefers-reduced-motion: no-preference) {
   .hero, .seg button, .toggle { transition: background-color .12s, border-color .12s; }
 }
+
+/* ---------- teoria (viola) e liste complete scorrevoli ---------- */
+.theory-badge, .data-badge {
+  display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 6px; vertical-align: 1px;
+}
+.theory-badge { background: var(--theory); color: #1a1030; }
+.data-badge { background: #1d3550; color: var(--data); }
+.sug-theory { font-size: 11.5px; line-height: 1.25; color: var(--theory); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sug-theory.bad { color: #e8a0ff; }
+.why-list li.is-theory { color: var(--theory); }
+.theory-title { color: var(--theory); }
+.theory-style { margin: 4px 16px 8px; padding: 8px 10px; border-radius: 10px; background: var(--theory-bg); border: 1px solid var(--theory-line); font-size: 14px; }
+.theory-style b { color: var(--theory); }
+.prof-sec.theory-sec { background: var(--theory-bg); border-color: var(--theory-line); }
+.prof-sec.theory-sec h3 { color: var(--theory); }
+.theory-grid { grid-template-columns: 1fr; }
+.theory-list .prof-hero { white-space: normal; align-items: flex-start; }
+.theory-list .prof-hero > span { display: flex; flex-direction: column; min-width: 0; }
+.theory-list small { color: #d9cdf5; font-size: 12px; line-height: 1.3; }
+.prof-count { font-weight: 600; color: var(--muted); }
+.prof-list { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.theory-note { margin: 4px 16px; color: #e3d4ff; }
+.sources { margin: 6px 16px; font-size: 13px; color: var(--muted); }
+.sources a { color: var(--theory); word-break: break-all; }
+.guides { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 8px 8px; }
+.guide-btn { width: 100%; border-color: var(--theory-line); background: var(--theory-bg); color: var(--theory); }
+.guide-row { padding: 0 16px 4px; }
+.guide-sec { margin: 8px 12px; padding: 8px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.guide-sec h3 { margin: 2px 0 6px; font-size: 15px; }
+.guide-sec ul { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.35; }
+#guide-body > p { margin: 8px 16px; }
+
+/* consigli compatti mentre si scorre la griglia: solo il n. 1 di ciascuno, nome e stima */
+.compact-picks .picks { padding-top: calc(4px + env(safe-area-inset-top)); padding-bottom: 4px; box-shadow: 0 4px 12px rgb(0 0 0 / .5); }
+.compact-picks .pick { padding: 4px 8px; gap: 2px; }
+.compact-picks .sug:not(.first), .compact-picks .sug-why, .compact-picks .sug-theory, .compact-picks .pick-note, .compact-picks .pick-rank { display: none; }
+.compact-picks .sug { min-height: 40px; padding: 2px; }
+.compact-picks .sug-face .face { width: 30px; height: 30px; }
+.compact-picks .role-btn { min-height: 28px; padding: 0 8px; font-size: 12px; }
+.theory-list .prof-hero { overflow: visible; }
+.theory-list .prof-hero b, .theory-list small { display: block; white-space: normal; overflow-wrap: anywhere; }
+.theory-list li > span:last-child { flex: 1 1 auto; min-width: 0; font-weight: 400; font-size: 13.5px; }
+.theory-list small { font-weight: 400; }

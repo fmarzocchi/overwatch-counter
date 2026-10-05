@@ -13,6 +13,8 @@
 // onlyFavorites: si consiglia solo tra i preferiti del giocatore; se nessun preferito è
 // disponibile (ruolo, ban, alleati) si torna a tutti gli eroi e lo si segnala in notes.
 
+import { theoryForPick } from "./theory.js";
+
 export const SYNERGY_WEIGHT = 0.5;
 export const FAVORITE_BONUS = 0.01;
 export const SIDE_WEIGHT = 0.01;
@@ -42,6 +44,7 @@ export function recommend(
   data,
   {
     role = null, mapSlug = null, side = null, enemies = [], allies = [], bans = [], favorites = [], onlyFavorites = false,
+    theory = null, useTheory = false,
   } = {},
 ) {
   const map = mapSlug ? data.maps.find((m) => m.slug === mapSlug) : null;
@@ -75,12 +78,16 @@ export function recommend(
       const con = withAllies.reduce((s, x) => s + x.delta, 0);
       const lato = useSide ? sideBonus(h, useSide) : 0;
       const pref = fav.has(id) ? FAVORITE_BONUS : 0;
-      const score = base + contro + con + lato + pref;
+      // teoria (stile di squadra, counter noti): sempre calcolata per mostrarla, nel punteggio solo se attivata
+      const th = theory ? theoryForPick(data, theory, h, { enemies, mates: allies }) : null;
+      const teoria = useTheory && th ? th.score : 0;
+      const score = base + contro + con + lato + pref + teoria;
       return {
         hero: h,
         score,
-        estimate: Math.min(0.99, Math.max(0.01, 0.5 + score - pref)),
-        parts: { base, contro, con, lato, pref },
+        estimate: Math.min(0.99, Math.max(0.01, 0.5 + score - pref - teoria)),
+        parts: { base, contro, con, lato, pref, teoria },
+        theory: th,
         baseLabel: map ? map.name : "generale",
         side: useSide,
         favorite: pref > 0,
@@ -195,6 +202,13 @@ export function details(row) {
   for (const a of row.withAllies) out.push({ good: a.delta >= 0, text: `con ${a.hero?.name ?? "?"} ${pct(a.delta)}` });
   if (row.side) out.push({ good: row.parts.lato >= 0, text: `${row.side === "defense" ? "difesa" : "attacco"} (regola sullo stile) ${pct(row.parts.lato)}` });
   if (row.favorite) out.push({ good: true, text: `preferito (solo per ordinare) ${pct(row.parts.pref)}` });
+  const th = row.theory;
+  if (th) {
+    for (const b of th.beats) out.push({ good: true, kind: "teoria", text: `batte ${b.name}: ${b.why}` });
+    for (const b of th.beatenBy) out.push({ good: false, kind: "teoria", text: `soffre ${b.name}: ${b.why}` });
+    for (const w of th.withMates) out.push({ good: true, kind: "teoria", text: `con ${w.name}: ${w.why}` });
+    if (th.fit) out.push({ good: true, kind: "teoria", text: `stesso stile della squadra: ${th.fit === "RUSH" ? "Rush" : th.fit === "DIVE" ? "Dive" : "Poke"}` });
+  }
   return out;
 }
 

@@ -138,6 +138,24 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   sito a ogni giro, niente è scritto a mano. L'app ridisegna la griglia se l'elenco cambia anche con l'app
   aperta. Collaudato: `test_fetch.py` n. 14 e il controllo e2e "ruolo cambiato nei dati".
 
+## Teoria (2026-10-05, richiesta dell'utente) — sempre separata dalle statistiche
+
+- `app/theory.js` (puro, testato in `tests/theory.test.js`): stili **Rush/Dive/Poke** di counterwatch
+  (`hero.style`), `buildTheory()` (rende simmetriche le liste: A batte B ⇒ B battuto da A), `heroTheory()`,
+  `theoryForPick()` (incastro di stile con la squadra + counter verso gli avversari), `playGuide()` ("Come giocarla":
+  Bersagli, Lascia stare, Attenzione a, Proteggi, Come muoverti, Gioca con, Mappa/lato; ogni riga è "teoria" o
+  "statistica").
+- `app/theory.json`: per eroe tags, synergies, counters, counteredBy, play {position, targets, avoidTargets, tips,
+  attack, defense}, uncertain, sources. Raccolta da 3 ricercatori via WebSearch il 2026-10-05: **solo i riassunti
+  dei risultati** (WebFetch bloccato dal proxy), voci solo-statistiche tolte. Incerti: D.Mon, Anran, Emre, Shion,
+  Sierra, Sombra, Jetpack Cat, Mizuki, Wuyang. **Sombra diventa Supporto dal 6/10/2026 (Stagione 5)**: la sua
+  teoria descrive il kit Danni e va rifatta.
+- UI: colore viola + etichetta "Teoria" (`--theory`), "Dati" in blu; riquadri "Sinergizza con", "Countera bene",
+  "Viene counterato da" nella scheda eroe; liste complete e scorrevoli; pulsanti "🎯 <eroe>" sotto mappa/lato e
+  "Come giocarla in questa partita" nella scheda; interruttore nel Profilo "Usa anche la teoria nei consigli"
+  (±0,5% per indicazione, la "stima" resta statistica).
+- Riquadro consigli fisso in alto (con spacer); scorrendo si compatta (solo il n. 1), in cima torna completo.
+
 ## L'app (PWA) — come deve essere
 
 Tema scuro, bersagli grandi (min 48 px), pensata per una mano sola.

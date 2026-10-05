@@ -1,4 +1,5 @@
 import { recommendDuo, breakdown, details, hasSides, withDivision, heroProfile } from "./recommend.js";
+import { buildTheory, heroTheory, playGuide, STYLE_IT, STYLE_DESC } from "./theory.js";
 
 // WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
 if (!Element.prototype.replaceChildren) {
@@ -62,6 +63,8 @@ let byId = {};
 let profile = store.get("owc.profile", null) ?? defaultProfile();
 let match = store.get("owc.match", null) ?? emptyMatch();
 let lastDuo = null;
+let theoryRaw = {}; // app/theory.json: sinergie, counter e modo di giocare raccolti da fonti di Overwatch
+let T = null; // teoria pronta all'uso (resa simmetrica, con i nomi dei dati attuali)
 const divFiles = {}; // chiave divisione → contenuto del file (o null se non disponibile)
 const divData = {}; // chiave divisione → dati generali uniti a quelli della divisione
 
@@ -136,6 +139,7 @@ async function loadData() {
     const heroSig = (x) => (x ? x.heroes.map((h) => `${h.id}:${h.role}:${h.name}`).join("|") : "");
     if (heroSig(d) !== heroSig(data)) $("#grid").replaceChildren();
     data = d;
+    T = buildTheory(data, theoryRaw);
     byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
     for (const k of Object.keys(divData)) delete divData[k];
     for (const k of Object.keys(divFiles)) delete divFiles[k];
@@ -224,6 +228,7 @@ function compute() {
   }));
   return recommendDuo(data, {
     players, mapSlug: match.mapSlug, side: match.side, bans: match.bans, enemies: match.enemies, allies: match.allies,
+    theory: T, useTheory: !!profile.useTheory,
   });
 }
 
@@ -244,7 +249,7 @@ const pctTxt = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
 function profileSection(title, items, kind) {
   if (!items.length) return null;
   return el("section", { class: "prof-sec" },
-    el("h3", {}, title),
+    el("h3", {}, title, el("small", { class: "prof-count" }, ` ${items.length}`)),
     el("ul", { class: "prof-list" }, items.map((x) => el("li", {},
       kind === "map"
         ? el("span", { class: "prof-map" }, el("b", {}, x.subject.name), el("small", {}, MODE_IT[x.subject.mode] ?? x.subject.mode))
@@ -252,27 +257,121 @@ function profileSection(title, items, kind) {
       el("span", { class: x.delta >= 0 ? "good" : "bad" }, pctTxt(x.delta))))));
 }
 
+const theoryBadge = () => el("span", { class: "theory-badge" }, "Teoria");
+
+function theorySection(title, items) {
+  return el("section", { class: "prof-sec theory-sec" },
+    el("h3", {}, theoryBadge(), " ", title, el("small", { class: "prof-count" }, ` ${items.length}`)),
+    items.length
+      ? el("ul", { class: "prof-list theory-list" }, items.map((x) => {
+        const h = data.heroes.find((y) => y.name === x.name);
+        return el("li", {},
+          el("span", { class: "prof-hero" }, h ? face(h) : null, el("span", {}, el("b", {}, x.name), el("small", {}, x.why))));
+      }))
+      : el("p", { class: "muted small" }, "Nessuna indicazione dalle fonti."));
+}
+
+function partnerHero(i) {
+  return lastDuo?.pair ? (i === 0 ? lastDuo.pair.b : lastDuo.pair.a) : null;
+}
+
 function openDetails(i, row) {
   const p = profile.players[i];
-  const prof = heroProfile(playerData(i), row.hero.id);
+  const prof = heroProfile(playerData(i), row.hero.id, Infinity);
+  const th = heroTheory(playerData(i), T, row.hero);
   $("#t-why").textContent = row.hero.name;
   $("#why-body").replaceChildren(
     el("div", { class: "why-head" }, face(row.hero),
       el("div", {}, el("div", { class: "pick-name" }, row.hero.name),
         el("div", { class: "muted" }, `per ${p.name} · stima ${est(row)}`),
         el("div", { class: "muted small" }, `dati: ${dataLabel(i)}`))),
+    el("div", { class: "guide-row" }, el("button", { type: "button", class: "btn guide-btn", onclick: () => openGuide(i, row.hero) },
+      "🎯 Come giocarla in questa partita")),
     el("h3", { class: "why-title" }, "Perché in questa partita"),
-    el("ul", { class: "why-list" }, details(row).map((d) => el("li", { class: d.good ? "good" : "bad" }, d.text))),
+    el("ul", { class: "why-list" }, details(row).map((d) =>
+      el("li", { class: `${d.good ? "good" : "bad"}${d.kind === "teoria" ? " is-theory" : ""}` }, d.kind === "teoria" ? [theoryBadge(), " "] : null, d.text))),
+    el("h3", { class: "why-title" }, "Statistiche Ranked"),
     el("div", { class: "prof-grid" },
       profileSection("Forte contro", prof.strongVs, "hero"),
       profileSection("In difficoltà contro", prof.weakVs, "hero"),
       profileSection("Mappe migliori", prof.bestMaps, "map"),
       profileSection("Funziona bene con", prof.bestWith, "hero")),
+    el("h3", { class: "why-title theory-title" }, theoryBadge(), " Come si incastra (guide e siti di Overwatch)"),
+    th.style ? el("p", { class: "theory-style" },
+      el("b", {}, `Stile ${STYLE_IT[th.style]}`), `: ${STYLE_DESC[th.style]} (classificazione di counterwatch).`) : null,
+    el("div", { class: "prof-grid theory-grid" },
+      theorySection("Sinergizza con", th.synergies),
+      theorySection("Countera bene", th.counters),
+      theorySection("Viene counterato da", th.counteredBy)),
+    th.uncertain ? el("p", { class: "muted small theory-note" },
+      "Eroe recente o con poche fonti: la teoria è parziale, vale soprattutto lo stile.") : null,
+    th.sources.length ? el("details", { class: "sources" }, el("summary", {}, `Fonti (${th.sources.length})`),
+      el("ul", {}, th.sources.map((u) => el("li", {}, el("a", { href: u, rel: "noopener" }, u.replace(/^https?:\/\//, "")))))) : null,
     el("p", { class: "muted small" },
-      "Ogni valore è lo scarto dal 50% di vittorie (dati counterwatch). La stima li somma: serve a ordinare, non è una certezza."),
+      "Statistiche: scarto dal 50% di vittorie (dati counterwatch). Teoria: indicazioni di guide e siti, non numeri."),
   );
   $("#why-dialog").showModal();
   $("#why-body").scrollTop = 0;
+}
+
+function openGuide(i, hero) {
+  const g = playGuide(playerData(i), T, {
+    hero, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies: match.allies,
+    partner: partnerHero(i) && partnerHero(i).id !== hero.id ? partnerHero(i) : null,
+  });
+  $("#t-guide").textContent = `Come giocare ${hero.name}`;
+  $("#guide-body").replaceChildren(
+    el("div", { class: "why-head" }, face(hero),
+      el("div", {}, el("div", { class: "pick-name" }, hero.name),
+        el("div", { class: "muted small" }, `${profile.players[i].name} · ${currentMap()?.name ?? "nessuna mappa"}` +
+          `${match.side ? ` · ${match.side === "attack" ? "attacco" : "difesa"}` : ""} · ${match.enemies.length} avversari`))),
+    ...g.sections.map((sec) => el("section", { class: "guide-sec" },
+      el("h3", {}, sec.title),
+      el("ul", {}, sec.items.map((it) => el("li", {},
+        el("span", { class: it.kind === "teoria" ? "theory-badge" : "data-badge" }, it.kind === "teoria" ? "Teoria" : "Dati"), " ", it.text))))),
+    g.uncertain ? el("p", { class: "muted small theory-note" }, "Per questo eroe le fonti sono poche: i consigli di teoria sono parziali.") : null,
+    el("p", { class: "muted small" }, "«Teoria»: guide e siti di Overwatch. «Dati»: statistiche Ranked di counterwatch. Consigli, non certezze."),
+  );
+  if (!$("#guide-dialog").open) $("#guide-dialog").showModal();
+  $("#guide-body").scrollTop = 0;
+}
+
+function renderGuides() {
+  const box = $("#guides");
+  box.replaceChildren();
+  if (!lastDuo) return;
+  profile.players.forEach((p, i) => {
+    const top = lastDuo.lists[i]?.[0];
+    if (!top) return;
+    box.append(el("button", { type: "button", class: "btn guide-btn", onclick: () => openGuide(i, top.hero),
+      "aria-label": `Come giocare ${top.hero.name} (${p.name})` }, `🎯 ${top.hero.name}`));
+  });
+}
+
+function theoryLine(r) {
+  const th = r.theory;
+  if (!th) return null;
+  const t = th.beats[0] ? `batte ${th.beats[0].name}` : th.beatenBy[0] ? `soffre ${th.beatenBy[0].name}`
+    : th.withMates[0] ? `con ${th.withMates[0].name}` : th.fit ? `stile ${STYLE_IT[th.fit]} come la squadra` : null;
+  return t ? el("span", { class: `sug-theory${th.beatenBy[0] && !th.beats[0] ? " bad" : ""}` }, "teoria: ", t) : null;
+}
+
+// Il riquadro dei consigli è fisso in alto; lo spazio sotto (spacer) ha l'altezza del riquadro completo.
+// Scorrendo oltre metà riquadro si compatta (solo il n. 1), tornando in cima si riapre: la pagina non salta.
+let compact = false;
+function layoutPicks() {
+  if ($("#view-match").hidden) return; // nascosto: misurerebbe 0
+  const h = Math.round($("#picks").getBoundingClientRect().height);
+  if (!compact) $("#picks-spacer").style.height = `${h}px`;
+  document.documentElement.style.setProperty("--picks-h", `${h}px`);
+}
+function onScroll() {
+  const full = $("#picks-spacer").getBoundingClientRect().height;
+  const want = compact ? window.scrollY > full * 0.25 : window.scrollY > full * 0.6;
+  if (want === compact || $("#view-match").hidden) return;
+  compact = want;
+  document.body.classList.toggle("compact-picks", compact);
+  layoutPicks();
 }
 
 function renderPicks() {
@@ -313,12 +412,13 @@ function renderPicks() {
           el("span", { class: "sug-face" }, face(r.hero), el("span", { class: "sug-n", "aria-hidden": "true" }, String(k + 1))),
           el("span", { class: "sug-body" },
             el("span", { class: "sug-top" }, el("span", { class: "sug-name" }, r.hero.name), el("span", { class: "sug-est" }, est(r))),
-            breakdown(r, partner).map((b) => el("span", { class: `sug-why ${b.good ? "good" : "bad"}` }, b.text))),
+            breakdown(r, partner).map((b) => el("span", { class: `sug-why ${b.good ? "good" : "bad"}` }, b.text)),
+            theoryLine(r)),
           )))),
     ));
   });
-  const h = box.getBoundingClientRect().height;
-  document.documentElement.style.setProperty("--picks-h", `${Math.round(h)}px`);
+  layoutPicks();
+  renderGuides();
 }
 
 // ---------- mappa e lato ----------
@@ -464,8 +564,14 @@ function renderProfile() {
       type: "button", class: "toggle wide", "aria-pressed": String(!!profile.onlyFavorites),
       onclick: () => { profile.onlyFavorites = !profile.onlyFavorites; saveProfile(); render(); },
     }, profile.onlyFavorites ? "✓ Suggerisci solo eroi preferiti" : "Suggerisci solo eroi preferiti"),
+    el("button", {
+      type: "button", class: "toggle wide", "aria-pressed": String(!!profile.useTheory),
+      onclick: () => { profile.useTheory = !profile.useTheory; saveProfile(); render(); },
+    }, profile.useTheory ? "✓ Usa anche la teoria nei consigli" : "Usa anche la teoria nei consigli"),
     el("p", { class: "muted small" },
-      "Vale per entrambi: a ognuno si consiglia solo tra i suoi preferiti del ruolo scelto. " +
+      "Teoria: stili Rush/Dive/Poke e counter noti da guide e siti. Spenta si vede ma non cambia la classifica; " +
+      "accesa aggiunge un piccolo peso (±0,5% per indicazione). " +
+      "Solo preferiti: vale per entrambi, a ognuno si consiglia solo tra i suoi preferiti del ruolo scelto. " +
       "Se non ne resta nessuno (ruolo, ban, alleati) si consiglia tra tutti e lo vedi scritto."),
   ));
   box.append(el("p", { class: "muted small", style: "margin:0 16px" },
@@ -583,6 +689,11 @@ function showView(name) {
   if (name === "profile" && data) renderProfile();
   store.set("owc.view", name);
   window.scrollTo(0, 0);
+  if (name === "match") {
+    compact = false;
+    document.body.classList.remove("compact-picks");
+    layoutPicks();
+  }
 }
 
 function wire() {
@@ -635,9 +746,14 @@ async function autoRefresh() {
 async function start() {
   wire();
   document.addEventListener("pointerdown", autoRefresh, { capture: true, passive: true });
+  window.addEventListener("scroll", onScroll, { passive: true });
   document.addEventListener("visibilitychange", autoRefresh);
   window.addEventListener("focus", autoRefresh);
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  try {
+    const r = await fetch("theory.json");
+    if (r.ok) theoryRaw = await r.json();
+  } catch { /* senza teoria: restano gli stili Rush/Dive/Poke dei dati */ }
   const ok = await loadData();
   if (ok) saveMatch();
   render();
