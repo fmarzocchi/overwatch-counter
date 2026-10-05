@@ -80,7 +80,7 @@ a { color: var(--allies); }
 .sug-top { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
 .sug-name { flex: 1; min-width: 0; font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sug.first .sug-name { font-size: 16px; }
-.sug-est { font-size: 12px; color: var(--muted); flex: none; }
+.sug-est { font-size: 12px; color: var(--muted); flex: none; margin-left: 4px; } /* margine: le WebView vecchie non hanno "gap" nei flex */
 .sug-why { font-size: 12px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .good { color: var(--good); }
 .bad { color: var(--bad); }
