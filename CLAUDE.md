@@ -196,12 +196,26 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   Nepal, New Junk City, New Queen Street, Rialto, Runasapi, Shambali. "Perché" mostra "Consigliato dalle guide su".
   Script di unione: rifare la ricerca e unirla (nomi eroi controllati sul ruolo).
 
+## Copertura delle guide: ricerca per eroe (2026-10-06, richiesta dell'utente: "più copertura possibile")
+
+La ricerca per mappa (sopra) citava quasi sempre gli stessi eroi (Lúcio su 22 mappe, 26 eroi su nessuna). Ricerca PER EROE
+(mappe migliori/peggiori di ciascuno) con 7 agenti WebSearch (solo riassunti, WebFetch bloccato): file in
+`scratchpad/research/*.json`, uniti con **`tools/merge_map_research.py`** (nomi e mappe controllati sui dati, ruolo dai
+dati, niente doppioni, `src` con la fonte; eroe consigliato E sconsigliato sulla stessa mappa da fonti diverse → tolto da
+entrambe, idem per le caratteristiche amate/odiate; `_heroMapsResearched`). Esito: +111 consigliati, +26 sconsigliati,
++18 caratteristiche (tolti per contrasto: Pharah/Ilios, Orisa e Reinhardt/Junkertown, D.Va e Widowmaker/Nepal).
+**PARZIALE**: le ricerche web sono al massimo 200 per turno, in comune tra tutti gli agenti, e sono finite a metà.
+Ancora senza nessuna mappa consigliata: Anran, Bastion, Emre, Freja, Shion, Sierra, Symmetra, Jetpack Cat, Juno,
+Lifeweaver, Mizuki, Wuyang, D.Mon, Domina, Hazard (eroi recenti: poche guide). Pochi dati anche per Kiriko, Zenyatta,
+Sombra, Torbjörn, Tracer e quasi nessuna mappa "cattiva". Da completare in un turno nuovo (stesso formato, poi lo script);
+le fonti sono spesso vecchie (Icy Veins era OW1, Sportskeeda/Game8 2022-24).
+
 ## Più giocatori e "chi ha preso cosa" (2026-10-05, richiesta dell'utente)
 
 - Profilo: **da 1 a 5 giocatori** (`MAX_PLAYERS`), "＋ Aggiungi giocatore" (il nuovo prende il ruolo che manca nella coda
   1 tank/2 danni/2 supporti) e "Rimuovi" a due tocchi. Ognuno ha un **colore** (`--p0`…`--p4`): riquadro, griglia, barra.
-- Partita: eroe preso → `match.picked[i]`, da "Segna come preso" (riquadro o guida) o "Altro" + tocco nella griglia
-  (poi si torna agli Avversari). Un eroe preso esce da ban/avversari/alleati. Griglia: **tratteggio** = consigliato a quel
+- Partita: eroe scelto → `match.picked[i]`, con un tocco nella lista dei preferiti, in "Scegline un altro", nel foglio "＋",
+  nella guida ("Segna: X l'ha scelto") o "Un altro eroe" + tocco nella griglia (poi si torna agli Avversari). Un eroe preso esce da ban/avversari/alleati. Griglia: **tratteggio** = consigliato a quel
   giocatore, **pieno + "F✓"** = preso. (La riga "Chi ha preso cosa" è stata tolta nel ridisegno: era un doppione.)
 - Alleati = gli ALTRI della squadra: max `5 − giocatori` (il pulsante sparisce in 5).
 - Logica: `recommendTeam()` (`recommendDuo` è lo stesso): eroi presi fissi (e alleati per gli altri; in cima alla loro lista
@@ -218,18 +232,25 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 ## Design: tre livelli (2026-10-05, richiesta dell'utente) — ha la precedenza su ciò che segue
 
 L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il resto è a un tocco o due.
-1. **Riquadro del giocatore** (colpo d'occhio): l'eroe da prendere grande (volto + nome) con UNA sola cifra (la stima);
-   prima degli avversari un solo motivo in parole (`headline()`, es. "Forte su King's Row"); con gli avversari
-   **Batte/Teme** con i volti (`matchups()`: numeri + teoria, coerente con "Punta/Attento" della guida);
-   "Segna come preso" (un tocco); 2 alternative (volti con stelline nel colore del giocatore = `choiceStars(i)`, la stessa
-   classifica della griglia durante "＋"; con gli avversari, sotto, volti piccoli di chi batte col bordo verde e chi teme col
-   bordo rosso, da `matchups()`, senza scritte: `altButton()`, richiesta del 2026-10-06, e2e "alternative: …") + "＋" (eroe diverso → banner "Tocca l'eroe preso
-   da X" al posto del selettore, `choosePicker`). Eroe preso: il riquadro resta fermo su quell'eroe; se conviene davvero
-   compare "Passa a …" (`swapAdvice()`: +1,5% nei numeri, o counterato in teoria da 2+ avversari e l'alternativa non
-   rende meno; mai per il n. 1 della lista). Niente percentuali "Mappa/Avversari/Con": sono nel livello 3.
+1. **Riquadro del giocatore** (dal 2026-10-06, richiesta dell'utente: "sembra che l'eroe l'abbia già scelto io"), due momenti:
+   - **prima della scelta**: SOLO la lista dei suoi preferiti del ruolo (tutti se il ruolo è libero), dal più adatto
+     (`favoritesFor()`, ordinati col punteggio di `choiceRows(i)`), al massimo `MAX_ROWS` = 4 righe; in cima il consigliato
+     (`lists[i][0]`, che tiene conto della squadra) evidenziato in `.rec-box` con "Consigliato · stima", il motivo
+     (`headline()`, senza avversari) e "Come giocarla" (`.rec-cta`, anche prima di scegliere); se il consigliato non è tra i
+     preferiti lo si scrive. Ogni riga (`favRow()`): volto, nome, stelline BIANCHE 1–5, con gli avversari i volti piccoli di
+     chi batte (bordo verde) e chi teme (rosso); "per <compagno>" se è il consigliato di un altro. Un tocco = scelto
+     (`choose()`, messaggio con "Annulla"). Senza preferiti: i più adatti del ruolo. Sotto: "＋ N altri" (preferiti che non
+     ci stanno → foglio), "Un altro eroe" (griglia) o, senza preferiti, "Altri eroi" (foglio). Banditi, alleati segnati ed
+     eroi già presi dagli altri non compaiono (`takenBy()`).
+   - **dopo la scelta**: riquadro dedicato (volto grande, una sola cifra, "Come giocarla", Batte/Teme `matchups()`,
+     "Passa a" `swapAdvice()`), in alto "✓ Scelto ×" (tocco = annulla) e sotto **"Scegline un altro"**: gli altri preferiti
+     del ruolo (`altButton()`, stelline bianche + chi batte/teme), solo quelli che ci stanno in una riga (`fitAlts()`), e
+     "＋" sempre → foglio `#choose-dialog` (`openChooser()`): tutti i preferiti (prima il ruolo, poi "Altri ruoli") e
+     "Un altro eroe: toccalo nella griglia" (`choosePicker`, banner "Tocca l'eroe preso da X").
+   Niente percentuali "Mappa/Avversari/Con": sono nel livello 3.
 2. **Come giocarla** (tocco sull'eroe, sul riquadrino in alto o su un'alternativa): "In breve" ≤ 7 righe con etichetta
    (Cambia, Punta, Attento, Abilità, Posizione, Proteggi, Mappa), volti per gli eroi, icona viola = teoria / azzurra = dati (legenda accanto a «In breve»);
-   "Tutti i consigli" chiuso (`#guide-more` nascosto, pulsante `.more-btn`); "Segna: X l'ha preso"; "Perché?".
+   "Tutti i consigli" chiuso (`#guide-more` nascosto, pulsante `.more-btn`); "Segna: X l'ha scelto"; "Perché?".
    Dal 2026-10-06 (richiesta: "consigli generici") ogni riga dice perché e cosa fare: **Attento** X: motivo — "lascia X a
    <alleato che lo batte in teoria>" o "evita l'1 contro 1" (+ "tieni <abilità> contro X", mai quella che X neutralizza);
    **Punta** con il motivo; **Combo** col compagno (sinergia); **Piano** (lato della mappa, poi consigliato/sconsigliato
@@ -279,25 +300,32 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
     (`localizeTheory()`, nomi globali senza ambiguità).
   - OverFast ha anche i **perk** (nomi e descrizioni in italiano, niente statistiche): non ancora usati.
 
-## Stelline sotto gli eroi della griglia (2026-10-06, richiesta dell'utente)
+## Stelline (2026-10-06, richieste dell'utente) — da 1 a 5 in tutta l'app, mai un eroe senza stelle
 
-Ogni volto della griglia (#grid) ha 0–3 stelline (`span.stars` sul bordo basso del volto, `data-stars` sul pulsante),
-ricalcolate a ogni tocco (mappa, lato, ban, avversari, alleati, eroi presi) e secondo la modalità del Profilo
-(statistiche / + teoria / solo guide). Classifica **ruolo per ruolo** (`rankStars()`: 3 ai migliori ~12%, 2 fino al 30%,
-1 fino al 55%; nessuna se i punteggi sono tutti uguali). `gridStars()` in app.js, secondo il selettore:
-- **Avversari → rosse** (`threatScores()`): forza sulla mappa dal LORO lato (l'opposto del vostro: `sideBonus`/`mapFit`)
-  + quanto battono la vostra squadra; i vostri eroi (presi o n. 1 dei consigli) contano il doppio degli alleati. Bannati: niente.
-- **Ban → bianche** su fondo scuro (prima nere col bordo bianco: l'utente non le vedeva bene): stesso calcolo del riquadro "Ban consigliati" (`banScores()` condivisa); i 2 consigliati
-  per ruolo hanno sempre 3 stelle (`top`); vostri eroi, preferiti, presi e alleati: niente (un ban vale per tutti).
-- **Alleati → dorate**; **scelta dell'eroe preso da un giocatore ("＋") → col colore del giocatore** (`--sc`):
-  `recommend()` su tutti i ruoli con gli eroi degli altri come alleati (buona scelta per voi).
+`rankStars()` (recommend.js): ruolo per ruolo, conta lo scarto dalla media del ruolo in deviazioni standard (z, soglie
+`STAR_Z` = ±1.25/±0.45: ~10% a 5 stelle, poi 4, 3 al centro, 2, 1), con una dispersione minima `STAR_MIN_SD` (1% di win
+rate, ½ punto guide) così eroi quasi alla pari restano tutti a 3; `top` = i primi N del ruolo a 5 (ban consigliati).
+Ricalcolate a ogni tocco (mappa, lato, ban, avversari, alleati, eroi presi), secondo la modalità del Profilo.
+- **Griglia** (`gridStars()`, `span.stars`, `data-stars`): Avversari → rosse (`threatScores()`: forza sulla mappa dal LORO
+  lato + quanto battono la vostra squadra, i vostri eroi contano il doppio; anche i bannati hanno le loro stelle);
+  Ban → bianche (`banScores()` condivisa col riquadro "Ban consigliati": i 2 consigliati per ruolo a 5; vostri eroi,
+  preferiti, presi e alleati a 1 = "non bannarlo"); Alleati → dorate; "Tocca l'eroe preso da X" → colore del giocatore.
+- **Riquadri e foglio "＋"**: stelline BIANCHE (richiesta: "sotto «segna come preso» devono essere bianche"), stessa
+  "buona scelta" (`choiceRows(i)`/`choiceStars(i)`: `recommend(..., {role: null, scoreAll: true})`, con gli eroi degli altri
+  come alleati; `scoreAll` = una riga per ogni eroe, senza fare coppia con se stesso). In modalità "solo guide" anche la
+  valutazione del riquadro dedicato è in stelline (`est(r, i)`). Cache per giro: `starCache` (svuotata in `renderPicks`).
+- **Varietà tra le mappe** (l'utente: "sempre gli stessi eroi"): un eroe che le guide consigliano su più di
+  `GUIDE_SPREAD` = 8 mappe vale 8/n del +2 su ciascuna (`mapFit`, `theory.spread` da `buildTheory`), lo stesso per gli
+  sconsigliati. Analisi (scratchpad `an/stars2.mjs`, 30 mappe senza avversari): con statistiche + teoria nessun eroe a 5
+  stelle su ≥15 mappe e solo 3/53 mai a 4+; solo guide 1/53. Con le sole statistiche D.Mon e Torbjörn restano a 5 su
+  ~22 mappe: è il dato Ranked (forti ovunque), non si forza.
 **Regola del gancio** (2026-10-06, segnalazione dell'utente: Roadhog non consigliato come ban su Nepal): su una mappa con
 `env-kills` un eroe con abilità `hook` (Roadhog, Junker Queen) ha +1 punto guide (`mapFit().hook`, `GUIDE_POINTS.hook`,
 motivo "… vicino ai bordi: butta giù i nemici"); Roadhog aggiunto a `_maps.nepal/runasapi.strong.Tank` (i testi envKills
 delle due mappe parlano già di ganci). Nepal, ban tank: solo guide Roadhog 1°; statistiche + teoria 3° (2 stelle); solo
 statistiche no: nei dati Ranked Roadhog su Nepal vince il 48,4% (10° tank su 15).
-Collaudo: `recommend.test.js` (formula, stelle) ed e2e "stelline …" (colori, ban consigliati = 3, cambiano col lato e coi
-ban); screenshot 04c, 05d, 06c.
+Collaudo: `recommend.test.js` (formula, soglie z, 1–5, scoreAll) ed e2e "stelline …", "lista …", "Scegline un altro …",
+"«＋»: foglio …" (colori, ban consigliati = 5, vostri = 1, cambiano col lato e con la mappa); screenshot 04c, 05, 05d–05g.
 
 ## Tasto/gesto "indietro" di Android (2026-10-06)
 

@@ -236,19 +236,62 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   border-color: var(--pc, #fff); color: var(--pc, #fff); font-weight: 800; background: rgba(255, 255, 255, .06);
 }
 
-/* alternative: solo volti; "+" = ha preso un eroe diverso (lo si tocca nella griglia) */
-.alts { display: flex; justify-content: center; align-items: flex-start; }
+/* prima della scelta: solo la lista dei preferiti (dal più adatto), il consigliato evidenziato; un tocco = scelto */
+.pick-ask { margin: 0; padding: 0 2px; font-size: 12.5px; font-weight: 650; line-height: 1.25; color: var(--muted); text-align: left; }
+.fav-list > * + * { margin-top: 6px; }
+.fav-row {
+  display: flex; align-items: flex-start; width: 100%; min-height: 48px; padding: 6px 7px; border-radius: 18px;
+  border: 1px solid var(--edge); background: var(--glass); color: var(--text); text-align: left;
+}
+.fav-row > .face { flex: none; width: 34px; height: 34px; font-size: 11px; margin-right: 8px; }
+.fr-body { display: flex; flex-direction: column; align-items: flex-start; flex: 1 1 auto; min-width: 0; }
+.fr-tag { max-width: 100%; font-size: 10.5px; font-weight: 800; line-height: 1.25; letter-spacing: .02em; text-transform: uppercase; color: var(--pc, var(--text)); }
+.fr-tag.other { text-transform: none; letter-spacing: 0; }
+.fr-name { max-width: 100%; font-size: calc(14px * var(--fit, 1)); font-weight: 750; line-height: 1.15; overflow-wrap: break-word; }
+.fr-stars { margin-top: 1px; font-size: 11px; line-height: 1.15; letter-spacing: .5px; color: #fff; white-space: nowrap; }
+.fr-note { margin-top: 2px; font-size: 11.5px; line-height: 1.25; color: var(--muted); }
+.fr-mu { display: flex; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.fr-mu .alt-mu { margin: 0 7px 2px 0; padding-left: 3px; justify-content: flex-start; }
+.fav-row.is-rec, .rec-box { border-color: var(--pc); background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px var(--pc), 0 0 18px -8px var(--pc); }
+.rec-box { border: 1px solid var(--pc); border-radius: 18px; }
+.rec-box .fav-row.is-rec { border: 0; background: transparent; box-shadow: none; }
+.rec-cta { width: 100%; min-height: 32px; margin: -6px 0 0; padding: 0 8px 2px; border: 0; background: transparent; }
+.fav-row.is-rec > .face { width: 42px; height: 42px; font-size: 13px; box-shadow: 0 0 0 2px var(--pc); }
+.fav-more {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 40px; padding: 0 10px;
+  border-radius: 999px; border: 1px dashed var(--edge); background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 650;
+}
+.fav-more .ic { margin-right: 5px; }
+
+/* dopo la scelta: "✓ Scelto" in alto (tocca per annullare) e "Scegline un altro" sotto */
+.chosen-chip {
+  flex: none; display: inline-flex; align-items: center; min-height: 32px; padding: 0 8px 0 9px; border-radius: 999px;
+  border: 1px solid var(--pc); background: rgba(255, 255, 255, .06); color: var(--pc); font-size: 13px; font-weight: 800; white-space: nowrap;
+}
+.chosen-chip .ic { margin-right: 3px; }
+.chosen-chip .chip-x { margin: 0 0 0 4px; font-size: 11px; opacity: .75; }
+.others { padding-top: 8px; border-top: 1px solid var(--edge); }
+.others-lab { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 700; color: var(--muted); }
+
+/* foglio "＋": tutti i preferiti */
+.choose-sub { margin: 4px 20px 10px; }
+#choose-body .fav-list { margin: 0 16px; }
+.choose-h { margin: 16px 20px 8px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.choose-grid { display: flex; width: calc(100% - 32px); margin: 16px 16px 0; background: var(--glass); }
+
+/* "Scegline un altro": volti con stelline e chi battono/temono; "+" = foglio con tutti i preferiti */
+.alts { display: flex; justify-content: center; align-items: flex-start; overflow: hidden; padding-bottom: 4px; } /* spazio per i bordi colorati */
 .alt {
   display: inline-flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 44px; min-height: 44px;
   padding: 5px 0 0; margin: 0 2px; border: 0; border-radius: 14px; background: transparent; color: inherit;
 }
 .alt-face { position: relative; display: inline-flex; }
 .alt .face { width: 34px; height: 34px; font-size: 11px; box-shadow: 0 0 0 1.5px var(--edge); }
-/* stelline sul bordo basso del volto, nel colore del giocatore (come nella griglia mentre si sceglie per lui) */
+/* stelline bianche (1–5) sul bordo basso del volto */
 .alt-stars {
   position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); padding: 0 3px; border-radius: 999px;
-  font-size: 9.5px; line-height: 11px; letter-spacing: -0.5px; white-space: nowrap; color: var(--pc, var(--amber));
-  background: rgba(0, 0, 0, .78);
+  font-size: 8.5px; line-height: 10px; letter-spacing: -0.5px; white-space: nowrap; color: #fff;
+  background: rgba(0, 0, 0, .8);
 }
 /* chi batte (verde) e chi teme (rosso): volti piccoli, senza scritte */
 .alt-mu { display: flex; justify-content: center; margin-top: 4px; padding-left: 3px; }
@@ -366,16 +409,16 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   line-height: 1.35; background: rgba(0, 0, 0, .55); color: var(--pc, var(--amber)); border: 1px dashed var(--pc, var(--amber));
 }
 .hero .tag.tag-took { background: var(--pc); color: #111; border-style: solid; }
-/* stelline (0–3) sul bordo basso del volto: rosse = pericolo nemico, bianche = da bannare,
+/* stelline (1–5) sul bordo basso del volto: rosse = pericolo nemico, bianche = da bannare,
    dorate (o col colore del giocatore che sta scegliendo) = buona scelta per voi */
 .hero .stars {
-  position: absolute; left: 50%; top: 39px; transform: translateX(-50%); padding: 0 4px; border-radius: 999px;
-  font-size: 11px; line-height: 13px; letter-spacing: -0.5px; white-space: nowrap; pointer-events: none;
+  position: absolute; left: 50%; top: 40px; transform: translateX(-50%); padding: 0 3px; border-radius: 999px;
+  font-size: 9px; line-height: 11px; letter-spacing: -0.6px; white-space: nowrap; pointer-events: none;
   background: rgba(0, 0, 0, .72);
 }
 .hero .stars[hidden] { display: none; }
 .hero .stars.st-enemies { color: #ff453a; }
-.hero .stars.st-bans { color: #fff; background: rgba(0, 0, 0, .85); font-size: 12px; text-shadow: 0 0 3px rgba(255, 255, 255, .55); }
+.hero .stars.st-bans { color: #fff; background: rgba(0, 0, 0, .85); font-size: 9.5px; text-shadow: 0 0 3px rgba(255, 255, 255, .55); }
 .hero .stars.st-allies { color: var(--amber); }
 .hero .stars.st-picked { color: var(--sc, var(--amber)); }
 

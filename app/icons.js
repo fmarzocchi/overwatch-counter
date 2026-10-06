@@ -17,6 +17,7 @@ const PATHS = {
   check: '<path d="m5.5 12.5 4.2 4.2 8.8-9.4"/>',
   swap: '<path d="M4 8.5h13.5l-3.6-3.6M20 15.5H6.5l3.6 3.6"/>',
   chart: '<path d="M4.5 19.5V10M10 19.5V4.5M15.5 19.5v-7M21 19.5H3"/>',
+  grid: '<rect x="4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="4" y="13.4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="13.4" width="6.6" height="6.6" rx="1.6"/>',
   list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="17.5" r="1" fill="currentColor"/>',
 };
 

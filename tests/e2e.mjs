@@ -72,9 +72,26 @@ const starsOf = (page) => page.evaluate(() => Object.fromEntries([...document.qu
 const heroBtn = (page, name) => page.locator("#grid .hero", { has: page.locator(".nm", { hasText: new RegExp(`^${name}$`) }) });
 // in cima alla pagina il riquadro dei consigli è completo (scorrendo si compatta)
 const toTop = async (page) => { await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(50); };
-const pickNames = (page) => page.locator(".pick .pick-name").allInnerTexts();
+// eroe in evidenza in ogni riquadro: il consigliato (lista dei preferiti, prima della scelta) o quello scelto
+const pickNames = (page) => page.locator(".pick").evaluateAll((cs) => cs.map((c) =>
+  (c.querySelector(".pick-name") ?? c.querySelector(".fav-row.is-rec .fr-name"))?.textContent.trim() ?? ""));
+const CARD = ".pick .fav-row, .pick .pick-main"; // riquadri pronti
+// righe della lista dei preferiti di un riquadro: nome, stelline, evidenziato
+const favRows = (page, k) => page.locator(".pick").nth(k).locator(".fav-row").evaluateAll((rs) => rs.map((r) => ({
+  name: r.querySelector(".fr-name").textContent, stars: r.querySelector(".fr-stars").textContent, rec: r.classList.contains("is-rec"),
+  label: r.getAttribute("aria-label") })));
 const heroId = (name) => String(data.heroes.find((h) => h.name === toEn(name)).id);
 const matchState = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("owc.match")));
+// «l'eroe preso da X lo tocco nella griglia»: «＋» del riquadro (lista o «Scegline un altro»), poi, se si apre il foglio,
+// «Un altro eroe: toccalo nella griglia»
+async function pickFromGrid(page, i) {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const card = page.locator(".pick").nth(i);
+  await card.locator(".fav-more, .others .alt-other").first().click();
+  await page.waitForTimeout(80);
+  if (await page.locator("#choose-dialog").evaluate((d) => d.open)) await page.click("#choose-body .choose-grid");
+  await page.locator("#pick-banner").waitFor();
+}
 
 try {
   for (let i = 0; i < 50; i++) { try { await fetch(BASE); break; } catch { await new Promise((r) => setTimeout(r, 100)); } }
@@ -83,7 +100,7 @@ try {
   const { ctx, page } = await newPage();
   lastPage = page;
   await page.goto(BASE);
-  await page.locator(".pick .pick-name").first().waitFor();
+  await page.locator(CARD).first().waitFor();
   await toTop(page);
   check("primo avvio: due consigli (Io e Lei)", (await page.locator(".pick").count()) === 2
     && (await text(page, ".picks")).includes("Io") && (await text(page, ".picks")).includes("Lei"));
@@ -160,22 +177,32 @@ try {
   check("2 ban contati", (await text(page, "[data-count=bans]")) === "2");
   const sb = await starsOf(page);
   const sbv = Object.values(sb);
-  check("stelline Ban: bianche su fondo scuro su tutta la griglia", sbv.some((x) => x.n === 3)
-    && sbv.every((x) => !x.n || (x.cls.includes("st-bans") && x.color === "rgb(255, 255, 255)")), JSON.stringify(sbv.find((x) => x.n)));
-  check("stelline Ban: i ban consigliati hanno 3 stelle, i vostri eroi e i preferiti nessuna",
-    br.heroes.every((n) => sb[n]?.n === 3) && ["Mercy", "Juno", ...picksNoBans].every((n) => !sb[n]?.n),
-    br.heroes.map((n) => `${n}:${sb[n]?.n}`).join());
+  check("stelline Ban: bianche su fondo scuro, da 1 a 5 su tutta la griglia", sbv.every((x) => x.n >= 1 && x.n <= 5
+    && x.cls.includes("st-bans") && x.color === "rgb(255, 255, 255)") && sbv.some((x) => x.n === 5), JSON.stringify(sbv.find((x) => x.n !== 5)));
+  check("stelline Ban: i ban consigliati hanno 5 stelle, i vostri eroi e i preferiti 1 (non si bannano)",
+    br.heroes.every((n) => sb[n]?.n === 5) && ["Mercy", "Juno", ...picksNoBans].every((n) => sb[n]?.n === 1),
+    [...br.heroes, "Mercy", "Juno", ...picksNoBans].map((n) => `${n}:${sb[n]?.n}`).join());
   await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
   await shot(page, "04c-stelline-ban");
-  check("stelline: numero e stelle disegnate coincidono (0–3)", sbv.every((x) => x.n >= 0 && x.n <= 3 && (x.n ? x.shown === x.n : !x.shown)));
+  check("stelline: mai un eroe senza stelle, numero e stelle disegnate coincidono (1–5)", sbv.every((x) => x.n >= 1 && x.n <= 5 && x.shown === x.n));
   await toTop(page);
   const afterBans = await pickNames(page);
   check("consigli senza eroi bannati", !afterBans.includes("Ana") && !afterBans.includes("Kiriko"), afterBans.join());
   check("consigli: Fabio e Giulia hanno eroi diversi", afterBans[0] !== afterBans[1], afterBans.join());
   await toTop(page);
   const cardNums = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => (c.innerText.match(/\d+[.,]\d%/g) ?? []).length));
-  check("prima degli avversari: un motivo in parole («Forte su King's Row») e un solo numero per riquadro (la stima)",
-    (await page.locator(".pick .pick-why", { hasText: "King's Row" }).count()) >= 1 && cardNums.every((k) => k === 1), JSON.stringify(cardNums));
+  check("prima degli avversari: un motivo in parole («Forte su King's Row») e un solo numero per riquadro (la stima del consigliato)",
+    (await page.locator(".pick .fr-note", { hasText: "King's Row" }).count()) >= 1 && cardNums.every((k) => k === 1), JSON.stringify(cardNums));
+  // prima della scelta: SOLO la lista (preferiti, o i più adatti se non ce ne sono), il consigliato in cima ed evidenziato
+  const lists0 = [await favRows(page, 0), await favRows(page, 1)];
+  check("prima della scelta: lista con il consigliato in cima ed evidenziato (al massimo 4 righe), nessun eroe «scelto»",
+    lists0.every((l) => l.length >= 1 && l.length <= 4 && l[0].rec && l.slice(1).every((r) => !r.rec))
+    && (await page.locator(".pick .pick-main, .pick .chosen-chip").count()) === 0, JSON.stringify(lists0));
+  check("prima della scelta: Giulia vede i suoi preferiti (Mercy, Juno), Fabio senza preferiti i più adatti",
+    ["Mercy", "Juno"].every((n) => lists0[1].some((r) => r.name === n)) && (await text(page, ".pick:nth-child(1) .pick-ask")).includes("Nessun preferito")
+    && (await text(page, ".pick:nth-child(2) .pick-ask")).includes("preferiti"), JSON.stringify(lists0.map((l) => l.map((r) => r.name))));
+  check("lista: stelline bianche da 1 a 5 su ogni riga", (await page.locator(".pick .fr-stars").evaluateAll((xs) => xs.every((x) =>
+    /^★{1,5}$/.test(x.textContent) && getComputedStyle(x).color === "rgb(255, 255, 255)"))));
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "05-inizio-partita");
 
@@ -183,23 +210,22 @@ try {
   await page.click("#groups [data-group=enemies]");
   const se = await starsOf(page);
   const sev = Object.values(se);
-  check("stelline Avversari: rosse", sev.filter((x) => x.n).length >= 10
-    && sev.every((x) => !x.n || (x.cls.includes("st-enemies") && x.color === "rgb(255, 69, 58)")), JSON.stringify(sev.find((x) => x.n)));
-  check("stelline Avversari: 3 stelle in ogni ruolo, nessuna agli eroi bannati",
-    ["tank", "damage", "support"].every((r) => sev.some((x) => x.n === 3 && (x.role ?? "").toLowerCase().startsWith(r)))
-    && !se.Ana.n && !se.Kiriko.n, JSON.stringify(sev.map((x) => `${x.role}:${x.n}`)));
+  check("stelline Avversari: rosse, da 1 a 5 su ogni eroe (anche i bannati)", sev.every((x) => x.n >= 1 && x.n <= 5
+    && x.cls.includes("st-enemies") && x.color === "rgb(255, 69, 58)") && se.Ana.n >= 1 && se.Kiriko.n >= 1, JSON.stringify(sev.find((x) => !x.n)));
+  check("stelline Avversari: almeno 4 stelle in ogni ruolo e qualcuno a 1",
+    ["tank", "damage", "support"].every((r) => sev.some((x) => x.n >= 4 && (x.role ?? "").toLowerCase().startsWith(r))) && sev.some((x) => x.n <= 2),
+    JSON.stringify(sev.map((x) => `${x.role}:${x.n}`)));
   await page.click("#side [data-side=attack]");
   const se2 = await starsOf(page);
   await page.click("#side [data-side=defense]");
   check("stelline Avversari: cambiano col lato (il loro è l'opposto del vostro)", Object.keys(se).some((n) => se[n].n !== se2[n].n));
-  const danger = Object.keys(se).find((n) => se[n].n === 3);
-  await page.click("#groups [data-group=bans]");
-  await heroBtn(page, danger).click();
-  await page.click("#groups [data-group=enemies]");
-  check("stelline Avversari: cambiano coi ban (un eroe bannato non ne ha)", !(await starsOf(page))[danger].n, danger);
-  await page.click("#groups [data-group=bans]");
-  await heroBtn(page, danger).click();
-  await page.click("#groups [data-group=enemies]");
+  await page.click("#map-btn");
+  await page.locator("#map-list .map-opt", { hasText: ILIOS }).click();
+  const se3 = await starsOf(page);
+  await page.click("#map-btn");
+  await page.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
+  await page.click("#side [data-side=defense]");
+  check("stelline Avversari: cambiano con la mappa", Object.keys(se).filter((n) => se[n].n !== se3[n].n).length >= 5);
   await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
   await shot(page, "05d-stelline-avversari");
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
@@ -209,41 +235,78 @@ try {
   check("…ma tornano toccando «Ban»", await page.locator("#ban-recs").isVisible());
   await page.click("#groups [data-group=enemies]");
   await toTop(page);
-  const mus = await page.locator(".pick .mu-grp").evaluateAll((gs) => gs.map((g) => g.getAttribute("aria-label")));
-  check("con avversari: «Batte»/«Teme» con i volti dei soli avversari segnati", mus.length >= 1 && mus.every((l) =>
-    /^(Batte|Teme) /.test(l) && l.replace(/^(Batte|Teme) /, "").split(", ").every((n) => ["Pharah", "Winston", "Reinhardt"].includes(n))), JSON.stringify(mus));
+  const ENEMIES = ["Pharah", "Winston", "Reinhardt"];
+  const onlyEnemies = (label) => [...label.matchAll(/(?:batte|teme) (.+?)(?=, (?:batte|teme) |, per |\. )/g)].every((g) => g[1].split(", ").every((n) => ENEMIES.includes(n)));
+  const rowsInfo = await page.locator(".pick .fav-row").evaluateAll((rs) => rs.map((r) => ({
+    label: r.getAttribute("aria-label"),
+    good: [...r.querySelectorAll(".alt-mu.good .face")].map((f) => getComputedStyle(f).boxShadow),
+    bad: [...r.querySelectorAll(".alt-mu.bad .face")].map((f) => getComputedStyle(f).boxShadow) })));
+  check("lista con avversari: chi batte (bordo verde) e chi teme (bordo rosso), solo tra gli avversari segnati",
+    rowsInfo.some((r) => r.good.length + r.bad.length) && rowsInfo.every((r) => r.good.every((x) => x.includes("rgb(50, 215, 75)"))
+      && r.bad.every((x) => x.includes("rgb(255, 105, 97)")) && onlyEnemies(r.label)), JSON.stringify(rowsInfo));
   const nums2 = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => (c.innerText.match(/\d+[.,]\d%/g) ?? []).length));
   check("con avversari: sempre un solo numero per riquadro (i dettagli sono a un tocco)", nums2.every((k) => k === 1), JSON.stringify(nums2));
-  check("ogni riquadro: l'eroe è il pulsante «Come giocarla»", (await page.locator(".pick .pick-main").count()) === 2
-    && (await page.locator(".pick .pick-cta").first().innerText()).includes("Come giocarla"));
+  check("il consigliato ha «Come giocarla» anche prima di sceglierlo", (await page.locator(".pick .rec-cta").count()) === 2
+    && (await page.locator(".pick .rec-cta").first().innerText()).includes("Come giocarla"));
+  const order = await favRows(page, 1);
+  const nStars = (r) => r.stars.length;
+  check("lista ordinata dal più adatto (stelline non crescenti dopo il consigliato)", order.slice(1).every((r, k, xs) => !k || nStars(r) <= nStars(xs[k - 1])),
+    JSON.stringify(order.map((r) => `${r.name}:${r.stars}`)));
+  await shot(page, "05e-lista-preferiti");
+
+  // un tocco sulla riga consigliata = scelto → riquadro dedicato a quell'eroe
+  const recF = (await favRows(page, 0))[0].name;
+  await page.locator(".pick").nth(0).locator(".fav-row.is-rec").click();
   await toTop(page);
-  const cards = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => ({
-    alts: c.querySelectorAll(".alt:not(.alt-other)").length,
-    est: [c.querySelector(".pick-main"), ...c.querySelectorAll(".alt:not(.alt-other)")].map((b) => parseFloat(b.getAttribute("aria-label").match(/stima (\d+\.\d)%/)[1])),
-  })));
-  check("3 consigli per giocatore: uno grande e 2 alternative piccole", cards.every((c) => c.alts === 2), JSON.stringify(cards));
-  check("ordinati dal migliore (stima non crescente, salvo bonus preferiti)", cards.every((c) => c.est.every((v, k) => !k || v <= c.est[k - 1] + 1.01)), JSON.stringify(cards));
-  await toTop(page);
-  const altInfo = await page.locator(".pick .alt:not(.alt-other)").evaluateAll((bs) => bs.map((b) => {
+  check("un tocco sul consigliato: scelto, riquadro dedicato («✓ Scelto», volto grande, Come giocarla)",
+    (await page.locator(".pick").nth(0).locator(".pick-name").innerText()) === recF
+    && (await page.locator(".pick").nth(0).locator(".chosen-chip").isVisible())
+    && (await page.locator(".pick").nth(0).locator(".pick-cta").innerText()).includes("Come giocarla")
+    && String((await matchState(page)).picked[0]) === heroId(recF) && (await text(page, "#toast")).includes("ha scelto"), recF);
+  const mus = await page.locator(".pick .mu-grp").evaluateAll((gs) => gs.map((g) => g.getAttribute("aria-label")));
+  check("riquadro dedicato: «Batte»/«Teme» con i volti dei soli avversari segnati", mus.length >= 1 && mus.every((l) =>
+    /^(Batte|Teme) /.test(l) && l.replace(/^(Batte|Teme) /, "").split(", ").every((n) => ENEMIES.includes(n))), JSON.stringify(mus));
+  const altInfo = await page.locator(".pick .others .alt:not(.alt-other)").evaluateAll((bs) => bs.filter((b) => !b.hidden).map((b) => {
     const card = b.closest(".pick").getBoundingClientRect();
     const r = b.getBoundingClientRect();
     const ring = (cls) => [...b.querySelectorAll(`.alt-mu.${cls} .face`)].map((f) => getComputedStyle(f).boxShadow);
     return { label: b.getAttribute("aria-label"), stars: b.querySelector(".alt-stars")?.textContent ?? "", text: (() => { const c = b.cloneNode(true); c.querySelectorAll(".face, .alt-stars").forEach((f) => f.remove()); return c.textContent.trim(); })(),
       good: ring("good"), bad: ring("bad"), inside: r.left >= card.left - 0.5 && r.right <= card.right + 0.5, color: b.querySelector(".alt-stars") ? getComputedStyle(b.querySelector(".alt-stars")).color : null };
   }));
-  check("alternative: stelline (buona scelta) nel colore del giocatore", altInfo.some((a) => a.stars.length) && altInfo.every((a) => /^★{0,3}$/.test(a.stars))
-    && altInfo.filter((a) => a.stars).every((a) => ["rgb(255, 179, 64)", "rgb(255, 111, 174)"].includes(a.color)), JSON.stringify(altInfo));
-  check("alternative: chi batte (bordo verde) e chi teme (bordo rosso) solo coi volti, senza scritte",
-    altInfo.some((a) => a.good.length + a.bad.length) && altInfo.every((a) => !a.text && a.good.length <= 3 && a.bad.length <= 3
-      && a.good.every((x) => x.includes("rgb(50, 215, 75)")) && a.bad.every((x) => x.includes("rgb(255, 105, 97)"))
-      && [...a.label.matchAll(/(?:batte|teme) (.+?)(?=, (?:batte|teme) |\. )/g)].every((g) => g[1].split(", ").every((n) => ["Pharah", "Winston", "Reinhardt"].includes(n)))),
+  check("«Scegline un altro»: volti con stelline BIANCHE da 1 a 5", altInfo.length >= 1 && altInfo.every((a) => /^★{1,5}$/.test(a.stars) && a.color === "rgb(255, 255, 255)"),
     JSON.stringify(altInfo));
-  check("alternative: tutto dentro il riquadro", altInfo.every((a) => a.inside), JSON.stringify(altInfo.map((a) => a.inside)));
-  await shot(page, "05e-alternative");
-  const altName = (await page.locator(".pick").nth(0).locator(".alt:not(.alt-other)").first().getAttribute("aria-label")).match(/^In alternativa (.+), stima/)[1];
-  await page.locator(".pick").nth(0).locator(".alt").first().click();
+  check("«Scegline un altro»: chi batte (bordo verde) e chi teme (bordo rosso) solo coi volti, senza scritte",
+    altInfo.some((a) => a.good.length + a.bad.length) && altInfo.every((a) => !a.text && a.good.length <= 3 && a.bad.length <= 3
+      && a.good.every((x) => x.includes("rgb(50, 215, 75)")) && a.bad.every((x) => x.includes("rgb(255, 105, 97)")) && onlyEnemies(a.label)),
+    JSON.stringify(altInfo));
+  check("«Scegline un altro»: tutto dentro il riquadro, «＋» sempre presente", altInfo.every((a) => a.inside)
+    && (await page.locator(".pick").nth(0).locator(".others .alt-other").isVisible()), JSON.stringify(altInfo.map((a) => a.inside)));
+  await shot(page, "05f-scelto");
+  const other = (await page.locator(".pick").nth(0).locator(".others .alt:not(.alt-other)").first().getAttribute("aria-label")).match(/^Scegli invece (.+?), \d/)[1];
+  await page.locator(".pick").nth(0).locator(".others .alt:not(.alt-other)").first().click();
+  await toTop(page);
+  check("«Scegline un altro»: un tocco sceglie quell'eroe", (await page.locator(".pick").nth(0).locator(".pick-name").innerText()) === other
+    && String((await matchState(page)).picked[0]) === heroId(other), other);
+  await page.locator(".pick").nth(0).locator(".others .alt-other").click();
+  await page.locator("#choose-dialog[open]").waitFor();
+  const sheet = await page.locator("#choose-body .fav-row").evaluateAll((rs) => rs.map((r) => [r.querySelector(".fr-name").textContent, r.querySelector(".fr-stars").textContent]));
+  check("«＋»: foglio con gli eroi tra cui scegliere (stelline 1–5) e «Un altro eroe» dalla griglia", sheet.length >= 3
+    && sheet.every(([, st]) => /^★{1,5}$/.test(st)) && (await page.locator("#choose-body .choose-grid").isVisible()), JSON.stringify(sheet));
+  await shot(page, "05g-foglio-preferiti");
+  const pickSheet = sheet.find(([n]) => n !== other)[0];
+  await page.locator("#choose-body .fav-row", { has: page.locator(".fr-name", { hasText: new RegExp(`^${pickSheet}$`) }) }).click();
+  await toTop(page);
+  check("foglio: un tocco sceglie e chiude", !(await page.locator("#choose-dialog").evaluate((d) => d.open))
+    && (await page.locator(".pick").nth(0).locator(".pick-name").innerText()) === pickSheet, pickSheet);
+  await page.locator(".pick").nth(0).locator(".chosen-chip").click();
+  await toTop(page);
+  check("«✓ Scelto» ritoccato: torna la lista, niente scelto", (await matchState(page)).picked[0] === null
+    && (await page.locator(".pick").nth(0).locator(".fav-row.is-rec").count()) === 1);
+  // «Come giocarla» del consigliato, poi «Perché»
+  const altName = (await favRows(page, 0))[0].name;
+  await page.locator(".pick").nth(0).locator(".rec-cta").click();
   await page.locator("#guide-dialog[open]").waitFor();
-  check("tocco su un'alternativa: «Come giocarla» di quell'eroe", (await text(page, "#t-guide")).includes(altName), await text(page, "#t-guide"));
+  check("«Come giocarla» del consigliato (prima della scelta)", (await text(page, "#t-guide")).includes(altName), await text(page, "#t-guide"));
   await page.click("#guide-body .why-btn");
   await page.locator("#why-dialog[open]").waitFor();
   const det = await text(page, "#why-body");
@@ -298,7 +361,7 @@ try {
   // dettaglio di un eroe: riquadro → Come giocarla → Perché
   const openWhy = async (k) => {
     await toTop(page);
-    await page.locator(".pick").nth(k).locator(".pick-main").click();
+    await page.locator(".pick").nth(k).locator(".pick-cta").click();
     await page.locator("#guide-dialog[open]").waitFor();
     await page.click("#guide-body .why-btn");
     await page.locator("#why-dialog[open]").waitFor();
@@ -317,8 +380,8 @@ try {
   check("senza alleati: niente riga «Alleati», la sinergia col compagno è «Con Giulia»", !/Alleati [+−]/.test(sumF) && /Con Giulia [+−]/.test(sumF), sumF);
   await page.click("#groups [data-group=allies]");
   const sa = Object.values(await starsOf(page));
-  check("stelline Alleati: dorate (buona scelta per voi)", sa.some((x) => x.n === 3)
-    && sa.every((x) => !x.n || (x.cls.includes("st-allies") && x.color === "rgb(255, 179, 64)")), JSON.stringify(sa.find((x) => x.n)));
+  check("stelline Alleati: dorate da 1 a 5 (buona scelta per voi)", sa.some((x) => x.n === 5)
+    && sa.every((x) => x.n >= 1 && x.n <= 5 && x.cls.includes("st-allies") && x.color === "rgb(255, 179, 64)"), JSON.stringify(sa.find((x) => !x.n)));
   await heroBtn(page, "Lúcio").click();
   await toTop(page);
   const sumA = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
@@ -356,21 +419,20 @@ try {
   await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
   await page.click(".tabs [data-view=match]");
   await toTop(page);
-  const giulia = [await page.locator(".pick").nth(1).locator(".pick-name").innerText(),
-    ...(await page.locator(".pick").nth(1).locator(".alt:not(.alt-other)").evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label").match(/^In alternativa (.+), stima/)[1])))];
+  const giulia = (await favRows(page, 1)).map((r) => r.name);
   check("solo preferiti: Giulia vede solo Mercy/Juno (Mercy è alleata → solo Juno)", giulia.join() === "Juno", giulia.join());
   await toTop(page);
   const fabio = await page.locator(".pick").nth(0).innerText();
-  check("solo preferiti: Fabio senza preferiti → tutti, con avviso", fabio.includes("nessun preferito disponibile")
-    && (await page.locator(".pick").nth(0).locator(".alt:not(.alt-other)").count()) === 2, fabio);
+  check("solo preferiti: Fabio senza preferiti → i più adatti, con avviso", fabio.includes("nessun preferito disponibile")
+    && (await page.locator(".pick").nth(0).locator(".fav-row").count()) >= 2, fabio);
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "06b-solo-preferiti");
   // Giulia ha preso un eroe non preferito: «Passa a» (riquadro e guida) propone solo preferiti
   await toTop(page);
-  await page.locator(".pick").nth(1).locator(".alt-other").click();
+  await page.locator(".pick").nth(1).locator(".fav-more").click(); // tutti i preferiti già in lista: «Un altro eroe» → griglia
   const sp = Object.values(await starsOf(page));
-  check("stelline durante la scelta dell'eroe di Giulia: col suo colore", sp.some((x) => x.n === 3)
-    && sp.every((x) => !x.n || (x.cls.includes("st-picked") && x.color === "rgb(255, 111, 174)")), JSON.stringify(sp.find((x) => x.n)));
+  check("stelline durante la scelta dell'eroe di Giulia: col suo colore, da 1 a 5", sp.some((x) => x.n === 5)
+    && sp.every((x) => x.n >= 1 && x.n <= 5 && x.cls.includes("st-picked") && x.color === "rgb(255, 111, 174)"), JSON.stringify(sp.find((x) => !x.n)));
   await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
   await shot(page, "06c-stelline-scelta");
   await heroBtn(page, "Brigitte").click();
@@ -384,7 +446,7 @@ try {
     && swapCard.length === 1 && swapGuide.length === 1,
     `riquadro ${swapCard.join()} · guida ${swapGuide.join()}`);
   await toTop(page);
-  await page.locator(".pick").nth(1).locator(".took-btn").click(); // scelta tolta: il resto del collaudo come prima
+  await page.locator(".pick").nth(1).locator(".chosen-chip").click(); // scelta tolta: il resto del collaudo come prima
   await page.click(".tabs [data-view=profile]");
   await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
   await page.click(".tabs [data-view=match]");
@@ -396,7 +458,7 @@ try {
 
   // ---------- memoria e nuova partita ----------
   await page.reload();
-  await page.locator(".pick .pick-name").first().waitFor();
+  await page.locator(CARD).first().waitFor();
   check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "4"
     && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes(ILIOS));
   await page.click("#new-match");
@@ -422,14 +484,14 @@ try {
     await p7.addInitScript(() => localStorage.setItem("owc.profile", JSON.stringify({ useTheory: true,
       players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] })));
     await p7.goto(BASE);
-    await p7.locator(".pick .pick-name").first().waitFor();
+    await p7.locator(CARD).first().waitFor();
     const hb = (n) => p7.locator("#grid .hero", { has: p7.locator(".nm", { hasText: new RegExp(`^${n}$`) }) });
     // ogni nome dei 53 eroi, nel posto del consiglio: mai spezzato a metà parola (le alternative sono solo volti)
     const slots = await p7.evaluate(() => {
       const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
       const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
       const broken = [];
-      for (const sel of [".pick .pick-name"]) {
+      for (const sel of [".pick .fav-row.is-rec .fr-name", ".pick .fav-row:not(.is-rec) .fr-name"]) {
         const orig = document.querySelector(sel);
         if (!orig) { broken.push(`${sel} assente`); continue; }
         const clone = orig.cloneNode(false);
@@ -460,11 +522,31 @@ try {
     }
     // e gli eroi presi da Fabio e Giulia (in 5: 3 alleati + i due giocatori), con «Altro» nei loro riquadri
     await toTop(p7);
-    await p7.locator(".pick").nth(0).locator(".alt-other").click();
+    await pickFromGrid(p7, 0);
     await hb("Cassidy").click();
     await toTop(p7);
-    await p7.locator(".pick").nth(1).locator(".alt-other").click();
+    await pickFromGrid(p7, 1);
     await hb("Moira").click();
+    // dopo la scelta, il nome nel riquadro dedicato: mai spezzato a metà parola
+    const slots2 = await p7.evaluate(() => {
+      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
+      const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
+      const orig = document.querySelector(".pick .pick-name");
+      if (!orig) return ["riquadro dedicato assente"];
+      const broken = [];
+      const clone = orig.cloneNode(false);
+      orig.after(clone);
+      orig.style.display = "none";
+      for (const n of names) {
+        clone.textContent = n;
+        window.owcFitText(clone);
+        if (lines(clone) > n.split(/\s+/).length || clone.scrollWidth > clone.parentElement.clientWidth + 1) broken.push(n);
+      }
+      clone.remove();
+      orig.style.display = "";
+      return broken;
+    });
+    if (vp.name || vp.width >= 390) check(`${label}: riquadro dedicato, nessun nome spezzato (53 eroi)`, slots2.length === 0, slots2.join(", "));
     await p7.waitForTimeout(2600); // il messaggio in basso sparisce
     const res = await p7.evaluate(async () => {
       const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -547,7 +629,7 @@ try {
         const players = QUEUE.slice(0, n).map(([name, role]) => ({ name, rank: "", roles: [role], favorites: [] }));
         await p9.addInitScript((pl) => localStorage.setItem("owc.profile", JSON.stringify({ players: pl })), players);
         await p9.goto(BASE);
-        await p9.locator(".pick .pick-name").first().waitFor();
+        await p9.locator(CARD).first().waitFor();
         const hb = (name) => p9.locator("#grid .hero", { has: p9.locator(".nm", { hasText: new RegExp(`^${name.replace(/[.:]/g, "\\$&")}$`) }) });
         await p9.click("#map-btn");
         await p9.locator("#map-list .map-opt", { hasText: ILIOS }).click();
@@ -557,13 +639,13 @@ try {
 
         const st = await p9.evaluate(() => ({
           cards: document.querySelectorAll("#picks .pick").length,
-          mains: document.querySelectorAll("#picks .pick-main").length,
-          firsts: [...document.querySelectorAll(".pick .pick-name")].map((x) => x.textContent),
+          mains: document.querySelectorAll("#picks .fav-row.is-rec").length,
+          firsts: [...document.querySelectorAll(".pick .fav-row.is-rec .fr-name")].map((x) => x.textContent),
           colors: [...document.querySelectorAll("#picks .pick")].map((x) => getComputedStyle(x).borderTopColor),
           recs: [...document.querySelectorAll("#grid .hero.rec")].map((b) => [b.querySelector(".nm").textContent, getComputedStyle(b).outlineColor]),
           alliesHidden: document.querySelector("#groups [data-group=allies]").hidden,
         }));
-        check(`${label}: un riquadro per giocatore, ognuno con l'eroe da prendere`, st.cards === n && st.mains === n, JSON.stringify(st));
+        check(`${label}: un riquadro per giocatore, ognuno con il consigliato evidenziato`, st.cards === n && st.mains === n, JSON.stringify(st));
         check(`${label}: consigli tutti diversi, del ruolo di ciascuno`,
           new Set(st.firsts).size === n && st.firsts.every((h, i) => data.heroes.find((x) => x.name === toEn(h))?.role === QUEUE[i][1]), st.firsts.join(", "));
         check(`${label}: un colore diverso per giocatore (riquadri e griglia)`,
@@ -578,8 +660,7 @@ try {
           const role = QUEUE[i][1];
           const h = TAKE[role][used[role]++];
           taken.push(h);
-          await toTop(p9);
-          await p9.locator(".pick").nth(i).locator(".alt-other").click();
+          await pickFromGrid(p9, i);
           check(`${label}: «Tocca l'eroe preso da ${QUEUE[i][0]}» al posto del selettore`, (await p9.locator("#pick-banner").isVisible())
             && (await text(p9, "#pick-banner-txt")).includes(QUEUE[i][0]) && !(await p9.locator("#groups").isVisible()));
           await hb(h).click();
@@ -588,19 +669,19 @@ try {
         await toTop(p9);
         const after = await p9.evaluate(() => ({
           firsts: [...document.querySelectorAll(".pick .pick-name")].map((x) => x.textContent),
-          pressed: document.querySelectorAll(".pick .took-btn[aria-pressed=true]").length,
+          pressed: document.querySelectorAll(".pick .chosen-chip").length,
           took: [...document.querySelectorAll("#grid .hero.took")].map((b) => [b.querySelector(".nm").textContent, b.querySelector(".tag")?.textContent]),
           rec: document.querySelectorAll("#grid .hero.rec").length,
           group: JSON.parse(localStorage.getItem("owc.match")).group,
-          alts: document.querySelectorAll(".pick .alt").length,
+          alts: [...document.querySelectorAll(".pick .others .alt:not(.alt-other)")].map((b) => b.getAttribute("aria-label").match(/^Scegli invece (.+?), \d/)[1]),
           swaps: [...document.querySelectorAll(".pick .swap b")].map((x) => x.textContent),
         }));
-        check(`${label}: ogni riquadro mostra l'eroe preso, segnato «✓ Preso»`, after.firsts.join() === taken.join() && after.pressed === n, JSON.stringify(after.firsts));
+        check(`${label}: ogni riquadro mostra l'eroe preso, segnato «✓ Scelto»`, after.firsts.join() === taken.join() && after.pressed === n, JSON.stringify(after.firsts));
         check(`${label}: griglia: eroi presi segnati col ✓ e l'iniziale di chi li ha presi`,
           after.took.length === n && taken.every((h, i) => after.took.some(([nm, tag]) => nm === h && tag === `${QUEUE[i][0][0]}✓`)) && after.rec === 0,
           JSON.stringify(after.took));
-        check(`${label}: dopo la scelta niente alternative; un eventuale cambio non propone eroi presi dagli altri`,
-          after.alts === 0 && after.swaps.every((x) => !taken.includes(x)), JSON.stringify(after));
+        check(`${label}: dopo la scelta «Scegline un altro» e un eventuale cambio non propongono eroi presi dagli altri`,
+          after.alts.every((x) => !taken.includes(x)) && after.swaps.every((x) => !taken.includes(x)), JSON.stringify(after));
         check(`${label}: dopo ogni scelta si torna agli avversari`, after.group === "enemies", after.group);
         // barra minima e barra fissa: tutti visibili, non troppo alte
         const bar = await p9.evaluate(async () => {
@@ -630,29 +711,28 @@ try {
     const { ctx: c10, page: p10 } = await newPage({ serviceWorkers: "block" });
     lastPage = p10;
     await p10.goto(BASE);
-    await p10.locator(".pick .pick-name").first().waitFor();
+    await p10.locator(CARD).first().waitFor();
     await p10.click("#groups [data-group=enemies]");
     await heroBtn(p10, "Mercy").click();
-    await toTop(p10);
-    await p10.locator(".pick").nth(1).locator(".alt-other").click();
+    await pickFromGrid(p10, 1);
     await heroBtn(p10, "Mercy").click();
     const m1 = await matchState(p10);
     check("«Altro»: eroe preso tolto dagli avversari e assegnato al giocatore", !m1.enemies.length && String(m1.picked[1]) === heroId("Mercy") && m1.picked[0] === null, JSON.stringify(m1));
     await toTop(p10);
-    await p10.locator(".pick").nth(1).locator(".took-btn").click();
-    check("«✓ Preso» ritoccato: l'eroe non è più segnato", (await matchState(p10)).picked[1] === null);
+    await p10.locator(".pick").nth(1).locator(".chosen-chip").click();
+    check("«✓ Scelto» ritoccato: l'eroe non è più segnato", (await matchState(p10)).picked[1] === null);
     await toTop(p10);
-    const rec0 = await p10.locator(".pick").nth(0).locator(".pick-name").innerText();
-    await p10.locator(".pick").nth(0).locator(".took-btn").click();
+    const rec0 = await p10.locator(".pick").nth(0).locator(".fav-row.is-rec .fr-name").innerText();
+    await p10.locator(".pick").nth(0).locator(".fav-row.is-rec").click();
     await toTop(p10);
-    check("«Segna come preso»: un tocco e l'eroe consigliato è segnato", String((await matchState(p10)).picked[0]) === heroId(rec0)
-      && (await p10.locator(".pick").nth(0).locator(".took-btn").getAttribute("aria-pressed")) === "true", rec0);
-    await p10.locator(".pick").nth(1).locator(".alt-other").click();
+    check("un tocco sul consigliato e l'eroe è segnato come scelto", String((await matchState(p10)).picked[0]) === heroId(rec0)
+      && (await p10.locator(".pick").nth(0).locator(".chosen-chip").isVisible()), rec0);
+    await pickFromGrid(p10, 1);
     await p10.click("#pick-cancel");
     check("«Annulla» nel banner: torna il selettore, niente segnato", (await p10.locator("#groups").isVisible())
       && !(await p10.locator("#pick-banner").isVisible()) && (await matchState(p10)).picked[1] === null);
     await toTop(p10);
-    await p10.locator(".pick").nth(1).locator(".pick-main").click();
+    await p10.locator(".pick").nth(1).locator(".pick-cta").click();
     await p10.locator("#guide-body .took-btn").click();
     check("dalla guida: «Segna: Lei l'ha preso»", (await matchState(p10)).picked[1] !== null
       && (await p10.locator("#guide-body .took-btn").getAttribute("aria-pressed")) === "true");
@@ -748,7 +828,7 @@ try {
 
     // abilità: nel «Come giocarla» i nomi ufficiali italiani (anche dentro i consigli scritti), non quelli inglesi
     await toTop(p12);
-    await p12.locator(".pick .pick-main").first().click();
+    await p12.locator(".pick .pick-cta").first().click();
     await p12.locator("#guide-dialog[open]").waitFor();
     await p12.click("#guide-body .more-btn");
     const hero = (await text(p12, "#t-guide")).replace(/^Come giocare /, "");
@@ -768,10 +848,10 @@ try {
     const { ctx: c14, page: p14 } = await newPage({ serviceWorkers: "block" });
     lastPage = p14;
     await p14.goto(BASE);
-    await p14.locator(".pick .pick-main").first().waitFor();
+    await p14.locator(".pick .pick-cta").first().waitFor();
     const depth = () => p14.evaluate(() => history.state?.owc ?? 0);
     const d0 = await depth();
-    await p14.locator(".pick .pick-main").first().click();
+    await p14.locator(".pick .pick-cta").first().click();
     await p14.locator("#guide-dialog[open]").waitFor();
     await p14.click("#guide-body .why-btn");
     await p14.locator("#why-dialog[open]").waitFor();
@@ -791,7 +871,12 @@ try {
     await p14.waitForTimeout(150);
     check("foglio chiuso col pulsante: nessun passo in più nella cronologia", (await depth()) === d0, `${await depth()} vs ${d0}`);
     await toTop(p14);
-    await p14.locator(".pick").nth(0).locator(".alt-other").click();
+    await p14.locator(".pick").nth(0).locator(".fav-more").click();
+    await p14.locator("#choose-dialog[open]").waitFor();
+    await p14.goBack();
+    await p14.waitForTimeout(150);
+    check("indietro: chiude il foglio «Scegli l'eroe»", !(await p14.locator("#choose-dialog").evaluate((d) => d.open)));
+    await pickFromGrid(p14, 0);
     await p14.goBack();
     await p14.waitForTimeout(150);
     check("indietro durante «Tocca l'eroe preso»: annulla, torna il selettore", await p14.locator("#groups").isVisible());
@@ -805,7 +890,7 @@ try {
     await p13.addInitScript(() => localStorage.setItem("owc.profile", JSON.stringify({
       players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] })));
     await p13.goto(BASE);
-    await p13.locator(".pick .pick-name").first().waitFor();
+    await p13.locator(CARD).first().waitFor();
     await p13.click(".tabs [data-view=profile]");
     await p13.click("#guide-only");
     check("profilo: «Consigli solo da guide e pro» attivo, l'altra opzione sulla teoria nascosta",
@@ -816,14 +901,14 @@ try {
     await p13.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await toTop(p13);
     const cardsTxt = await p13.locator(".pick").evaluateAll((cs) => cs.map((c) => c.innerText));
-    check("solo guide: nei riquadri valutazione a stelle, nessuna percentuale", cardsTxt.every((t) => /guide ★/.test(t) && !/\d+[.,]\d%/.test(t)), cardsTxt.join(" | "));
+    check("solo guide: nei riquadri stelline, nessuna percentuale", cardsTxt.every((t) => /★/.test(t) && !/\d+[.,]\d%/.test(t)), cardsTxt.join(" | "));
     const sub = await text(p13, "#ban-recs .br-sub");
     check("solo guide: ban consigliati dalle guide (2 per ruolo)", sub.includes("guide") && (await p13.locator("#ban-recs .hero").count()) === 6, sub);
     await shot(p13, "17-solo-guide");
     await p13.click("#groups [data-group=enemies]");
     for (const n of ["Pharah", "Winston"]) await heroBtn(p13, n).click();
     await toTop(p13);
-    await p13.locator(".pick .pick-main").first().click();
+    await p13.locator(".pick .pick-cta").first().click();
     await p13.locator("#guide-dialog[open]").waitFor();
     await p13.click("#guide-body .more-btn");
     const g = await text(p13, "#guide-body");
@@ -846,7 +931,7 @@ try {
     await c6.route("**/data.json*", (r) => { hits++; return r.fulfill({ json: { ...data, checked: version } }); });
     await p6.clock.install();
     await p6.goto(BASE);
-    await p6.locator(".pick .pick-name").first().waitFor();
+    await p6.locator(CARD).first().waitFor();
     const h0 = hits;
     await p6.clock.runFor(2 * 3600e3);              // 2 ore senza toccare niente
     check("app lasciata lì: nessuna richiesta di dati senza interazione (niente timer)", hits === h0, `${hits - h0} richieste`);
@@ -872,7 +957,7 @@ try {
     await c5.route("**/data.json*", (r) => r.fulfill({ json: swapped
       ? { ...data, heroes: data.heroes.map((h) => (h.name === "Sombra" ? { ...h, role: "Support" } : h)) } : data }));
     await p5.goto(BASE);
-    await p5.locator(".pick .pick-name").first().waitFor();
+    await p5.locator(CARD).first().waitFor();
     const roleOf = () => p5.evaluate(() => {
       const b = [...document.querySelectorAll("#grid .hero")].find((x) => x.querySelector(".nm").textContent === "Sombra");
       let el = b.closest(".grid").previousElementSibling;
@@ -890,10 +975,10 @@ try {
   // ---------- offline ----------
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
-  await page.locator(".pick .pick-name").first().waitFor();
+  await page.locator(CARD).first().waitFor();
   await ctx.setOffline(true);
   await page.reload();
-  const offlineOk = await page.locator(".pick .pick-name").first().waitFor({ timeout: 5000 }).then(() => true, () => false);
+  const offlineOk = await page.locator(CARD).first().waitFor({ timeout: 5000 }).then(() => true, () => false);
   check("offline: l'app parte con i dati salvati", offlineOk);
   await shot(page, "08-offline");
   await ctx.setOffline(false);
@@ -907,7 +992,7 @@ try {
     const old = { ...data, checked: new Date(Date.now() - 3 * 86400e3).toISOString(), problems: ["mappa x: rotta"] };
     await p2.route("**/data.json*", (r) => r.fulfill({ json: old }));
     await p2.goto(BASE);
-    await p2.locator(".pick .pick-name").first().waitFor();
+    await p2.locator(CARD).first().waitFor();
     const w = await text(p2, "#warn");
     check("dati vecchi/parziali: avviso giallo, app funzionante", (await p2.locator("#warn").isVisible()) && w.includes("non vengono aggiornati") && w.includes("dati precedenti"), w);
     await shot(p2, "09-dati-vecchi");
@@ -938,7 +1023,7 @@ try {
       return r.fulfill({ json: { workflow_runs: [{ created_at: new Date().toISOString(), status: "completed", conclusion: "success" }] } });
     });
     await p4.goto(BASE);
-    await p4.locator(".pick .pick-name").first().waitFor();
+    await p4.locator(CARD).first().waitFor();
     await p4.click(".tabs [data-view=profile]");
     await p4.fill("#token", "github_pat_PROVA");
     await p4.click("#token-save");

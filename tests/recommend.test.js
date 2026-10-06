@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   recommend, recommendDuo, recommendTeam, matchups, headline, MATCHUP_MIN, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
-  banSuggestions, BANS_PER_ROLE, threatScores, rankStars,
+  banSuggestions, BANS_PER_ROLE, threatScores, rankStars, STAR_Z, STAR_MIN_SD,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -399,19 +399,44 @@ test("stelline: pericolo dei nemici = forza sulla mappa + quanto battono i vostr
   close(mixed.find((r) => r.hero.id === h.id).score, strength + t2, `${h.name} con un compagno`);
 });
 
-test("stelline: 0–3 ruolo per ruolo, i primi `top` sempre a 3, nessuna se i punteggi sono uguali", () => {
+test("stelline: da 1 a 5 ruolo per ruolo, mai senza stelle, i primi `top` a 5, tutti uguali → tutti 3", () => {
   const rows = threatScores(data, null, { mapSlug: "kings-row", ours: [id("Mercy")] });
-  const st = rankStars(rows);
+  const st = rankStars(rows, { minSd: STAR_MIN_SD.stat });
+  assert.equal(st.size, data.heroes.length, "ogni eroe ha le sue stelle");
+  assert.ok([...st.values()].every((x) => x >= 1 && x <= 5));
   for (const role of ["Tank", "Damage", "Support"]) {
     const rr = rows.filter((r) => r.hero.role === role).sort((a, b) => b.score - a.score);
-    assert.equal(st.get(String(rr[0].hero.id)), 3, role);
-    assert.equal(st.get(String(rr.at(-1).hero.id)), 0, role);
     const n = rr.map((r) => st.get(String(r.hero.id)));
     assert.ok(n.every((x, k) => !k || x <= n[k - 1]), `${role}: stelle non crescenti ${n}`);
+    assert.ok(n[0] >= 4 && n.at(-1) <= 2, `${role}: il migliore in alto, il peggiore in basso (${n})`);
+    // soglie sullo scarto dalla media del ruolo
+    const xs = rr.map((r) => r.score);
+    const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+    const sd = Math.max(STAR_MIN_SD.stat, Math.sqrt(xs.reduce((a, b) => a + (b - mean) ** 2, 0) / xs.length));
+    rr.forEach((r, k) => {
+      const z = (r.score - mean) / sd;
+      const want = z >= STAR_Z[0] ? 5 : z >= STAR_Z[1] ? 4 : z > STAR_Z[2] ? 3 : z > STAR_Z[3] ? 2 : 1;
+      assert.equal(n[k], want, `${role} ${r.hero.name} z=${z.toFixed(2)}`);
+    });
   }
   const ban = banSuggestions(data, { mapSlug: "kings-row", perRole: 999 });
   const sb = rankStars(Object.values(ban).flat(), { top: BANS_PER_ROLE });
-  for (const role of Object.keys(ban)) for (const r of ban[role].slice(0, BANS_PER_ROLE)) assert.equal(sb.get(String(r.hero.id)), 3);
+  for (const role of Object.keys(ban)) for (const r of ban[role].slice(0, BANS_PER_ROLE)) assert.equal(sb.get(String(r.hero.id)), 5);
   const flat = rankStars(data.heroes.map((hero) => ({ hero, score: 0 })));
-  assert.ok([...flat.values()].every((x) => x === 0));
+  assert.ok([...flat.values()].every((x) => x === 3), "tutti alla pari: 3 stelle");
+  // differenze minuscole (sotto la dispersione minima) non sparpagliano le stelle
+  const tiny = rankStars(data.heroes.map((hero, k) => ({ hero, score: k * 1e-5 })), { minSd: STAR_MIN_SD.stat });
+  assert.ok([...tiny.values()].every((x) => x === 3), "quasi alla pari: tutti 3");
+});
+
+test("scoreAll: una riga per ogni eroe (anche alleati e bannati), senza fare coppia con se stesso", () => {
+  const allies = [id("Ana"), id("Winston")];
+  const bans = [id("Kiriko")];
+  const rows = recommend(data, { mapSlug: "kings-row", enemies: [id("Pharah")], allies, bans, scoreAll: true });
+  assert.equal(rows.length, data.heroes.length);
+  const ana = rows.find((r) => r.hero.name === "Ana");
+  assert.ok(ana.withAllies.every((a) => a.hero.name !== "Ana"), "Ana non è alleata di se stessa");
+  // per gli altri eroi la riga è la stessa del consiglio normale
+  const normal = recommend(data, { mapSlug: "kings-row", enemies: [id("Pharah")], allies, bans });
+  for (const r of normal) close(rows.find((x) => x.hero.id === r.hero.id).score, r.score, r.hero.name);
 });

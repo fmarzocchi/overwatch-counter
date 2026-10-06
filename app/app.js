@@ -1,5 +1,5 @@
 import { recommend, recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES,
-  BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, guideStars, threatScores, rankStars } from "./recommend.js";
+  BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, threatScores, rankStars, STAR_MIN_SD } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
 
@@ -340,9 +340,8 @@ function nextRole(i) {
   render();
 }
 
-const SHOWN = 3;
-// stima in percentuale; in modalità guide una valutazione a stelle (niente numeri delle statistiche)
-const est = (r) => (r.estimate == null ? `guide ${"★".repeat(guideStars(r)) || "–"}` : `${(r.estimate * 100).toFixed(1)}%`);
+// stima in percentuale; in modalità guide le stelline (1–5) di quell'eroe per quel giocatore (niente numeri delle statistiche)
+const est = (r, i) => (r.estimate == null ? `guide ${"★".repeat(choiceStars(i).get(sid(r.hero.id)) ?? 3)}` : `${(r.estimate * 100).toFixed(1)}%`);
 
 const pctTxt = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
 
@@ -382,7 +381,8 @@ function partnersOf(i) {
 }
 
 // Tre livelli, dal più immediato al più approfondito:
-// 1. riquadro (colpo d'occhio): chi prendere, chi batte e chi teme (volti), "Segna come preso", alternative;
+// 1. riquadro (colpo d'occhio): prima della scelta la lista dei preferiti col consigliato evidenziato; dopo, l'eroe scelto
+//    con chi batte e chi teme (volti) e "Scegline un altro";
 // 2. "Come giocarla" (un tocco sull'eroe): riepilogo di poche righe, il resto dei consigli chiuso sotto;
 // 3. "Perché" (dalla guida): numeri, statistiche Ranked e teoria completa.
 
@@ -407,7 +407,7 @@ function openDetails(i, row) {
   fill($("#why-body"),
     el("div", { class: "why-head" }, face(row.hero),
       el("div", {}, el("div", { class: "pick-name" }, row.hero.name),
-        el("div", { class: "muted" }, `per ${p.name} · ${guide ? "valutazione" : "stima"} ${est(row)}`),
+        el("div", { class: "muted" }, `per ${p.name} · ${guide ? "valutazione" : "stima"} ${est(row, i)}`),
         el("div", { class: "muted small" }, `dati: ${dataLabel(i)}`))),
     sum.length ? el("p", { class: "why-sum" }, sum.map((b, k) => [k ? " · " : null, el("span", { class: b.good ? "good" : "bad" }, b.text)])) : null,
     el("div", { class: "guide-row" }, el("button", { type: "button", class: "btn guide-btn", onclick: () => openGuide(i, row.hero) },
@@ -484,7 +484,7 @@ function openGuide(i, hero) {
       el("button", {
         type: "button", class: "took-btn", "aria-pressed": String(isPicked),
         onclick: () => { togglePicked(i, hero); openGuide(i, hero); },
-      }, icon("check"), isPicked ? `Preso da ${p.name}` : `Segna: ${p.name} l'ha preso`)),
+      }, icon("check"), isPicked ? `Scelto da ${p.name}` : `Segna: ${p.name} l'ha scelto`)),
     staleBanner(hero),
     brief ? el("section", { class: "guide-sec guide-summary" },
       el("h3", {}, "In breve", el("span", { class: "legend", "aria-hidden": "true" },
@@ -530,8 +530,9 @@ function renderMini() {
     const changed = miniTops[i] !== undefined && miniTops[i] !== tops[i];
     box.append(el("button", { type: "button", class: `mini-pick${r.picked ? " took" : ""}${changed ? " pulse" : ""}`, style: `--pc: var(--p${i})`,
       onclick: () => openGuide(i, r.hero),
-      "aria-label": `${p.name}: ${r.picked ? "ha preso " : ""}${r.hero.name}, stima ${est(r)}. Tocca per come giocarla` },
-    face(r.hero), el("span", { class: "mini-txt" }, el("b", {}, r.hero.name), el("small", {}, `${r.picked ? "✓ " : ""}${p.name} · ${est(r)}`))));
+      "aria-label": `${p.name}: ${r.picked ? `ha scelto ${r.hero.name}, ${guideMode() ? "valutazione" : "stima"} ${est(r, i)}` : `consigliato ${r.hero.name}, ancora da scegliere`}. Tocca per come giocarla` },
+    face(r.hero), el("span", { class: "mini-txt" }, el("b", {}, r.hero.name),
+      el("small", {}, r.picked ? `✓ ${p.name} · ${est(r, i)}` : `${p.name} · consigliato`))));
   });
   miniTops = tops;
 }
@@ -553,72 +554,212 @@ function matchupRow(top) {
   return el("div", { class: "mu" }, grp("good", "Batte", m.strong), grp("bad", "Teme", m.weak));
 }
 
-// alternativa sotto "Segna come preso": volto con le stelline (buona scelta, colore del giocatore) e, con gli avversari
-// segnati, i volti piccoli di chi batte (bordo verde) e di chi teme (bordo rosso), come «Batte/Teme» ma senza scritte
-function altButton(i, r, n) {
-  const m = match.enemies.length ? matchups(r) : { strong: [], weak: [] };
+// Con gli avversari segnati: volti piccoli di chi l'eroe batte (bordo verde) e di chi teme (bordo rosso), senza
+// scritte (come «Batte/Teme» del riquadro). Restituisce i nodi e il testo per i lettori di schermo.
+function miniMatchups(r) {
+  const m = match.enemies.length && r ? matchups(r) : { strong: [], weak: [] };
   const names = (xs) => xs.map((x) => x.hero.name).join(", ");
   const mini = (cls, xs) => (xs.length ? el("span", { class: `alt-mu ${cls}`, "aria-hidden": "true" }, xs.map((x) => face(x.hero))) : null);
-  return el("button", {
-    type: "button", class: "alt", onclick: () => openGuide(i, r.hero),
-    "aria-label": `In alternativa ${r.hero.name}, stima ${est(r)}${n ? `, ${n} stell${n > 1 ? "e" : "a"} su 3` : ""}` +
-      `${m.strong.length ? `, batte ${names(m.strong)}` : ""}${m.weak.length ? `, teme ${names(m.weak)}` : ""}. Tocca per come giocarla`,
-  },
-  el("span", { class: "alt-face" }, face(r.hero), n ? el("span", { class: "alt-stars", "aria-hidden": "true" }, "★".repeat(n)) : null),
-  mini("good", m.strong), mini("bad", m.weak));
+  return {
+    nodes: [mini("good", m.strong), mini("bad", m.weak)].filter(Boolean),
+    label: `${m.strong.length ? `, batte ${names(m.strong)}` : ""}${m.weak.length ? `, teme ${names(m.weak)}` : ""}`,
+  };
+}
+const starsTxt = (n) => "★".repeat(n);
+const starsLabel = (n) => `${n} stell${n > 1 ? "e" : "a"} su 5`;
+
+// Eroi che il giocatore i può ancora prendere: non bannati, non presi da un compagno (giocatore o alleato segnato).
+function takenBy(i) {
+  return new Set([...match.picked.filter((x, j) => x && j !== i), ...match.allies, ...match.bans].map(sid));
+}
+// Preferiti del giocatore i per quel ruolo (tutti, se il ruolo è libero), dal più adatto a questa partita.
+function favoritesFor(i, role) {
+  const rows = choiceRows(i);
+  const off = takenBy(i);
+  return [...new Set(profile.players[i].favorites.map(sid))]
+    .filter((id) => rows.has(id) && !off.has(id) && (!role || byId[id].role === role))
+    .sort((a, b) => rows.get(b).score - rows.get(a).score || byId[a].name.localeCompare(byId[b].name));
 }
 
+// "scegli": l'eroe preso da quel giocatore (dalla lista dei preferiti, da "Scegline un altro" o dal foglio "＋")
+function choose(i, id) {
+  const was = match.picked[i] ? sid(match.picked[i]) : null;
+  setPicked(i, id);
+  saveMatch();
+  render();
+  toast(`${profile.players[i].name} ha scelto ${byId[id].name} ✓`, 2500, {
+    label: "Annulla",
+    run: () => { if (was) setPicked(i, was); else match.picked[i] = null; saveMatch(); render(); },
+  });
+}
+
+// Una riga della lista dei preferiti: volto, nome, stelline bianche (1–5) e chi batte/teme. Un tocco = scelto.
+// rec: etichetta del consigliato (evidenziato); tag: {text, color} es. "per Lei" (consigliato a un compagno).
+function favRow(i, id, { rec = null, note = null, tag = null, after = null } = {}) {
+  const h = byId[id];
+  const r = choiceRows(i).get(id);
+  const n = choiceStars(i).get(id) ?? 3;
+  const mu = miniMatchups(r);
+  return el("button", {
+    type: "button", class: `fav-row${rec ? " is-rec" : ""}`, "data-id": id,
+    onclick: () => { choose(i, id); if (after) after(); },
+    "aria-label": `${rec ? `${rec}: ` : ""}${h.name}, ${starsLabel(n)}${mu.label}${tag ? `, ${tag.text}` : ""}. Tocca per sceglierlo`,
+  },
+  face(h),
+  el("span", { class: "fr-body", "aria-hidden": "true" },
+    rec ? el("span", { class: "fr-tag" }, rec) : tag ? el("span", { class: "fr-tag other", style: `color: ${tag.color}` }, tag.text) : null,
+    el("span", { class: "fr-name" }, h.name),
+    el("span", { class: "fr-stars" }, starsTxt(n)),
+    note ? el("span", { class: "fr-note" }, note) : null,
+    mu.nodes.length ? el("span", { class: "fr-mu" }, mu.nodes) : null));
+}
+
+// "Scegline un altro" (dopo la scelta): volto con stelline bianche e, sotto, chi batte e chi teme. Un tocco = scelto.
+function altButton(i, id) {
+  const h = byId[id];
+  const n = choiceStars(i).get(id) ?? 3;
+  const mu = miniMatchups(choiceRows(i).get(id));
+  return el("button", {
+    type: "button", class: "alt", "data-id": id, onclick: () => choose(i, id),
+    "aria-label": `Scegli invece ${h.name}, ${starsLabel(n)}${mu.label}`,
+  },
+  el("span", { class: "alt-face" }, face(h), el("span", { class: "alt-stars", "aria-hidden": "true" }, starsTxt(n))),
+  mu.nodes);
+}
+
+// Foglio "＋": tutti i preferiti del giocatore (prima quelli del ruolo), dal più adatto, e un eroe qualsiasi dalla griglia.
+function openChooser(i) {
+  const p = profile.players[i];
+  const cur = match.picked[i] ? sid(match.picked[i]) : null;
+  const role = cur ? byId[cur].role : match.roles[i];
+  const close = () => $("#choose-dialog").close();
+  const mine = favoritesFor(i, role);
+  const otherRoles = favoritesFor(i, null).filter((id) => !mine.includes(id));
+  const fallback = mine.length || otherRoles.length ? [] : (lastDuo?.lists?.[i] ?? []).map((r) => sid(r.hero.id))
+    .filter((id) => !takenBy(i).has(id)).slice(0, 8);
+  const row = (id) => (id === cur
+    ? favRow(i, id, { rec: "Scelto", after: close })
+    : favRow(i, id, { after: close }));
+  $("#t-choose").textContent = `Scegli l'eroe di ${p.name}`;
+  fill($("#choose-body"),
+    el("p", { class: "muted small choose-sub" }, mine.length || otherRoles.length
+      ? "I tuoi preferiti, dal più adatto a questa partita. Un tocco per sceglierlo."
+      : "Nessun preferito nel Profilo: i più adatti per il ruolo."),
+    mine.length || fallback.length ? el("div", { class: "fav-list" }, [...mine, ...fallback].map(row)) : null,
+    otherRoles.length ? el("h3", { class: "choose-h" }, "Altri ruoli") : null,
+    otherRoles.length ? el("div", { class: "fav-list" }, otherRoles.map(row)) : null,
+    el("button", {
+      type: "button", class: "btn choose-grid", onclick: () => { close(); choosePicker(i); },
+    }, icon("grid"), "Un altro eroe: toccalo nella griglia"));
+  if (!$("#choose-dialog").open) $("#choose-dialog").showModal();
+  $("#choose-dialog").scrollTop = 0;
+}
+
+// Riquadro del giocatore, in due momenti:
+// - prima della scelta: SOLO la lista dei suoi preferiti (del ruolo), dal più adatto, con il consigliato evidenziato
+//   (in cima; se non è tra i preferiti lo si dice). Un tocco su una riga = scelto. Nessun eroe sembra già preso.
+// - dopo la scelta: il riquadro dedicato a quell'eroe (volto grande, stima, Come giocarla, Batte/Teme, "Passa a") e sotto
+//   "Scegline un altro" con gli altri preferiti (quelli che ci stanno) e "＋" per il foglio con tutti.
+const MAX_ROWS = 4;
 function pickCard(p, i) {
   const rows = lastDuo.lists[i] ?? [];
   const top = rows[0];
   const took = !!top?.picked;
   const role = took ? top.hero.role : match.roles[i];
+  const style = `--pc: var(--p${i}); --pca: var(--p${i}a)`;
   const head = el("div", { class: "pick-head" },
     el("span", { class: "pick-player", title: dataLabel(i) }, p.name),
-    took ? el("span", { class: "role-tag" }, ROLE_IT[role] ?? "")
+    took ? el("button", {
+      type: "button", class: "chosen-chip", onclick: () => togglePicked(i, top.hero),
+      "aria-label": `${p.name} ha scelto ${top.hero.name}: tocca per annullare la scelta`,
+    }, icon("check"), "Scelto", icon("xmark", "ic chip-x"))
       : el("button", {
         type: "button", class: "role-btn",
         "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare`,
         onclick: () => nextRole(i),
       }, role ? ROLE_IT[role] : "Qualsiasi"));
-  const style = `--pc: var(--p${i}); --pca: var(--p${i}a)`;
   if (!top) return el("article", { class: "pick empty", style }, head, el("p", { class: "pick-why" }, "Nessun eroe disponibile"));
   const note = lastDuo.notes?.[i];
-  const why = match.enemies.length ? null : headline(top, partnersOf(i));
-  const sw = took ? swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() }) : null;
-  const alts = took ? [] : rows.slice(1, SHOWN);
-  const altStars = alts.length ? choiceStars(i) : null;
-  return el("article", { class: `pick glass${took ? " took" : ""}`, style, "aria-label": `${p.name}: ${took ? "ha preso" : "consigliato"} ${top.hero.name}` },
-    head,
-    note ? el("div", { class: "pick-note warn-note" }, note)
-      : profile.onlyFavorites && !took ? el("div", { class: "pick-note" }, "★ solo preferiti") : null,
+  const noteEl = note ? el("div", { class: "pick-note warn-note" }, note) : null;
+  const favs = favoritesFor(i, role);
+  const favSet = new Set(p.favorites.map(sid));
+
+  if (!took) {
+    const recId = sid(top.hero.id);
+    const pool = favs.length ? favs : rows.map((r) => sid(r.hero.id)).filter((id) => !takenBy(i).has(id));
+    const list = [recId, ...pool.filter((id) => id !== recId)];
+    const shown = list.slice(0, MAX_ROWS);
+    const more = favs.length ? list.length - shown.length : 0; // preferiti che non ci stanno (senza preferiti: "Altri eroi")
+    // eroi consigliati a un compagno (non ancora presi): si possono scegliere, ma lo si segnala
+    const forMate = new Map((lastDuo.team ?? []).map((h, j) => (h && j !== i && !match.picked[j] ? [sid(h.id), j] : null)).filter(Boolean));
+    const why = match.enemies.length ? null : headline(top, partnersOf(i));
+    return el("article", { class: "pick glass choosing", style, "aria-label": `${p.name}: da scegliere` },
+      head, noteEl,
+      el("p", { class: "pick-ask" }, favs.length ? "Scegli tra i preferiti" : `Nessun preferito${role ? ` ${ROLE_IT[role]}` : ""}: i più adatti`),
+      el("div", { class: "fav-list" }, shown.map((id) => (id === recId
+        // il consigliato, evidenziato, con "Come giocarla" (anche prima di sceglierlo)
+        ? el("div", { class: "rec-box" },
+          favRow(i, id, {
+            rec: `Consigliato${top.estimate != null ? ` · ${est(top, i)}` : ""}`,
+            note: [favs.length && !favSet.has(id) ? "Non è tra i preferiti" : null, why].filter(Boolean).join(" · ") || null,
+          }),
+          el("button", {
+            type: "button", class: "pick-cta rec-cta", onclick: () => openGuide(i, top.hero),
+            "aria-label": `Come giocare ${top.hero.name} in questa partita`,
+          }, icon("target"), "Come giocarla", icon("chevron", "ic chev")))
+        : favRow(i, id, forMate.has(id) ? { tag: { text: `per ${profile.players[forMate.get(id)].name}`, color: `var(--p${forMate.get(id)})` } } : {})))),
+      el("button", {
+        type: "button", class: "fav-more",
+        onclick: () => (more || !favs.length ? openChooser(i) : choosePicker(i)),
+        "aria-label": more ? `Altri ${more} preferiti di ${p.name}` : favs.length ? `${p.name} ha preso un altro eroe: toccalo nella griglia`
+          : `Altri eroi per ${p.name}`,
+      }, icon("plus"), more ? `${more} ${more === 1 ? "altro" : "altri"}` : favs.length ? "Un altro eroe" : "Altri eroi"));
+  }
+
+  const sw = swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() });
+  const chosen = sid(top.hero.id);
+  const others = (favs.length ? favs : rows.slice(1).map((r) => sid(r.hero.id))).filter((id) => id !== chosen && !takenBy(i).has(id));
+  return el("article", { class: "pick glass took", style, "aria-label": `${p.name} ha scelto ${top.hero.name}` },
+    head, noteEl,
     // eroe grande con alone nel colore del giocatore: un tocco → Come giocarla
     el("button", {
       type: "button", class: "pick-main", onclick: () => openGuide(i, top.hero),
-      "aria-label": `${took ? `${p.name} ha preso` : `Per ${p.name}:`} ${top.hero.name}, stima ${est(top)}. Tocca per come giocarla`,
+      "aria-label": `${p.name} ha scelto ${top.hero.name}, ${guideMode() ? "valutazione" : "stima"} ${est(top, i)}. Tocca per come giocarla`,
     },
     el("span", { class: "halo" }, face(top.hero)),
     el("span", { class: "pick-name" }, top.hero.name),
-    el("span", { class: "pick-est" }, `${est(top)}${top.favorite ? " ★" : ""}`),
+    el("span", { class: "pick-est" }, est(top, i)),
     el("span", { class: "pick-cta" }, icon("target"), "Come giocarla", icon("chevron", "ic chev"))),
-    match.enemies.length ? matchupRow(top) : why ? el("p", { class: "pick-why" }, why) : null,
+    match.enemies.length ? matchupRow(top) : null,
     sw ? el("button", {
       type: "button", class: "swap", onclick: () => openGuide(i, sw.hero),
       "aria-label": `Meglio passare a ${sw.hero.name}: ${sw.why}. Tocca per come giocarla`,
     }, el("span", { class: "swap-lab" }, icon("swap"), "Passa a"), el("span", { class: "swap-hero" }, face(sw.hero), el("b", {}, sw.hero.name))) : null,
-    el("button", {
-      type: "button", class: "took-btn", "aria-pressed": String(took),
-      "aria-label": took ? `${p.name} ha preso ${top.hero.name}: tocca per annullare` : `Segna che ${p.name} ha preso ${top.hero.name}`,
-      onclick: () => togglePicked(i, top.hero),
-    }, took ? [icon("check"), "Preso"] : "Segna come preso"),
-    // alternative: solo volti (il nome è nell'etichetta per i lettori di schermo); "+" = ha preso un altro eroe
-    took ? null : el("div", { class: "alts" },
-      alts.map((r) => altButton(i, r, altStars.get(sid(r.hero.id)) ?? 0)),
-      el("button", {
-        type: "button", class: "alt alt-other", onclick: () => choosePicker(i),
-        "aria-label": `${p.name} ha preso un altro eroe: toccalo nella griglia`,
-      }, icon("plus"))),
-  );
+    el("div", { class: "others" },
+      el("span", { class: "others-lab" }, "Scegline un altro"),
+      el("div", { class: "alts" },
+        others.map((id) => altButton(i, id)),
+        el("button", {
+          type: "button", class: "alt alt-other", onclick: () => openChooser(i),
+          "aria-label": `Tutti i preferiti di ${p.name}`,
+        }, icon("plus")))));
+}
+
+// "Scegline un altro": restano i volti che ci stanno in una riga (il "＋" sempre); gli altri sono nel foglio
+function fitAlts(box) {
+  for (const row of $$(".others .alts", box)) {
+    const items = $$(".alt:not(.alt-other)", row);
+    for (const b of items) b.hidden = false;
+    const plus = $(".alt-other", row);
+    const room = row.clientWidth;
+    if (!room) continue;
+    const w = (b) => b.getBoundingClientRect().width + 4; // + margini
+    let used = plus ? w(plus) : 0;
+    for (const b of items) {
+      used += w(b);
+      if (used > room + 0.5) b.hidden = true;
+    }
+  }
 }
 
 function renderPicks() {
@@ -626,9 +767,11 @@ function renderPicks() {
   box.replaceChildren();
   if (!data) return;
   lastDuo = compute();
+  starCache = new Map();
   box.className = `picks n${profile.players.length}`;
   profile.players.forEach((p, i) => box.append(pickCard(p, i)));
-  for (const t of $$(".pick-name", box)) fitText(t);
+  for (const t of $$(".pick-name, .fr-name", box)) fitText(t);
+  fitAlts(box);
   renderMini();
   updateMini();
 }
@@ -855,8 +998,8 @@ function toggleIn(g, id) {
   render();
 }
 
-// Eroe preso da un giocatore: "Segna come preso" nel riquadro (o nella guida) per l'eroe consigliato,
-// "Altro" nel riquadro per un eroe diverso (si tocca nella griglia). Un eroe preso esce da ban/avversari/alleati.
+// Eroe scelto da un giocatore: un tocco su una riga della lista dei preferiti, su "Scegline un altro", nel foglio "＋",
+// nella guida ("Segna: X l'ha scelto") o nella griglia ("Un altro eroe"). Un eroe scelto esce da ban/avversari/alleati.
 function setPicked(i, id) {
   const who = pickerOf(id);
   if (who >= 0) match.picked[who] = null;
@@ -871,7 +1014,7 @@ function togglePicked(i, hero) {
   else setPicked(i, id);
   saveMatch();
   render();
-  toast(was ? `${profile.players[i].name}: ${hero.name} tolto` : `${profile.players[i].name} ha preso ${hero.name} ✓`, 1800);
+  toast(was ? `${profile.players[i].name}: scelta di ${hero.name} annullata` : `${profile.players[i].name} ha scelto ${hero.name} ✓`, 1800);
 }
 
 // "Altro": il prossimo tocco nella griglia è l'eroe preso da quel giocatore (poi si torna agli avversari)
@@ -890,42 +1033,57 @@ function tapPicked(id) {
   match.group = "enemies";
   saveMatch();
   render();
-  toast(`${profile.players[i].name} ha preso ${byId[id].name} ✓`, 2000);
+  toast(`${profile.players[i].name} ha scelto ${byId[id].name} ✓`, 2000);
 }
 
-// ---------- stelline sotto gli eroi della griglia ----------
-// Cambiano col selettore e con ogni scelta (mappa, lato, ban, avversari, alleati, eroi presi), ruolo per ruolo:
+// ---------- stelline (1–5) ----------
+// In tutta l'app da 1 a 5, ruolo per ruolo (rankStars), mai un eroe senza stelle. Cambiano con ogni scelta (mappa,
+// lato, ban, avversari, alleati, eroi presi) e seguono la modalità del Profilo (statistiche, + teoria, solo guide).
+// Griglia, secondo il selettore:
 //   Avversari (rosse) = quanto è pericoloso quel nemico: forte sulla mappa dal suo lato + quanto batte la vostra squadra,
-//     soprattutto i vostri eroi (threatScores); Ban (bianche) = stesso calcolo dei ban consigliati;
-//   Alleati / eroe preso da un giocatore (dorate o col colore del giocatore) = quanto è una buona scelta per voi.
-// Seguono la modalità scelta nel Profilo (statistiche, statistiche + teoria, solo guide).
+//     soprattutto i vostri eroi (threatScores); Ban (bianche) = stesso calcolo dei ban consigliati (i vostri eroi,
+//     i preferiti e gli alleati non si bannano: 1 stella); Alleati / eroe preso da un giocatore (dorate o col colore del
+//     giocatore) = quanto è una buona scelta per voi. Riquadri dei giocatori: stelline bianche, stessa "buona scelta".
 const STAR_WHAT = { enemies: "pericolo", bans: "da bannare", allies: "buona scelta", picked: "buona scelta" };
+const starMode = () => (guideMode() ? "guide" : profile.useTheory && T ? "blend" : "stat");
+const starOpts = (extra = {}) => ({ minSd: STAR_MIN_SD[starMode()], ...extra });
+let starCache = new Map(); // calcoli di questo giro: si svuota a ogni nuovo consiglio (renderPicks)
 function gridStars() {
   const g = match.group;
   const team = lastDuo?.team ?? [];
-  const mode = guideMode() ? "guide" : profile.useTheory && T ? "blend" : "stat";
   if (g === "bans") {
     const rec = banScores(999);
-    return rankStars(BAN_ROLES.flatMap((r) => rec[r]), { top: BANS_PER_ROLE });
+    const st = rankStars(BAN_ROLES.flatMap((r) => rec[r]), starOpts({ top: BANS_PER_ROLE }));
+    for (const h of data.heroes) if (!st.has(sid(h.id))) st.set(sid(h.id), 1);
+    return st;
   }
   if (g === "enemies") {
-    const banned = new Set(match.bans.map(sid));
     const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
     return rankStars(threatScores(sets, T, {
-      mapSlug: match.mapSlug, side: match.side, ours: team.filter(Boolean).map((h) => h.id), mates: match.allies, mode,
-    }).filter((r) => !banned.has(sid(r.hero.id))));
+      mapSlug: match.mapSlug, side: match.side, ours: team.filter(Boolean).map((h) => h.id), mates: match.allies, mode: starMode(),
+    }), starOpts());
   }
   return choiceStars(g === "picked" ? match.pickFor : -1);
 }
-// quanto un eroe è una buona scelta per il giocatore i (-1 = per la squadra): gli eroi degli altri contano come alleati.
-// Usate dalla griglia (Alleati, "＋") e dalle alternative nei riquadri.
+// quanto ogni eroe (tutti, anche bannati o già presi) è una buona scelta per il giocatore i (-1 = per la squadra): gli
+// eroi degli altri contano come alleati. Righe di recommend() per id; usate da griglia, riquadri e foglio "＋".
+function choiceRows(i) {
+  const key = `rows${i}`;
+  if (!starCache.has(key)) {
+    const team = lastDuo?.team ?? [];
+    const allies = [...new Set([...team.filter((h, j) => h && j !== i).map((h) => sid(h.id)), ...match.allies.map(sid)])];
+    const rows = recommend(i >= 0 ? playerData(i) : data, {
+      role: null, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies, bans: match.bans, scoreAll: true,
+      favorites: i >= 0 ? profile.players[i].favorites : [], theory: T, useTheory: !!profile.useTheory, guideOnly: guideMode(),
+    });
+    starCache.set(key, new Map(rows.map((r) => [sid(r.hero.id), r])));
+  }
+  return starCache.get(key);
+}
 function choiceStars(i) {
-  const team = lastDuo?.team ?? [];
-  const allies = [...new Set([...team.filter((h, j) => h && j !== i).map((h) => sid(h.id)), ...match.allies.map(sid)])];
-  return rankStars(recommend(i >= 0 ? playerData(i) : data, {
-    role: null, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies, bans: match.bans,
-    favorites: i >= 0 ? profile.players[i].favorites : [], theory: T, useTheory: !!profile.useTheory, guideOnly: guideMode(),
-  }));
+  const key = `stars${i}`;
+  if (!starCache.has(key)) starCache.set(key, rankStars([...choiceRows(i).values()], starOpts()));
+  return starCache.get(key);
 }
 
 function renderGrid() {
@@ -953,10 +1111,10 @@ function renderGrid() {
     const inGroup = match.group === "picked" ? took === match.pickFor : g === match.group;
     b.setAttribute("aria-pressed", String(inGroup));
     const whoName = who >= 0 ? profile.players[who].name : "";
-    const n = stars.get(id) ?? 0;
+    const n = stars.get(id) ?? 3;
     b.setAttribute("aria-label", `${byId[id].name}${g ? `, ${GROUP_ONE[g]}` : ""}` +
       `${took >= 0 ? `, preso da ${whoName}` : rec >= 0 ? `, consigliato a ${whoName}` : ""}` +
-      `${n ? `, ${STAR_WHAT[match.group]} ${n} stell${n > 1 ? "e" : "a"} su 3` : ""}`);
+      `, ${STAR_WHAT[match.group]} ${starsLabel(n)}`);
     let st = $(".stars", b);
     if (!st) {
       st = el("span", { class: "stars", "aria-hidden": "true" });
@@ -1341,7 +1499,8 @@ async function start() {
     if (!data || $("#view-match").hidden) return;
     delete $("#grid").dataset.fitW;
     fitNames($("#grid"));
-    for (const t of $$("#picks .pick-name")) fitText(t);
+    for (const t of $$("#picks .pick-name, #picks .fr-name")) fitText(t);
+    fitAlts($("#picks"));
     fitBanRecs();
   };
   window.addEventListener("resize", refit);

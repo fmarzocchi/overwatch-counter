@@ -52,19 +52,25 @@ export function recommend(
   data,
   {
     role = null, mapSlug = null, side = null, enemies = [], allies = [], bans = [], favorites = [], onlyFavorites = false,
-    theory = null, useTheory = false, guideOnly = false,
+    theory = null, useTheory = false, guideOnly = false, scoreAll = false,
   } = {},
 ) {
   const map = mapSlug ? data.maps.find((m) => m.slug === mapSlug) : null;
   const useSide = hasSides(map) ? side : null;
   const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
-  const excluded = new Set([...allies, ...bans].map(sid));
+  // scoreAll: una riga per OGNI eroe (anche alleati e bannati), es. per le stelline di tutta la griglia
+  const excluded = new Set(scoreAll ? [] : [...allies, ...bans].map(sid));
   const fav = new Set(favorites.map(sid));
+  const allEnemies = enemies;
+  const allAllies = allies;
 
   const rows = data.heroes
     .filter((h) => (!role || h.role === role) && !excluded.has(sid(h.id)) && (!onlyFavorites || fav.has(sid(h.id))))
     .map((h) => {
       const id = sid(h.id);
+      // un eroe non fa coppia con se stesso (con scoreAll può essere tra gli alleati)
+      const enemies = allEnemies.filter((e) => sid(e) !== id);
+      const allies = allAllies.filter((a) => sid(a) !== id);
       if (guideOnly) return guideRow(data, theory, h, { map, useSide, enemies, allies, fav, byId });
       const baseWr = map?.winRates?.[id] ?? data.overall?.[id] ?? 0.5;
       const base = baseWr - 0.5;
@@ -154,7 +160,7 @@ export function banSuggestions(datasets, { mapSlug = null, ours = [], keep = [],
 //   contro   = +1 per ogni avversario che l'eroe batte in teoria, −1 per chi lo batte
 //   con      = +0.5 per ogni alleato con cui sinergizza in teoria
 //   lato     = la stessa regola su attacco/difesa (±0.5), pref = preferito +0.5
-// estimate = null: il riquadro mostra una valutazione a stelle invece della percentuale.
+// estimate = null: il riquadro mostra le stelline (rankStars, 1–5) invece della percentuale.
 function guideRow(data, theory, h, { map, useSide, enemies, allies, fav, byId }) {
   const id = sid(h.id);
   const fit = mapFit(theory, map?.slug, h, useSide);
@@ -173,12 +179,6 @@ function guideRow(data, theory, h, { map, useSide, enemies, allies, fav, byId })
     vs: enemies.map((e) => (byId[sid(e)] ? { hero: byId[sid(e)], delta: 0 } : null)).filter(Boolean),
     withAllies: [],
   };
-}
-
-// valutazione a stelle (modalità guide): 3 = forte sulla mappa e/o contro gli avversari secondo le guide
-export function guideStars(row) {
-  const v = row?.guide?.score ?? 0;
-  return v >= 3 ? 3 : v >= 1.5 ? 2 : v >= 0.5 ? 1 : 0;
 }
 
 const hookText = (a) => `${a.name} vicino ai bordi: butta giù i nemici (mappa con burroni)`;
@@ -276,10 +276,13 @@ export function threatScores(datasets, theory, { mapSlug = null, side = null, ou
   });
 }
 
-// Da punteggi a 0–3 stelle, in base alla posizione (le scale cambiano con la modalità), ruolo per ruolo come la griglia:
-// 3 ai migliori ~12%, 2 ai successivi fino al 30%, 1 fino al 55%; niente stelle se i punteggi sono tutti uguali.
-// top: i primi `top` di ogni ruolo hanno comunque 3 stelle (es. i 2 ban consigliati per ruolo).
-export function rankStars(rows, { byRole = true, top = 0 } = {}) {
+// Da punteggi a stelle da 1 a 5, ruolo per ruolo come la griglia, mai senza stelle: conta la distanza dalla media del
+// ruolo in deviazioni standard (z). Soglie STAR_Z: 5 stelle sopra +1.25 (circa il 10% migliore), 4 sopra +0.45, 3 nella
+// fascia centrale, 2 sotto −0.45, 1 sotto −1.25. minSd: dispersione minima (nella scala dei punteggi), così eroi quasi
+// alla pari restano tutti attorno a 3 invece di essere sparpagliati da differenze minime; tutti uguali → tutti 3.
+// top: i primi `top` di ogni ruolo hanno comunque 5 stelle (es. i ban consigliati).
+export const STAR_Z = [1.25, 0.45, -0.45, -1.25];
+export function rankStars(rows, { byRole = true, top = 0, minSd = 0 } = {}) {
   const out = new Map();
   const groups = new Map();
   for (const r of rows) {
@@ -288,16 +291,20 @@ export function rankStars(rows, { byRole = true, top = 0 } = {}) {
     groups.get(k).push(r);
   }
   for (const g of groups.values()) {
+    const n = g.length;
+    const mean = g.reduce((a, r) => a + r.score, 0) / n;
+    const sd = Math.max(minSd, Math.sqrt(g.reduce((a, r) => a + (r.score - mean) ** 2, 0) / n));
     const sorted = [...g].sort((a, b) => b.score - a.score || a.hero.name.localeCompare(b.hero.name));
-    const n = sorted.length;
-    const lo = sorted[n - 1].score;
     sorted.forEach((r, k) => {
-      const stars = r.score - lo < 1e-9 ? 0 : k < Math.max(top, n * 0.12) ? 3 : k < n * 0.3 ? 2 : k < n * 0.55 ? 1 : 0;
+      const z = sd > 1e-12 ? (r.score - mean) / sd : 0;
+      const stars = k < top ? 5 : z >= STAR_Z[0] ? 5 : z >= STAR_Z[1] ? 4 : z > STAR_Z[2] ? 3 : z > STAR_Z[3] ? 2 : 1;
       out.set(sid(r.hero.id), stars);
     });
   }
   return out;
 }
+// dispersione minima per rankStars, nella scala di ciascuna modalità: 1% di win rate, oppure mezzo punto delle guide
+export const STAR_MIN_SD = { stat: 0.01, blend: 0.01, guide: 0.5 };
 
 // Squadra di 1–5 giocatori. players: [{role, favorites, onlyFavorites, data?, picked?}, …]; il resto come recommend().
 // data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.

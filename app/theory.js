@@ -74,7 +74,22 @@ export function buildTheory(data, raw = {}, patches = null) {
     for (const c of t.counters ?? []) { add(e.counters, c.hero, c.why); if (byName[c.hero]) add(get(c.hero).counteredBy, name, c.why); }
     for (const c of t.counteredBy ?? []) { add(e.counteredBy, c.hero, c.why); if (byName[c.hero]) add(get(c.hero).counters, name, c.why); }
   }
-  return { byName, idx, maps: raw._maps ?? {}, researched: raw._researched ?? null, patches };
+  // su quante mappe le guide consigliano / sconsigliano ogni eroe (per mapFit: un eroe consigliato quasi ovunque
+  // dice poco della singola mappa)
+  const maps = raw._maps ?? {};
+  const spread = {};
+  const bump = (name, k) => {
+    if (!spread[name]) spread[name] = { strong: 0, avoid: 0 }; // niente "??=": WebView vecchie
+    spread[name][k]++;
+  };
+  for (const m of Object.values(maps)) {
+    if (!m || typeof m !== "object") continue;
+    const strongHere = new Set(Object.values(m.strong ?? {}).flat().map((x) => x?.hero).filter(Boolean));
+    const avoidHere = new Set((m.avoid ?? []).map((x) => x?.hero).filter(Boolean));
+    for (const n of strongHere) bump(n, "strong");
+    for (const n of avoidHere) bump(n, "avoid");
+  }
+  return { byName, idx, maps, spread, researched: raw._researched ?? null, patches };
 }
 
 // La teoria di un eroe è ancora valida? Si accorge da sola di cambi di ruolo, eroi nuovi e patch successive.
@@ -185,7 +200,12 @@ export function allyDirected(a) {
 // Quanto un eroe è adatto alla mappa secondo guide, coach e giocatori forti (theory.json → _maps[slug]):
 //   strong (consigliato, eventualmente solo in attacco o in difesa) +2, avoid (sconsigliato) −2,
 //   stile adatto alla mappa (goodStyles) +0.5, caratteristiche della mappa che l'eroe ama/odia (mapFeatures) ±0.25 l'una (max ±1).
+// Un eroe che le guide consigliano su più di GUIDE_SPREAD mappe è "forte ovunque" (lo dicono già le statistiche):
+// su ogni mappa il suo +2 vale GUIDE_SPREAD/n (es. consigliato su 24 mappe → +0,67), così emergono gli eroi forti
+// proprio su quella mappa invece dei soliti noti. Lo stesso per gli sconsigliati.
 export const GUIDE_POINTS = { strong: 2, avoid: 2, style: 0.5, feature: 0.25, hook: 1, beats: 1, synergy: 0.5, favorite: 0.5 };
+export const GUIDE_SPREAD = 8;
+const spreadWeight = (n) => Math.min(1, GUIDE_SPREAD / Math.max(1, n ?? 1));
 export function mapFit(theory, mapSlug, hero, side = null) {
   const m = mapSlug ? theory?.maps?.[mapSlug] : null;
   const none = { strong: null, avoid: null, style: false, likes: [], dislikes: [], hook: null, points: 0 };
@@ -203,7 +223,9 @@ export function mapFit(theory, mapSlug, hero, side = null) {
   // mappe con burroni/pozzi: un gancio (tira a sé il nemico) vicino al bordo è un'uccisione sicura → +1 a parte
   const hook = feats.has("env-kills")
     ? (theory?.idx?.[hero.name]?.abilities ?? []).find((a) => (a.tags ?? []).includes("hook")) ?? null : null;
-  const points = (strong ? P.strong : 0) - (avoid ? P.avoid : 0) + (style ? P.style : 0) + featPts + (hook ? P.hook : 0);
+  const sp = theory?.spread?.[hero.name];
+  const points = (strong ? P.strong * spreadWeight(sp?.strong) : 0) - (avoid ? P.avoid * spreadWeight(sp?.avoid) : 0)
+    + (style ? P.style : 0) + featPts + (hook ? P.hook : 0);
   return { strong, avoid, style, likes, dislikes, hook, points };
 }
 

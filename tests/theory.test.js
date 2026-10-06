@@ -6,7 +6,7 @@ import {
   dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected, swapAdvice,
   mapFit, GUIDE_POINTS, adaptMapText,
 } from "../app/theory.js";
-import { recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, guideStars, headline, THEORY_SHARE, GUIDE_TO_WR,
+import { recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, rankStars, headline, THEORY_SHARE, GUIDE_TO_WR,
   blendedBanSuggestions, banSuggestions } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -302,7 +302,7 @@ test("guide: i consigli non dipendono dalle statistiche (stesse scelte con numer
   const tanks = recommend(data, { ...ctx, role: "Tank" });
   assert.equal(tanks[0].hero.name, "Reinhardt", "consigliato sulla mappa e batte Genji");
   assert.equal(tanks[0].estimate, null, "niente percentuale");
-  assert.equal(guideStars(tanks[0]), 3);
+  assert.equal(rankStars(tanks).get(String(tanks[0].hero.id)), 5, "il migliore dei tank: 5 stelle");
   assert.equal(headline(tanks[0]), "Consigliato su King's Row");
   assert.ok(guideDetails(tanks[0]).every((d) => d.kind === "teoria") && guideDetails(tanks[0]).some((d) => /batte Genji/.test(d.text)));
   const dmg = recommend(data, { ...ctx, role: "Damage" }).map((r) => r.hero.name);
@@ -373,7 +373,7 @@ test("in breve: consigli interi, mai troncati con i puntini", () => {
   }
 });
 
-test("gancio sulle mappe con burroni: +1 a Roadhog (e JQ), niente altrove; Roadhog ban tank su Nepal in modalità guide", () => {
+test("gancio sulle mappe con burroni: +1 a Roadhog (e JQ), niente altrove; Roadhog tra i ban tank su Nepal in modalità guide", () => {
   const TT = buildTheory(data, JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url))), null);
   const P = GUIDE_POINTS;
   const nepal = mapFit(TT, "nepal", hero("Roadhog"));
@@ -386,6 +386,7 @@ test("gancio sulle mappe con burroni: +1 a Roadhog (e JQ), niente altrove; Roadh
   assert.ok(Math.abs(withoutHook - ((nepal.strong ? P.strong : 0) + (nepal.style ? P.style : 0)
     + Math.max(-1, Math.min(1, P.feature * (nepal.likes.length - nepal.dislikes.length))))) < 1e-9);
   const rec = guideBanSuggestions(data, TT, { mapSlug: "nepal" });
-  assert.equal(rec.Tank[0].hero.name, "Roadhog");
-  assert.match(rec.Tank[0].why, /pozzo|bordi/);
+  const hog = rec.Tank.find((r) => r.hero.name === "Roadhog");
+  assert.ok(hog, `Roadhog tra i 2 ban tank consigliati su Nepal (${rec.Tank.map((r) => r.hero.name)})`);
+  assert.match(hog.why, /pozzo|bordi/);
 });
