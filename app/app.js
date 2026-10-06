@@ -729,22 +729,29 @@ function pickCard(p, i) {
   const sw = swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() });
   const chosen = sid(top.hero.id);
   const others = (favs.length ? favs : rows.slice(1).map((r) => sid(r.hero.id))).filter((id) => id !== chosen && !takenBy(i).has(id));
+  // stelline bianche anche sull'eroe scelto e su "Passa a" (richiesta del 2026-10-06), le stesse della lista
+  const nStars = (id) => choiceStars(i).get(id) ?? 3;
   return el("article", { class: "pick glass took", style, "aria-label": `${p.name} ha scelto ${top.hero.name}` },
     head, noteEl,
     // eroe grande con alone nel colore del giocatore: un tocco → Come giocarla
     el("button", {
       type: "button", class: "pick-main", onclick: () => openGuide(i, top.hero),
-      "aria-label": `${p.name} ha scelto ${top.hero.name}, ${guideMode() ? "valutazione" : "stima"} ${est(top, i)}. Tocca per come giocarla`,
+      "aria-label": `${p.name} ha scelto ${top.hero.name}, ${starsLabel(nStars(chosen))}`
+        + `${top.estimate == null ? "" : `, stima ${est(top, i)}`}. Tocca per come giocarla`,
     },
     el("span", { class: "halo" }, face(top.hero)),
     el("span", { class: "pick-name" }, top.hero.name),
-    el("span", { class: "pick-est" }, est(top, i)),
+    el("span", { class: "pick-stars", "aria-hidden": "true" }, starsTxt(nStars(chosen))),
+    // in "solo guide" la valutazione è già nelle stelline: niente pillola
+    top.estimate == null ? null : el("span", { class: "pick-est" }, est(top, i)),
     el("span", { class: "pick-cta" }, icon("target"), "Come giocarla", icon("chevron", "ic chev"))),
     match.enemies.length ? matchupRow(top) : null,
     sw ? el("button", {
       type: "button", class: "swap", onclick: () => openGuide(i, sw.hero),
-      "aria-label": `Meglio passare a ${sw.hero.name}: ${sw.why}. Tocca per come giocarla`,
-    }, el("span", { class: "swap-lab" }, icon("swap"), "Passa a"), el("span", { class: "swap-hero" }, face(sw.hero), el("b", {}, sw.hero.name))) : null,
+      "aria-label": `Meglio passare a ${sw.hero.name}, ${starsLabel(nStars(sid(sw.hero.id)))}: ${sw.why}. Tocca per come giocarla`,
+    }, el("span", { class: "swap-lab" }, icon("swap"), "Passa a"), el("span", { class: "swap-hero" }, face(sw.hero),
+      el("span", { class: "swap-txt" }, el("b", {}, sw.hero.name),
+        el("span", { class: "swap-stars", "aria-hidden": "true" }, starsTxt(nStars(sid(sw.hero.id))))))) : null,
     el("div", { class: "others" },
       el("span", { class: "others-lab" }, "Scegline un altro"),
       el("div", { class: "alts" },

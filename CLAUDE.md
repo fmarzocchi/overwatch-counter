@@ -270,8 +270,9 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
      (`choose()`, messaggio con "Annulla"). Senza preferiti: i più adatti del ruolo. Sotto: "＋ N altri" (preferiti che non
      ci stanno → foglio), "Un altro eroe" (griglia) o, senza preferiti, "Altri eroi" (foglio). Banditi, alleati segnati ed
      eroi già presi dagli altri non compaiono (`takenBy()`).
-   - **dopo la scelta**: riquadro dedicato (volto grande, una sola cifra, "Come giocarla", Batte/Teme `matchups()`,
-     "Passa a" `swapAdvice()`), in alto "✓ Scelto ×" (tocco = annulla) e sotto **"Scegline un altro"**: gli altri preferiti
+   - **dopo la scelta**: riquadro dedicato (volto grande, stelline BIANCHE sotto il nome — le stesse della lista, richiesta
+     del 2026-10-06 —, una sola cifra (in "solo guide" niente pillola: bastano le stelline), "Come giocarla", Batte/Teme
+     `matchups()`, "Passa a" `swapAdvice()` anche lui con le stelline), in alto "✓ Scelto ×" (tocco = annulla) e sotto **"Scegline un altro"**: gli altri preferiti
      del ruolo (`altButton()`, stelline bianche + chi batte/teme), solo quelli che ci stanno in una riga (`fitAlts()`), e
      "＋" sempre → foglio `#choose-dialog` (`openChooser()`): tutti i preferiti (prima il ruolo, poi "Altri ruoli") e
      "Un altro eroe: toccalo nella griglia" (`choosePicker`, banner "Tocca l'eroe preso da X").

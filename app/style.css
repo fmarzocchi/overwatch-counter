@@ -205,6 +205,7 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   display: block; max-width: 100%; font-size: calc(20px * var(--fit, 1)); font-weight: 800; letter-spacing: -0.02em;
   line-height: 1.12; overflow-wrap: break-word;
 }
+.pick-stars { display: block; margin-top: 3px; font-size: 15px; line-height: 1.1; letter-spacing: 1px; color: #fff; white-space: nowrap; }
 .pick-est {
   display: inline-block; margin-top: 5px; padding: 3px 10px; border-radius: 999px; background: var(--glass-2);
   font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums;
@@ -235,6 +236,8 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .swap-lab .ic { margin-right: 4px; }
 .swap-hero { display: flex; align-items: center; margin-top: 3px; font-size: 15px; }
 .swap-hero .face { width: 24px; height: 24px; font-size: 9px; margin-right: 6px; }
+.swap-txt { display: flex; flex-direction: column; align-items: flex-start; }
+.swap-stars { font-size: 11px; line-height: 1.15; letter-spacing: .5px; color: #fff; white-space: nowrap; }
 
 /* "Segna come preso": capsula di vetro; premuto = tinta e spunta del colore del giocatore */
 .took-btn {

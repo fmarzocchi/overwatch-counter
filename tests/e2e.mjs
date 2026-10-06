@@ -273,8 +273,15 @@ try {
 
   // un tocco sulla riga consigliata = scelto → riquadro dedicato a quell'eroe
   const recF = (await favRows(page, 0))[0].name;
+  const recStars = (await favRows(page, 0))[0].stars;
   await page.locator(".pick").nth(0).locator(".fav-row.is-rec").click();
   await toTop(page);
+  const chosenSt = await page.locator(".pick").nth(0).locator(".pick-main .pick-stars").evaluate((x) => [x.textContent, getComputedStyle(x).color]).catch(() => null);
+  check("eroe scelto: stelline bianche (1–5) sotto il nome, le stesse della lista", chosenSt && /^★{1,5}$/.test(chosenSt[0])
+    && chosenSt[0] === recStars && chosenSt[1] === "rgb(255, 255, 255)", `${JSON.stringify(chosenSt)} / lista ${recStars}`);
+  const swapSt = await page.locator(".pick .swap .swap-stars").allInnerTexts();
+  check("«Passa a»: con le stelline (1–5) come ogni altro eroe", (await page.locator(".pick .swap").count()) === swapSt.length
+    && swapSt.every((t) => /^★{1,5}$/.test(t)), JSON.stringify(swapSt));
   check("un tocco sul consigliato: scelto, riquadro dedicato («✓ Scelto», volto grande, Come giocarla)",
     (await page.locator(".pick").nth(0).locator(".pick-name").innerText()) === recF
     && (await page.locator(".pick").nth(0).locator(".chosen-chip").isVisible())
@@ -976,6 +983,14 @@ try {
     await shot(p13, "17b-solo-guide-perche");
     await p13.click("#why-dialog [data-close]");
     await p13.click("#guide-dialog [data-close]").catch(() => {});
+    await toTop(p13);
+    const gStars = (await favRows(p13, 0))[0].stars;
+    await p13.locator(".pick").nth(0).locator(".fav-row.is-rec").click();
+    await toTop(p13);
+    const gCard = await p13.locator(".pick").nth(0).evaluate((c) => ({ stars: c.querySelector(".pick-stars")?.textContent ?? "",
+      pill: !!c.querySelector(".pick-est"), text: c.innerText }));
+    check("solo guide: eroe scelto con le stelline (le stesse della lista), senza pillola né percentuali",
+      gCard.stars === gStars && /^★{1,5}$/.test(gCard.stars) && !gCard.pill && !/\d+[.,]\d%/.test(gCard.text), JSON.stringify(gCard).slice(0, 300));
     await c13.close();
   }
 
