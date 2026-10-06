@@ -242,7 +242,9 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
     nei testi mostrati (`el`/`fill`/titoli), dati e teoria restano in inglese. e2e: `itn()`/`toEn()`.
   - **Mappe**: OverFast non le traduce, la wiki inglese non ha collegamenti all'italiano. La wiki italiana (piccola,
     2017) conferma solo Ilio, Torre di Lijiang, Osservatorio: Gibilterra (`WIKI_IT` in names_it.py, accettati solo se la
-    pagina esiste): le altre restano col nome di counterwatch (molte sono uguali). `tr()` traduce anche le mappe nei testi.
+    pagina esiste) + Penisola Antartica e Monastero Shambali (`OFFICIAL_IT`, notizie ufficiali Blizzard it-it, verificate
+    il 2026-10-06). Le altre sono nomi propri, uguali nel gioco italiano (Neon Junction compreso). `tr()` traduce anche le
+    mappe nei testi.
   - **Abilità degli altri eroi** citate nei consigli (es. Dragonblade di Genji nei consigli di Ana): tradotte anche loro
     (`localizeTheory()`, nomi globali senza ambiguità).
   - OverFast ha anche i **perk** (nomi e descrizioni in italiano, niente statistiche): non ancora usati.

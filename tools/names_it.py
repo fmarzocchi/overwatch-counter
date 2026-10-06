@@ -100,6 +100,18 @@ def main():
     # Corrispondenze note dei nomi del gioco; le mappe nuove non ci sono e restano col nome di counterwatch.
     WIKI_IT = {"Ilios": "Ilio", "Lijiang Tower": "Torre di Lijiang", "Watchpoint: Gibraltar": "Osservatorio: Gibilterra",
                "Temple of Anubis": "Tempio di Anubi", "Volskaya Industries": "Industrie Volskaya"}
+    # nomi usati da Blizzard nelle notizie ufficiali in italiano (verificati il 2026-10-06); le altre mappe sono nomi
+    # propri e restano uguali nel gioco italiano (es. Neon Junction, Busan, Rialto, Suravasa)
+    OFFICIAL_IT = {
+        "Antarctic Peninsula": "Penisola Antartica",   # https://overwatch.blizzard.com/it-it/news/23912175
+        "Shambali Monastery": "Monastero Shambali",    # https://overwatch.blizzard.com/it-it/news/23878812
+    }
+    try:
+        for en, it in OFFICIAL_IT.items():
+            if any(m["name"] == en for m in load(a.data)["maps"]):
+                maps[en] = it
+    except (OSError, ValueError, KeyError) as e:
+        problems.append(f"elenco mappe non letto ({e})")
     try:
         pages = {x["title"] for x in load(of("wiki_it_allpages.json"))["query"]["allpages"]}
         ours = {m["name"] for m in load(a.data)["maps"]}

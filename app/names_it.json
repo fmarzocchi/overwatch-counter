@@ -437,8 +437,10 @@
   "Zenyatta": "Zenyatta"
  },
  "maps": {
+  "Antarctic Peninsula": "Penisola Antartica",
   "Ilios": "Ilio",
   "Lijiang Tower": "Torre di Lijiang",
+  "Shambali Monastery": "Monastero Shambali",
   "Watchpoint: Gibraltar": "Osservatorio: Gibilterra"
  },
  "source": "OverFast API (overfast-api.tekrop.fr), dal sito ufficiale overwatch.blizzard.com (en-us / it-it)",
