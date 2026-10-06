@@ -232,6 +232,12 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
    <alleato che lo batte in teoria>" o "evita l'1 contro 1" (+ "tieni <abilità> contro X", mai quella che X neutralizza);
    **Punta** con il motivo; **Combo** col compagno (sinergia); **Piano** (lato della mappa, poi consigliato/sconsigliato
    dalle guide); **Ultimate** (quando); Proteggi e Posizione solo se resta spazio. Ordine `PRIO` in playGuide, max 7.
+   Dal 2026-10-06: i consigli delle mappe che citano eroi come esempi hanno in theory.json `_maps[slug].who[testo]` =
+   {tags, roles?, warn?, enemyWarn?, all?}; `adaptMapText()` li adatta all'eroe preso: lo riguarda → nominato per primo
+   ("eroi mobili (come Juno, Genji, Winston)", "Cassidy, Ashe, Ana e Widowmaker rendono bene"); non lo riguarda → fuori dal
+   suo Piano, in "Tutti i consigli" come "Per la squadra:"; enemyWarn solo se quegli eroi sono avversari. Etichetta virtuale
+   "boop" da abilità knockback/hook. Ultimate senza combo con eroi assenti. **Mai frasi troncate** ("…"): `cut()` non
+   accorcia più. Scansione: tutti i 53 eroi × 30 mappe × lati, 22.000 righe, nessuna citazione fuori luogo.
 3. **Perché** (dalla guida): riepilogo Mappa/Avversari/Con, ogni riga, statistiche Ranked complete, teoria completa.
 - "↺ Nuova partita" nella barra in basso (sempre a portata di pollice) con "Annulla" nel messaggio.
 - La barra minima in alto lampeggia una volta quando cambia il consiglio di un giocatore.

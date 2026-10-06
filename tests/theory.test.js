@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected, swapAdvice,
-  mapFit, GUIDE_POINTS,
+  mapFit, GUIDE_POINTS, adaptMapText,
 } from "../app/theory.js";
 import { recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, guideStars, headline, THEORY_SHARE, GUIDE_TO_WR,
   blendedBanSuggestions, banSuggestions } from "../app/recommend.js";
@@ -345,4 +345,30 @@ test("statistiche + teoria: concorrono entrambe, la teoria pesa di più (55%)", 
   assert.ok(Object.values(bans).every((rows) => rows.length === 2));
   const reinStat = plain.Tank.findIndex((r) => r.hero.name === "Reinhardt");
   assert.ok(bans.Tank.some((r) => r.hero.name === "Reinhardt") || reinStat > 6, "Reinhardt (consigliato dalle guide) tra i ban se non è in fondo nei numeri");
+});
+
+test("consigli della mappa: riguardano l'eroe preso (nominato per primo) o non compaiono nel suo piano", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const TT = buildTheory(data, raw, null);
+  const atk = raw._maps.dorado.attack; // "Eroi mobili (Genji, Winston) per superare il varco…"
+  assert.match(adaptMapText(data, TT, "dorado", atk, hero("Juno")), /\(come Juno, Genji, Winston\)/);
+  assert.match(adaptMapText(data, TT, "dorado", atk, hero("Winston")), /\(Winston, Genji\)/, "già citato: in testa");
+  assert.equal(adaptMapText(data, TT, "dorado", atk, hero("Reinhardt")), null, "non è un eroe mobile");
+  const burroni = raw._maps.colosseo.tips.find((t) => t.startsWith("Attenti ai burroni"));
+  assert.equal(adaptMapText(data, TT, "colosseo", burroni, hero("Ana"), ["Winston"]), null, "avviso solo se Lúcio o Pharah sono avversari");
+  assert.equal(adaptMapText(data, TT, "colosseo", burroni, hero("Ana"), ["Lúcio"]), burroni);
+  // nel piano di Reinhardt su Dorado in attacco non c'è il consiglio sugli eroi mobili
+  const g = playGuide(data, TT, { hero: hero("Reinhardt"), mapSlug: "dorado", side: "attack", enemies: [id("Ana")] });
+  const plan = g.sections.find((x) => x.summary).items.find((i) => i.key === "map");
+  assert.ok(!plan || !/Eroi mobili|eroi mobili/.test(plan.text), plan?.text);
+});
+
+test("in breve: consigli interi, mai troncati con i puntini", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const TT = buildTheory(data, raw, null);
+  const enemies = ["Winston", "Tracer", "Ana", "Reaper"].map(id);
+  for (const h of data.heroes) for (const m of ["dorado", "kings-row", "ilios"]) {
+    const g = playGuide(data, TT, { hero: h, mapSlug: m, side: m === "ilios" ? null : "attack", enemies, partners: [hero("Lúcio")] });
+    for (const it of g.sections.flatMap((x) => x.items)) assert.ok(!/…|\.\.\./.test(`${it.text} ${it.short ?? ""}`), `${h.name}: ${it.text}`);
+  }
 });

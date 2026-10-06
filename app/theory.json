@@ -10008,7 +10008,16 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Eroi mobili e da tuffo (Winston, Tracer, D.Va) e la velocità di Lúcio rendono bene.": {
+     "tags": [
+      "mobile",
+      "dive",
+      "speed"
+     ]
+    }
+   }
   },
   "antarctic-peninsula": {
    "features": [
@@ -10075,7 +10084,15 @@
      "why": "Rompighiaccio: soffitti bassi, cecchini svantaggiati"
     }
    ],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Sublevel: chi vola troppo in alto viene congelato e precipita (Pharah, Echo attenti).": {
+     "tags": [
+      "flyer"
+     ],
+     "warn": true
+    }
+   }
   },
   "blizzard-world": {
    "features": [
@@ -10138,7 +10155,18 @@
     "Support": []
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Tuffatevi sul punto con Winston o D.Va; Reinhardt per sfondare sull'ultimo tratto.": {
+     "tags": [
+      "dive",
+      "shield"
+     ],
+     "roles": [
+      "Tank"
+     ]
+    }
+   }
   },
   "busan": {
    "features": [
@@ -10302,7 +10330,26 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Eroi con mobilità verticale (Pharah, Echo) per contestare le alture; aggirate l'hotel.": {
+     "tags": [
+      "flyer"
+     ]
+    },
+    "La difesa è favorita all'inizio: arco d'ingresso e alture ai lati con Widowmaker e Sigma.": {
+     "tags": [
+      "sniper",
+      "long-range"
+     ]
+    },
+    "Mappa da cecchini: lunghe linee di tiro con poca copertura (Widowmaker, Ashe, Hanzo).": {
+     "tags": [
+      "sniper",
+      "long-range"
+     ]
+    }
+   }
   },
   "colosseo": {
    "features": [
@@ -10376,7 +10423,18 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Muri bassi e cielo alto: Pharah, Echo e Winston aggirano gli ostacoli dall'alto.": {
+     "tags": [
+      "flyer",
+      "dive"
+     ]
+    },
+    "Attenti ai burroni dopo il primo checkpoint: Lúcio e Pharah possono spingervi giù.": {
+     "enemyWarn": true
+    }
+   }
   },
   "dorado": {
    "features": [
@@ -10454,7 +10512,33 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Eroi mobili (Genji, Winston) per superare il varco e colpire i bersagli chiave.": {
+     "tags": [
+      "mobile",
+      "dive"
+     ]
+    },
+    "Tenete il varco (Ashe, Zarya) e usate le due alture vicine allo spawn sul carico.": {
+     "tags": [
+      "hitscan",
+      "long-range",
+      "tanky"
+     ]
+    },
+    "Dopo il primo checkpoint linee di tiro lunghe: Widowmaker e Ana rendono bene.": {
+     "tags": [
+      "sniper",
+      "long-range"
+     ]
+    },
+    "Secondo e terzo tratto: cielo alto e copertura, ottimi per Pharah ed Echo.": {
+     "tags": [
+      "flyer"
+     ]
+    }
+   }
   },
   "eichenwalde": {
    "features": [
@@ -10543,7 +10627,23 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Eroi molto mobili (Genji, Winston) per usare le vie laterali; prendete il tetto a sinistra.": {
+     "tags": [
+      "mobile",
+      "dive"
+     ]
+    },
+    "Sfruttate varchi e alture; Hanzo con la freccia sonica rivela i movimenti nemici.": {
+     "tags": []
+    },
+    "Sul ponte del castello spinte di Reinhardt, Orisa e Lúcio possono buttare giù i nemici.": {
+     "tags": [
+      "boop"
+     ]
+    }
+   }
   },
   "esperanca": {
    "features": [
@@ -10625,7 +10725,19 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Molti edifici e vie alte: fiancheggiatori e Wrecking Ball rendono bene.": {
+     "tags": [
+      "dive",
+      "mobile"
+     ],
+     "roles": [
+      "Damage",
+      "Tank"
+     ]
+    }
+   }
   },
   "havana": {
    "features": [
@@ -10700,7 +10812,15 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Tenete le alture con eroi a lunga gittata (Widowmaker, Ashe, Hanzo, Zenyatta).": {
+     "tags": [
+      "sniper",
+      "long-range"
+     ]
+    }
+   }
   },
   "hollywood": {
    "features": [
@@ -10783,7 +10903,27 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Primo punto: Pharah, Echo o D.Va per salire sulle alture e sfondare il varco iniziale.": {
+     "tags": [
+      "flyer",
+      "dive"
+     ]
+    },
+    "Cecchini nell'edificio a destra sul primo punto; nei corridoi stretti Roadhog rende bene.": {
+     "tags": [
+      "sniper",
+      "short-range"
+     ]
+    },
+    "Il set western ha molti punti alti e linee lunghe: buono per Ashe, Widowmaker, Hanzo.": {
+     "tags": [
+      "sniper",
+      "long-range"
+     ]
+    }
+   }
   },
   "ilios": {
    "features": [
@@ -10879,7 +11019,14 @@
      "why": "Pozzo aperto: può spingere ma è difficile restare al sicuro"
     }
    ],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Well: le uccisioni nel buco decidono il round, Lúcio, Pharah e Orisa sono ottimi.": {
+     "tags": [
+      "boop"
+     ]
+    }
+   }
   },
   "junkertown": {
    "features": [
@@ -10963,7 +11110,20 @@
      "why": "Vulnerabile a Danni a distanza e spam senza coperture"
     }
    ],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Primo tratto adatto a Widowmaker; nei tratti successivi meglio eroi da corta distanza.": {
+     "tags": [
+      "sniper",
+      "short-range"
+     ]
+    },
+    "Junkrat e Pharah sono buone alternative con danno ad area sui varchi.": {
+     "tags": [
+      "spam"
+     ]
+    }
+   }
   },
   "kings-row": {
    "features": [
@@ -11037,7 +11197,23 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Composizione brawl (Reinhardt + Brigitte) al varco; Genji e Tracer per aggirare.": {
+     "tags": [
+      "short-range",
+      "melee",
+      "dive"
+     ]
+    },
+    "Scontri ravvicinati: Reinhardt, Junkrat e Reaper rendono bene sui varchi.": {
+     "tags": [
+      "short-range",
+      "melee",
+      "spam"
+     ]
+    }
+   }
   },
   "lijiang-tower": {
    "features": [
@@ -11132,7 +11308,14 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Night Market e Garden: Lúcio e Roadhog possono mandare i nemici nei burroni.": {
+     "tags": [
+      "boop"
+     ]
+    }
+   }
   },
   "midtown": {
    "features": [
@@ -11208,7 +11391,33 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Zarya e D.Va sono consigliate per spingere il carico verso le alture.": {
+     "roles": [
+      "Tank"
+     ],
+     "tags": [
+      "tanky"
+     ]
+    },
+    "Usate le alture all'imbocco del tunnel con Sigma, Ashe o Sojourn.": {
+     "tags": [
+      "long-range",
+      "shield"
+     ],
+     "roles": [
+      "Damage",
+      "Tank"
+     ]
+    },
+    "Nei passaggi stretti eroi da corta distanza rendono bene (Brigitte, Junkrat).": {
+     "tags": [
+      "short-range",
+      "melee"
+     ]
+    }
+   }
   },
   "neon-junction": {
    "features": [
@@ -11336,7 +11545,14 @@
      "why": "Villaggio chiusissimo: dominano gli eroi a corto raggio"
     }
    ],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Sanctum è tra le migliori mappe per le uccisioni ambientali: occhio a Lúcio e Roadhog.": {
+     "tags": [
+      "boop"
+     ]
+    }
+   }
   },
   "new-junk-city": {
    "features": [
@@ -11485,7 +11701,16 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Strada lunga con curve: favoriti scontri ravvicinati (Reinhardt, Zarya).": {
+     "tags": [
+      "short-range",
+      "melee",
+      "tanky"
+     ]
+    }
+   }
   },
   "numbani": {
    "features": [
@@ -11578,7 +11803,18 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Linee di tiro lunghe: Cassidy, Soldier: 76, Hanzo e Widowmaker rendono bene.": {
+     "tags": [
+      "sniper",
+      "long-range"
+     ],
+     "roles": [
+      "Damage"
+     ]
+    }
+   }
   },
   "oasis": {
    "features": [
@@ -11672,7 +11908,14 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "City Center e Gardens: cielo alto e copertura, ottimi per Pharah ed Echo.": {
+     "tags": [
+      "flyer"
+     ]
+    }
+   }
   },
   "paraiso": {
    "features": [
@@ -11748,7 +11991,33 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Prendete prima un'altura a destra o a sinistra, con Genji o Tracer.": {
+     "tags": [
+      "mobile",
+      "dive"
+     ]
+    },
+    "Il punto A è circondato da alture; un tank con barriera tiene il varco (Orisa, Reinhardt).": {
+     "tags": [
+      "shield"
+     ],
+     "roles": [
+      "Tank"
+     ]
+    },
+    "Molte vie laterali ed edifici aperti: Genji, Reaper e Sombra colpiscono da angoli inattesi.": {
+     "tags": [
+      "dive",
+      "stealth",
+      "mobile"
+     ],
+     "roles": [
+      "Damage"
+     ]
+    }
+   }
   },
   "rialto": {
    "features": [
@@ -11811,7 +12080,15 @@
      "why": "Poca mobilità per attraversare il canale"
     }
    ],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Genji contesta le alture in pochi secondi grazie alla mobilità.": {
+     "tags": [
+      "mobile",
+      "dive"
+     ]
+    }
+   }
   },
   "route-66": {
    "features": [
@@ -11906,7 +12183,24 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Tenete il tetto della stazione di servizio con una composizione poke protetta da Sigma o Orisa.": {
+     "tags": [
+      "long-range",
+      "shield"
+     ],
+     "roles": [
+      "Damage",
+      "Tank"
+     ]
+    },
+    "Nel primo tratto le spinte (Lúcio) possono mandare i nemici nel canyon.": {
+     "tags": [
+      "boop"
+     ]
+    }
+   }
   },
   "runasapi": {
    "features": [
@@ -12070,7 +12364,19 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Volcano: la lava attorno al punto rende Lúcio fortissimo con le spinte.": {
+     "tags": [
+      "boop"
+     ]
+    },
+    "Spazi aperti e alture premiano i tuffatori (Winston, Genji).": {
+     "tags": [
+      "dive"
+     ]
+    }
+   }
   },
   "shambali-monastery": {
    "features": [
@@ -12120,7 +12426,21 @@
     ]
    },
    "avoid": [],
-   "guideUncertain": true
+   "guideUncertain": true,
+   "who": {
+    "Controllate le alture (D.Va, Winston, Widowmaker) per pressare chi spinge.": {
+     "tags": [
+      "dive",
+      "long-range",
+      "sniper"
+     ]
+    },
+    "Usate le spinte vicino ai bordi (Lúcio, Roadhog, Orisa, Winston).": {
+     "tags": [
+      "boop"
+     ]
+    }
+   }
   },
   "suravasa": {
    "features": [
@@ -12223,7 +12543,12 @@
      "why": "Lento negli spostamenti tra i punti"
     }
    ],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Poca altura e qualche linea lunga: una squadra compatta con Lúcio rende bene.": {
+     "all": true
+    }
+   }
   },
   "watchpoint-gibraltar": {
    "features": [
@@ -12323,7 +12648,30 @@
      "why": "Mappa che premia il tiro da lontano"
     }
    ],
-   "guideUncertain": false
+   "guideUncertain": false,
+   "who": {
+    "Eroi mobili (Genji, Winston) per superare le linee aperte; contestate subito l'altura.": {
+     "tags": [
+      "mobile",
+      "dive"
+     ]
+    },
+    "Sigma controlla l'altura meglio di tutti; sfruttate i lunghi corridoi.": {
+     "tags": [
+      "shield",
+      "long-range"
+     ],
+     "roles": [
+      "Tank"
+     ]
+    },
+    "Linee di tiro lunghe e molti punti alti: Ashe, Ana e Widowmaker rendono bene.": {
+     "tags": [
+      "sniper",
+      "long-range"
+     ]
+    }
+   }
   }
  },
  "_researched": "2026-10-05",

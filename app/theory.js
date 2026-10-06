@@ -204,6 +204,40 @@ export function mapFit(theory, mapSlug, hero, side = null) {
   return { strong, avoid, style, likes, dislikes, points };
 }
 
+// Consigli delle mappe che citano eroi come esempi ("Eroi mobili (Genji, Winston) per superare il varco"):
+// theory.json → _maps[slug].who[testo] = {tags, roles?, all?, warn?} dice a chi si riferiscono. Per l'eroe preso:
+// lo riguarda → lo si nomina per primo ("(come Juno, Genji, Winston)"); non lo riguarda → null (consiglio per la squadra).
+const BOOP_TAGS = ["boop", "knockback", "environmental-kill", "hook"];
+export function heroTags(theory, hero) {
+  const e = theory?.idx?.[hero.name];
+  const tags = new Set(e?.tags ?? []);
+  if ((e?.abilities ?? []).some((a) => (a.tags ?? []).some((t) => BOOP_TAGS.includes(t)))) tags.add("boop");
+  return tags;
+}
+export function adaptMapText(data, theory, mapSlug, text, hero, enemyNames = []) {
+  if (!text) return null;
+  const spec = theory?.maps?.[mapSlug]?.who?.[text];
+  if (!spec || spec.all || !hero) return text;
+  const listed = data.heroes.map((h) => h.name).filter((n) => text.includes(n))
+    .sort((a, b) => text.indexOf(a) - text.indexOf(b));
+  // avviso su eroi nemici ("Lúcio e Pharah possono spingervi giù"): solo se ci sono davvero tra gli avversari
+  if (spec.enemyWarn) return listed.some((n) => enemyNames.includes(n)) ? text : null;
+  const mine = listed.includes(hero.name);
+  const tags = heroTags(theory, hero);
+  const fits = mine || ((!spec.roles || spec.roles.includes(hero.role)) && (spec.tags ?? []).some((t) => tags.has(t)));
+  if (!fits) return null;
+  const group = text.match(/\(([^)]*)\)/);
+  const inGroup = group && listed.some((n) => group[1].includes(n));
+  if (mine) {
+    if (!inGroup || !group[1].includes(hero.name)) return text;
+    const rest = group[1].split(/\s*,\s*/).filter((x) => x !== hero.name);
+    return text.replace(group[0], `(${[hero.name, ...rest].join(", ")})`);
+  }
+  if (inGroup) return text.replace(group[0], `(${spec.warn ? "" : "come "}${hero.name}, ${group[1]})`);
+  // elenco senza parentesi ("Ashe, Ana e Widowmaker rendono bene"): l'eroe preso in testa all'elenco
+  return listed.length ? text.replace(listed[0], `${hero.name}, ${listed[0]}`) : text;
+}
+
 export const SWAP_GAIN = 0.015;
 export const SWAP_GAIN_GUIDE = 1.5; // in modalità guide: almeno un motivo pieno in più (es. forte sulla mappa, o batte un avversario e mezzo)
 export function swapAdvice(data, theory, { hero, rows = null, enemies = [], guide = false } = {}) {
@@ -391,13 +425,19 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
     const dislikes = (me?.mapFeatures?.dislikes ?? []).filter((f) => feats.includes(f));
     if (likes.length) mapItems.push({ text: `La mappa ti favorisce: ${likes.map((f) => FEATURE_IT[f] ?? f).join(", ")}.`, kind: "teoria" });
     if (dislikes.length) mapItems.push({ text: `La mappa ti sfavorisce: ${dislikes.map((f) => FEATURE_IT[f] ?? f).join(", ")}${me?.mapFeatures?.why ? ` — ${me.mapFeatures.why.replace(/[.\s]+$/, "")}` : ""}.`, kind: "teoria" });
-    for (const tip of (mapT?.tips ?? []).slice(0, 2)) mapItems.push({ text: tip, kind: "teoria" });
+    // consigli della mappa: prima quelli che riguardano questo eroe; gli altri come consigli per la squadra
+    const tips = (mapT?.tips ?? []).map((t) => ({ t, a: adaptMapText(data, theory, map.slug, t, hero, enemyH.map((h) => h.name)) }));
+    for (const x of tips.filter((x) => x.a)) mapItems.push({ text: x.a, kind: "teoria", forHero: true });
+    for (const x of tips.filter((x) => !x.a).slice(0, 2)) mapItems.push({ text: `Per la squadra: ${x.t}`, kind: "teoria" });
   }
   if (side && (map?.mode === "Escort" || map?.mode === "Hybrid")) {
     const own = side === "attack" ? me?.play?.attack : me?.play?.defense;
     const mapSide = side === "attack" ? mapT?.attack : mapT?.defense;
     mapItems.push({ text: own || MODE_SIDE[side], kind: "teoria" });
-    if (mapSide) mapItems.push({ text: `${map.name}, ${side === "attack" ? "attacco" : "difesa"}: ${mapSide}`, kind: "teoria" });
+    if (mapSide) {
+      const a = adaptMapText(data, theory, map?.slug, mapSide, hero, enemyH.map((h) => h.name));
+      mapItems.push({ text: `${map.name}, ${side === "attack" ? "attacco" : "difesa"}${a ? "" : " (per la squadra)"}: ${a ?? mapSide}`, kind: "teoria" });
+    }
   }
   push(map ? `Mappa: ${map.name}` : "Mappa", mapItems);
 
@@ -422,7 +462,8 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   const proper = new Set([...data.heroes.map((h) => h.name.split(" ")[0]),
     ...Object.values(theory?.idx ?? {}).flatMap((e) => (e.abilities ?? []).map((a) => String(a.name).split(" ")[0]))]);
   const lowerP = (t) => (proper.has(String(t).trim().split(/[\s,:]/)[0]) ? String(t).replace(/\.$/, "") : lower(t));
-  const cut = (t, n = 95) => { const x = String(t).replace(/\s+/g, " ").trim().replace(/\.$/, ""); return x.length <= n ? x : `${x.slice(0, n).replace(/\s+\S*$/, "")}…`; };
+  // niente frasi troncate: un consiglio si dà intero (si toglie solo il punto finale)
+  const cut = (t) => String(t).replace(/\s+/g, " ").trim().replace(/\.$/, "");
   const myAbilityFor = (h) => (me?.abilities ?? []).find((a) => !allyDirected(a)
     && ((a.saveFor ?? []).some((x) => x.hero === h.name) || (a.targets ?? []).includes(h.name)));
   const top3 = good.filter((t) => signal(t.h) > -0.01).slice(0, 3).map((t) => t.h);
@@ -458,18 +499,25 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
     .sort((x, y) => (mates.has(sid(y.a.id)) ? 1 : 0) - (mates.has(sid(x.a.id)) ? 1 : 0))[0];
   if (combo) line("combo", "Combo", `Con ${combo.a.name}: ${cut(combo.why, 140)}.`, "teoria", { heroes: [combo.a], short: cut(lowerP(combo.why), 90) });
   // ultimate: quando usarla (se non è già in una riga sopra)
-  const ult = (me?.abilities ?? []).find((a) => a.ult && a.when);
-  if (ult && !keyTop.some((k) => k.text.includes(ult.name))) {
-    line("ult", "Ultimate", `${ult.name}: ${cut(ult.when, 140)}.`, "teoria", { short: `${ult.name}: ${cut(lowerP(ult.when), 80)}` });
+  // ultimate: quando usarla, ma senza combo con eroi che non sono in squadra ("con Graviton Surge di Zarya")
+  const present = new Set([hero.name, ...allyH.map((h) => h.name), ...enemyH.map((h) => h.name)]);
+  const clean = (t) => t && !data.heroes.some((h) => h.name !== hero.name && !present.has(h.name) && t.includes(h.name));
+  const ult = (me?.abilities ?? []).find((a) => a.ult);
+  const ultTxt = ult ? [ult.when, ult.use].find(clean) : null;
+  if (ultTxt && !keyTop.some((k) => k.text.includes(ult.name))) {
+    line("ult", "Ultimate", `${ult.name}: ${cut(ultTxt)}.`, "teoria", { short: `${ult.name}: ${cut(lowerP(ultTxt))}` });
   }
   // piano per la mappa: prima il lato (attacco/difesa), poi cosa dicono le guide di questo eroe qui, poi la mappa
   if (map) {
     const fit = mapFit(theory, map.slug, hero, side);
-    const sideTxt = side ? (side === "attack" ? mapT?.attack : mapT?.defense) : null;
+    // il lato della mappa solo se riguarda questo eroe (non "eroi mobili" per un eroe che non lo è)
+    const sideTxt = side ? adaptMapText(data, theory, map.slug, side === "attack" ? mapT?.attack : mapT?.defense, hero, enemyH.map((h) => h.name)) : null;
+    const heroTip = mapItems.find((x) => x.forHero);
     const plan = fit.avoid ? { t: `le guide lo sconsigliano qui: ${lowerP(fit.avoid.why)}`, k: "teoria" }
       : sideTxt ? { t: `${side === "attack" ? "in attacco" : "in difesa"}: ${lowerP(sideTxt)}`, k: "teoria" }
         : fit.strong ? { t: `qui è consigliato: ${lowerP(fit.strong.why)}`, k: "teoria" }
-          : (() => { const m = mapItems.find((x) => x.kind === "teoria" && /favorisce|sfavorisce|baratri/.test(x.text)) ?? mapItems.find((x) => !guide || x.kind === "teoria");
+          : (() => { const m = heroTip ?? mapItems.find((x) => x.kind === "teoria" && /favorisce|sfavorisce|baratri/.test(x.text))
+              ?? mapItems.find((x) => (!guide || x.kind === "teoria") && !/^Per la squadra|per la squadra\)/.test(x.text));
             return m ? { t: m.text.replace(/^La mappa /, "").replace(/\.$/, ""), k: m.kind } : null; })();
     if (plan) line("map", "Piano", `${map.name}, ${plan.t}.`, plan.k, { short: cut(plan.t, 110).replace(/^\p{Ll}/u, (c) => c.toUpperCase()) });
   }
