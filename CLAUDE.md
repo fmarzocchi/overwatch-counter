@@ -206,11 +206,13 @@ La ricerca per mappa (sopra) citava quasi sempre gli stessi eroi (Lúcio su 22 m
 dati, niente doppioni, `src` con la fonte; eroe consigliato E sconsigliato sulla stessa mappa da fonti diverse → tolto da
 entrambe, idem per le caratteristiche amate/odiate; `_heroMapsResearched`). Esito: +111 consigliati, +26 sconsigliati,
 +18 caratteristiche (tolti per contrasto: Pharah/Ilios, Orisa e Reinhardt/Junkertown, D.Va e Widowmaker/Nepal).
-**PARZIALE**: le ricerche web sono al massimo 200 per turno, in comune tra tutti gli agenti, e sono finite a metà.
-Ancora senza nessuna mappa consigliata: Anran, Bastion, Emre, Freja, Shion, Sierra, Symmetra, Jetpack Cat, Juno,
-Lifeweaver, Mizuki, Wuyang, D.Mon, Domina, Hazard (eroi recenti: poche guide). Pochi dati anche per Kiriko, Zenyatta,
-Sombra, Torbjörn, Tracer e quasi nessuna mappa "cattiva". Da completare in un turno nuovo (stesso formato, poi lo script);
-le fonti sono spesso vecchie (Icy Veins era OW1, Sportskeeda/Game8 2022-24).
+Le ricerche web sono al massimo 200 per turno, in comune tra tutti gli agenti: il primo giro le ha esaurite a metà.
+Secondo giro (2026-10-06, "continua la ricerca"): 4 agenti con tetto di 45 ricerche ciascuno e salvataggio dopo ogni
+eroe (istruzioni comuni in `scratchpad/research2/PROMPT.md`): +13 consigliati, +7 sconsigliati, +16 caratteristiche
+(scartati: Juno, fonte sulla modalità Clash; Sombra, kit Danni superato; tolti per contrasto Reinhardt/Ilios,
+Winston/Nepal, Sigma/Gibilterra). Ora OGNI eroe ha `mapFeatures` (tipo di mappa adatto). Senza nessuna mappa precisa
+dalle guide restano D.Mon, Domina, Hazard, Emre, Freja, Sierra, Jetpack Cat, Juno, Lifeweaver, Mizuki, Wuyang: le guide
+per loro danno solo statistiche (escluse) o il tipo di mappa. Fonti spesso vecchie (Icy Veins era OW1, 2022-24).
 
 ## Più giocatori e "chi ha preso cosa" (2026-10-05, richiesta dell'utente)
 

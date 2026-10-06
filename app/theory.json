@@ -117,7 +117,8 @@
    "https://game8.co/games/Overwatch2/archives/391292",
    "https://game8.co/games/Overwatch2/archives/391291",
    "https://game8.co/games/Overwatch2/archives/391357",
-   "https://game8.co/games/Overwatch2/archives/391349"
+   "https://game8.co/games/Overwatch2/archives/391349",
+   "https://www.thegamer.com/overwatch-maps-all-ranked/"
   ],
   "abilities": [
    {
@@ -226,7 +227,8 @@
   "mapFeatures": {
    "likes": [
     "long-sightlines",
-    "high-ground"
+    "high-ground",
+    "open-spaces"
    ],
    "dislikes": [
     "flank-routes",
@@ -326,7 +328,8 @@
    "https://overbuddy.com/heroes/ANRAN/counters/",
    "https://us.forums.blizzard.com/en/overwatch/t/how-to-counter-anran-as-dps-or-support/1021448",
    "https://www.dexerto.com/wikis/overwatch/heroes/damage/anran/",
-   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/"
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
+   "https://mobalytics.gg/overwatch/heroes/anran-guide"
   ],
   "abilities": [
    {
@@ -416,7 +419,8 @@
   "mapFeatures": {
    "likes": [
     "flank-routes",
-    "close-quarters"
+    "close-quarters",
+    "high-ground"
    ],
    "dislikes": [
     "long-sightlines",
@@ -595,7 +599,8 @@
   "mapFeatures": {
    "likes": [
     "long-sightlines",
-    "high-ground"
+    "high-ground",
+    "open-spaces"
    ],
    "dislikes": [
     "close-quarters",
@@ -904,7 +909,9 @@
    "https://overwatch.blizzard.com/en-us/heroes/bastion/",
    "https://www.thegamer.com/overwatch-2-bastion-hero-play-guide-abilities-tips-tricks/",
    "https://gamerant.com/overwatch-2-bastion-rework/",
-   "https://overwatch.weirdgloop.org/w/Bastion"
+   "https://overwatch.weirdgloop.org/w/Bastion",
+   "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types",
+   "https://www.dualshockers.com/overwatch-2-bastion-tips-tricks/"
   ],
   "abilities": [
    {
@@ -1457,7 +1464,8 @@
    "https://rankedow.com/blog/dmon-overwatch-tank-guide",
    "https://allthings.how/overwatch-how-to-play-d-mon-abilities-and-playstyle/",
    "https://us.forums.blizzard.com/en/overwatch/t/overwatch-retail-patch-notes-%E2%80%93-august-11-2026/1032368",
-   "https://x.com/OWCavalry/status/2087620545235792004"
+   "https://x.com/OWCavalry/status/2087620545235792004",
+   "https://www.exitlag.com/blog/overwatch-season-4-hero-dmon/"
   ],
   "abilities": [
    {
@@ -1941,7 +1949,9 @@
    "https://www.thegamer.com/overwatch-domina-hero-ability-tips-guide/",
    "https://turboboost.gg/article/how-to-play-domina-overwatch-guide",
    "https://games.gg/overwatch/guides/overwatch-domina-guide-master-the-poke-tank-and-dominate/",
-   "https://esports.gg/news/overwatch/overwatch-domina-release-date-release-time-abilities-and-lore/"
+   "https://esports.gg/news/overwatch/overwatch-domina-release-date-release-time-abilities-and-lore/",
+   "https://roonby.com/2026/02/27/domina-overwatch-guide-tips-how-to-play-her/amp/",
+   "https://1v9.gg/blog/overwatch-domina-guide"
   ],
   "abilities": [
    {
@@ -2058,7 +2068,8 @@
     "env-kills"
    ],
    "dislikes": [
-    "open-spaces"
+    "open-spaces",
+    "close-quarters"
    ],
    "why": "Tank da poke a media/lunga distanza; Sonic Repulsors stordisce solo contro i muri e butta giù dai bordi (es. ponte di Eichenwalde)."
   },
@@ -2159,7 +2170,8 @@
    "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
    "https://elderelo.com/overwatch-2-tank-map-guide",
-   "https://upcomer.com/how-to-get-value-from-overwatchs-close-combat-fighter-doomfist"
+   "https://upcomer.com/how-to-get-value-from-overwatchs-close-combat-fighter-doomfist",
+   "https://www.pcgamer.com/uk/overwatch-doomfist-guide"
   ],
   "abilities": [
    {
@@ -2252,10 +2264,12 @@
     "env-kills",
     "close-quarters",
     "flank-routes",
-    "high-ground"
+    "high-ground",
+    "chokepoints"
    ],
    "dislikes": [
-    "open-spaces"
+    "open-spaces",
+    "long-sightlines"
    ],
    "why": "Muri vicini per lo stordimento del pugno e bordi per buttare fuori; negli spazi aperti è un bersaglio facile."
   },
@@ -2555,7 +2569,8 @@
     "chokepoints"
    ],
    "dislikes": [
-    "flank-routes"
+    "flank-routes",
+    "open-spaces"
    ],
    "why": "Fucile a raffica a media-lunga distanza con Take Aim; granata utile sui choke; teme chi lo aggira"
   },
@@ -2630,7 +2645,8 @@
    "https://fenixbazaar.com/2025/07/15/overwatch-2-freja-guide/",
    "https://nerdburglars.net/question/what-are-the-best-counters-to-freja/",
    "https://www.dexerto.com/overwatch/overwatch-freja-guide-abilities-ultimate-tips-3131604/",
-   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/"
+   "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
+   "https://mobalytics.gg/overwatch/heroes/freja-guide"
   ],
   "abilities": [
    {
@@ -3221,7 +3237,8 @@
    "https://esports.gg/news/overwatch/overwatch-2-hazard-abilities-and-ultimate/",
    "https://www.oneesports.gg/overwatch/overwatch-2-hazard-guide-abilities/",
    "https://overwatch.fandom.com/wiki/June_16,_2026_Patch",
-   "https://x.com/OWCavalry/status/2031430108574060820"
+   "https://x.com/OWCavalry/status/2031430108574060820",
+   "https://mobalytics.gg/overwatch/heroes/hazard-guide"
   ],
   "abilities": [
    {
@@ -3596,7 +3613,8 @@
    "https://esports.gg/news/overwatch/overwatch-season-4-midseason-patch-notes-baptiste-buffs-kiriko-nerfs-and-more/",
    "https://screenrant.com/overwatch-jetpack-cat-build-best-abilities-ultimate-perks-tips/",
    "https://www.thegamer.com/overwatch-jetpack-cat-hero-ability-tips-guide/",
-   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/"
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
+   "https://games.gg/hi/news/overwatch-adds-jetpack-cat-hero-with-tether-flight/"
   ],
   "abilities": [
    {
@@ -3693,7 +3711,8 @@
    "likes": [
     "env-kills",
     "open-spaces",
-    "high-ground"
+    "high-ground",
+    "flank-routes"
    ],
    "dislikes": [
     "close-quarters"
@@ -4367,7 +4386,8 @@
    "https://mobalytics.gg/overwatch/heroes/kiriko-guide",
    "https://overwatch.fandom.com/wiki/February_10,_2026_Patch",
    "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
-   "https://game8.co/games/Overwatch2/archives/391182"
+   "https://game8.co/games/Overwatch2/archives/391182",
+   "https://www.exitlag.com/news/kiriko-overwatch/"
   ],
   "abilities": [
    {
@@ -4567,7 +4587,9 @@
    "https://x.com/OWCavalry/status/2024984783084793974",
    "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
    "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
-   "https://mobalytics.gg/overwatch/heroes/lifeweaver-guide"
+   "https://mobalytics.gg/overwatch/heroes/lifeweaver-guide",
+   "https://www.ggrecon.com/articles/how-have-pros-used-lifeweaver-in-overwatch-league",
+   "https://ggrecon.com/guides/overwatch-2-lifeweaver-abilities"
   ],
   "abilities": [
    {
@@ -4658,9 +4680,7 @@
     "chokepoints",
     "env-kills"
    ],
-   "dislikes": [
-    "flank-routes"
-   ],
+   "dislikes": [],
    "why": "La piattaforma sfrutta i dislivelli; è lento e vulnerabile ai fiancheggiatori."
   },
   "abilitiesNote": "Season 2 2026: Life Grip ora ripulisce dagli effetti (cleanse); da agosto chi viene tirato può annullare il tiro. Healing Blossom e Thorn Volley sono l'arma, non elencate. Modifiche di giugno (Arcade) ignorate.",
@@ -5430,12 +5450,12 @@
   },
   "mapFeatures": {
    "likes": [
-    "high-ground"
+    "high-ground",
+    "open-spaces"
    ],
    "dislikes": [
     "long-sightlines",
-    "close-quarters",
-    "flank-routes"
+    "close-quarters"
    ],
    "why": "Sfrutta i dislivelli con Guardian Angel; le linee lunghe la espongono ai cecchini."
   },
@@ -5531,7 +5551,9 @@
    "https://turboboost.gg/article/how-to-play-mizuki-overwatch-guide",
    "https://overwatch.blizzard.com/en-us/heroes/mizuki/",
    "https://www.thegamer.com/overwatch-mizuki-tips-tricks-hero-guide/",
-   "https://overwatch.fandom.com/wiki/June_16,_2026_Patch"
+   "https://overwatch.fandom.com/wiki/June_16,_2026_Patch",
+   "https://mobalytics.gg/overwatch/heroes/mizuki-guide",
+   "https://games.gg/overwatch/guides/overwatch-mizuki-guide-abilities-perks-and-playstyle-explained/"
   ],
   "abilities": [
    {
@@ -6349,7 +6371,8 @@
    "https://gamerant.com/overwatch-2-ramattra-guide-tips-abilities-combos-counters/",
    "https://overwatch.fandom.com/wiki/April_14,_2026_Patch",
    "https://x.com/OWCavalry/status/2031430108574060820",
-   "https://elderelo.com/overwatch-2-tank-map-guide"
+   "https://elderelo.com/overwatch-2-tank-map-guide",
+   "https://upcomer.com/tips-on-how-to-play-ramattra-the-newest-tank-in-overwatch-2"
   ],
   "abilities": [
    {
@@ -6704,7 +6727,10 @@
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
    "https://gamersdecide.com/articles/overwatch-2-best-maps-for-tanks",
    "https://gamersdecide.com/articles/overwatch-2-best-beginner-heroes-1",
-   "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
+   "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+   "https://www.icy-veins.com/overwatch/reinhardt-guide",
+   "https://esports.gg/news/overwatch/best-tank-heroes-in-overwatch-2/",
+   "https://upcomer.com/the-best-heroes-for-push-game-mode-in-overwatch-2-season-1"
   ],
   "abilities": [
    {
@@ -6828,7 +6854,8 @@
    ],
    "dislikes": [
     "high-ground",
-    "open-spaces"
+    "open-spaces",
+    "long-sightlines"
    ],
    "why": "Lo scudo blocca gli ingressi e la carica butta fuori dai bordi; soffre alture e spazi aperti con poke."
   },
@@ -7221,7 +7248,8 @@
   "mapFeatures": {
    "likes": [
     "flank-routes",
-    "close-quarters"
+    "close-quarters",
+    "high-ground"
    ],
    "dislikes": [
     "long-sightlines"
@@ -7279,7 +7307,9 @@
    "https://dotesports.com/overwatch/news/sierra-abilities-overwatch",
    "https://wp-prod.icy-veins.com/meet-sierra-overwatchs-next-dps-threat-arriving-in-season-2/",
    "https://www.esports.net/news/overwatch-sierra-kit-low-elo/",
-   "https://idcgames.com/en/overwatch/news/overwatch-launches-season-2-summit,-introducing-sierra,-map-reworks,-and-a-wave-of-new-content-2026-04-14-11-25-12835"
+   "https://idcgames.com/en/overwatch/news/overwatch-launches-season-2-summit,-introducing-sierra,-map-reworks,-and-a-wave-of-new-content-2026-04-14-11-25-12835",
+   "https://mobalytics.gg/overwatch/heroes/sierra-guide",
+   "https://idcgames.com/en/overwatch/news/overwatch-reveals-sierra-gameplay,-introducing-a-dps-designed-to-redefine-combat-control-2026-04-10-11-30-12825"
   ],
   "abilities": [
    {
@@ -7356,7 +7386,10 @@
     "high-ground",
     "flank-routes"
    ],
-   "dislikes": [],
+   "dislikes": [
+    "close-quarters",
+    "long-sightlines"
+   ],
    "why": "Usa angoli alti e laterali raggiunti col drone; mappe con strutture alte la aiutano"
   },
   "abilitiesNote": "Uscita ad aprile 2026: kit confermato, consigli d'uso da poche guide.",
@@ -7448,7 +7481,8 @@
    "https://dotesports.com/overwatch/news/the-best-counters-for-each-overwatch-2-hero",
    "https://mobalytics.gg/overwatch/heroes/sigma-guide",
    "https://esports.gg/news/overwatch/best-tanks-overwatch-2-for-any-situation",
-   "https://esports.gg/news/overwatch/the-best-overwatch-2-season-2-tanks-ranked"
+   "https://esports.gg/news/overwatch/the-best-overwatch-2-season-2-tanks-ranked",
+   "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
   ],
   "abilities": [
    {
@@ -7580,12 +7614,11 @@
   "mapFeatures": {
    "likes": [
     "long-sightlines",
-    "chokepoints",
-    "high-ground"
+    "chokepoints"
    ],
    "dislikes": [
     "flank-routes",
-    "close-quarters"
+    "open-spaces"
    ],
    "why": "Tank da poke e barriera: rende sulle lunghe linee di tiro, soffre i fianchi e i dive a corto raggio."
   },
@@ -8201,7 +8234,9 @@
    "https://www.esportsheaven.com/features/how-to-counter-symmetra/",
    "https://dotesports.com/overwatch/news/best-genji-counters-in-overwatch-2",
    "https://www.thegamer.com/overwatch-2-symmetra-hero-play-guide-abilities-tips-tricks/",
-   "https://immortalboost.com/blog/overwatch-2/symmetra-guide/"
+   "https://immortalboost.com/blog/overwatch-2/symmetra-guide/",
+   "https://icy-veins.com/overwatch/symmetra-maps",
+   "https://gamersdecide.com/articles/overwatch-2-best-maps-for-dps"
   ],
   "abilities": [
    {
@@ -8521,7 +8556,8 @@
    "https://overwatch.fandom.com/wiki/Tracer",
    "https://immortalboost.com/blog/overwatch-2/tracer-guide/",
    "https://www.icy-veins.com/overwatch/tracer-maps",
-   "https://game8.co/games/Overwatch2/archives/391314"
+   "https://game8.co/games/Overwatch2/archives/391314",
+   "https://www.espn.com/esports/story/_/id/16616751/overwatch-meta-breakdown-offense"
   ],
   "abilities": [
    {
@@ -8587,7 +8623,8 @@
    ],
    "dislikes": [
     "open-spaces",
-    "high-ground"
+    "high-ground",
+    "chokepoints"
    ],
    "why": "Fiancheggiatrice rapida: vive di vie laterali e angoli"
   },
@@ -9164,7 +9201,8 @@
     "high-ground"
    ],
    "dislikes": [
-    "close-quarters"
+    "close-quarters",
+    "chokepoints"
    ],
    "why": "Cecchina: vuole linee lunghe e posizioni alte, è inutile negli spazi stretti"
   },
@@ -9274,7 +9312,9 @@
    "https://medium.com/overlogs/overwatch-hero-counters-explained-1-tank-role-7747004ade58",
    "https://www.icy-veins.com/overwatch/winston-maps",
    "https://gamersdecide.com/articles/overwatch-2-best-maps-for-tanks",
-   "https://esports.gg/news/overwatch/best-tanks-overwatch-2-for-any-situation"
+   "https://esports.gg/news/overwatch/best-tanks-overwatch-2-for-any-situation",
+   "https://icy-veins.com/overwatch/winston-maps",
+   "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
   ],
   "abilities": [
    {
@@ -9359,9 +9399,11 @@
     "high-ground",
     "flank-routes",
     "env-kills",
-    "close-quarters"
+    "open-spaces"
    ],
-   "dislikes": [],
+   "dislikes": [
+    "chokepoints"
+   ],
    "why": "Il salto sfrutta alture e fianchi, l'ult butta giù dai bordi; negli spazi aperti è un bersaglio facile."
   },
   "abilitiesNote": "Kit base invariato nel 2026 (cambi a perk; quelli del 30/06 erano solo Community Crafted).",
@@ -9624,7 +9666,8 @@
    "https://us.forums.blizzard.com/en/overwatch/t/wuyang-support-synergies/981204",
    "https://www.thegamer.com/overwatch-2-wuyang-hero-guide/",
    "https://turboboost.gg/article/wuyang-overwatch-guide",
-   "https://esports.gg/news/overwatch/overwatch-2-wuyang-trial-abilities-and-release-date/"
+   "https://esports.gg/news/overwatch/overwatch-2-wuyang-trial-abilities-and-release-date/",
+   "https://mobalytics.gg/overwatch/heroes/wuyang-guide"
   ],
   "abilities": [
    {
@@ -9810,7 +9853,8 @@
    "https://www.reddit.com/r/ZaryaMains/comments/1d4qi3e/what_maps_are_good_for_zarya/",
    "https://elderelo.com/overwatch-2-tank-map-guide",
    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
-   "https://gamersdecide.com/articles/overwatch-2-best-maps-for-tanks"
+   "https://gamersdecide.com/articles/overwatch-2-best-maps-for-tanks",
+   "https://lr.us.psf.lt/r/ZaryaMains/comments/1d4qi3e/what_maps_are_good_for_zarya"
   ],
   "abilities": [
    {
@@ -10011,7 +10055,9 @@
    "https://payloadwire.com/article/community-crafted-june-30-2026/",
    "https://www.gfinityesports.com/article/overwatch-2-zenyatta-rework-sparks-outrage",
    "https://overwatch.blizzard.com/en-us/heroes/zenyatta/",
-   "https://game8.co/games/Overwatch2/archives/391180"
+   "https://game8.co/games/Overwatch2/archives/391180",
+   "https://cyberpost.co/is-zenyatta-and-mercy-good/",
+   "https://www.pcgamer.com/overwatch-zenyatta-guide/"
   ],
   "abilities": [
    {
@@ -11093,6 +11139,18 @@
       "why": "In attacco la mobilità verticale aiuta contro le difese in alto",
       "side": "attack",
       "src": "https://www.sportskeeda.com/esports/how-play-eichenwalde-map-overwatch-2"
+     },
+     {
+      "hero": "Bastion",
+      "why": "Strozzatura iniziale che favorisce chi difende",
+      "side": "defense",
+      "src": "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types"
+     },
+     {
+      "hero": "Symmetra",
+      "why": "Il Teletrasporto porta la squadra oltre la strozzatura del ponte",
+      "side": "attack",
+      "src": "https://icy-veins.com/overwatch/symmetra-maps"
      }
     ],
     "Support": [
@@ -11520,11 +11578,6 @@
       "side": null
      },
      {
-      "hero": "Reinhardt",
-      "why": "Scelta comune sui punti stretti come Rovine",
-      "side": null
-     },
-     {
       "hero": "Mauga",
       "why": "Scelta tank forte su questa mappa (guida ElderElo basata sui pro)",
       "side": null,
@@ -11607,7 +11660,13 @@
      }
     ]
    },
-   "avoid": [],
+   "avoid": [
+    {
+     "hero": "Sigma",
+     "why": "Il pozzo: facile da spingere dentro con i CC e senza risposta valida",
+     "src": "https://mobalytics.gg/overwatch/heroes/sigma-guide"
+    }
+   ],
    "guideUncertain": false,
    "who": {
     "Well: le uccisioni nel buco decidono il round, Lúcio, Pharah e Orisa sono ottimi.": {
@@ -11697,6 +11756,12 @@
       "why": "Cyber-Agility per i fianchi e Deflect per attraversare le linee aperte",
       "side": null,
       "src": "https://www.sportskeeda.com/esports/how-play-junkertown-map-overwatch-2"
+     },
+     {
+      "hero": "Bastion",
+      "why": "Pochi fianchi: regge sul carico (strategia della nave pirata)",
+      "side": "defense",
+      "src": "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types"
      }
     ],
     "Support": [
@@ -11704,6 +11769,12 @@
       "hero": "Mercy",
       "why": "Scelta comune: segue i cecchini sui punti alti",
       "side": null
+     },
+     {
+      "hero": "Zenyatta",
+      "why": "Lunghe linee di tiro: cura e danneggia da lontano in sicurezza",
+      "side": null,
+      "src": "https://cyberpost.co/is-zenyatta-and-mercy-good/"
      }
     ]
    },
@@ -11799,6 +11870,12 @@
       "why": "Corridoi stretti: i nemici non hanno dove nascondersi, il corto raggio la favorisce",
       "side": null,
       "src": "https://www.reddit.com/r/ZaryaMains/comments/1d4qi3e/what_maps_are_good_for_zarya/"
+     },
+     {
+      "hero": "Ramattra",
+      "why": "Rende meglio nelle mappe a corto raggio come questa.",
+      "side": null,
+      "src": "https://upcomer.com/tips-on-how-to-play-ramattra-the-newest-tank-in-overwatch-2"
      }
     ],
     "Damage": [
@@ -11846,6 +11923,12 @@
       "why": "Vicoli e fianchi ovunque: colpisce senza esporsi; Barrage può spazzare i nemici",
       "side": null,
       "src": "https://www.sportskeeda.com/esports/how-play-king-s-row-map-overwatch-2"
+     },
+     {
+      "hero": "Bastion",
+      "why": "Punti stretti e facili da difendere: ottimo per piazzarsi",
+      "side": "defense",
+      "src": "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types"
      }
     ],
     "Support": [
@@ -11995,6 +12078,12 @@
       "why": "Mappe aperte con soffitti alti: chi vola rende molto",
       "side": null,
       "src": "https://www.sportskeeda.com/esports/how-play-lijiang-tower-map-overwatch-2"
+     },
+     {
+      "hero": "Anran",
+      "why": "Verticalita' e rotte di fianco per colpire nemici isolati",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/heroes/anran-guide"
      }
     ],
     "Support": [
@@ -12021,7 +12110,13 @@
      }
     ]
    },
-   "avoid": [],
+   "avoid": [
+    {
+     "hero": "Ana",
+     "why": "Nessun posto dove nascondersi, scontri ravvicinati continui: Ana soffre",
+     "src": "https://www.thegamer.com/overwatch-maps-all-ranked/"
+    }
+   ],
    "guideUncertain": true,
    "who": {
     "Night Market e Garden: Lúcio e Roadhog possono mandare i nemici nei burroni.": {
@@ -12174,7 +12269,14 @@
    ],
    "strong": {
     "Tank": [],
-    "Damage": [],
+    "Damage": [
+     {
+      "hero": "Shion",
+      "why": "Vicoli verticali di Tokyo adatti a un eroe molto mobile",
+      "side": null,
+      "src": "https://www.exitlag.com/blog/overwatch-shion/"
+     }
+    ],
     "Support": []
    },
    "avoid": [],
@@ -12212,11 +12314,6 @@
      {
       "hero": "Roadhog",
       "why": "Santuario e Villaggio: il gancio vicino ai bordi butta i nemici nel pozzo",
-      "side": null
-     },
-     {
-      "hero": "Winston",
-      "why": "Tank consigliato nella composizione migliore per Nepal",
       "side": null
      },
      {
@@ -12275,6 +12372,18 @@
       "why": "Molta copertura: raggiunge le retrovie senza farsi vedere",
       "side": null,
       "src": "https://www.sportskeeda.com/esports/5-best-hero-compositions-control-mode-overwatch-2"
+     },
+     {
+      "hero": "Anran",
+      "why": "Verticalita' e rotte di fianco per colpire nemici isolati",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/heroes/anran-guide"
+     },
+     {
+      "hero": "Symmetra",
+      "why": "Torrette e difesa a corto raggio nei santuari: la scelta migliore",
+      "side": null,
+      "src": "https://gamersdecide.com/articles/overwatch-2-best-maps-for-dps"
      }
     ],
     "Support": [
@@ -12311,6 +12420,11 @@
      "hero": "Hanzo",
      "why": "Nessuna altura con vista libera sui punti di cattura; Dragonstrike prevedibile",
      "src": "https://www.icy-veins.com/overwatch/hanzo-maps"
+    },
+    {
+     "hero": "Ashe",
+     "why": "Punti stretti e poche linee di tiro: Ashe fatica",
+     "src": "https://www.gameslearningsociety.org/wiki/is-ashe-good-for-every-map/"
     }
    ],
    "guideUncertain": true,
@@ -13032,6 +13146,12 @@
       "why": "Ultimo tratto stretto e chiuso: ideale per combattere nei passaggi stretti",
       "side": null,
       "src": "https://www.sportskeeda.com/esports/how-play-route-66-map-overwatch-2"
+     },
+     {
+      "hero": "Bastion",
+      "why": "Citato tra gli eroi comuni, con molte strozzature lungo il percorso",
+      "side": null,
+      "src": "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types"
      }
     ],
     "Support": [
@@ -13055,6 +13175,12 @@
       "why": "Squadre compatte tra le casette: cura continua e Coalescence potente su tutto il percorso",
       "side": null,
       "src": "https://www.icy-veins.com/overwatch/moira-maps"
+     },
+     {
+      "hero": "Zenyatta",
+      "why": "Lunghe linee di tiro: sta a distanza e usa le sfere",
+      "side": null,
+      "src": "https://cyberpost.co/is-zenyatta-and-mercy-good/"
      }
     ]
    },
@@ -13402,6 +13528,12 @@
       "hero": "Genji",
       "why": "Dive: isola i bersagli poco mobili",
       "side": null
+     },
+     {
+      "hero": "Anran",
+      "why": "Mappa Flashpoint con verticalita' e fianchi per le eliminazioni",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/heroes/anran-guide"
      }
     ],
     "Support": [
@@ -13484,11 +13616,6 @@
       "hero": "Wrecking Ball",
       "why": "Mappa più grande: rampino, caccia la Widow",
       "side": null
-     },
-     {
-      "hero": "Sigma",
-      "why": "Copertura su linee lunghe e strozzature",
-      "side": "defense"
      }
     ],
     "Damage": [
@@ -13581,6 +13708,11 @@
      "hero": "Moira",
      "why": "Niente movimento verticale: tre piani e percorsi che dividono la squadra",
      "src": "https://www.icy-veins.com/overwatch/moira-maps"
+    },
+    {
+     "hero": "Symmetra",
+     "why": "Mappa grande a lunghe distanze: la sua sfera e le torrette rendono poco",
+     "src": "https://icy-veins.com/overwatch/symmetra-maps"
     }
    ],
    "guideUncertain": false,
