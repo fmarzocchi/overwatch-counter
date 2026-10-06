@@ -377,7 +377,18 @@ try {
   await closeAll();
   const sumF = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
   await closeAll();
-  check("senza alleati: niente riga «Alleati», la sinergia col compagno è «Con Giulia»", !/Alleati [+−]/.test(sumF) && /Con Giulia [+−]/.test(sumF), sumF);
+  const cardsTxt0 = await page.locator(".pick").allInnerTexts();
+  check("nessuno ha scelto: i consigli non dipendono dal compagno (niente «Con Giulia», niente «Bene con …»)",
+    !/Alleati [+−]/.test(sumF) && !/Con Giulia/.test(sumF) && cardsTxt0.every((t) => !/Bene con (Fabio|Giulia)/.test(t)), sumF);
+  // Giulia sceglie: da lì il suo eroe conta per Fabio («Con Giulia» nei perché)
+  await toTop(page);
+  const recG = (await favRows(page, 1))[0].name;
+  await page.locator(".pick").nth(1).locator(".fav-row.is-rec").click();
+  const sumF2 = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
+  await closeAll();
+  check("dopo la scelta di Giulia: la sinergia con il suo eroe è «Con Giulia»", /Con Giulia [+−]/.test(sumF2), `${recG}: ${sumF2}`);
+  await toTop(page);
+  await page.locator(".pick").nth(1).locator(".chosen-chip").click();
   await page.click("#groups [data-group=allies]");
   const sa = Object.values(await starsOf(page));
   check("stelline Alleati: dorate da 1 a 5 (buona scelta per voi)", sa.some((x) => x.n === 5)
@@ -400,6 +411,7 @@ try {
   check("tocco sposta tra gruppi", (await text(page, "[data-count=enemies]")) === "4" && (await text(page, "[data-count=allies]")) === "2");
   // ruolo cambiato al volo
   await toTop(page);
+  const fabioBefore = (await pickNames(page))[0];
   await page.locator(".pick").nth(1).locator(".role-btn").click();
   await toTop(page);
   check("ruolo di Giulia cambiato al volo (Supporto → Danni)", (await page.locator(".pick").nth(1).locator(".role-btn").innerText()) === "Danni");
@@ -407,6 +419,8 @@ try {
   const duo = await pickNames(page);
   const role = (n) => data.heroes.find((h) => h.name === toEn(n))?.role;
   check("con lo stesso ruolo eroi diversi", duo[0] !== duo[1] && role(duo[0]) === "Damage" && role(duo[1]) === "Damage", duo.join());
+  check("il consiglio di Fabio non cambia per il ruolo di Giulia (salvo che serva un eroe diverso)", duo[0] === fabioBefore || duo[1] === fabioBefore,
+    `${fabioBefore} → ${duo.join()}`);
   await toTop(page);
   await page.locator(".pick").nth(1).locator(".role-btn").click();
   await page.evaluate(() => window.scrollTo(0, 0));

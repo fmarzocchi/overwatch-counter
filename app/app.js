@@ -376,8 +376,10 @@ function theorySection(title, items) {
 }
 
 // eroi (presi o consigliati) degli altri giocatori, col nome di chi li gioca
+// solo eroi GIÀ PRESI: il consiglio fatto a chi non ha ancora scelto non influenza gli altri (richiesta del 2026-10-06)
 function partnersOf(i) {
-  return (lastDuo?.team ?? []).map((h, j) => (h && j !== i ? { id: h.id, name: profile.players[j].name, hero: h } : null)).filter(Boolean);
+  return match.picked.map((x, j) => (x && j !== i && byId[sid(x)] ? { id: byId[sid(x)].id, name: profile.players[j].name, hero: byId[sid(x)] } : null))
+    .filter(Boolean);
 }
 
 // Tre livelli, dal più immediato al più approfondito:
@@ -1066,12 +1068,12 @@ function gridStars() {
   return choiceStars(g === "picked" ? match.pickFor : -1);
 }
 // quanto ogni eroe (tutti, anche bannati o già presi) è una buona scelta per il giocatore i (-1 = per la squadra): gli
-// eroi degli altri contano come alleati. Righe di recommend() per id; usate da griglia, riquadri e foglio "＋".
+// eroi GIÀ PRESI dagli altri contano come alleati (non i loro consigli). Righe di recommend() per id; usate da griglia, riquadri e foglio "＋".
 function choiceRows(i) {
   const key = `rows${i}`;
   if (!starCache.has(key)) {
     const team = lastDuo?.team ?? [];
-    const allies = [...new Set([...team.filter((h, j) => h && j !== i).map((h) => sid(h.id)), ...match.allies.map(sid)])];
+    const allies = [...new Set([...match.picked.filter((x, j) => x && j !== i).map(sid), ...match.allies.map(sid)])];
     const rows = recommend(i >= 0 ? playerData(i) : data, {
       role: null, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies, bans: match.bans, scoreAll: true,
       favorites: i >= 0 ? profile.players[i].favorites : [], theory: T, useTheory: !!profile.useTheory, guideOnly: guideMode(),

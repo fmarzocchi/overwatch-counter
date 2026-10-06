@@ -310,11 +310,12 @@ export const STAR_MIN_SD = { stat: 0.01, blend: 0.01, guide: 0.5 };
 // data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.
 // picked: eroe GIÀ PRESO da quel giocatore → resta fisso, conta come alleato per gli altri e la sua lista
 // ha in cima l'eroe preso (row.picked = true) seguito dalle alternative del suo ruolo.
-// Per gli altri si cerca la COMBINAZIONE migliore (eroi tutti diversi): somma dei punteggi + sinergia
-// tra ogni coppia di eroi consigliati. Fino a 2 giocatori liberi la ricerca è completa; con di più si
-// considerano i migliori TEAM_BEAM eroi di ciascuno (differenza trascurabile, calcolo istantaneo).
+// Per gli altri (dal 2026-10-06, richiesta dell'utente) il consiglio dipende SOLO da mappa, lato, ban, avversari, alleati
+// segnati ed eroi GIÀ PRESI dai compagni: mai dal consiglio fatto a un altro giocatore che non ha ancora scelto (niente
+// sinergia tra consigli). L'unico legame: gli eroi consigliati sono tutti diversi (la combinazione con la somma dei
+// punteggi più alta). Fino a 2 giocatori liberi la ricerca è completa; con di più si considerano i migliori TEAM_BEAM.
 // Restituisce {lists, team, picked, pair, notes}: lists[i] = alternative ordinate (la prima è quella consigliata
-// o presa), già calcolate con gli eroi degli altri come alleati; team[i] = eroe di ciascuno.
+// o presa), calcolate con gli eroi già presi dagli altri come alleati; team[i] = eroe di ciascuno.
 export const TEAM_BEAM = 12;
 export function recommendTeam(data, { players = [], ...ctx } = {}) {
   const notes = players.map(() => null);
@@ -333,19 +334,6 @@ export function recommendTeam(data, { players = [], ...ctx } = {}) {
     }
     return p;
   });
-  const synOf = (a, b) => {
-    if (ctx.guideOnly) {
-      const ha = byId[sid(a)], hb = byId[sid(b)];
-      const ta = ctx.theory?.idx?.[ha?.name];
-      return ha && hb && ta?.synergies.has(hb.name) ? GUIDE_POINTS.synergy : 0;
-    }
-    const v = pairValue(data.synergies, a, b);
-    const stat = v === null ? 0 : (v - 0.5) * SYNERGY_WEIGHT;
-    if (!ctx.useTheory || !ctx.theory) return stat;
-    const ha = byId[sid(a)], hb = byId[sid(b)];
-    const t = ha && hb && ctx.theory.idx?.[ha.name]?.synergies.has(hb.name) ? GUIDE_POINTS.synergy : 0;
-    return W_STAT * stat + W_THEORY * t;
-  };
   const search = () => {
     const cands = free.map((i) => {
       const rows = recommend(dataOf(opts[i]), { ...ctx, ...opts[i], allies: [...allies, ...fixed] });
@@ -356,7 +344,7 @@ export function recommendTeam(data, { players = [], ...ctx } = {}) {
     const at = new Map(ids.map((x, k) => [x, k]));
     const n = ids.length;
     const syn = new Float64Array(n * n);
-    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) syn[a * n + b] = syn[b * n + a] = synOf(ids[a], ids[b]);
+    // nessuna sinergia tra giocatori che non hanno ancora scelto: i consigli non dipendono l'uno dall'altro
     const idx = cands.map((rows) => rows.map((r) => at.get(sid(r.hero.id))));
     const used = new Uint8Array(n);
     const pick = new Int32Array(free.length);
@@ -395,7 +383,8 @@ export function recommendTeam(data, { players = [], ...ctx } = {}) {
   const team = players.map((_, i) => (pickedIds[i] ? byId[pickedIds[i]] ?? null : null));
   if (best) free.forEach((i, k) => { team[i] = best.rows[k].hero; });
   const lists = players.map((p, i) => {
-    const others = team.filter((h, j) => h && j !== i).map((h) => sid(h.id));
+    // solo gli eroi già presi dagli altri contano come alleati (non i consigli fatti a chi non ha ancora scelto)
+    const others = fixed.filter((x) => x !== pickedIds[i]);
     if (pickedIds[i]) {
       const h = byId[pickedIds[i]];
       const o = { ...ctx, ...opts[i], role: h?.role ?? null, onlyFavorites: false, allies: [...allies, ...others] };

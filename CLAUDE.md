@@ -219,9 +219,13 @@ le fonti sono spesso vecchie (Icy Veins era OW1, Sportskeeda/Game8 2022-24).
   giocatore, **pieno + "F✓"** = preso. (La riga "Chi ha preso cosa" è stata tolta nel ridisegno: era un doppione.)
 - Alleati = gli ALTRI della squadra: max `5 − giocatori` (il pulsante sparisce in 5).
 - Logica: `recommendTeam()` (`recommendDuo` è lo stesso): eroi presi fissi (e alleati per gli altri; in cima alla loro lista
-  con `picked: true`, sotto le alternative del ruolo); per gli altri la combinazione migliore (eroi diversi, sinergia tra
-  ogni coppia), completa fino a 2 liberi, poi i migliori `TEAM_BEAM` = 12 a testa (5 giocatori: ~5 ms).
-  `breakdown(row, partners[])`: "Con <nome>" o "Con voi". `playGuide` accetta `partners[]`.
+  con `picked: true`, sotto le alternative del ruolo). **Dal 2026-10-06 (richiesta dell'utente)** il consiglio a chi non ha
+  ancora scelto dipende SOLO da mappa, lato, ban, avversari, alleati segnati ed eroi GIÀ PRESI dai compagni, mai dal
+  consiglio fatto a un altro: niente sinergia tra consigli; l'unico legame è che gli eroi consigliati sono diversi
+  (combinazione con la somma dei punteggi più alta, completa fino a 2 liberi, poi `TEAM_BEAM` = 12 a testa).
+  `partnersOf()` e `choiceRows()` in app.js contano solo gli eroi presi. `breakdown(row, partners[])`: "Con <nome>" o
+  "Con voi" (solo con compagni che hanno scelto). `playGuide` accetta `partners[]`. e2e "nessuno ha scelto: i consigli
+  non dipendono dal compagno", "il consiglio di Fabio non cambia per il ruolo di Giulia".
 - Collaudo: `recommend.test.js` (squadre da 1 a 5, combinazione ottima verificata a forza bruta con 3, eroi presi, tutti
   presi) ed e2e (1–5 giocatori su Xiaomi 14T e Nothing Phone (3), 5 anche su 360×640; aggiungi/rimuovi; screenshot 13-*, 14-*).
 - Nomi della griglia: `fitNames()` misura la parola più lunga col testo VERO della pagina (span invisibile) e imposta solo

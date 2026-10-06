@@ -104,19 +104,19 @@ test("in due: eroi diversi anche con lo stesso ruolo, scelta in cima alle liste"
   assert.notEqual(pair.a.id, pair.b.id);
   assert.equal(lists[0][0].hero.id, pair.a.id);
   assert.equal(lists[1][0].hero.id, pair.b.id);
-  assert.ok(!names(lists[0]).includes(pair.b.name), "l'eroe dell'altro non è tra le alternative");
-  assert.ok(!names(lists[1]).includes(pair.a.name));
+  // nessuno ha ancora scelto: il consiglio dell'uno non dipende da quello dell'altro (solo eroi diversi)
+  const alone = names(recommend(data, { role: "Damage" }));
+  assert.equal(pair.a.name, alone[0]);
+  assert.equal(pair.b.name, alone[1]);
+  assert.ok(lists[0][0].withAllies.length === 0 && lists[1][0].withAllies.length === 0, "il compagno non conta come alleato");
 });
 
-test("in due: la coppia scelta è la migliore tra tutte (sinergia tra i due compresa)", () => {
+test("in due: la coppia scelta è la migliore tra tutte (senza sinergia tra consigli, solo eroi diversi)", () => {
   const ctx = { mapSlug: "kings-row", enemies: [id("Pharah"), id("Reinhardt")], bans: [id("Ana")] };
   const players = [{ role: "Damage", favorites: [id("Tracer")] }, { role: "Support", favorites: [id("Mercy")] }];
   const { pair } = recommendDuo(data, { ...ctx, players });
   const [r0, r1] = players.map((p) => recommend(data, { ...ctx, ...p }));
-  const total = (a, b) => {
-    const s = pairValue(data.synergies, a.hero.id, b.hero.id);
-    return a.score + b.score + (s === null ? 0 : (s - 0.5) * SYNERGY_WEIGHT);
-  };
+  const total = (a, b) => a.score + b.score;
   const chosen = total(r0.find((r) => r.hero.id === pair.a.id), r1.find((r) => r.hero.id === pair.b.id));
   for (const a of r0) for (const b of r1) assert.ok(total(a, b) <= chosen + 1e-12, `${a.hero.name}+${b.hero.name}`);
   assert.ok(pair.a.id !== id("Ana") && pair.b.id !== id("Ana"), "ban rispettato");
@@ -211,7 +211,9 @@ test("scheda eroe: forte contro, debole contro, mappe migliori, coppie migliori"
 });
 
 test("perché: la sinergia col compagno è mostrata a parte, non come «Alleati»", () => {
-  const { lists, pair } = recommendDuo(data, { players: [{ role: "Damage" }, { role: "Support" }] });
+  // conta solo un compagno che ha GIÀ scelto (qui Lei ha preso Mercy)
+  const { lists, pair } = recommendDuo(data, { players: [{ role: "Damage" }, { role: "Support", picked: id("Mercy") }] });
+  assert.equal(pair.b.name, "Mercy");
   const b = breakdown(lists[0][0], { id: pair.b.id, name: "Lei" });
   assert.ok(!b.some((x) => x.key === "allies"), "nessun alleato segnato");
   assert.ok(b.some((x) => x.key === "partner" && x.text.startsWith("Con Lei")));
@@ -239,10 +241,10 @@ for (const n of [1, 2, 3, 4, 5]) {
       assert.notEqual(h.id, id("Ana"), "ban rispettato");
     });
     assert.deepEqual(picked, players.map(() => false));
-    // ogni lista conta gli eroi degli altri come alleati
+    // nessuno ha scelto: i consigli degli altri non contano come alleati (stesso punteggio che da soli)
     team.forEach((h, i) => {
-      const mates = team.filter((_, j) => j !== i).map((x) => String(x.id));
-      assert.ok(lists[i].every((r) => !mates.includes(String(r.hero.id))), "gli eroi degli altri non sono tra le alternative");
+      const solo = recommend(data, { ...ctx, ...players[i] }).find((r) => r.hero.id === h.id);
+      close(lists[i][0].score, solo.score, `${h.name} non dipende dagli altri`);
     });
   });
 }
@@ -251,12 +253,11 @@ test("squadra: la combinazione scelta è la migliore (controllo completo con 3 g
   const players = [{ role: "Tank" }, { role: "Support" }, { role: "Support" }];
   const ctx = { mapSlug: "ilios", enemies: [id("Genji"), id("Winston")] };
   const { team } = recommendTeam(data, { ...ctx, players });
-  const syn = (a, b) => { const v = pairValue(data.synergies, a.hero.id, b.hero.id); return v === null ? 0 : (v - 0.5) * SYNERGY_WEIGHT; };
   const [r0, r1, r2] = players.map((p) => recommend(data, { ...ctx, ...p }));
   let best = -Infinity, bestIds = null;
   for (const a of r0) for (const b of r1) for (const c of r2) {
     if (b.hero.id === c.hero.id) continue;
-    const t = a.score + b.score + c.score + syn(a, b) + syn(a, c) + syn(b, c);
+    const t = a.score + b.score + c.score;
     if (t > best) { best = t; bestIds = [a, b, c].map((r) => r.hero.id); }
   }
   assert.deepEqual(team.map((h) => h.id), bestIds);
@@ -289,7 +290,7 @@ test("tutti hanno già preso: niente ricerca, liste con l'eroe preso in cima", (
 });
 
 test("perché con più compagni: «Con voi» somma la sinergia con gli altri giocatori", () => {
-  const players = [{ role: "Tank" }, { role: "Damage" }, { role: "Support" }];
+  const players = [{ role: "Tank" }, { role: "Damage", picked: id("Tracer") }, { role: "Support", picked: id("Ana") }];
   const { lists, team } = recommendTeam(data, { players });
   const partners = [{ id: team[1].id, name: "B" }, { id: team[2].id, name: "C" }];
   const row = lists[0][0];
