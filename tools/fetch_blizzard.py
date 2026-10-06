@@ -121,6 +121,11 @@ def main():
         if txt:
             save("wiki_maps_langlinks.json", txt)
             break
+    # wiki italiana (se esiste): elenco delle pagine, per riconoscere i nomi italiani delle mappe
+    q = urllib.parse.urlencode({"action": "query", "list": "allpages", "aplimit": "500", "format": "json"})
+    txt = wiki.get(f"https://overwatch.fandom.com/it/api.php?{q}")
+    if txt:
+        save("wiki_it_allpages.json", txt)
     log(f"Wiki: {wiki.ok} risposte")
 
     # 2. sito ufficiale
