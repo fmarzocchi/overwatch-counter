@@ -178,6 +178,21 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - `fill()` in app.js al posto di `replaceChildren` per le schede: le parti facoltative assenti non diventano testo "null"
   (e2e "schede senza testi «null»").
 
+## "Consigli solo da guide e pro" (2026-10-06, richiesta dell'utente)
+
+- Profilo → interruttore `#guide-only` (`profile.guideOnly`; con questo attivo "Usa anche la teoria" sparisce): consigli,
+  ban e "Passa a" SENZA statistiche di counterwatch. `guideRow()`/`guideBanSuggestions()`/`guideDetails()`/`guideStars()`
+  in recommend.js, `mapFit()` in theory.js (consigliato +2 / sconsigliato −2 dalle guide, stile +0.5, caratteristiche
+  ±0.25; batte/soffre in teoria ±1, sinergia +0.5, preferito +0.5). Al posto della percentuale "guide ★★★"; "Perché"
+  senza statistiche Ranked; playGuide(`guide: true`) toglie le righe "statistica". Test: unità (numeri stravolti →
+  stessi consigli) ed e2e "solo guide …".
+- `theory.json → _maps[slug].strong {Tank,Damage,Support: [{hero, why, side}]}`, `avoid [{hero, why}]`, `guideUncertain`:
+  ricerca di 3 agenti il 2026-10-06 (solo riassunti WebSearch, fonti: guide Sportskeeda/Game8/TheGamer/Red Bull/Icy
+  Veins/Liquipedia ecc., in buona parte 2022–2024, niente pro recenti; eroi nuovissimi mai citati). Incerte: Aatlis,
+  Antarctic Peninsula, Blizzard World, Hollywood, Junkertown, King's Row, Lijiang, Midtown, Neon Junction (vuota),
+  Nepal, New Junk City, New Queen Street, Rialto, Runasapi, Shambali. "Perché" mostra "Consigliato dalle guide su".
+  Script di unione: rifare la ricerca e unirla (nomi eroi controllati sul ruolo).
+
 ## Più giocatori e "chi ha preso cosa" (2026-10-05, richiesta dell'utente)
 
 - Profilo: **da 1 a 5 giocatori** (`MAX_PLAYERS`), "＋ Aggiungi giocatore" (il nuovo prende il ruolo che manca nella coda

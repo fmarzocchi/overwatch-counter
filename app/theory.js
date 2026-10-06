@@ -16,7 +16,7 @@ export const STYLE_DESC = {
 };
 export const THEORY_WEIGHT = 0.005;
 const ROLE_IT = { Tank: "Tank", Damage: "Danni", Support: "Supporto" };
-const FEATURE_IT = {
+export const FEATURE_IT = {
   "env-kills": "baratri per le uccisioni ambientali", "long-sightlines": "linee di tiro lunghe", "close-quarters": "spazi stretti",
   "high-ground": "molte alture", "flank-routes": "vie di fianco", "open-spaces": "spazi aperti", "chokepoints": "strettoie",
 }; // peso piccolo e dichiarato, solo se l'utente lo attiva
@@ -181,8 +181,32 @@ export function allyDirected(a) {
 //   nel punteggio (che con "Usa anche la teoria" comprende già la teoria).
 // Così il primo della lista non riceve mai il consiglio di cambiare: l'app non si contraddice.
 // rows: alternative ordinate per quel giocatore (recommend). Restituisce {hero, gain, why, kind, countered} o null.
+// ---------- modalità "solo guide e pro" (senza statistiche) ----------
+// Quanto un eroe è adatto alla mappa secondo guide, coach e giocatori forti (theory.json → _maps[slug]):
+//   strong (consigliato, eventualmente solo in attacco o in difesa) +2, avoid (sconsigliato) −2,
+//   stile adatto alla mappa (goodStyles) +0.5, caratteristiche della mappa che l'eroe ama/odia (mapFeatures) ±0.25 l'una (max ±1).
+export const GUIDE_POINTS = { strong: 2, avoid: 2, style: 0.5, feature: 0.25, beats: 1, synergy: 0.5, favorite: 0.5 };
+export function mapFit(theory, mapSlug, hero, side = null) {
+  const m = mapSlug ? theory?.maps?.[mapSlug] : null;
+  const none = { strong: null, avoid: null, style: false, likes: [], dislikes: [], points: 0 };
+  if (!m || !hero) return none;
+  const strong = (m.strong?.[hero.role] ?? []).find((x) => x.hero === hero.name && (!x.side || !side || x.side === side)) ?? null;
+  const avoid = (m.avoid ?? []).find((x) => x.hero === hero.name) ?? null;
+  const dom = dominantStyle(hero);
+  const style = !!dom && (m.goodStyles ?? []).includes(dom);
+  const mf = theory?.idx?.[hero.name]?.mapFeatures;
+  const feats = new Set(m.features ?? []);
+  const likes = (mf?.likes ?? []).filter((f) => feats.has(f));
+  const dislikes = (mf?.dislikes ?? []).filter((f) => feats.has(f));
+  const P = GUIDE_POINTS;
+  const featPts = Math.max(-1, Math.min(1, P.feature * (likes.length - dislikes.length)));
+  const points = (strong ? P.strong : 0) - (avoid ? P.avoid : 0) + (style ? P.style : 0) + featPts;
+  return { strong, avoid, style, likes, dislikes, points };
+}
+
 export const SWAP_GAIN = 0.015;
-export function swapAdvice(data, theory, { hero, rows = null, enemies = [] } = {}) {
+export const SWAP_GAIN_GUIDE = 1.5; // in modalità guide: almeno un motivo pieno in più (es. forte sulla mappa, o batte un avversario e mezzo)
+export function swapAdvice(data, theory, { hero, rows = null, enemies = [], guide = false } = {}) {
   if (!hero || !rows || rows.length < 2 || !enemies.length) return null;
   const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
   const enemyH = enemies.map((x) => byId[sid(x)]).filter(Boolean);
@@ -198,7 +222,7 @@ export function swapAdvice(data, theory, { hero, rows = null, enemies = [] } = {
     if (sid(r.hero.id) === sid(hero.id)) continue;
     const gain = r.score - cur.score;
     const th = vsTheory(r.hero);
-    const byData = gain >= SWAP_GAIN;
+    const byData = gain >= (guide ? SWAP_GAIN_GUIDE : SWAP_GAIN);
     const byTheory = countered.length >= 2 && th.beatenBy.length < countered.length && gain >= 0;
     if (!byData && !byTheory) continue;
     const value = gain + 0.01 * (th.beats.length - th.beatenBy.length);
@@ -206,6 +230,11 @@ export function swapAdvice(data, theory, { hero, rows = null, enemies = [] } = {
   }
   if (!best) return null;
   const beats = best.th.beats.map((h) => h.name);
+  if (guide) {
+    const why = beats.length ? `in teoria batte ${names(beats)}` : best.r.guide?.map?.strong ? `per le guide è forte su questa mappa: ${lower(best.r.guide.map.strong.why)}`
+      : `per le guide è più adatto a questa partita (${names(countered.map((h) => h.name)) || "mappa e avversari"})`;
+    return { hero: best.r.hero, gain: best.gain, why, kind: "teoria", countered };
+  }
   const why = beats.length
     ? `in teoria batte ${names(beats)}${best.gain >= 0.005 ? ` e nei dati rende ${pct(best.gain)} in più` : ""}`
     : best.gain >= 0.005 ? `nei dati rende ${pct(best.gain)} in più con questi avversari`
@@ -213,7 +242,7 @@ export function swapAdvice(data, theory, { hero, rows = null, enemies = [] } = {
   return { hero: best.r.hero, gain: best.gain, why, kind: beats.length || best.gain < 0.005 ? "teoria" : "statistica", countered };
 }
 
-export function playGuide(data, theory, { hero, mapSlug = null, side = null, enemies = [], allies = [], partner = null, partners = null, rows = null } = {}) {
+export function playGuide(data, theory, { hero, mapSlug = null, side = null, enemies = [], allies = [], partner = null, partners = null, rows = null, guide = false } = {}) {
   const mates = new Set([...(partners ?? []), partner].filter(Boolean).map((h) => sid(h.id)));
   const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
   const T = (name) => theory?.idx?.[name];
@@ -222,7 +251,8 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   const enemyH = enemies.map((x) => byId[sid(x)]).filter(Boolean);
   const allyH = [...new Map([...allies.map((x) => byId[sid(x)]), ...(partners ?? []), partner].filter(Boolean)
     .map((h) => [sid(h.id), h])).values()].filter((h) => sid(h.id) !== sid(hero.id));
-  const stat = (a, b) => { const v = data.counters?.[sid(a.id)]?.[sid(b.id)]; return typeof v === "number" ? v - 0.5 : 0; };
+  // in modalità guide le statistiche non contano
+  const stat = (a, b) => { const v = guide ? null : data.counters?.[sid(a.id)]?.[sid(b.id)]; return typeof v === "number" ? v - 0.5 : 0; };
   const sections = [];
   const push = (title, items) => { if (items.length) sections.push({ title, items }); };
 
@@ -350,6 +380,10 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   if (map) {
     const wr = map.winRates?.[sid(hero.id)];
     if (typeof wr === "number") mapItems.push({ text: `Su ${map.name} ${hero.name} vince ${pct(wr - 0.5)} rispetto alla media.`, kind: "statistica" });
+    // guide e giocatori forti: eroe consigliato o sconsigliato su questa mappa
+    const fit = mapFit(theory, map.slug, hero, side);
+    if (fit.strong) mapItems.push({ text: `Le guide lo consigliano su ${map.name}: ${lower(fit.strong.why)}.`, kind: "teoria" });
+    if (fit.avoid) mapItems.push({ text: `Le guide lo sconsigliano su ${map.name}: ${lower(fit.avoid.why)}.`, kind: "teoria" });
     const feats = mapT?.features ?? [];
     const likes = (me?.mapFeatures?.likes ?? []).filter((f) => feats.includes(f));
     const dislikes = (me?.mapFeatures?.dislikes ?? []).filter((f) => feats.includes(f));
@@ -366,7 +400,7 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   push(map ? `Mappa: ${map.name}` : "Mappa", mapItems);
 
   // 9. cambio eroe se la composizione avversaria è sfavorevole (solo verso un eroe che conviene davvero)
-  const sw = swapAdvice(data, theory, { hero, rows, enemies });
+  const sw = swapAdvice(data, theory, { hero, rows, enemies, guide });
   let switchLine = null;
   if (sw) {
     switchLine = { text: `Se la partita va male, passa a ${sw.hero.name}: ${sw.why}.`, kind: sw.kind };
@@ -404,11 +438,17 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
     line("protect", "Proteggi", `${t}.`, pz.kind, { short: t.replace(/^Proteggi /, "") });
   }
   if (map && mapItems.length) {
-    const m = mapItems.find((x) => x.kind === "teoria" && /favorisce|sfavorisce|baratri/.test(x.text)) ?? mapItems[0];
-    line("map", "Mappa", m.text, m.kind, { short: m.text.replace(/^La mappa /, "").replace(/\.$/, "") });
+    const m = mapItems.find((x) => /^Le guide lo/.test(x.text)) ?? mapItems.find((x) => x.kind === "teoria" && /favorisce|sfavorisce|baratri/.test(x.text))
+      ?? mapItems.find((x) => !guide || x.kind === "teoria");
+    if (m) line("map", "Mappa", m.text, m.kind, { short: m.text.replace(/^La mappa /, "").replace(/^Le guide lo /, "").replace(/\.$/, "") });
   }
   if (summary.length) sections.unshift({ title: "In breve", summary: true, items: summary.slice(0, 7) });
 
+  // modalità guide: niente righe tratte dalle statistiche
+  if (guide) {
+    for (const sec of sections) sec.items = sec.items.filter((it) => it.kind !== "statistica");
+    sections.splice(0, sections.length, ...sections.filter((sec) => sec.items.length));
+  }
   if (!sections.length) {
     sections.push({ title: "Consigli", items: [{ text: "Segna mappa e avversari per avere consigli su misura.", kind: "teoria" }] });
   }

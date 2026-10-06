@@ -9964,8 +9964,51 @@
     "https://overwatch.fandom.com/wiki/Aatlis",
     "https://liquipedia.net/overwatch/Aatlis",
     "https://overwatchmaps.gg/aatlis",
-    "https://us.forums.blizzard.com/en/overwatch/t/aatlis-ahh-the-new-map/975447"
-   ]
+    "https://us.forums.blizzard.com/en/overwatch/t/aatlis-ahh-the-new-map/975447",
+    "https://www.pcgamesn.com/overwatch-2/season-17-map-reworks",
+    "https://esports.gg/news/overwatch/overwatch-flashpoint-guide-how-to-dominate-the-new-mode",
+    "https://sportskeeda.com/esports/5-beginner-tips-flashpoint-game-mode-overwatch-2"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Wrecking Ball",
+      "why": "Flashpoint: mappa grande, mobilità per ruotare tra i punti",
+      "side": null
+     },
+     {
+      "hero": "Doomfist",
+      "why": "Flashpoint: arriva per primo ai punti grazie alla mobilità",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Tracer",
+      "why": "Flashpoint: esplora e contesta i punti in fretta",
+      "side": null
+     },
+     {
+      "hero": "Sombra",
+      "why": "Flashpoint: mobilità e informazioni sulle rotazioni nemiche",
+      "side": null
+     },
+     {
+      "hero": "Echo",
+      "why": "Flashpoint: volo utile per spostarsi tra punti lontani",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Velocità: porta la squadra al punto prima dei nemici",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "antarctic-peninsula": {
    "features": [
@@ -9989,8 +10032,50 @@
    "sources": [
     "https://esports.gg/guides/overwatch/5-locations-to-know-on-the-new-overwatch-2-map-antarctic-peninsula/",
     "https://www.pcgamer.com/games/fps/antarctic-peninsulas-long-awaited-rework-adds-a-new-environmental-hazard-to-overwatch-thatll-be-a-pain-for-flyers/",
-    "https://overwatch.fandom.com/wiki/Antarctic_Peninsula"
-   ]
+    "https://overwatch.fandom.com/wiki/Antarctic_Peninsula",
+    "https://sportskeeda.com/esports/overwatch-2-antarctic-peninsula-map-release-date-best-heroes",
+    "https://esports.gg/news/overwatch/5-locations-to-know-on-the-new-overwatch-2-map-antarctic-peninsula",
+    "https://esports.gg/news/overwatch/everything-we-know-about-new-overwatch-2-map-antarctic-peninsula"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Reinhardt",
+      "why": "Passaggi stretti facili da chiudere con lo scudo",
+      "side": null
+     },
+     {
+      "hero": "Sigma",
+      "why": "Passaggi stretti facili da chiudere con la barriera",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Pharah",
+      "why": "Grandi spazi aperti su Relitto: attacca il punto dall'alto",
+      "side": null
+     },
+     {
+      "hero": "Echo",
+      "why": "Grandi spazi aperti su Relitto: attacca il punto dall'alto",
+      "side": null
+     },
+     {
+      "hero": "Hanzo",
+      "why": "Dal centro (Laboratori) arrampica e domina i punti di tiro",
+      "side": null
+     }
+    ],
+    "Support": []
+   },
+   "avoid": [
+    {
+     "hero": "Widowmaker",
+     "why": "Rompighiaccio: soffitti bassi, cecchini svantaggiati"
+    }
+   ],
+   "guideUncertain": true
   },
   "blizzard-world": {
    "features": [
@@ -10016,8 +10101,44 @@
    "sources": [
     "https://www.metabomb.net/overwatch/map-guides/overwatch-blizzard-world-guide",
     "https://game8.co/games/Overwatch2/archives/376879",
-    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
-   ]
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://zathong.com/overwatch-best-heroes-for-each-map/",
+    "https://invenglobal.com/articles/4062/find-your-way-with-this-detailed-guide-to-blizzard-world-in-overwatch"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Salta sull'obiettivo e scompagina la difesa",
+      "side": "attack"
+     },
+     {
+      "hero": "Wrecking Ball",
+      "why": "Muri alti e strade tortuose per rampino e aggiramenti",
+      "side": "attack"
+     },
+     {
+      "hero": "Orisa",
+      "why": "Lunghi rettilinei: buona a media-lunga distanza",
+      "side": "defense"
+     },
+     {
+      "hero": "Sigma",
+      "why": "Barriera per i compagni appostati in alto",
+      "side": "defense"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Torbjörn",
+      "why": "Torretta per tenere le strettoie in difesa",
+      "side": "defense"
+     }
+    ],
+    "Support": []
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "busan": {
    "features": [
@@ -10043,8 +10164,67 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391357",
     "https://ggclan.com/news/overwatch-2-busan-map-tips",
-    "https://www.redbull.com/int-en/overwatch-how-to-master-busan-map"
-   ]
+    "https://www.redbull.com/int-en/overwatch-how-to-master-busan-map",
+    "https://www.sportskeeda.com/esports/how-play-busan-map-overwatch-2",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types",
+    "https://www.redbull.com/ie-en/overwatch-how-to-master-busan-map"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "D.Va",
+      "why": "Autodistruzione: uccisioni multiple negli spazi aperti",
+      "side": null
+     },
+     {
+      "hero": "Wrecking Ball",
+      "why": "Mobile, ultimate ad area forte sulla Conquista",
+      "side": null
+     },
+     {
+      "hero": "Sigma",
+      "why": "Base MEKA: punto circondato da alture, serve il controllo",
+      "side": null
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Base MEKA: le squadre da mischia spingono via i nemici",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Widowmaker",
+      "why": "Centro città e Santuario: tetti e linee di tiro lunghe",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Centro città: sale sui tetti e tira sul punto",
+      "side": null
+     },
+     {
+      "hero": "Soldier: 76",
+      "why": "Santuario: aperto con lunghe linee di tiro",
+      "side": null
+     },
+     {
+      "hero": "Tracer",
+      "why": "Aggiramento lato punto accessibile solo a eroi mobili",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Velocità: porta i tank sul punto rapidamente",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "circuit-royal": {
    "features": [
@@ -10069,8 +10249,60 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391180",
     "https://www.sportskeeda.com/esports/how-play-circuit-royal-map-overwatch-2",
-    "https://overwatch.fandom.com/wiki/Circuit_Royal"
-   ]
+    "https://overwatch.fandom.com/wiki/Circuit_Royal",
+    "https://do34.pixelkicks.co.uk/blog/overwatch-2-mastering-circuit-royal",
+    "https://immortalboost.com/blog/overwatch-2/circuit-royal-map-guide/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Raggiunge i cecchini sulle alture, scudo contro le linee di tiro",
+      "side": "attack"
+     },
+     {
+      "hero": "Sigma",
+      "why": "Tiene le strettoie iniziali e le linee di tiro lunghe",
+      "side": "defense"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Widowmaker",
+      "why": "Lunghe linee di tiro e strettoie iniziali",
+      "side": "defense"
+     },
+     {
+      "hero": "Pharah",
+      "why": "Cielo alto dopo il primo checkpoint, mobilità verticale",
+      "side": "attack"
+     },
+     {
+      "hero": "Ashe",
+      "why": "Forte sulle alture dopo il primo checkpoint",
+      "side": "defense"
+     },
+     {
+      "hero": "Junkrat",
+      "why": "Bombarda dalle alture dopo il primo checkpoint",
+      "side": "defense"
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Velocità per spingere il carico ed entrare/uscire dagli scontri",
+      "side": null
+     },
+     {
+      "hero": "Ana",
+      "why": "Linee di tiro lunghe, consigliata nelle composizioni",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "colosseo": {
    "features": [
@@ -10094,8 +10326,57 @@
    "note": "Le guide consigliano di disturbare i danni a media gittata con eroi da mischia; il controllo folla conta oltre il Colosseo.",
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391291",
-    "https://www.sportskeeda.com/esports/how-play-colosseo-map-overwatch-2"
-   ]
+    "https://www.sportskeeda.com/esports/how-play-colosseo-map-overwatch-2",
+    "https://gamespot.com/articles/overwatch-2-push-mode-tips-best-heroes-and-more-strategies/1100-6508126/",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types",
+    "https://wecoach.gg/blog/article/all-overwatch-2-maps-and-how-to-play-them"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Prima fase strada stretta: salta sui supporti nemici",
+      "side": null
+     },
+     {
+      "hero": "Wrecking Ball",
+      "why": "Push: veloce a riprendere il robot",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Tracer",
+      "why": "Tante scorciatoie e vie di aggiramento",
+      "side": null
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Push: linee lunghe e alture favoriscono gli hitscan",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Push: linee lunghe e alture favoriscono gli hitscan",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Velocità: arriva al robot prima dei nemici",
+      "side": null
+     },
+     {
+      "hero": "Brigitte",
+      "why": "Spazi stretti: mantiene Ispirazione, Raduno forte alle barricate",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "dorado": {
    "features": [
@@ -10120,8 +10401,60 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391182",
     "https://sportskeeda.com/esports/how-play-dorado-map-overwatch-2",
-    "https://overwatch.fandom.com/wiki/Dorado"
-   ]
+    "https://overwatch.fandom.com/wiki/Dorado",
+    "https://gamersdecide.com/articles/overwatch-2-best-maps-for-tanks",
+    "https://zathong.com/overwatch-best-heroes-for-each-map/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Reinhardt",
+      "why": "Prima strettoia: scontro tra tank, combo di ultimate",
+      "side": "attack"
+     },
+     {
+      "hero": "Sigma",
+      "why": "Strettoia iniziale stretta e senza copertura, ultimate efficace",
+      "side": null
+     },
+     {
+      "hero": "Winston",
+      "why": "Ultime sezioni: alture raggiungibili coi tank mobili",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Widowmaker",
+      "why": "Dopo il primo checkpoint: tetti e archi, linee lunghe",
+      "side": null
+     },
+     {
+      "hero": "Pharah",
+      "why": "Ultimi due tratti: cielo alto e buone coperture",
+      "side": null
+     },
+     {
+      "hero": "Echo",
+      "why": "Ultimi due tratti: cielo alto e mobilità aerea",
+      "side": null
+     },
+     {
+      "hero": "Soldier: 76",
+      "why": "Indicato tra i migliori Danni della mappa",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Ana",
+      "why": "Sfrutta le lunghe linee di tiro della prima parte",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "eichenwalde": {
    "features": [
@@ -10147,8 +10480,70 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391311",
     "https://overwatch.fandom.com/wiki/Eichenwalde",
-    "https://www.sportskeeda.com/esports/how-play-eichenwalde-map-overwatch-2"
-   ]
+    "https://www.sportskeeda.com/esports/how-play-eichenwalde-map-overwatch-2",
+    "https://immortalboost.com/blog/overwatch-2/eichenwalde-map-guide/",
+    "https://gamersdecide.com/articles/overwatch-2-best-maps-for-tanks"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Attacco: vie di aggiramento per raggiungere i bersagli chiave",
+      "side": "attack"
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Spinge nei burroni (uccisioni ambientali) e passaggi stretti",
+      "side": null
+     },
+     {
+      "hero": "Orisa",
+      "why": "Spinge i nemici nei burroni",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Genji",
+      "why": "Mobile: aggira e chiude la distanza sui bersagli",
+      "side": "attack"
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Nella composizione d'attacco consigliata",
+      "side": "attack"
+     },
+     {
+      "hero": "Hanzo",
+      "why": "Freccia sonar svela i nemici nei passaggi stretti",
+      "side": "defense"
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Alture difensive con angoli stretti",
+      "side": "defense"
+     },
+     {
+      "hero": "Torbjörn",
+      "why": "Torretta dietro lo scudo per tenere il punto A",
+      "side": "defense"
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Colpo sonoro nei burroni; velocità in attacco",
+      "side": "attack"
+     },
+     {
+      "hero": "Ana",
+      "why": "Nella composizione d'attacco consigliata",
+      "side": "attack"
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "esperanca": {
    "features": [
@@ -10172,8 +10567,65 @@
    "note": "",
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391292",
-    "https://www.sportskeeda.com/esports/how-play-esperana-map-overwatch-2"
-   ]
+    "https://www.sportskeeda.com/esports/how-play-esperana-map-overwatch-2",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://gamespot.com/articles/overwatch-2-push-mode-tips-best-heroes-and-more-strategies/1100-6508126/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Wrecking Ball",
+      "why": "Edifici alti per il rampino, ultimate nega gli aggiramenti",
+      "side": null
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Nella composizione consigliata per la mappa",
+      "side": null
+     },
+     {
+      "hero": "Junker Queen",
+      "why": "Velocità di squadra per il robot e la strettoia del ponte",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Tracer",
+      "why": "Mobilità nel primo scontro e negli aggiramenti",
+      "side": null
+     },
+     {
+      "hero": "Sombra",
+      "why": "Mobilità nel primo scontro e negli aggiramenti",
+      "side": null
+     },
+     {
+      "hero": "Reaper",
+      "why": "Aggira bene nel primo scontro",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Tetto del Café Caravela: ottime linee di tiro",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Velocità: vantaggio importante per il robot",
+      "side": null
+     },
+     {
+      "hero": "Moira",
+      "why": "Nella composizione consigliata per la mappa",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "havana": {
    "features": [
@@ -10200,8 +10652,55 @@
    "sources": [
     "https://www.thegamer.com/overwatch-map-guide-havana/",
     "https://immortalboost.com/blog/overwatch-2/havana-map-guide/",
-    "https://overwatch.fandom.com/wiki/Havana"
-   ]
+    "https://overwatch.fandom.com/wiki/Havana",
+    "https://zathong.com/overwatch-best-heroes-for-each-map/",
+    "https://us.forums.blizzard.com/en/overwatch/t/tips-on-havana-offense/806075"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Sigma",
+      "why": "Barriera nelle strade, assorbe proiettili; tiene le alture",
+      "side": "defense"
+     },
+     {
+      "hero": "Winston",
+      "why": "Dive contro la difesa arroccata sulle alture del punto A",
+      "side": "attack"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Widowmaker",
+      "why": "Linee di tiro enormi, soprattutto sul punto A",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Punto A: alture con colonne in fondo al rettilineo",
+      "side": "defense"
+     },
+     {
+      "hero": "Soldier: 76",
+      "why": "Mappa da lunga distanza",
+      "side": null
+     },
+     {
+      "hero": "Cassidy",
+      "why": "Indicato tra i migliori Danni della mappa",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Baptiste",
+      "why": "Stivali per le alture; regge aggiramenti al punto A",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "hollywood": {
    "features": [
@@ -10227,8 +10726,64 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391316",
     "https://sportskeeda.com/esports/how-play-hollywood-map-overwatch-2",
-    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
-   ]
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://www.esportstales.com/overwatch/best-widowmaker-sniping-spots-hollywood"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Sigma",
+      "why": "Sfrutta corridoi stretti, molto terreno alto e vie di aggiramento",
+      "side": null
+     },
+     {
+      "hero": "D.Va",
+      "why": "Vola sulle piattaforme alte dove si piazzano i Danni",
+      "side": null
+     },
+     {
+      "hero": "Roadhog",
+      "why": "Gancio ai passaggi obbligati, fucile letale nei corridoi stretti",
+      "side": "defense"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Pharah",
+      "why": "Primo punto verticale con coperture: ideale per eroi volanti",
+      "side": null
+     },
+     {
+      "hero": "Echo",
+      "why": "Primo punto verticale con coperture: ideale per eroi volanti",
+      "side": null
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Consigliata dalle guide come Danni principale sulla mappa",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Set western: tante postazioni alte e linee di tiro lunghe",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Baptiste",
+      "why": "Supporto consigliato per la composizione sulla mappa",
+      "side": null
+     },
+     {
+      "hero": "Lúcio",
+      "why": "Supporto consigliato per la composizione sulla mappa",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "ilios": {
    "features": [
@@ -10253,8 +10808,78 @@
    "sources": [
     "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
     "https://www.sportskeeda.com/esports/how-play-ilios-map-overwatch-2",
-    "https://note.com/ow_kinako/n/ne2b19929daf2?hl=en"
-   ]
+    "https://note.com/ow_kinako/n/ne2b19929daf2?hl=en",
+    "https://game8.co/games/Overwatch2/archives/391331",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://immortalboost.com/blog/overwatch-2/ilios-map-complete-guide-layout-locations/",
+    "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types",
+    "https://twinfinite.net/guides/best-overwatch-maps-ranked-worst/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Roadhog",
+      "why": "Molti burroni: gancio per uccisioni ambientali facili",
+      "side": null
+     },
+     {
+      "hero": "Orisa",
+      "why": "Tank consigliato nella composizione migliore per Ilios",
+      "side": null
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Scelta comune sui punti stretti come Rovine",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Genji",
+      "why": "Consigliato nella composizione migliore per Ilios",
+      "side": null
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Consigliata nella composizione migliore per Ilios",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Rovine: terreno adatto a colpi alla testa da lontano",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Rovine: terreno adatto a colpi alla testa da lontano",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "La mappa migliore per spinte nel vuoto: Pozzo e Faro",
+      "side": null
+     },
+     {
+      "hero": "Ana",
+      "why": "Supporto consigliato nella composizione migliore per Ilios",
+      "side": null
+     },
+     {
+      "hero": "Zenyatta",
+      "why": "Scelta comune su tutti e tre i punti",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [
+    {
+     "hero": "Pharah",
+     "why": "Pozzo aperto: può spingere ma è difficile restare al sicuro"
+    }
+   ],
+   "guideUncertain": false
   },
   "junkertown": {
    "features": [
@@ -10278,8 +10903,67 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391166",
     "https://sportskeeda.com/esports/how-play-junkertown-map-overwatch-2",
-    "https://www.invenglobal.com/articles/3019/its-over-anakin-i-have-the-high-ground-overwatch-junkertown-guide"
-   ]
+    "https://www.invenglobal.com/articles/3019/its-over-anakin-i-have-the-high-ground-overwatch-junkertown-guide",
+    "https://www.esportstales.com/overwatch/best-widowmaker-sniping-spots-junkertown",
+    "https://www.pcinvasion.com/?p=341477",
+    "https://www.keengamer.com/articles/guides/overwatch-guide-how-to-attack-and-defend-on-junkertown/",
+    "https://labs.invenglobal.com/articles/3019/its-over-anakin-i-have-the-high-ground-overwatch-junkertown-guide",
+    "https://www.ggrecon.com/guides/overwatch-2-maps-list/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Sigma",
+      "why": "Media/lunga distanza e terreno alto: il migliore in difesa",
+      "side": "defense"
+     },
+     {
+      "hero": "Roadhog",
+      "why": "Scelta comune: corridoi stretti per il gancio",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Ashe",
+      "why": "Prime due sezioni: punti alti e linee di tiro lunghe",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Tante postazioni alte (Piattaforma, Cinema, Balcone)",
+      "side": null
+     },
+     {
+      "hero": "Hanzo",
+      "why": "Linee lunghe all'inizio, buono anche nei passaggi stretti",
+      "side": null
+     },
+     {
+      "hero": "Reaper",
+      "why": "Passaggi stretti e aggiramenti sotto la piattaforma rotante",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Mercy",
+      "why": "Scelta comune: segue i cecchini sui punti alti",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [
+    {
+     "hero": "Reinhardt",
+     "why": "Senza tiro a distanza su linee di tiro lunghe"
+    },
+    {
+     "hero": "Orisa",
+     "why": "Vulnerabile a Danni a distanza e spam senza coperture"
+    }
+   ],
+   "guideUncertain": true
   },
   "kings-row": {
    "features": [
@@ -10303,8 +10987,57 @@
    "sources": [
     "https://sportskeeda.com/esports/how-play-king-s-row-map-overwatch-2",
     "https://immortalboost.com/blog/overwatch-2/kings-row-complete-map-guide/",
-    "https://guides.cheatcc.com/overwatch-guide-walkthrough/guide_sections/king-s-row"
-   ]
+    "https://guides.cheatcc.com/overwatch-guide-walkthrough/guide_sections/king-s-row",
+    "https://game8.co/games/Overwatch2/archives/391314",
+    "https://www.sportskeeda.com/esports/best-overwatch-2-heroes-king-s-row",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://www.ggrecon.com/guides/overwatch-2-maps-list/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Reinhardt",
+      "why": "Strade strette: scudo e Spaccaterra sui passaggi obbligati",
+      "side": "defense"
+     },
+     {
+      "hero": "Orisa",
+      "why": "Difficile da uccidere, blocca il tank nemico in attacco",
+      "side": "attack"
+     },
+     {
+      "hero": "Junker Queen",
+      "why": "Mappa a corto raggio: ferite sempre attive, si cura",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Junkrat",
+      "why": "Danno ad area nei corridoi stretti, mine per i punti alti",
+      "side": null
+     },
+     {
+      "hero": "Reaper",
+      "why": "Scontri ravvicinati e tenuta dei passaggi obbligati",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Primo punto aperto: dalla porta alta dello spawn",
+      "side": "attack"
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Underworld: due burroni per spinte ambientali",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "lijiang-tower": {
    "features": [
@@ -10330,8 +11063,76 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391352",
     "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
-    "https://dignitas.gg/articles/overwatch-maps-and-you-lijiang-tower"
-   ]
+    "https://dignitas.gg/articles/overwatch-maps-and-you-lijiang-tower",
+    "https://www.sportskeeda.com/esports/how-play-lijiang-tower-map-overwatch-2",
+    "https://immortalboost.com/blog/?p=19019",
+    "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Sigma",
+      "why": "Tank consigliato nella composizione migliore per Lijiang",
+      "side": null
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Centro di controllo: corpo a corpo al chiuso",
+      "side": null
+     },
+     {
+      "hero": "Winston",
+      "why": "Tuffo sulle retrovie vicino ai bordi",
+      "side": null
+     },
+     {
+      "hero": "D.Va",
+      "why": "Razzi: errori di posizione diventano cadute nel vuoto",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Reaper",
+      "why": "Usa i punti alti come vie di aggiramento",
+      "side": null
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Danni consigliata nella composizione migliore per Lijiang",
+      "side": null
+     },
+     {
+      "hero": "Genji",
+      "why": "Aggiramenti dai punti alti, scelta comune",
+      "side": null
+     },
+     {
+      "hero": "Pharah",
+      "why": "Colpo concussivo nei burroni di Giardino e Mercato",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Giardino: muri per correre e spinte nel vuoto",
+      "side": null
+     },
+     {
+      "hero": "Baptiste",
+      "why": "Supporto consigliato nella composizione migliore",
+      "side": null
+     },
+     {
+      "hero": "Zenyatta",
+      "why": "Scelta comune sulla mappa",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "midtown": {
    "features": [
@@ -10357,7 +11158,57 @@
     "https://game8.co/games/Overwatch2/archives/391308",
     "https://www.sportskeeda.com/esports/how-play-midtown-map-overwatch-2",
     "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
-   ]
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Sigma",
+      "why": "Barriera nelle strade strette, punti alti del tunnel",
+      "side": null
+     },
+     {
+      "hero": "Zarya",
+      "why": "Utile per spingere sul terreno alto vicino al treno",
+      "side": "attack"
+     },
+     {
+      "hero": "D.Va",
+      "why": "Utile per spingere sul terreno alto vicino al treno",
+      "side": "attack"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Sojourn",
+      "why": "Railgun versatile, scivolata verso i punti alti",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Terreno alto all'ingresso del tunnel per fermare il carico",
+      "side": "defense"
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Grand Central: tanti appostamenti sui passaggi stretti",
+      "side": "defense"
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Baptiste",
+      "why": "Mobilità e controllo d'area su carico e passaggi",
+      "side": null
+     },
+     {
+      "hero": "Lúcio",
+      "why": "Mobilità e disturbo ad area su carico e passaggi",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "neon-junction": {
    "features": [
@@ -10380,8 +11231,19 @@
     "https://overwatch.fandom.com/wiki/Neon_Junction",
     "https://overwatch.blizzard.com/en-us/news/24293050/weekly-recall-neon-junction-ama-recap/",
     "https://us.forums.blizzard.com/en/overwatch/t/neon-junction-tokyo-new-hybrid-map-showmatch-live-now/1020733",
-    "https://us.forums.blizzard.com/en/overwatch/t/i-cant-ever-defend-on-neon-junction/1025894"
-   ]
+    "https://us.forums.blizzard.com/en/overwatch/t/i-cant-ever-defend-on-neon-junction/1025894",
+    "https://liquipedia.net/overwatch/Neon_Junction",
+    "https://esports.gg/news/overwatch/overwatch-neon-junction-map-season-3/",
+    "https://owtv.gg/news/new-hybrid-map-revealed-at-owcs-champions-clash",
+    "https://overwatch.blizzard.com/en-us/news/24293050"
+   ],
+   "strong": {
+    "Tank": [],
+    "Damage": [],
+    "Support": []
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "nepal": {
    "features": [
@@ -10406,8 +11268,75 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391339",
     "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
-    "https://www.pcgamer.com/learn-how-to-play-overwatchs-nepal-map-from-the-pros/"
-   ]
+    "https://www.pcgamer.com/learn-how-to-play-overwatchs-nepal-map-from-the-pros/",
+    "https://immortalboost.com/blog/overwatch-2/nepal-map-guide/",
+    "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Tank consigliato nella composizione migliore per Nepal",
+      "side": null
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Santuario e Villaggio: combattimenti ravvicinati",
+      "side": null
+     },
+     {
+      "hero": "Orisa",
+      "why": "Santuario: spinge i nemici nel pozzo senza fondo",
+      "side": null
+     },
+     {
+      "hero": "D.Va",
+      "why": "Santuario: spinge i nemici nel pozzo senza fondo",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Genji",
+      "why": "Consigliato nella composizione migliore per Nepal",
+      "side": null
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Consigliata nella composizione migliore per Nepal",
+      "side": null
+     },
+     {
+      "hero": "Tracer",
+      "why": "Tempio: molte vie di aggiramento, scelta comune",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Villaggio pieno di muri, pozzo del Santuario per spinte",
+      "side": null
+     },
+     {
+      "hero": "Ana",
+      "why": "Supporto consigliato nella composizione migliore",
+      "side": null
+     },
+     {
+      "hero": "Zenyatta",
+      "why": "Scelta comune sulla mappa",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [
+    {
+     "hero": "Widowmaker",
+     "why": "Villaggio chiusissimo: dominano gli eroi a corto raggio"
+    }
+   ],
+   "guideUncertain": true
   },
   "new-junk-city": {
    "features": [
@@ -10430,8 +11359,50 @@
     "https://overwatch.fandom.com/wiki/New_Junk_City",
     "https://overwatch.blizzard.com/en-us/news/24215719/weekly-recall-flashpoint-map-reworks/",
     "https://www.dualshockers.com/overwatch-2-tips-and-tricks-for-flashpoint/",
-    "https://sportskeeda.com/esports/beginner-tips-new-junk-city-map-overwatch-2"
-   ]
+    "https://sportskeeda.com/esports/beginner-tips-new-junk-city-map-overwatch-2",
+    "https://sportskeeda.com/esports/5-beginner-tips-flashpoint-game-mode-overwatch-2",
+    "https://sportskeeda.com/esports/overwatch-2-new-junk-city-map-how-play-features"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Wrecking Ball",
+      "why": "Punti che si spostano: serve mobilità per arrivare primi",
+      "side": null
+     },
+     {
+      "hero": "Doomfist",
+      "why": "Punti che si spostano: serve mobilità per arrivare primi",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Echo",
+      "why": "Mobile tra i punti e sull'altura del sito centrale",
+      "side": null
+     },
+     {
+      "hero": "Genji",
+      "why": "Mobilità verticale per dominare l'altura centrale",
+      "side": null
+     },
+     {
+      "hero": "Hanzo",
+      "why": "Mobilità verticale per dominare l'altura centrale",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Velocità: porta la squadra al punto prima degli altri",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "new-queen-street": {
    "features": [
@@ -10455,8 +11426,66 @@
    "sources": [
     "https://dotesports.com/overwatch/news/everything-to-know-about-new-queen-street-in-overwatch-2",
     "https://sportskeeda.com/esports/how-play-new-queen-street-map-overwatch-2",
-    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
-   ]
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://game8.co/games/Overwatch2/archives/393849",
+    "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-widowmaker",
+    "https://www.hotspawn.com/overwatch/guide/the-beginners-guide-to-overwatch-map-types"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Sigma",
+      "why": "Tank migliore per tenere i passaggi stretti",
+      "side": null
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Angoli e passaggi obbligati, ultimate ad area",
+      "side": null
+     },
+     {
+      "hero": "Zarya",
+      "why": "Scontri ravvicinati tra i negozi, Gravitone ad area",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Ashe",
+      "why": "Danni consigliata: linee lunghe sul percorso del robot",
+      "side": null
+     },
+     {
+      "hero": "Genji",
+      "why": "Tante vie di aggiramento tra negozi ed edifici",
+      "side": null
+     },
+     {
+      "hero": "Pharah",
+      "why": "Attacca da più angoli e si ripara dietro gli edifici",
+      "side": null
+     },
+     {
+      "hero": "Echo",
+      "why": "Attacca da più angoli e si ripara dietro gli edifici",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Baptiste",
+      "why": "Supporto consigliato nella composizione migliore",
+      "side": null
+     },
+     {
+      "hero": "Lúcio",
+      "why": "Supporto consigliato, scelta comune sulla mappa",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "numbani": {
    "features": [
@@ -10481,8 +11510,75 @@
    "sources": [
     "https://overwatch.fandom.com/wiki/Numbani",
     "https://immortalboost.com/blog/overwatch-2/numbani-map-guide-complete/",
-    "https://us.forums.blizzard.com/en/overwatch/t/how-the-f-do-you-defend-on-numbani/390786?page=2"
-   ]
+    "https://us.forums.blizzard.com/en/overwatch/t/how-the-f-do-you-defend-on-numbani/390786?page=2",
+    "https://icy-veins.com/overwatch/pharah-maps",
+    "https://www.icy-veins.com/overwatch/winston-maps",
+    "https://www.icy-veins.com/overwatch/mercy-maps",
+    "https://www.tentonhammer.com/articles/overwatch-tier-list-numbani.amp",
+    "https://esportstales.com/overwatch/best-widowmaker-sniping-spots-numbani",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://www.well-played.com.au/overwatch-dive-explained/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Mappa grande e divisa: salto per punire cecchini isolati",
+      "side": null
+     },
+     {
+      "hero": "D.Va",
+      "why": "Mappa aperta con vie laterali, ideale per il dive",
+      "side": "attack"
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Scudo e Carica sismica per spinte coordinate",
+      "side": null
+     },
+     {
+      "hero": "Roadhog",
+      "why": "Zone aperte: rampino efficace in difesa",
+      "side": "defense"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Pharah",
+      "why": "Mappa aperta, molte alture e strade per aggirare",
+      "side": null
+     },
+     {
+      "hero": "Reaper",
+      "why": "Molta verticalità per cadere sui nemici da vicino",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Altura principale vede tutto il primo punto",
+      "side": "defense"
+     },
+     {
+      "hero": "Genji",
+      "why": "Parte del dive: vie laterali nelle fasi d'attacco",
+      "side": "attack"
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Mercy",
+      "why": "Mappa aperta: vola tra compagni che combattono su più fronti",
+      "side": null
+     },
+     {
+      "hero": "Lúcio",
+      "why": "Velocità per il dive su mappa aperta",
+      "side": "attack"
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "oasis": {
    "features": [
@@ -10506,8 +11602,77 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391349",
     "https://www.pcgamer.com/overwatch-oasis-tips/",
-    "https://www.dexerto.com/overwatch/little-known-environmental-spot-for-lucio-discovered-in-overwatch-1362472/"
-   ]
+    "https://www.dexerto.com/overwatch/little-known-environmental-spot-for-lucio-discovered-in-overwatch-1362472/",
+    "https://www.redbull.com/int-en/overwatch-tips-to-dominate-on-oasis-like-a-pro",
+    "https://www.fandom.com/articles/1382-oasis-overwatch-map-guide-and-hero-tricks",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Sigma",
+      "why": "Scudo mobile per vie strette e linee di tiro lunghe",
+      "side": null
+     },
+     {
+      "hero": "Orisa",
+      "why": "Ultra efficace sul punto, buona in tutte le fasi",
+      "side": null
+     },
+     {
+      "hero": "Winston",
+      "why": "Raggiunge in fretta le alture di City Center",
+      "side": null
+     },
+     {
+      "hero": "D.Va",
+      "why": "Mobile, conquista presto le alture",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Genji",
+      "why": "Molte vie di aggiramento e alture",
+      "side": null
+     },
+     {
+      "hero": "Pharah",
+      "why": "Cielo alto e strozzature, scavalca le coperture",
+      "side": null
+     },
+     {
+      "hero": "Reaper",
+      "why": "University è molto ravvicinata",
+      "side": null
+     },
+     {
+      "hero": "Junkrat",
+      "why": "Danno ad area devastante su City Center",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Respinta nella fossa di Gardens e nel traffico",
+      "side": null
+     },
+     {
+      "hero": "Ana",
+      "why": "Linee di tiro lunghe, coppia classica con Sigma",
+      "side": null
+     },
+     {
+      "hero": "Mercy",
+      "why": "Coppia con Pharah usata su City Center",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "paraiso": {
    "features": [
@@ -10533,7 +11698,57 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391309",
     "https://www.sportskeeda.com/esports/how-play-paraso-map-overwatch-2"
-   ]
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Salto per chiudere le distanze nelle strade strette",
+      "side": null
+     },
+     {
+      "hero": "D.Va",
+      "why": "Strade strette: scontri ravvicinati",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Genji",
+      "why": "Molte vie di aggiramento verso i bersagli chiave",
+      "side": null
+     },
+     {
+      "hero": "Reaper",
+      "why": "Scontri ravvicinati e aggiramenti nelle stradine",
+      "side": null
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Indicata nella composizione migliore per la mappa",
+      "side": null
+     },
+     {
+      "hero": "Pharah",
+      "why": "Prima metà all'aperto, ampio spazio aereo",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Velocità e respinta nelle strade strette",
+      "side": null
+     },
+     {
+      "hero": "Ana",
+      "why": "Strade strette offrono coperture ai supporti",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "rialto": {
    "features": [
@@ -10559,8 +11774,44 @@
    "sources": [
     "https://www.redbull.com/int-en/overwatch-rialto-tips",
     "https://us.forums.blizzard.com/en/overwatch/t/how-do-you-win-on-rialto/764659",
-    "https://www.gamersdecide.com/articles/overwatch-2-best-heroes-for-each-map"
-   ]
+    "https://www.gamersdecide.com/articles/overwatch-2-best-heroes-for-each-map",
+    "https://www.redbull.com/dk-da/overwatch-rialto-tips",
+    "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
+    "https://wecoach.gg/blog/article/all-overwatch-2-maps-and-how-to-play-them"
+   ],
+   "strong": {
+    "Tank": [],
+    "Damage": [
+     {
+      "hero": "Pharah",
+      "why": "Tetti e canale: plana sopra il ponte",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Rampino per attraversare il canale facilmente",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Ponti e barche: respinte nell'acqua",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [
+    {
+     "hero": "Cassidy",
+     "why": "Poca mobilità per attraversare il canale"
+    },
+    {
+     "hero": "Zenyatta",
+     "why": "Poca mobilità per attraversare il canale"
+    }
+   ],
+   "guideUncertain": true
   },
   "route-66": {
    "features": [
@@ -10585,8 +11836,77 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391250",
     "https://www.metabomb.net/overwatch/map-guides/overwatch-route-66-map-guide",
-    "https://note.com/ow_kinako/n/ne56271d22dc4?hl=en"
-   ]
+    "https://note.com/ow_kinako/n/ne56271d22dc4?hl=en",
+    "https://sportskeeda.com/esports/how-play-route-66-map-overwatch-2",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-lucio",
+    "https://breezewiki.discard.no/overwatch/wiki/Route_66"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Salto per raggiungere i bersagli sulle alture",
+      "side": "attack"
+     },
+     {
+      "hero": "Orisa",
+      "why": "Mappa da lunga distanza, ultra forte sul carico",
+      "side": null
+     },
+     {
+      "hero": "Sigma",
+      "why": "Scudo e proiettili per le linee di tiro lunghe",
+      "side": null
+     },
+     {
+      "hero": "Doomfist",
+      "why": "Distributore: spinge i nemici giù dalla mappa",
+      "side": "defense"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Widowmaker",
+      "why": "Tetti piatti con linee di tiro lunghe",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Sfrutta le alture e i tetti",
+      "side": null
+     },
+     {
+      "hero": "Sojourn",
+      "why": "Indicata nella composizione d'attacco",
+      "side": "attack"
+     },
+     {
+      "hero": "Junkrat",
+      "why": "Area finale stretta e chiusa",
+      "side": "defense"
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Ana",
+      "why": "Linee di tiro lunghe, composizione d'attacco",
+      "side": "attack"
+     },
+     {
+      "hero": "Lúcio",
+      "why": "Pareti lunghe per correre e tornare sul carico",
+      "side": null
+     },
+     {
+      "hero": "Baptiste",
+      "why": "Mobile e buono sulle alture",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "runasapi": {
    "features": [
@@ -10611,8 +11931,47 @@
     "https://esports.gg/news/overwatch/everything-we-know-about-the-new-runasapi-push-map-coming-to-overwatch-2/",
     "https://overwatch.fandom.com/wiki/Runasapi",
     "https://overwatchmaps.gg/runasapi/guide",
-    "https://overwatchcentral.gg/runasapi/"
-   ]
+    "https://overwatchcentral.gg/runasapi/",
+    "https://gamespot.com/articles/overwatch-2-push-mode-tips-best-heroes-and-more-strategies/1100-6508126/",
+    "https://esports.gg/news/overwatch/everything-we-know-about-the-new-runasapi-push-map-coming-to-overwatch-2",
+    "https://www.gfinityesports.com/article/overwatch-2-runasapi-release-date-mode-layout",
+    "https://www.thegamer.com/overwatch-2-tips-for-playing-push/"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Junker Queen",
+      "why": "Push in generale: tank da rush con Lúcio",
+      "side": null
+     },
+     {
+      "hero": "Sigma",
+      "why": "Push in generale: scudo per composizioni a distanza",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Sojourn",
+      "why": "Push in generale: linee lunghe e alture",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Push in generale: linee lunghe e alture",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Push in generale: velocità per composizioni rush",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "samoa": {
    "features": [
@@ -10636,8 +11995,82 @@
    "sources": [
     "https://www.sportskeeda.com/esports/overwatch-2-samoa-guide-how-play-best-heroes",
     "https://www.sportskeeda.com/esports/overwatch-2-best-dive-heroes-samoa-map",
-    "https://esports.gg/news/overwatch/overwatch-2-reveals-samoa-map-details-during-owl-grand-finals-2023/"
-   ]
+    "https://esports.gg/news/overwatch/overwatch-2-reveals-samoa-map-details-during-owl-grand-finals-2023/",
+    "https://www.sportskeeda.com/esports/best-tank-heroes-dominate-samoa-overwatch-2",
+    "https://sportskeeda.com/esports/5-best-support-heroes-dominate-samoa-overwatch-2",
+    "https://www.sportskeeda.com/esports/overwatch-2-5-best-poke-heroes-samoa-map",
+    "https://www.sportskeeda.com/esports/overwatch-2-five-best-hitscan-heroes-samoa-map"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Orisa",
+      "why": "Barriera crea copertura attorno al punto circolare",
+      "side": null
+     },
+     {
+      "hero": "Winston",
+      "why": "Spazi aperti, alture e salti: ideale per dive",
+      "side": null
+     },
+     {
+      "hero": "D.Va",
+      "why": "Tank dive adatto alle alture della mappa",
+      "side": null
+     },
+     {
+      "hero": "Sigma",
+      "why": "Tra i migliori eroi da poke sulla mappa",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Genji",
+      "why": "Alture e spazi aperti per la sua agilità",
+      "side": null
+     },
+     {
+      "hero": "Soldier: 76",
+      "why": "Tante alture per hitscan (Downtown, Beach)",
+      "side": null
+     },
+     {
+      "hero": "Ashe",
+      "why": "Coach gun per salire sulle alture",
+      "side": null
+     },
+     {
+      "hero": "Tracer",
+      "why": "Traslazione per raggiungere i bersagli nel dive",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Lúcio",
+      "why": "Mappa Control: aggressivo e torna subito in squadra",
+      "side": null
+     },
+     {
+      "hero": "Kiriko",
+      "why": "Tra le migliori per le composizioni su Samoa",
+      "side": null
+     },
+     {
+      "hero": "Mercy",
+      "why": "Vola tra i Danni, forte sui punti Control",
+      "side": null
+     },
+     {
+      "hero": "Ana",
+      "why": "Funziona se ben posizionata sulle alture",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": false
   },
   "shambali-monastery": {
    "features": [
@@ -10659,8 +12092,35 @@
    "note": "Le guide non indicano uno stile di squadra preferito.",
    "sources": [
     "https://hard-drive.net/guides/overwatch-2/overwatch-2-how-to-win-on-shambali-monastery-best-strategy/",
-    "https://gamerant.com/overwatch-2-shambali-monastery-preview/"
-   ]
+    "https://gamerant.com/overwatch-2-shambali-monastery-preview/",
+    "https://hard-drive.net/?p=20275",
+    "https://liquipedia.net/overwatch/Shambali_Monastery",
+    "https://overwatch.blizzard.com/en-us/news/23878812/what-to-expect-for-season-2-ramattra-shambali-monastery-and-the-battle-for-olympus/"
+   ],
+   "strong": {
+    "Tank": [],
+    "Damage": [
+     {
+      "hero": "Reaper",
+      "why": "Vie laterali per aggirare e fuggire",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Balconi e lunghe linee di tiro sulla strada",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Moira",
+      "why": "Vie laterali per aggirare, Svanire per fuggire",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [],
+   "guideUncertain": true
   },
   "suravasa": {
    "features": [
@@ -10683,8 +12143,87 @@
    "sources": [
     "https://www.sportskeeda.com/esports/overwatch-2-suravasa-map-how-play-features",
     "https://overwatch.blizzard.com/en-us/news/24215719/weekly-recall-flashpoint-map-reworks/",
-    "https://liquipedia.net/overwatch/Suravasa"
-   ]
+    "https://liquipedia.net/overwatch/Suravasa",
+    "https://sportskeeda.com/esports/beginner-tips-suravasa-map-overwatch-2"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "D.Va",
+      "why": "Dive e Autodistruzione lanciata dall'alto",
+      "side": null
+     },
+     {
+      "hero": "Reinhardt",
+      "why": "Composizione brawl compatta funziona bene",
+      "side": null
+     },
+     {
+      "hero": "Wrecking Ball",
+      "why": "Mobilità per arrivare primi al punto nuovo",
+      "side": null
+     },
+     {
+      "hero": "Doomfist",
+      "why": "Mobilità tra i punti di una mappa enorme",
+      "side": null
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Pharah",
+      "why": "Mappa aperta e verticale: attacchi dall'alto",
+      "side": null
+     },
+     {
+      "hero": "Echo",
+      "why": "Aerea e mobile tra i cinque punti",
+      "side": null
+     },
+     {
+      "hero": "Reaper",
+      "why": "Composizione brawl ravvicinata",
+      "side": null
+     },
+     {
+      "hero": "Genji",
+      "why": "Dive: isola i bersagli poco mobili",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Mercy",
+      "why": "In volo è difficile da colpire da terra",
+      "side": null
+     },
+     {
+      "hero": "Lúcio",
+      "why": "Velocità tra i punti e per il brawl",
+      "side": null
+     },
+     {
+      "hero": "Baptiste",
+      "why": "Indicato nella composizione brawl",
+      "side": null
+     }
+    ]
+   },
+   "avoid": [
+    {
+     "hero": "Widowmaker",
+     "why": "Poche alture da cui tirare"
+    },
+    {
+     "hero": "Ana",
+     "why": "Poche alture e lenta tra i punti"
+    },
+    {
+     "hero": "Sigma",
+     "why": "Lento negli spostamenti tra i punti"
+    }
+   ],
+   "guideUncertain": false
   },
   "watchpoint-gibraltar": {
    "features": [
@@ -10709,9 +12248,84 @@
    "sources": [
     "https://game8.co/games/Overwatch2/archives/391265",
     "https://www.sportskeeda.com/esports/how-play-watchpoint-gibraltar-map-overwatch-2",
-    "https://www.esportstales.com/overwatch/best-widowmaker-sniping-spots-watchpoint-gibraltar"
-   ]
+    "https://www.esportstales.com/overwatch/best-widowmaker-sniping-spots-watchpoint-gibraltar",
+    "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/",
+    "https://www.icy-veins.com/overwatch/winston-maps",
+    "https://www.icy-veins.com/overwatch/wrecking-ball-maps",
+    "https://www.icy-veins.com/overwatch/pharah-maps",
+    "https://www.icy-veins.com/overwatch/mercy-maps"
+   ],
+   "strong": {
+    "Tank": [
+     {
+      "hero": "Winston",
+      "why": "Salto sulle alture, punisce Widowmaker",
+      "side": "attack"
+     },
+     {
+      "hero": "Wrecking Ball",
+      "why": "Mappa più grande: rampino, caccia la Widow",
+      "side": null
+     },
+     {
+      "hero": "Sigma",
+      "why": "Copertura su linee lunghe e strozzature",
+      "side": "defense"
+     }
+    ],
+    "Damage": [
+     {
+      "hero": "Pharah",
+      "why": "Mappa enorme, nemici divisi: bersagli facili",
+      "side": null
+     },
+     {
+      "hero": "Widowmaker",
+      "why": "Tetto della navetta e uscita alta dal respawn",
+      "side": null
+     },
+     {
+      "hero": "Echo",
+      "why": "Mobilità verticale, tetto della navetta",
+      "side": null
+     },
+     {
+      "hero": "Soldier: 76",
+      "why": "Hitscan forte dal tetto della navetta",
+      "side": null
+     }
+    ],
+    "Support": [
+     {
+      "hero": "Ana",
+      "why": "Linee di tiro lunghe, in attacco e in difesa",
+      "side": null
+     },
+     {
+      "hero": "Mercy",
+      "why": "Mappa enorme: Angelo custode tra compagni sparsi",
+      "side": "attack"
+     },
+     {
+      "hero": "Baptiste",
+      "why": "Composizione difensiva su linee lunghe",
+      "side": "defense"
+     }
+    ]
+   },
+   "avoid": [
+    {
+     "hero": "Reinhardt",
+     "why": "Mappa che premia il tiro da lontano"
+    },
+    {
+     "hero": "Zarya",
+     "why": "Mappa che premia il tiro da lontano"
+    }
+   ],
+   "guideUncertain": false
   }
  },
- "_researched": "2026-10-05"
+ "_researched": "2026-10-05",
+ "_mapsResearched": "2026-10-06"
 }

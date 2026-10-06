@@ -1,4 +1,5 @@
-import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES } from "./recommend.js";
+import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES,
+  guideBanSuggestions, guideDetails, guideStars } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
 
@@ -106,6 +107,8 @@ const divFiles = {}; // chiave divisione → contenuto del file (o null se non d
 const divData = {}; // chiave divisione → dati generali uniti a quelli della divisione
 
 const saveProfile = () => store.set("owc.profile", profile);
+// "Solo guide e pro": consigli e ban senza le statistiche di counterwatch (servono la teoria e le mappe studiate)
+const guideMode = () => !!profile.guideOnly && !!T;
 const saveMatch = () => store.set("owc.match", match);
 
 // ---------- volti degli eroi ----------
@@ -268,6 +271,7 @@ function playerData(i) {
 
 function dataLabel(i) {
   const p = profile.players[i];
+  if (guideMode()) return "solo guide e giocatori forti (niente statistiche)";
   if (data?.filter?.gameType !== "Ranked") return "tutte le partite";
   if (!p.rank) return "Ranked, tutte le divisioni";
   return playerData(i) === data ? `Ranked, tutte le divisioni (dati ${p.rank} non disponibili)`
@@ -323,7 +327,7 @@ function compute() {
   }));
   return recommendTeam(data, {
     players, mapSlug: match.mapSlug, side: match.side, bans: match.bans, enemies: match.enemies, allies: match.allies,
-    theory: T, useTheory: !!profile.useTheory,
+    theory: T, useTheory: !!profile.useTheory, guideOnly: guideMode(),
   });
 }
 
@@ -337,7 +341,8 @@ function nextRole(i) {
 }
 
 const SHOWN = 3;
-const est = (r) => `${(r.estimate * 100).toFixed(1)}%`;
+// stima in percentuale; in modalità guide una valutazione a stelle (niente numeri delle statistiche)
+const est = (r) => (r.estimate == null ? `guide ${"★".repeat(guideStars(r)) || "–"}` : `${(r.estimate * 100).toFixed(1)}%`);
 
 const pctTxt = (d) => `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)}%`;
 
@@ -389,21 +394,30 @@ function openDetails(i, row) {
   const p = profile.players[i];
   const prof = heroProfile(playerData(i), row.hero.id, Infinity);
   const th = heroTheory(playerData(i), T, row.hero);
-  const sum = breakdown(row, partnersOf(i));
+  const guide = !!row.guide;
+  const sum = guide ? [] : breakdown(row, partnersOf(i));
+  // mappe dove le guide lo consigliano o lo sconsigliano (theory.json → _maps)
+  const onMaps = (key) => data.maps.flatMap((m) => {
+    const t = T?.maps?.[m.slug];
+    const x = key === "strong" ? (t?.strong?.[row.hero.role] ?? []).find((y) => y.hero === row.hero.name)
+      : (t?.avoid ?? []).find((y) => y.hero === row.hero.name);
+    return x ? [{ name: m.name, why: x.why + (x.side ? ` (${x.side === "attack" ? "attacco" : "difesa"})` : "") }] : [];
+  });
   $("#t-why").textContent = tr(`Perché ${row.hero.name}`);
   fill($("#why-body"),
     el("div", { class: "why-head" }, face(row.hero),
       el("div", {}, el("div", { class: "pick-name" }, row.hero.name),
-        el("div", { class: "muted" }, `per ${p.name} · stima ${est(row)}`),
+        el("div", { class: "muted" }, `per ${p.name} · ${guide ? "valutazione" : "stima"} ${est(row)}`),
         el("div", { class: "muted small" }, `dati: ${dataLabel(i)}`))),
-    el("p", { class: "why-sum" }, sum.map((b, k) => [k ? " · " : null, el("span", { class: b.good ? "good" : "bad" }, b.text)])),
+    sum.length ? el("p", { class: "why-sum" }, sum.map((b, k) => [k ? " · " : null, el("span", { class: b.good ? "good" : "bad" }, b.text)])) : null,
     el("div", { class: "guide-row" }, el("button", { type: "button", class: "btn guide-btn", onclick: () => openGuide(i, row.hero) },
       icon("target"), "Come giocarla in questa partita")),
     el("h3", { class: "why-title" }, "Perché in questa partita"),
-    el("ul", { class: "why-list" }, details(row).map((d) =>
+    el("ul", { class: "why-list" }, (guide ? guideDetails(row) : details(row)).map((d) =>
       el("li", { class: `${d.good ? "good" : "bad"}${d.kind === "teoria" ? " is-theory" : ""}` }, d.kind === "teoria" ? [theoryBadge(), " "] : null, d.text))),
-    el("h3", { class: "why-title" }, "Statistiche Ranked"),
-    el("div", { class: "prof-grid" },
+    // modalità "solo guide": niente statistiche di counterwatch
+    guide ? null : el("h3", { class: "why-title" }, "Statistiche Ranked"),
+    guide ? null : el("div", { class: "prof-grid" },
       profileSection("Forte contro", prof.strongVs, "hero"),
       profileSection("In difficoltà contro", prof.weakVs, "hero"),
       profileSection("Mappe migliori", prof.bestMaps, "map"),
@@ -413,6 +427,8 @@ function openDetails(i, row) {
     th.style ? el("p", { class: "theory-style" },
       el("b", {}, `Stile ${STYLE_IT[th.style]}`), `: ${STYLE_DESC[th.style]} (classificazione di counterwatch).`) : null,
     el("div", { class: "prof-grid theory-grid" },
+      onMaps("strong").length ? theorySection("Consigliato dalle guide su", onMaps("strong")) : null,
+      onMaps("avoid").length ? theorySection("Sconsigliato su", onMaps("avoid")) : null,
       theorySection("Sinergizza con", th.synergies),
       theorySection("Countera bene", th.counters),
       theorySection("Viene counterato da", th.counteredBy)),
@@ -451,7 +467,7 @@ function openGuide(i, hero) {
   const g = playGuide(playerData(i), T, {
     hero, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies: match.allies,
     partners: partnersOf(i).map((x) => x.hero).filter((h) => sid(h.id) !== sid(hero.id)),
-    rows,
+    rows, guide: guideMode(),
   });
   const brief = g.sections.find((s) => s.summary);
   const rest = g.sections.filter((s) => !s.summary);
@@ -553,7 +569,7 @@ function pickCard(p, i) {
   if (!top) return el("article", { class: "pick empty", style }, head, el("p", { class: "pick-why" }, "Nessun eroe disponibile"));
   const note = lastDuo.notes?.[i];
   const why = match.enemies.length ? null : headline(top, partnersOf(i));
-  const sw = took ? swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies }) : null;
+  const sw = took ? swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() }) : null;
   const alts = took ? [] : rows.slice(1, SHOWN);
   return el("article", { class: `pick glass${took ? " took" : ""}`, style, "aria-label": `${p.name}: ${took ? "ha preso" : "consigliato"} ${top.hero.name}` },
     head,
@@ -617,14 +633,19 @@ function renderBanRecs() {
   const players = profile.players.map((p, i) => ({
     role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites, data: playerData(i), picked: match.picked[i],
   }));
+  const guide = guideMode();
   const { team } = recommendTeam(data, {
     players, mapSlug: match.mapSlug, side: match.side, bans: [], enemies: [], allies: match.allies, theory: T, useTheory: !!profile.useTheory,
+    guideOnly: guide,
   });
-  const rec = banSuggestions([...new Set(profile.players.map((p, i) => playerData(i)))], {
-    mapSlug: match.mapSlug,
+  const opts = {
+    mapSlug: match.mapSlug, side: match.side,
     ours: team.filter(Boolean).map((h) => h.id),
     keep: [...profile.players.flatMap((p) => p.favorites), ...match.picked.filter(Boolean), ...match.allies],
-  });
+  };
+  const rec = guide ? guideBanSuggestions(data, T, opts) : banSuggestions([...new Set(profile.players.map((p, i) => playerData(i)))], opts);
+  $(".br-sub", box).textContent = guide ? "Forti su questa mappa per guide e giocatori forti, e contro i vostri eroi"
+    : "Forti su questa mappa e contro i vostri eroi";
   const banned = new Set(match.bans.map(sid));
   $("#t-ban-recs").textContent = `Ban consigliati per ${map.name}`;
   fill($("#ban-recs-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
@@ -632,8 +653,8 @@ function renderBanRecs() {
     el("div", { class: "br-heroes" }, rec[role].map((r) => {
       const id = sid(r.hero.id);
       const on = banned.has(id);
-      const why = [r.strength >= 0.003 ? `forte su ${map.name}` : null,
-        r.beats.length ? `batte ${r.beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || `tra i migliori su ${map.name}`;
+      const why = r.why ?? ([r.strength >= 0.003 ? `forte su ${map.name}` : null,
+        r.beats.length ? `batte ${r.beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || `tra i migliori su ${map.name}`);
       return el("button", {
         type: "button", class: `hero${on ? " in-bans" : ""}`, "data-id": id, "aria-pressed": String(on), title: why,
         "aria-label": `${on ? "Bannato" : "Banna"} ${r.hero.name}: ${why}`, onclick: () => toggleIn("bans", id),
@@ -966,10 +987,16 @@ function renderProfile() {
       onclick: () => { profile.onlyFavorites = !profile.onlyFavorites; saveProfile(); render(); },
     }, "Suggerisci solo eroi preferiti"),
     el("button", {
+      type: "button", class: "toggle wide", id: "guide-only", "aria-pressed": String(!!profile.guideOnly),
+      onclick: () => { profile.guideOnly = !profile.guideOnly; saveProfile(); render(); },
+    }, "Consigli solo da guide e pro (senza statistiche)"),
+    profile.guideOnly ? null : el("button", {
       type: "button", class: "toggle wide", "aria-pressed": String(!!profile.useTheory),
       onclick: () => { profile.useTheory = !profile.useTheory; saveProfile(); render(); },
     }, "Usa anche la teoria nei consigli"),
     el("p", { class: "muted small" },
+      "Solo guide e pro: eroi e ban scelti senza le statistiche di counterwatch, da ciò che dicono guide, coach e giocatori " +
+      "forti su mappe, counter e sinergie; al posto della percentuale vedi una valutazione a stelle. " +
       "Teoria: stili Rush/Dive/Poke e counter noti da guide e siti. Spenta si vede ma non cambia la classifica; " +
       "accesa aggiunge un piccolo peso (±0,5% per indicazione). " +
       "Solo preferiti: vale per tutti, a ognuno si consiglia solo tra i suoi preferiti del ruolo scelto. " +

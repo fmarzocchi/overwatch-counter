@@ -13,7 +13,7 @@
 // onlyFavorites: si consiglia solo tra i preferiti del giocatore; se nessun preferito è
 // disponibile (ruolo, ban, alleati) si torna a tutti gli eroi e lo si segnala in notes.
 
-import { theoryForPick } from "./theory.js";
+import { theoryForPick, mapFit, GUIDE_POINTS, FEATURE_IT } from "./theory.js";
 
 export const SYNERGY_WEIGHT = 0.5;
 export const FAVORITE_BONUS = 0.01;
@@ -44,7 +44,7 @@ export function recommend(
   data,
   {
     role = null, mapSlug = null, side = null, enemies = [], allies = [], bans = [], favorites = [], onlyFavorites = false,
-    theory = null, useTheory = false,
+    theory = null, useTheory = false, guideOnly = false,
   } = {},
 ) {
   const map = mapSlug ? data.maps.find((m) => m.slug === mapSlug) : null;
@@ -57,6 +57,7 @@ export function recommend(
     .filter((h) => (!role || h.role === role) && !excluded.has(sid(h.id)) && (!onlyFavorites || fav.has(sid(h.id))))
     .map((h) => {
       const id = sid(h.id);
+      if (guideOnly) return guideRow(data, theory, h, { map, useSide, enemies, allies, fav, byId });
       const baseWr = map?.winRates?.[id] ?? data.overall?.[id] ?? 0.5;
       const base = baseWr - 0.5;
 
@@ -136,6 +137,74 @@ export function banSuggestions(datasets, { mapSlug = null, ours = [], keep = [],
     .sort((a, b) => b.score - a.score || a.hero.name.localeCompare(b.hero.name)).slice(0, perRole)]));
 }
 
+// Modalità "solo guide e pro" (guideOnly): nessuna statistica di counterwatch. Punti (non percentuali):
+//   mappa    = mapFit(): consigliato +2 / sconsigliato −2 dalle guide, stile e caratteristiche della mappa
+//   contro   = +1 per ogni avversario che l'eroe batte in teoria, −1 per chi lo batte
+//   con      = +0.5 per ogni alleato con cui sinergizza in teoria
+//   lato     = la stessa regola su attacco/difesa (±0.5), pref = preferito +0.5
+// estimate = null: il riquadro mostra una valutazione a stelle invece della percentuale.
+function guideRow(data, theory, h, { map, useSide, enemies, allies, fav, byId }) {
+  const id = sid(h.id);
+  const fit = mapFit(theory, map?.slug, h, useSide);
+  const th = theory ? theoryForPick(data, theory, h, { enemies, mates: allies }) : null;
+  const mappa = map ? fit.points : 0;
+  const contro = th ? GUIDE_POINTS.beats * (th.beats.length - th.beatenBy.length) : 0;
+  const con = th ? GUIDE_POINTS.synergy * th.withMates.length : 0;
+  const lato = useSide ? sideBonus(h, useSide) / SIDE_WEIGHT : 0;
+  const pref = fav.has(id) ? GUIDE_POINTS.favorite : 0;
+  const score = mappa + contro + con + lato + pref;
+  return {
+    hero: h, score, estimate: null, guide: { mappa, contro, con, lato, map: fit, score: score - pref },
+    parts: { base: mappa, contro, con, lato, pref, teoria: 0 }, theory: th, baseLabel: map ? map.name : "generale",
+    side: useSide, favorite: pref > 0, baseWr: null,
+    // avversari senza numeri: "Batte/Teme" del riquadro si basa solo sulla teoria
+    vs: enemies.map((e) => (byId[sid(e)] ? { hero: byId[sid(e)], delta: 0 } : null)).filter(Boolean),
+    withAllies: [],
+  };
+}
+
+// valutazione a stelle (modalità guide): 3 = forte sulla mappa e/o contro gli avversari secondo le guide
+export function guideStars(row) {
+  const v = row?.guide?.score ?? 0;
+  return v >= 3 ? 3 : v >= 1.5 ? 2 : v >= 0.5 ? 1 : 0;
+}
+
+// perché, in modalità guide: le stesse righe di details() ma solo dalle guide
+export function guideDetails(row) {
+  const g = row.guide;
+  if (!g) return [];
+  const out = [];
+  if (g.map.strong) out.push({ good: true, kind: "teoria", text: `consigliato su ${row.baseLabel}: ${g.map.strong.why}` });
+  if (g.map.avoid) out.push({ good: false, kind: "teoria", text: `sconsigliato su ${row.baseLabel}: ${g.map.avoid.why}` });
+  if (g.map.style) out.push({ good: true, kind: "teoria", text: `stile adatto a ${row.baseLabel}` });
+  if (g.map.likes.length) out.push({ good: true, kind: "teoria", text: `la mappa lo favorisce (${g.map.likes.map((f) => FEATURE_IT[f] ?? f).join(", ")})` });
+  if (g.map.dislikes.length) out.push({ good: false, kind: "teoria", text: `la mappa lo sfavorisce (${g.map.dislikes.map((f) => FEATURE_IT[f] ?? f).join(", ")})` });
+  for (const b of row.theory?.beats ?? []) out.push({ good: true, kind: "teoria", text: `batte ${b.name}: ${b.why}` });
+  for (const b of row.theory?.beatenBy ?? []) out.push({ good: false, kind: "teoria", text: `soffre ${b.name}: ${b.why}` });
+  for (const w of row.theory?.withMates ?? []) out.push({ good: true, kind: "teoria", text: `con ${w.name}: ${w.why}` });
+  if (g.lato) out.push({ good: g.lato > 0, kind: "teoria", text: `${row.side === "attack" ? "attacco" : "difesa"} (regola sullo stile)` });
+  return out;
+}
+
+// Ban consigliati in modalità guide: forti sulla mappa per le guide (mapFit) + quanti dei vostri eroi battono in teoria.
+export function guideBanSuggestions(data, theory, { mapSlug = null, side = null, ours = [], keep = [], perRole = BANS_PER_ROLE } = {}) {
+  const byId = Object.fromEntries(data.heroes.map((h) => [sid(h.id), h]));
+  const mine = [...new Set(ours.map(sid))].map((o) => byId[o]).filter(Boolean);
+  const skip = new Set([...keep.map(sid), ...mine.map((h) => sid(h.id))]);
+  const rows = data.heroes.filter((h) => !skip.has(sid(h.id))).map((h) => {
+    const fit = mapFit(theory, mapSlug, h, side);
+    const t = theory?.idx?.[h.name];
+    const beats = t ? mine.filter((m) => t.counters.has(m.name)) : [];
+    const strength = fit.points;
+    const threat = GUIDE_POINTS.beats * beats.length;
+    const why = [fit.strong ? `per le guide è forte qui: ${fit.strong.why}` : null,
+      beats.length ? `batte ${beats.map((x) => x.name).join(" e ")}` : null].filter(Boolean).join("; ");
+    return { hero: h, score: strength + threat, strength, threat, beats, why };
+  });
+  return Object.fromEntries(BAN_ROLES.map((role) => [role, rows.filter((r) => r.hero.role === role)
+    .sort((a, b) => b.score - a.score || a.hero.name.localeCompare(b.hero.name)).slice(0, perRole)]));
+}
+
 // Squadra di 1–5 giocatori. players: [{role, favorites, onlyFavorites, data?, picked?}, …]; il resto come recommend().
 // data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.
 // picked: eroe GIÀ PRESO da quel giocatore → resta fisso, conta come alleato per gli altri e la sua lista
@@ -164,6 +233,11 @@ export function recommendTeam(data, { players = [], ...ctx } = {}) {
     return p;
   });
   const synOf = (a, b) => {
+    if (ctx.guideOnly) {
+      const ha = byId[sid(a)], hb = byId[sid(b)];
+      const ta = ctx.theory?.idx?.[ha?.name];
+      return ha && hb && ta?.synergies.has(hb.name) ? GUIDE_POINTS.synergy : 0;
+    }
     const v = pairValue(data.synergies, a, b);
     return v === null ? 0 : (v - 0.5) * SYNERGY_WEIGHT;
   };
@@ -319,6 +393,13 @@ export function matchups(row, max = 3) {
 // (i numeri restano nel dettaglio). null se non c'è un motivo netto.
 export function headline(row, partners = []) {
   if (!row) return null;
+  if (row.guide) {
+    if (row.guide.map.strong) return `Consigliato su ${row.baseLabel}`;
+    const mate = (row.theory?.withMates ?? [])[0];
+    if (mate) return `Bene con ${mate.name}`;
+    if (row.guide.map.style || row.guide.map.likes.length) return `Adatto a ${row.baseLabel}`;
+    return row.favorite ? "Tra i tuoi preferiti" : null;
+  }
   if (row.parts.base >= 0.01) return row.baseLabel === "generale" ? "Tra i più forti in generale" : `Forte su ${row.baseLabel}`;
   const mates = (Array.isArray(partners) ? partners : [partners]).filter(Boolean);
   const best = row.withAllies

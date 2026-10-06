@@ -4,8 +4,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected, swapAdvice,
+  mapFit, GUIDE_POINTS,
 } from "../app/theory.js";
-import { recommend, recommendDuo, recommendTeam, details } from "../app/recommend.js";
+import { recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, guideStars, headline } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
 const hero = (name) => data.heroes.find((h) => h.name === name) ?? assert.fail(`eroe mancante: ${name}`);
@@ -251,4 +252,70 @@ test("come giocarla: le abilità per i compagni puntano agli alleati, quelle off
   assert.equal(allyDirected(abil("Sigma", "Kinetic Grasp")), false);
   assert.equal(allyDirected(abil("Zenyatta", "Orb of Discord")), false);
   assert.equal(allyDirected(abil("Mercy", "Caduceus Staff")), true);
+});
+
+// ---------- modalità "solo guide e pro" ----------
+const GUIDE_RAW = {
+  _maps: {
+    "kings-row": {
+      features: ["close-quarters", "chokepoints"], goodStyles: ["RUSH"],
+      strong: { Tank: [{ hero: "Reinhardt", why: "Spazi stretti, scudo e martello", side: null }],
+        Damage: [{ hero: "Mei", why: "Muro sulle strettoie", side: "defense" }], Support: [{ hero: "Lúcio", why: "Velocità per il rush", side: null }] },
+      avoid: [{ hero: "Widowmaker", why: "Poche linee lunghe" }, { hero: "Pharah", why: "Tetti bassi" }],
+    },
+  },
+  Reinhardt: { counters: [{ hero: "Genji", why: "lo schiaccia da vicino" }] },
+  Winston: { counteredBy: [{ hero: "Reaper", why: "danni ravvicinati" }] },
+};
+
+test("guide: mapFit premia i consigliati, penalizza gli sconsigliati, rispetta il lato", () => {
+  const TT = buildTheory(data, GUIDE_RAW, null);
+  const rein = mapFit(TT, "kings-row", hero("Reinhardt"));
+  assert.ok(rein.strong && rein.points >= GUIDE_POINTS.strong, JSON.stringify(rein));
+  const widow = mapFit(TT, "kings-row", hero("Widowmaker"));
+  assert.ok(widow.avoid && widow.points <= -GUIDE_POINTS.avoid + 1, JSON.stringify(widow));
+  assert.ok(mapFit(TT, "kings-row", hero("Mei"), "defense").strong);
+  assert.equal(mapFit(TT, "kings-row", hero("Mei"), "attack").strong, null, "consigliato solo in difesa");
+  assert.equal(mapFit(TT, null, hero("Mei")).points, 0);
+});
+
+test("guide: i consigli non dipendono dalle statistiche (stesse scelte con numeri stravolti)", () => {
+  const TT = buildTheory(data, GUIDE_RAW, null);
+  const scrambled = {
+    ...data,
+    overall: Object.fromEntries(Object.keys(data.overall).map((k, i) => [k, 0.3 + ((i * 37) % 40) / 100])),
+    counters: Object.fromEntries(Object.entries(data.counters).map(([h, row]) => [h, Object.fromEntries(Object.keys(row).map((o, i) => [o, 0.2 + ((i * 13) % 60) / 100]))])),
+    maps: data.maps.map((m) => ({ ...m, winRates: Object.fromEntries(Object.keys(m.winRates).map((k, i) => [k, 0.35 + ((i * 7) % 30) / 100])) })),
+  };
+  const ctx = { mapSlug: "kings-row", enemies: [id("Genji")], theory: TT, guideOnly: true };
+  for (const role of ["Tank", "Damage", "Support"]) {
+    const a = recommend(data, { ...ctx, role }).map((r) => r.hero.name);
+    const b = recommend(scrambled, { ...ctx, role }).map((r) => r.hero.name);
+    assert.deepEqual(a, b, role);
+  }
+  const tanks = recommend(data, { ...ctx, role: "Tank" });
+  assert.equal(tanks[0].hero.name, "Reinhardt", "consigliato sulla mappa e batte Genji");
+  assert.equal(tanks[0].estimate, null, "niente percentuale");
+  assert.equal(guideStars(tanks[0]), 3);
+  assert.equal(headline(tanks[0]), "Consigliato su King's Row");
+  assert.ok(guideDetails(tanks[0]).every((d) => d.kind === "teoria") && guideDetails(tanks[0]).some((d) => /batte Genji/.test(d.text)));
+  const dmg = recommend(data, { ...ctx, role: "Damage" }).map((r) => r.hero.name);
+  assert.ok(dmg.indexOf("Widowmaker") > dmg.length - 3 && dmg.indexOf("Pharah") > dmg.length - 3, "gli sconsigliati in fondo");
+});
+
+test("guide: ban consigliati dalle guide (forti sulla mappa e contro i vostri eroi), mai i vostri", () => {
+  const TT = buildTheory(data, GUIDE_RAW, null);
+  const rec = guideBanSuggestions(data, TT, { mapSlug: "kings-row", ours: [id("Winston")], keep: [id("Lúcio")] });
+  assert.equal(rec.Tank[0].hero.name, "Reinhardt");
+  assert.ok(rec.Damage.some((r) => r.hero.name === "Reaper" || r.hero.name === "Mei"), JSON.stringify(rec.Damage.map((r) => r.hero.name)));
+  assert.ok(Object.values(rec).flat().every((r) => !["Winston", "Lúcio"].includes(r.hero.name)));
+  assert.ok(Object.values(rec).every((rows) => rows.length === 2));
+});
+
+test("guide: nella guida nessuna riga tratta dalle statistiche", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const TT = buildTheory(data, raw, null);
+  const rows = recommend(data, { role: "Damage", mapSlug: "kings-row", enemies: [id("Pharah"), id("Winston")], theory: TT, guideOnly: true });
+  const g = playGuide(data, TT, { hero: rows[0].hero, mapSlug: "kings-row", enemies: [id("Pharah"), id("Winston")], rows, guide: true });
+  assert.ok(g.sections.flatMap((s) => s.items).every((it) => it.kind !== "statistica"));
 });

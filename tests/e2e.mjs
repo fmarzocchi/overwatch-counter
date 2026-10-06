@@ -206,8 +206,9 @@ try {
   check("statistiche nella scheda: lista completa (più di 5) e nessuno scroll interno ai riquadri", firstList > 5 && innerScroll === 0,
     `${firstList} voci, ${innerScroll} riquadri con scroll interno`);
   check("teoria nella scheda: stile Rush/Dive/Poke e tre riquadri «Teoria»", (await page.locator("#why-body .theory-style").count()) === 1
-    && (await page.locator("#why-body .theory-sec").count()) === 3
-    && (await page.locator("#why-body .theory-sec .theory-badge").count()) === 3);
+    && (await page.locator("#why-body .theory-sec").count()) >= 3
+    && (await page.locator("#why-body .theory-sec .theory-badge").count()) === (await page.locator("#why-body .theory-sec").count())
+    && (await page.locator("#why-body .theory-sec", { hasText: "Sinergizza con" }).count()) === 1);
   check("riquadri teoria in viola, diversi dalle statistiche", await page.evaluate(() => {
     const a = getComputedStyle(document.querySelector("#why-body .theory-sec")).backgroundColor;
     const b = getComputedStyle(document.querySelector("#why-body .prof-sec:not(.theory-sec)")).backgroundColor;
@@ -691,6 +692,47 @@ try {
       `${hero}: ancora in inglese ${left.join(", ")}`);
     await p12.click("#guide-dialog [data-close]");
     await c12.close();
+  }
+
+  // ---------- «Consigli solo da guide e pro»: niente statistiche di counterwatch ----------
+  {
+    const { ctx: c13, page: p13 } = await newPage({ viewport: { width: 407, height: 833 }, serviceWorkers: "block" });
+    lastPage = p13;
+    await p13.addInitScript(() => localStorage.setItem("owc.profile", JSON.stringify({
+      players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] })));
+    await p13.goto(BASE);
+    await p13.locator(".pick .pick-name").first().waitFor();
+    await p13.click(".tabs [data-view=profile]");
+    await p13.click("#guide-only");
+    check("profilo: «Consigli solo da guide e pro» attivo, l'altra opzione sulla teoria nascosta",
+      (await p13.getAttribute("#guide-only", "aria-pressed")) === "true"
+      && (await p13.getByRole("button", { name: /Usa anche la teoria/ }).count()) === 0);
+    await p13.click(".tabs [data-view=match]");
+    await p13.click("#map-btn");
+    await p13.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
+    await toTop(p13);
+    const cardsTxt = await p13.locator(".pick").evaluateAll((cs) => cs.map((c) => c.innerText));
+    check("solo guide: nei riquadri valutazione a stelle, nessuna percentuale", cardsTxt.every((t) => /guide ★/.test(t) && !/\d+[.,]\d%/.test(t)), cardsTxt.join(" | "));
+    const sub = await text(p13, "#ban-recs .br-sub");
+    check("solo guide: ban consigliati dalle guide (2 per ruolo)", sub.includes("guide") && (await p13.locator("#ban-recs .hero").count()) === 6, sub);
+    await shot(p13, "17-solo-guide");
+    await p13.click("#groups [data-group=enemies]");
+    for (const n of ["Pharah", "Winston"]) await heroBtn(p13, n).click();
+    await toTop(p13);
+    await p13.locator(".pick .pick-main").first().click();
+    await p13.locator("#guide-dialog[open]").waitFor();
+    await p13.click("#guide-body .more-btn");
+    const g = await text(p13, "#guide-body");
+    check("solo guide: «Come giocarla» senza righe dalle statistiche", (await p13.locator("#guide-body .data-badge, #guide-body .brief-row.is-data").count()) === 0
+      && !/vince [+−]\d/.test(g), g.slice(0, 200));
+    await p13.click("#guide-body .why-btn");
+    await p13.locator("#why-dialog[open]").waitFor();
+    const w = await text(p13, "#why-body");
+    check("solo guide: «Perché» senza statistiche Ranked né percentuali", !w.includes("Statistiche Ranked") && !/[+−]\d+[.,]\d%/.test(w), w.slice(0, 300));
+    await shot(p13, "17b-solo-guide-perche");
+    await p13.click("#why-dialog [data-close]");
+    await p13.click("#guide-dialog [data-close]").catch(() => {});
+    await c13.close();
   }
 
   // ---------- dati riletti ogni 30 minuti, solo con l'app aperta (niente timer) ----------
