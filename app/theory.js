@@ -415,35 +415,78 @@ export function playGuide(data, theory, { hero, mapSlug = null, side = null, ene
   const summary = [];
   const line = (key, label, text, kind, extra = {}) => summary.push({ key, label, text, kind, short: extra.short ?? null, heroes: extra.heroes ?? null });
   if (sw) line("swap", "Cambia", switchLine.text, sw.kind, { heroes: [sw.hero], short: sw.why });
-  // un avversario sta in una sola riga: "Punta" se nel complesso lo batti (numeri + teoria), altrimenti "Attento"
+  // un avversario sta in una sola riga: "Punta" se nel complesso lo batti (numeri + teoria), altrimenti "Attento".
+  // Ogni riga dice PERCHÉ e COSA FARE, non solo il nome.
   const signal = (h) => stat(hero, h) + (me?.counters.has(h.name) ? 0.015 : 0) - (me?.counteredBy.has(h.name) ? 0.015 : 0);
+  // minuscola iniziale solo se la frase non comincia con un nome (eroe o abilità: "Sleep Dart ferma…")
+  const proper = new Set([...data.heroes.map((h) => h.name.split(" ")[0]),
+    ...Object.values(theory?.idx ?? {}).flatMap((e) => (e.abilities ?? []).map((a) => String(a.name).split(" ")[0]))]);
+  const lowerP = (t) => (proper.has(String(t).trim().split(/[\s,:]/)[0]) ? String(t).replace(/\.$/, "") : lower(t));
+  const cut = (t, n = 95) => { const x = String(t).replace(/\s+/g, " ").trim().replace(/\.$/, ""); return x.length <= n ? x : `${x.slice(0, n).replace(/\s+\S*$/, "")}…`; };
+  const myAbilityFor = (h) => (me?.abilities ?? []).find((a) => !allyDirected(a)
+    && ((a.saveFor ?? []).some((x) => x.hero === h.name) || (a.targets ?? []).includes(h.name)));
   const top3 = good.filter((t) => signal(t.h) > -0.01).slice(0, 3).map((t) => t.h);
-  if (top3.length) {
-    const ign = ignore.slice(0, 2).map((h) => h.name);
-    line("target", "Punta", `Punta a ${names(top3.map((h) => h.name))}${ign.length ? `; ignora ${names(ign)}` : ""}.`,
-      good[0].kind, { heroes: top3, short: ign.length ? `ignora ${names(ign)}` : null });
-  }
   const dangerTop = danger.filter((d) => !top3.includes(d.h) && signal(d.h) < 0.01).sort((a, b) => b.w - a.w).slice(0, 2);
   if (dangerTop.length) {
+    const h = dangerTop[0].h;
+    const why = me?.counteredBy.get(h.name);
+    // chi della tua squadra lo batte, e la tua abilità per gestirlo
+    const handler = allyH.find((a) => T(a.name)?.counters.has(h.name));
+    const ab0 = myAbilityFor(h);
+    // non proporre proprio l'abilità che quell'avversario ti neutralizza ("il Dardo soporifero interrompe Charge")
+    const ab = ab0 && why && [ab0.name, ab0.en, ab0.it].filter(Boolean).some((n) => why.includes(n)) ? null : ab0;
+    const how = [handler ? `lascia ${h.name} a ${handler.name}` : `evita l'1 contro 1 con ${h.name}`, ab ? `tieni ${ab.name} contro ${h.name}` : null].filter(Boolean).join(", ");
     const hs = dangerTop.map((d) => d.h);
-    line("threat", "Attento", `Attento a ${names(hs.map((h) => h.name))}.`, dangerTop[0].kind, { heroes: hs });
+    line("threat", "Attento", `Attento a ${names(hs.map((x) => x.name))}${why ? `: ${cut(why, 140)}` : ""} — ${how}.`, dangerTop[0].kind,
+      { heroes: hs, short: `${why ? `${cut(lowerP(why), 80)} — ` : ""}${how}` });
+  }
+  if (top3.length) {
+    const t0 = good.find((t) => t.h === top3[0]);
+    const why = me?.counters.get(top3[0].name);
+    const ign = ignore.filter((h) => !dangerTop.some((d) => d.h === h)).slice(0, 2).map((h) => h.name);
+    const reason = why ? cut(lowerP(why), 80) : t0?.kind === "teoria" ? cut(lowerP(t0.text.replace(/^[^:]+:\s*/, "")), 80) : null;
+    line("target", "Punta", `Punta a ${names(top3.map((h) => h.name))}${reason ? `: ${reason}` : ""}${ign.length ? `; ignora ${names(ign)}` : ""}.`,
+      good[0].kind, { heroes: top3, short: [reason, ign.length ? `ignora ${names(ign)}` : null].filter(Boolean).join(" · ") || null });
   }
   const keyTop = keyLines.sort((a, b) => b.w - a.w).slice(0, 2);
   for (const k of keyTop) line("ability", "Abilità", k.text, k.kind, { short: k.short });
   if (!keyTop.length && me?.priority?.ability) {
-    line("ability", "Abilità", `Abilità su cui puntare: ${me.priority.ability}.`, "teoria", { short: `${me.priority.ability}${pr?.it ? ` (${pr.it})` : ""}: la più importante` });
+    line("ability", "Abilità", `Abilità su cui puntare: ${me.priority.ability}.`, "teoria", { short: `${me.priority.ability}: ${cut(lowerP(me.priority.why ?? "la più importante"), 80)}` });
   }
-  if (me?.play?.position && POSITION_IT[me.play.position]) line("position", "Posizione", POSITION_IT[me.play.position], "teoria");
+  // combo con il compagno (o un alleato): cosa fare insieme
+  const combo = allyH.map((a) => ({ a, why: me?.synergies.get(a.name) ?? T(a.name)?.synergies.get(hero.name) })).filter((x) => x.why)
+    .sort((x, y) => (mates.has(sid(y.a.id)) ? 1 : 0) - (mates.has(sid(x.a.id)) ? 1 : 0))[0];
+  if (combo) line("combo", "Combo", `Con ${combo.a.name}: ${cut(combo.why, 140)}.`, "teoria", { heroes: [combo.a], short: cut(lowerP(combo.why), 90) });
+  // ultimate: quando usarla (se non è già in una riga sopra)
+  const ult = (me?.abilities ?? []).find((a) => a.ult && a.when);
+  if (ult && !keyTop.some((k) => k.text.includes(ult.name))) {
+    line("ult", "Ultimate", `${ult.name}: ${cut(ult.when, 140)}.`, "teoria", { short: `${ult.name}: ${cut(lowerP(ult.when), 80)}` });
+  }
+  // piano per la mappa: prima il lato (attacco/difesa), poi cosa dicono le guide di questo eroe qui, poi la mappa
+  if (map) {
+    const fit = mapFit(theory, map.slug, hero, side);
+    const sideTxt = side ? (side === "attack" ? mapT?.attack : mapT?.defense) : null;
+    const plan = fit.avoid ? { t: `le guide lo sconsigliano qui: ${lowerP(fit.avoid.why)}`, k: "teoria" }
+      : sideTxt ? { t: `${side === "attack" ? "in attacco" : "in difesa"}: ${lowerP(sideTxt)}`, k: "teoria" }
+        : fit.strong ? { t: `qui è consigliato: ${lowerP(fit.strong.why)}`, k: "teoria" }
+          : (() => { const m = mapItems.find((x) => x.kind === "teoria" && /favorisce|sfavorisce|baratri/.test(x.text)) ?? mapItems.find((x) => !guide || x.kind === "teoria");
+            return m ? { t: m.text.replace(/^La mappa /, "").replace(/\.$/, ""), k: m.kind } : null; })();
+    if (plan) line("map", "Piano", `${map.name}, ${plan.t}.`, plan.k, { short: cut(plan.t, 110).replace(/^\p{Ll}/u, (c) => c.toUpperCase()) });
+  }
   const pz = protect.sort((a, b) => b.w - a.w)[0];
   if (pz) {
-    const t = pz.text.split(":")[0].replace(/ — tu lo batti\.?$/, "");
-    line("protect", "Proteggi", `${t}.`, pz.kind, { short: t.replace(/^Proteggi /, "") });
+    const t = pz.text.replace(/ — tu lo batti\.?$/, "").replace(/\.$/, "");
+    line("protect", "Proteggi", `${t}.`, pz.kind, { short: cut(t.replace(/^Proteggi /, ""), 90) });
   }
-  if (map && mapItems.length) {
-    const m = mapItems.find((x) => /^Le guide lo/.test(x.text)) ?? mapItems.find((x) => x.kind === "teoria" && /favorisce|sfavorisce|baratri/.test(x.text))
-      ?? mapItems.find((x) => !guide || x.kind === "teoria");
-    if (m) line("map", "Mappa", m.text, m.kind, { short: m.text.replace(/^La mappa /, "").replace(/^Le guide lo /, "").replace(/\.$/, "") });
-  }
+  // posizione generica solo se resta spazio
+  if (summary.length < 5 && me?.play?.position && POSITION_IT[me.play.position]) line("position", "Posizione", POSITION_IT[me.play.position], "teoria");
+  // ordine d'importanza (al massimo 7 righe): cambio, minaccia, bersagli, abilità chiave, combo, piano, ultimate,
+  // poi la seconda abilità, chi proteggere e la posizione
+  const PRIO = { swap: 0, threat: 1, target: 2, ability: 3, combo: 4, map: 5, ult: 6, protect: 8, position: 9 };
+  let abilSeen = 0;
+  const ranked = summary.map((it, k) => ({ it, k, p: it.key === "ability" && abilSeen++ ? 7 : PRIO[it.key] ?? 10 }))
+    .sort((a, b) => a.p - b.p || a.k - b.k).map((x) => x.it);
+  summary.splice(0, summary.length, ...ranked);
   if (summary.length) sections.unshift({ title: "In breve", summary: true, items: summary.slice(0, 7) });
 
   // modalità guide: niente righe tratte dalle statistiche

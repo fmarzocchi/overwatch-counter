@@ -443,7 +443,8 @@ function openDetails(i, row) {
   $("#why-dialog").scrollTop = 0;
 }
 
-const BRIEF_ICON = { swap: "swap", target: "target", threat: "warn", ability: "bolt", position: "move", protect: "shield", map: "map" };
+const BRIEF_ICON = { swap: "swap", target: "target", threat: "warn", ability: "bolt", position: "move", protect: "shield", map: "map",
+  combo: "plus", ult: "bolt" };
 // volto + nome, per le righe del riepilogo che parlano di eroi
 const heroChip = (h) => el("span", { class: "hchip" }, face(h), h.name);
 

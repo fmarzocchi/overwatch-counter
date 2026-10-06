@@ -228,6 +228,10 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
 2. **Come giocarla** (tocco sull'eroe, sul riquadrino in alto o su un'alternativa): "In breve" ≤ 7 righe con etichetta
    (Cambia, Punta, Attento, Abilità, Posizione, Proteggi, Mappa), volti per gli eroi, icona viola = teoria / azzurra = dati (legenda accanto a «In breve»);
    "Tutti i consigli" chiuso (`#guide-more` nascosto, pulsante `.more-btn`); "Segna: X l'ha preso"; "Perché?".
+   Dal 2026-10-06 (richiesta: "consigli generici") ogni riga dice perché e cosa fare: **Attento** X: motivo — "lascia X a
+   <alleato che lo batte in teoria>" o "evita l'1 contro 1" (+ "tieni <abilità> contro X", mai quella che X neutralizza);
+   **Punta** con il motivo; **Combo** col compagno (sinergia); **Piano** (lato della mappa, poi consigliato/sconsigliato
+   dalle guide); **Ultimate** (quando); Proteggi e Posizione solo se resta spazio. Ordine `PRIO` in playGuide, max 7.
 3. **Perché** (dalla guida): riepilogo Mappa/Avversari/Con, ogni riga, statistiche Ranked complete, teoria completa.
 - "↺ Nuova partita" nella barra in basso (sempre a portata di pollice) con "Annulla" nel messaggio.
 - La barra minima in alto lampeggia una volta quando cambia il consiglio di un giocatore.

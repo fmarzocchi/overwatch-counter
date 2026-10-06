@@ -224,6 +224,9 @@ try {
     && (await page.locator("#guide-body .guide-more").evaluate((d) => d.hidden)) && !guideShort.includes("Come muoverti")
     && !(await page.locator("#why-dialog").evaluate((d) => d.open)), `${briefRows} righe`);
   check("come giocarla: i bersagli con i volti", (await page.locator("#guide-body .brief-row.k-target .hchip").count()) >= 1);
+  const threatTxt = await page.locator("#guide-body .brief-row.k-threat").allInnerTexts();
+  check("in breve: «Attento» dice anche cosa fare (a chi lasciarlo o evitare l'1 contro 1)",
+    threatTxt.length === 0 || threatTxt.every((t) => /lascia .+ a |evita l'1 contro 1/.test(t)), threatTxt.join(" | "));
   await shot(page, "05e-come-giocarla");
   check("come giocarla: legenda teoria/dati accanto a «In breve»", (await text(page, "#guide-body .guide-summary h3")).includes("teoria"));
   await page.click("#guide-body .more-btn");
