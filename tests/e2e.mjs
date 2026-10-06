@@ -57,7 +57,7 @@ async function newPage(ctxOpts = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "it-IT", ...ctxOpts });
   await ctx.route((url) => !url.href.startsWith(BASE), (r) => r.abort());
   const page = await ctx.newPage();
-  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("pageerror", (e) => errors.push(String(e) + (process.env.STACK ? `\n${e.stack}` : "")));
   return { ctx, page };
 }
 const shot = (page, name) => page.screenshot({ path: path.join(SHOTS, `${name}.png`) });
@@ -150,7 +150,11 @@ try {
   check("Hybrid: attacco/difesa visibile", await page.locator("#side").isVisible());
   await page.click("#side [data-side=defense]");
   check("difesa selezionata", (await page.getAttribute("#side [data-side=defense]", "aria-pressed")) === "true");
-  // ban consigliati per la mappa: 3 per ruolo (anche i preferiti, mai gli eroi già scelti); un tocco li segna
+  // ban consigliati per la mappa: solo nella sezione «Ban», sotto il selettore; 3 per ruolo (anche i preferiti, mai gli eroi già scelti)
+  check("ban consigliati: nascosti fuori dalla sezione «Ban»", (await matchState(page)).group !== "bans" && await page.locator("#ban-recs").isHidden());
+  await page.click("#groups [data-group=bans]");
+  check("ban consigliati: subito sotto il selettore Ban/Avversari/Alleati", await page.evaluate(() =>
+    document.querySelector("#groups").closest("section, .groups").nextElementSibling === document.querySelector("#ban-recs")));
   await toTop(page);
   const br = await page.evaluate(() => ({ visible: !document.querySelector("#ban-recs").hidden, title: document.querySelector("#t-ban-recs").textContent,
     heroes: [...document.querySelectorAll("#ban-recs .hero")].map((b) => b.querySelector(".nm").textContent) }));
@@ -242,9 +246,10 @@ try {
   await shot(page, "05d-stelline-avversari");
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
   check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
-  check("con gli avversari segnati i ban consigliati spariscono", await page.locator("#ban-recs").isHidden());
+  check("sezione «Avversari»: niente ban consigliati", await page.locator("#ban-recs").isHidden());
+  check("«Chi soffrite di più»: nascosto finché nessuno ha scelto e non ci sono alleati", await page.locator("#threats").isHidden());
   await page.click("#groups [data-group=bans]");
-  check("…ma tornano toccando «Ban»", await page.locator("#ban-recs").isVisible());
+  check("…i ban consigliati tornano toccando «Ban»", await page.locator("#ban-recs").isVisible() && await page.locator("#threats").isHidden());
   await page.click("#groups [data-group=enemies]");
   await toTop(page);
   const ENEMIES = ["Pharah", "Winston", "Reinhardt"];
@@ -278,6 +283,26 @@ try {
   const mus = await page.locator(".pick .mu-grp").evaluateAll((gs) => gs.map((g) => g.getAttribute("aria-label")));
   check("riquadro dedicato: «Batte»/«Teme» con i volti dei soli avversari segnati", mus.length >= 1 && mus.every((l) =>
     /^(Batte|Teme) /.test(l) && l.replace(/^(Batte|Teme) /, "").split(", ").every((n) => ENEMIES.includes(n))), JSON.stringify(mus));
+  // «Chi soffrite di più»: con un eroe scelto compare (solo su «Avversari»), 3 per ruolo, mai i bannati;
+  // accanto solo i volti dei vostri eroi (qui l'eroe scelto), bordo verde = lo batte, rosso = lo teme
+  const th = await page.locator("#threats .hero").evaluateAll((bs) => bs.map((b) => ({
+    name: b.querySelector(".nm").textContent, stars: b.querySelector(".stars").textContent, label: b.getAttribute("aria-label"),
+    rings: [...b.querySelectorAll(".th-o")].map((o) => [o.className, getComputedStyle(o.querySelector(".face")).boxShadow]) })));
+  const gridSt = await starsOf(page);
+  check("«Chi soffrite di più»: compare con un eroe scelto, 3 per ruolo, stelline rosse come nella griglia, senza bannati",
+    await page.locator("#threats").isVisible() && (await text(page, "#t-threats")) === "Chi soffrite di più" && th.length === 9
+    && ["Tank", "Damage", "Support"].every((r) => th.filter((t) => roleOf(t.name) === r).length === 3)
+    && th.every((t) => /^★{1,5}$/.test(t.stars) && gridSt[t.name]?.n === t.stars.length && !["Ana", "Kiriko"].includes(t.name)), JSON.stringify(th));
+  check("«Chi soffrite di più»: i più pericolosi del ruolo (nessuno fuori elenco ha più stelle)", th.every((t) =>
+    Object.entries(gridSt).every(([n, x]) => roleOf(n) !== roleOf(t.name) || ["Ana", "Kiriko"].includes(n) || th.some((u) => u.name === n) || x.n <= t.stars.length)));
+  check("«Chi soffrite di più»: accanto solo l'eroe scelto, verde se lo batte e rosso se lo teme", th.some((t) => t.rings.length)
+    && th.every((t) => t.rings.length <= 1 && t.rings.every(([c, sh]) => (c.includes("good") && sh.includes("rgb(50, 215, 75)")) || (c.includes("bad") && sh.includes("rgb(255, 105, 97)")))
+      && [...t.label.matchAll(/lo (?:battono|temono) ([^;.]+)/g)].every((g) => g[1] === recF)), JSON.stringify(th));
+  await page.evaluate(() => window.scrollTo(0, document.querySelector("#groups").getBoundingClientRect().top + window.scrollY - 60));
+  await shot(page, "05h-chi-soffrite");
+  await page.click("#groups [data-group=bans]");
+  check("«Chi soffrite di più»: solo nella sezione «Avversari»", await page.locator("#threats").isHidden() && await page.locator("#ban-recs").isVisible());
+  await page.click("#groups [data-group=enemies]");
   const altInfo = await page.locator(".pick .others .alt:not(.alt-other)").evaluateAll((bs) => bs.filter((b) => !b.hidden).map((b) => {
     const card = b.closest(".pick").getBoundingClientRect();
     const r = b.getBoundingClientRect();
@@ -314,6 +339,7 @@ try {
   await toTop(page);
   check("«✓ Scelto» ritoccato: torna la lista, niente scelto", (await matchState(page)).picked[0] === null
     && (await page.locator(".pick").nth(0).locator(".fav-row.is-rec").count()) === 1);
+  check("«Chi soffrite di più»: sparisce di nuovo senza eroi scelti né alleati", await page.locator("#threats").isHidden());
   // «Come giocarla» del consigliato, poi «Perché»
   const altName = (await favRows(page, 0))[0].name;
   await page.locator(".pick").nth(0).locator(".rec-cta").click();
@@ -538,6 +564,7 @@ try {
     await p7.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await p7.click("#side [data-side=attack]");
     if (vp.width === 390) {
+      await p7.click("#groups [data-group=bans]");
       check("statistiche + teoria: ban consigliati da entrambe", (await text(p7, "#ban-recs .br-sub")).includes("statistiche e guide")
         && (await p7.locator("#ban-recs .hero").count()) === 9);
     }
@@ -928,6 +955,7 @@ try {
     await toTop(p13);
     const cardsTxt = await p13.locator(".pick").evaluateAll((cs) => cs.map((c) => c.innerText));
     check("solo guide: nei riquadri stelline, nessuna percentuale", cardsTxt.every((t) => /★/.test(t) && !/\d+[.,]\d%/.test(t)), cardsTxt.join(" | "));
+    await p13.click("#groups [data-group=bans]");
     const sub = await text(p13, "#ban-recs .br-sub");
     check("solo guide: ban consigliati dalle guide (3 per ruolo)", sub.includes("guide") && (await p13.locator("#ban-recs .hero").count()) === 9, sub);
     await shot(p13, "17-solo-guide");

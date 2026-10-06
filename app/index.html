@@ -32,13 +32,6 @@
       <button type="button" data-side="defense" aria-pressed="false">Difesa</button>
     </div>
 
-    <!-- inizio partita (mappa scelta, avversari non ancora segnati): ban da fare, 3 per ruolo; un tocco li segna -->
-    <section id="ban-recs" class="ban-recs glass" aria-labelledby="t-ban-recs" hidden>
-      <h2 id="t-ban-recs" class="br-title">Ban consigliati</h2>
-      <p class="br-sub">Forti su questa mappa e contro i vostri eroi</p>
-      <div id="ban-recs-list" class="br-roles"></div>
-    </section>
-
     <section id="picks" class="picks" aria-live="polite" aria-label="Eroi consigliati"></section>
 
     <div id="warn" class="warn glass" role="status" hidden></div>
@@ -54,6 +47,17 @@
         <span id="pick-banner-txt"></span>
         <button type="button" id="pick-cancel">Annulla</button>
       </div>
+    </section>
+    <!-- sotto il selettore: con "Ban" i ban consigliati (3 per ruolo), con "Avversari" chi soffrite di più -->
+    <section id="ban-recs" class="ban-recs glass" aria-labelledby="t-ban-recs" hidden>
+      <h2 id="t-ban-recs" class="br-title">Ban consigliati</h2>
+      <p class="br-sub">Forti su questa mappa e contro i vostri eroi</p>
+      <div id="ban-recs-list" class="br-roles"></div>
+    </section>
+    <section id="threats" class="ban-recs threats glass" aria-labelledby="t-threats" hidden>
+      <h2 id="t-threats" class="br-title">Chi soffrite di più</h2>
+      <p class="br-sub" id="threats-sub"></p>
+      <div id="threats-list" class="br-roles"></div>
     </section>
     <div id="chosen" class="chosen" aria-label="Selezionati"></div>
 

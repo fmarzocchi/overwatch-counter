@@ -468,6 +468,18 @@ export function breakdown(row, partners = null) {
 // nel verso opposto): così il riquadro dice la stessa cosa delle righe "Punta"/"Attento" di Come giocarla.
 export const MATCHUP_MIN = 0.01;
 export const MATCHUP_THEORY = 0.015;
+// Un nostro eroe contro un nemico: 1 = lo batte, −1 = lo teme, 0 = alla pari (stesse soglie e stessa teoria di matchups()).
+// guide: solo teoria (modalità "solo guide").
+export function matchupSign(data, theory, ours, enemy, { guide = false } = {}) {
+  const t = theory?.idx?.[ours.name];
+  const th = t?.counters.has(enemy.name) ? 1 : t?.counteredBy.has(enemy.name) ? -1 : 0;
+  const v = guide ? null : data.counters?.[sid(ours.id)]?.[sid(enemy.id)];
+  const signal = (typeof v === "number" ? v - 0.5 : 0) + th * MATCHUP_THEORY;
+  if (signal >= MATCHUP_MIN || (th === 1 && signal > -MATCHUP_MIN)) return 1;
+  if (signal <= -MATCHUP_MIN || (th === -1 && signal < MATCHUP_MIN)) return -1;
+  return 0;
+}
+
 export function matchups(row, max = 3) {
   const beats = new Set((row?.theory?.beats ?? []).map((b) => b.name));
   const beaten = new Set((row?.theory?.beatenBy ?? []).map((b) => b.name));

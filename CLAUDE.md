@@ -127,8 +127,8 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   stile POKE, attacco DIVE/RUSH, al massimo ±0.5%; nei motivi appare come "difesa (regola)".
 - **Rank**: sceglie i dati Ranked della divisione del giocatore (vedi "Dati Ranked").
 - Ban: max **5** (richiesta del 2026-10-05). Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
-- **Ban consigliati per la mappa** (richiesta del 2026-10-05): riquadro "Ban consigliati per <mappa>" sotto mappa/lato,
-  visibile con la mappa scelta finché non si segnano avversari, e sempre col selettore su "Ban"; **3 per ruolo** (dal 2026-10-06,
+- **Ban consigliati per la mappa** (richiesta del 2026-10-05): riquadro "Ban consigliati per <mappa>" subito SOTTO il
+  selettore Ban/Avversari/Alleati, visibile SOLO col selettore su "Ban" (dal 2026-10-06; senza mappa sui dati generali); **3 per ruolo** (dal 2026-10-06,
   `BANS_PER_ROLE`; una riga per ruolo nel riquadro), un tocco li segna/toglie (`toggleIn`).
   `banSuggestions()` (recommend.js, testata): forza = win rate sulla mappa − 0.5 (media sulle divisioni dei giocatori)
   + minaccia = media del win rate del candidato contro i "vostri eroi" − 0.5. Vostri eroi = dal 2026-10-06 (richiesta
@@ -136,6 +136,12 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   ban dipendono dalla mappa e dal lato ("Forti su questa mappa"). Dal 2026-10-06 (richiesta dell'utente) si propongono
   ANCHE i preferiti; mai gli eroi già scelti né gli alleati segnati (un ban vale per entrambe le squadre). Lo stesso per le stelline rosse degli avversari. L'elenco
   non cambia mentre si segnano i ban (si vedono barrati). e2e "ban consigliati …", "ban: al massimo 5".
+- **"Chi soffrite di più"** (2026-10-06, richiesta dell'utente): allo stesso posto, solo col selettore su "Avversari" e solo
+  se almeno un giocatore ha scelto o c'è almeno un alleato segnato (`ourComp()`: eroi presi + alleati, mai i consigliati).
+  `renderThreats()`: 3 per ruolo (`THREATS_PER_ROLE`) coi punteggi delle stelline rosse (`threatScores`), mai i bannati; gli
+  avversari già segnati restano (evidenziati). Sotto ogni eroe i volti piccoli dei vostri: bordo verde = lo batte, rosso = lo
+  teme, niente = alla pari (`matchupSign()` in recommend.js: scarto contro ≥ 1% + teoria che vale 1,5%; solo teoria in "solo guide").
+  Un tocco lo segna avversario. e2e "Chi soffrite di più …", screenshot 05h.
 - Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
 - **3 consigli per giocatore** (dal migliore): uno grande e 2 alternative (vedi "Design: tre livelli"); i perché in
   numeri ("Mappa ±x%", "Avversari ±x%", "Con <nome>", `breakdown()`; ogni avversario/alleato, `details()`) sono nel "Perché".

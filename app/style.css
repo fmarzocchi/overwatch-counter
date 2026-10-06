@@ -156,6 +156,14 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .ban-recs .hero .face { width: 38px; height: 38px; }
 .ban-recs .hero.in-bans::after { top: 24px; }
 .ban-recs .hero .stars { top: 35px; }
+/* chi soffrite di più: sotto il nome i vostri eroi, bordo verde = lo battono, rosso = lo temono */
+.ban-recs { margin-top: 0; }
+.threats .hero { padding-bottom: 6px; }
+#ban-recs, #threats { margin-top: 8px; }
+.th-ours { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 4px; padding-left: 3px; }
+.threats .th-o .face { width: 20px; height: 20px; font-size: 7px; margin: 0 0 0 -3px; box-shadow: 0 0 0 1px rgba(18, 18, 26, .95), 0 0 0 2.5px var(--ring); }
+.th-o.good { --ring: var(--good); }
+.th-o.bad { --ring: var(--bad); }
 
 /* ---------- consigli: un riquadro per giocatore ---------- */
 /* Livello 1, colpo d'occhio: l'eroe da prendere (grande), chi batte e chi teme (volti), una sola cifra (la stima).

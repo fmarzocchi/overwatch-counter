@@ -1,5 +1,5 @@
 import { recommend, recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES,
-  BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, threatScores, rankStars, STAR_MIN_SD } from "./recommend.js";
+  BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, threatScores, rankStars, STAR_MIN_SD, matchupSign } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
 
@@ -799,29 +799,82 @@ function banScores(perRole) {
     : profile.useTheory && T ? blendedBanSuggestions(sets, T, opts) : banSuggestions(sets, opts);
 }
 
+// ---------- chi soffrite di più (selettore su "Avversari") ----------
+// I 3 eroi per ruolo più pericolosi per voi (le stelline rosse: threatScores), e accanto i vostri eroi — scelti e
+// alleati segnati — col bordo verde se li battono, rosso se li temono, niente se alla pari. Senza eroi scelti né
+// alleati il riquadro non c'è. Un tocco li segna come avversari.
+const THREATS_PER_ROLE = 3;
+// vostra squadra per "Chi soffrite di più": solo eroi presi e alleati segnati, mai i consigliati
+function ourComp() {
+  const heroes = profile.players.map((p, i) => {
+    const id = match.picked[i];
+    return id != null && byId[sid(id)] ? { hero: byId[sid(id)], i } : null;
+  }).filter(Boolean);
+  for (const a of match.allies) if (byId[sid(a)]) heroes.push({ hero: byId[sid(a)], i: -1 });
+  return heroes;
+}
+function renderThreats() {
+  const box = $("#threats");
+  // solo su "Avversari" e solo se c'è una squadra da confrontare (richiesta del 2026-10-06)
+  const comp = data && match.group === "enemies" ? ourComp() : [];
+  box.hidden = !comp.length;
+  if (box.hidden) return;
+  const map = currentMap();
+  const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
+  const banned = new Set(match.bans.map(sid));
+  const rows = threatScores(sets, T, {
+    mapSlug: match.mapSlug, side: match.side, ours: match.picked.filter(Boolean), mates: match.allies, mode: starMode(),
+  });
+  const st = rankStars(rows, starOpts());
+  const enemies = new Set(match.enemies.map(sid));
+  $("#threats-sub").textContent = `${map ? `I più pericolosi su ${map.name}` : "I più pericolosi"}. Accanto, i vostri eroi:`
+    + " verde = li battono, rosso = li temono.";
+  fill($("#threats-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
+    el("span", { class: `br-role-lab r-${role}` }, ROLE_IT[role]),
+    el("div", { class: "br-heroes" }, rows.filter((r) => r.hero.role === role && !banned.has(sid(r.hero.id)))
+      .sort((a, b) => b.score - a.score).slice(0, THREATS_PER_ROLE).map((r) => {
+        const id = sid(r.hero.id);
+        const n = st.get(id) ?? 3;
+        const vs = comp.map((c) => ({ ...c, s: matchupSign(c.i >= 0 ? playerData(c.i) : data, T, c.hero, r.hero, { guide: guideMode() }) }))
+          .filter((c) => c.s !== 0);
+        const names = (s) => vs.filter((c) => c.s === s).map((c) => c.hero.name).join(", ");
+        return el("button", {
+          type: "button", class: `hero threat${enemies.has(id) ? " in-enemies" : ""}`, "data-id": id, "data-stars": String(n),
+          "aria-pressed": String(enemies.has(id)), onclick: () => toggleIn("enemies", id),
+          "aria-label": `${r.hero.name}, pericolo ${starsLabel(n)}${names(1) ? `; lo battono ${names(1)}` : ""}${names(-1) ? `; lo temono ${names(-1)}` : ""}. Tocca per segnarlo avversario`,
+        }, face(r.hero), el("span", { class: "stars st-enemies", "aria-hidden": "true" }, starsTxt(n)),
+        el("span", { class: `nm${heroName(r.hero).length >= 10 ? " long" : ""}` }, heroName(r.hero)),
+        vs.length ? el("span", { class: "th-ours", "aria-hidden": "true" }, vs.map((c) => el("span", { class: `th-o ${c.s > 0 ? "good" : "bad"}` }, face(c.hero)))) : null);
+      })))));
+  delete box.dataset.fitW;
+  fitNames(box);
+}
+
 function renderBanRecs() {
   const box = $("#ban-recs");
   const map = currentMap();
-  // a inizio partita (avversari non ancora segnati) o quando si sceglie "Ban"
-  const show = !!map && (!match.enemies.length || match.group === "bans");
+  // solo col selettore su "Ban" (richiesta del 2026-10-06), sotto il selettore; senza mappa sui dati generali
+  const show = !!data && match.group === "bans";
   box.hidden = !show;
   if (!show) return;
   const guide = guideMode();
   const rec = banScores(BANS_PER_ROLE);
   // "contro i vostri eroi" solo se ce ne sono (scelti o alleati segnati)
   const vs = ourHeroes().length ? " e contro i vostri eroi" : "";
-  $(".br-sub", box).textContent = guide ? `Forti su questa mappa per guide e giocatori forti${vs}`
-    : profile.useTheory && T ? `Forti su questa mappa${vs} (statistiche e guide)` : `Forti su questa mappa${vs}`;
+  const place = map ? "su questa mappa" : "in generale";
+  $(".br-sub", box).textContent = guide ? `Forti ${place} per guide e giocatori forti${vs}`
+    : profile.useTheory && T ? `Forti ${place}${vs} (statistiche e guide)` : `Forti ${place}${vs}`;
   const banned = new Set(match.bans.map(sid));
-  $("#t-ban-recs").textContent = `Ban consigliati per ${map.name}`;
+  $("#t-ban-recs").textContent = map ? `Ban consigliati per ${map.name}` : "Ban consigliati";
   const bst = banStars();
   fill($("#ban-recs-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
     el("span", { class: `br-role-lab r-${role}` }, ROLE_IT[role]),
     el("div", { class: "br-heroes" }, rec[role].map((r) => {
       const id = sid(r.hero.id);
       const on = banned.has(id);
-      const why = r.why ?? ([r.strength >= 0.003 ? `forte su ${map.name}` : null,
-        r.beats.length ? `batte ${r.beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || `tra i migliori su ${map.name}`);
+      const where = map ? `su ${map.name}` : "in generale";
+      const why = r.why ?? ([r.strength >= 0.003 ? `forte ${where}` : null,
+        r.beats.length ? `batte ${r.beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || `tra i migliori ${where}`);
       const n = bst.get(id) ?? 3;
       return el("button", {
         type: "button", class: `hero${on ? " in-bans" : ""}`, "data-id": id, "data-stars": String(n), "aria-pressed": String(on), title: why,
@@ -1380,8 +1433,9 @@ function render() {
   }
   renderControls();
   starCache = new Map(); // stelline ricalcolate a ogni giro (anche quelle del riquadro dei ban)
-  renderBanRecs();
   renderPicks();
+  renderBanRecs();
+  renderThreats();
   renderGroups();
   renderGrid();
   fitNames($("#grid"));

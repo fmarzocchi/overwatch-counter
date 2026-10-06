@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   recommend, recommendDuo, recommendTeam, matchups, headline, MATCHUP_MIN, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
-  banSuggestions, BANS_PER_ROLE, threatScores, rankStars, STAR_Z, STAR_MIN_SD,
+  banSuggestions, BANS_PER_ROLE, threatScores, matchupSign, MATCHUP_THEORY, rankStars, STAR_Z, STAR_MIN_SD,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -440,4 +440,20 @@ test("scoreAll: una riga per ogni eroe (anche alleati e bannati), senza fare cop
   // per gli altri eroi la riga è la stessa del consiglio normale
   const normal = recommend(data, { mapSlug: "kings-row", enemies: [id("Pharah")], allies, bans });
   for (const r of normal) close(rows.find((x) => x.hero.id === r.hero.id).score, r.score, r.hero.name);
+});
+
+test("matchupSign: verde/rosso dallo scarto contro (≥ MATCHUP_MIN) e dalla teoria, niente se alla pari", () => {
+  const a = hero("Ana"), b = hero("Genji");
+  const d = (wr) => ({ ...data, counters: { [String(a.id)]: { [String(b.id)]: wr } } });
+  const th = (rel) => ({ idx: { Ana: { counters: new Set(rel === 1 ? ["Genji"] : []), counteredBy: new Set(rel === -1 ? ["Genji"] : []) } } });
+  assert.equal(matchupSign(d(0.5 + MATCHUP_MIN), null, a, b), 1);
+  assert.equal(matchupSign(d(0.5 - MATCHUP_MIN), null, a, b), -1);
+  assert.equal(matchupSign(d(0.505), null, a, b), 0);
+  assert.equal(matchupSign(d(0.5), th(1), a, b), 1);
+  assert.equal(matchupSign(d(0.5), th(-1), a, b), -1);
+  // la teoria non ribalta statistiche nette in senso opposto
+  assert.equal(matchupSign(d(0.5 - MATCHUP_MIN - MATCHUP_THEORY), th(1), a, b), -1);
+  // solo guide: le statistiche non contano
+  assert.equal(matchupSign(d(0.9), null, a, b, { guide: true }), 0);
+  assert.equal(matchupSign(d(0.1), th(1), a, b, { guide: true }), 1);
 });
