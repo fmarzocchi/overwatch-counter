@@ -384,6 +384,10 @@ try {
     await p7.click("#map-btn");
     await p7.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await p7.click("#side [data-side=attack]");
+    if (vp.width === 390) {
+      check("statistiche + teoria: ban consigliati da entrambe", (await text(p7, "#ban-recs .br-sub")).includes("statistiche e guide")
+        && (await p7.locator("#ban-recs .hero").count()) === 6);
+    }
     for (const [g, names] of [["bans", ["Ana", "Kiriko", "Widowmaker", "Tracer"]], ["enemies", ["Reinhardt", "Genji", "Pharah", "Mercy", "Lúcio"]], ["allies", ["Winston", "Sojourn", "Baptiste"]]]) {
       await toTop(p7);
       await p7.click(`#groups [data-group=${g}]`);

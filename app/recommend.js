@@ -19,6 +19,14 @@ export const SYNERGY_WEIGHT = 0.5;
 export const FAVORITE_BONUS = 0.01;
 export const SIDE_WEIGHT = 0.01;
 export const SIDE_MODES = ["Escort", "Hybrid"]; // solo qui esistono attacco e difesa
+// Statistiche + teoria insieme ("Usa anche la teoria nei consigli"): concorrono entrambe, la teoria un po' di più.
+// I punti delle guide si portano sulla scala dei win rate con GUIDE_TO_WR (misurato sui dati: la dispersione di
+// 1 punto delle guide ≈ 2% di win rate, sia per le mappe sia per i counter), poi 45% statistiche + 55% teoria
+// (×2, così il punteggio resta sulla scala delle statistiche). La "stima" in percentuale resta solo statistica.
+export const GUIDE_TO_WR = 0.02;
+export const THEORY_SHARE = 0.55;
+const W_STAT = 2 * (1 - THEORY_SHARE);
+const W_THEORY = 2 * THEORY_SHARE * GUIDE_TO_WR;
 
 const sid = (x) => String(x);
 
@@ -79,16 +87,20 @@ export function recommend(
       const con = withAllies.reduce((s, x) => s + x.delta, 0);
       const lato = useSide ? sideBonus(h, useSide) : 0;
       const pref = fav.has(id) ? FAVORITE_BONUS : 0;
-      // teoria (stile di squadra, counter noti): sempre calcolata per mostrarla, nel punteggio solo se attivata
+      // teoria (stile di squadra, counter noti): sempre calcolata per mostrarla; se attivata concorre al punteggio (55%)
       const th = theory ? theoryForPick(data, theory, h, { enemies, mates: allies }) : null;
-      const teoria = useTheory && th ? th.score : 0;
-      const score = base + contro + con + lato + pref + teoria;
+      const stat = base + contro + con + lato;
+      const g = useTheory && theory ? guideRow(data, theory, h, { map, useSide, enemies, allies, fav: new Set(), byId }) : null;
+      const blended = g ? W_STAT * stat + W_THEORY * g.score : stat;
+      const teoria = blended - stat; // parte dovuta alla teoria (la stima la esclude)
+      const score = blended + pref;
       return {
         hero: h,
         score,
         estimate: Math.min(0.99, Math.max(0.01, 0.5 + score - pref - teoria)),
         parts: { base, contro, con, lato, pref, teoria },
         theory: th,
+        mapGuide: theory ? mapFit(theory, map?.slug, h, useSide) : null, // consigliato/sconsigliato su questa mappa dalle guide
         baseLabel: map ? map.name : "generale",
         side: useSide,
         favorite: pref > 0,
@@ -205,6 +217,24 @@ export function guideBanSuggestions(data, theory, { mapSlug = null, side = null,
     .sort((a, b) => b.score - a.score || a.hero.name.localeCompare(b.hero.name)).slice(0, perRole)]));
 }
 
+// Ban con statistiche + teoria: stesso miscuglio dei consigli (45% statistiche, 55% guide).
+export function blendedBanSuggestions(datasets, theory, opts = {}) {
+  const perRole = opts.perRole ?? BANS_PER_ROLE;
+  const st = banSuggestions(datasets, { ...opts, perRole: 999 });
+  const gd = guideBanSuggestions((Array.isArray(datasets) ? datasets[0] : datasets), theory, { ...opts, perRole: 999 });
+  return Object.fromEntries(BAN_ROLES.map((role) => {
+    const g = new Map(gd[role].map((r) => [sid(r.hero.id), r]));
+    const rows = st[role].map((r) => {
+      const x = g.get(sid(r.hero.id));
+      const beats = [...new Set([...r.beats, ...(x?.beats ?? [])])];
+      const why = [r.strength >= 0.003 || x?.strength >= 1.5 ? "forte su questa mappa (statistiche e guide)" : null,
+        beats.length ? `batte ${beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || null;
+      return { ...r, beats, why, score: W_STAT * r.score + W_THEORY * (x?.score ?? 0) };
+    });
+    return [role, rows.sort((a, b) => b.score - a.score || a.hero.name.localeCompare(b.hero.name)).slice(0, perRole)];
+  }));
+}
+
 // Squadra di 1–5 giocatori. players: [{role, favorites, onlyFavorites, data?, picked?}, …]; il resto come recommend().
 // data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.
 // picked: eroe GIÀ PRESO da quel giocatore → resta fisso, conta come alleato per gli altri e la sua lista
@@ -239,7 +269,11 @@ export function recommendTeam(data, { players = [], ...ctx } = {}) {
       return ha && hb && ta?.synergies.has(hb.name) ? GUIDE_POINTS.synergy : 0;
     }
     const v = pairValue(data.synergies, a, b);
-    return v === null ? 0 : (v - 0.5) * SYNERGY_WEIGHT;
+    const stat = v === null ? 0 : (v - 0.5) * SYNERGY_WEIGHT;
+    if (!ctx.useTheory || !ctx.theory) return stat;
+    const ha = byId[sid(a)], hb = byId[sid(b)];
+    const t = ha && hb && ctx.theory.idx?.[ha.name]?.synergies.has(hb.name) ? GUIDE_POINTS.synergy : 0;
+    return W_STAT * stat + W_THEORY * t;
   };
   const search = () => {
     const cands = free.map((i) => {
@@ -413,6 +447,13 @@ export function headline(row, partners = []) {
 
 // Tutti i perché, uno per riga: mappa, ogni avversario, ogni alleato, lato, preferito.
 export function details(row) {
+  const g = row.mapGuide;
+  const lines = [];
+  if (g?.strong) lines.push({ good: true, kind: "teoria", text: `consigliato dalle guide su ${row.baseLabel}: ${g.strong.why}` });
+  if (g?.avoid) lines.push({ good: false, kind: "teoria", text: `sconsigliato dalle guide su ${row.baseLabel}: ${g.avoid.why}` });
+  return [...lines, ...statDetails(row)];
+}
+function statDetails(row) {
   const out = [{ good: row.parts.base >= 0, text: `${row.baseLabel === "generale" ? "Win rate generale" : row.baseLabel} ${pct(row.parts.base)}` }];
   for (const v of row.vs) out.push({ good: v.delta >= 0, text: `contro ${v.hero?.name ?? "?"} ${pct(v.delta)}` });
   for (const a of row.withAllies) out.push({ good: a.delta >= 0, text: `con ${a.hero?.name ?? "?"} ${pct(a.delta)}` });

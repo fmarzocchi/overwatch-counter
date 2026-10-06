@@ -159,7 +159,10 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   teoria descrive il kit Danni e va rifatta.
 - UI: colore viola + etichetta "Teoria" (`--theory`), "Dati" in blu; riquadri "Sinergizza con", "Countera bene",
   "Viene counterato da" nella scheda "Perché"; liste complete; "Come giocarla" dal riquadro (vedi "Design: tre livelli");
-  interruttore nel Profilo "Usa anche la teoria nei consigli" (±0,5% per indicazione, la "stima" resta statistica).
+  interruttore nel Profilo "Usa anche la teoria nei consigli": dal 2026-10-06 (richiesta dell'utente) statistiche e
+  teoria CONCORRONO entrambe, la teoria un po' di più: punteggio = 0.9·statistiche + 1.1·0.02·punti guide (45%/55%;
+  `GUIDE_TO_WR` = 0.02 misurato: dispersione di 1 punto guide ≈ 2% di win rate su mappe e counter). Vale per consigli,
+  combinazione di squadra (sinergie), ban (`blendedBanSuggestions`) e "Passa a"; la "stima" in % resta statistica.
 - Riquadro consigli **in flusso** (scorre via con la pagina, non copre mai la griglia); quando è fuori schermo compare
   in alto la barra minima `#mini` (n. 1 di ciascuno, toccabile) e sotto si ferma il selettore Ban/Avversari/Alleati.
   **Niente scroll dentro i riquadri** (liste complete e distese; si scorre solo pagina o scheda). Collaudo e2e:

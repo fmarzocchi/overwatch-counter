@@ -1,5 +1,5 @@
 import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES,
-  guideBanSuggestions, guideDetails, guideStars } from "./recommend.js";
+  guideBanSuggestions, blendedBanSuggestions, guideDetails, guideStars } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
 
@@ -643,9 +643,11 @@ function renderBanRecs() {
     ours: team.filter(Boolean).map((h) => h.id),
     keep: [...profile.players.flatMap((p) => p.favorites), ...match.picked.filter(Boolean), ...match.allies],
   };
-  const rec = guide ? guideBanSuggestions(data, T, opts) : banSuggestions([...new Set(profile.players.map((p, i) => playerData(i)))], opts);
+  const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
+  const rec = guide ? guideBanSuggestions(data, T, opts)
+    : profile.useTheory && T ? blendedBanSuggestions(sets, T, opts) : banSuggestions(sets, opts);
   $(".br-sub", box).textContent = guide ? "Forti su questa mappa per guide e giocatori forti, e contro i vostri eroi"
-    : "Forti su questa mappa e contro i vostri eroi";
+    : profile.useTheory && T ? "Forti su questa mappa e contro i vostri eroi (statistiche e guide)" : "Forti su questa mappa e contro i vostri eroi";
   const banned = new Set(match.bans.map(sid));
   $("#t-ban-recs").textContent = `Ban consigliati per ${map.name}`;
   fill($("#ban-recs-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
@@ -997,8 +999,9 @@ function renderProfile() {
     el("p", { class: "muted small" },
       "Solo guide e pro: eroi e ban scelti senza le statistiche di counterwatch, da ciò che dicono guide, coach e giocatori " +
       "forti su mappe, counter e sinergie; al posto della percentuale vedi una valutazione a stelle. " +
-      "Teoria: stili Rush/Dive/Poke e counter noti da guide e siti. Spenta si vede ma non cambia la classifica; " +
-      "accesa aggiunge un piccolo peso (±0,5% per indicazione). " +
+      "Usa anche la teoria: consigli, ban e cambi nascono da statistiche e guide insieme, con un po' più di peso alle " +
+      "guide (55% contro 45%); la stima in percentuale resta quella delle statistiche. Spenta, la teoria si vede ma " +
+      "non cambia la classifica. " +
       "Solo preferiti: vale per tutti, a ognuno si consiglia solo tra i suoi preferiti del ruolo scelto. " +
       "Se non ne resta nessuno (ruolo, ban, alleati) si consiglia tra tutti e lo vedi scritto."),
   ));

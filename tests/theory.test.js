@@ -6,7 +6,8 @@ import {
   dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected, swapAdvice,
   mapFit, GUIDE_POINTS,
 } from "../app/theory.js";
-import { recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, guideStars, headline } from "../app/recommend.js";
+import { recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, guideStars, headline, THEORY_SHARE, GUIDE_TO_WR,
+  blendedBanSuggestions, banSuggestions } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
 const hero = (name) => data.heroes.find((h) => h.name === name) ?? assert.fail(`eroe mancante: ${name}`);
@@ -65,7 +66,12 @@ test("teoria nei consigli: vista sempre, nel punteggio solo se attivata", () => 
   const on = recommend(data, { ...ctx, useTheory: true }).find((r) => r.hero.name === "Cassidy");
   assert.equal(off.theory.beats[0].name, "Pharah");
   assert.equal(off.parts.teoria, 0);
-  assert.ok(Math.abs(on.parts.teoria - THEORY_WEIGHT) < 1e-12);
+  // statistiche 45% + teoria 55% (punti delle guide portati sulla scala dei win rate)
+  const stat = off.score - off.parts.pref;
+  const guide = recommend(data, { ...ctx, guideOnly: true }).find((r) => r.hero.name === "Cassidy");
+  const expected = 2 * (1 - THEORY_SHARE) * stat + 2 * THEORY_SHARE * GUIDE_TO_WR * (guide.score - guide.parts.pref);
+  assert.ok(Math.abs(on.score - on.parts.pref - expected) < 1e-12, `${on.score} vs ${expected}`);
+  assert.ok(Math.abs(on.parts.teoria - (expected - stat)) < 1e-12);
   assert.ok(Math.abs(on.estimate - off.estimate) < 1e-12, "la stima resta statistica");
   assert.ok(details(off).some((d) => d.kind === "teoria" && d.text.startsWith("batte Pharah")));
   const fit = theoryForPick(data, T, hero("Junker Queen"), { mates: [id("Lúcio"), id("Juno")] });
@@ -318,4 +324,25 @@ test("guide: nella guida nessuna riga tratta dalle statistiche", () => {
   const rows = recommend(data, { role: "Damage", mapSlug: "kings-row", enemies: [id("Pharah"), id("Winston")], theory: TT, guideOnly: true });
   const g = playGuide(data, TT, { hero: rows[0].hero, mapSlug: "kings-row", enemies: [id("Pharah"), id("Winston")], rows, guide: true });
   assert.ok(g.sections.flatMap((s) => s.items).every((it) => it.kind !== "statistica"));
+});
+
+test("statistiche + teoria: concorrono entrambe, la teoria pesa di più (55%)", () => {
+  const TT = buildTheory(data, GUIDE_RAW, null);
+  const ctx = { role: "Damage", mapSlug: "kings-row", theory: TT };
+  const stat = recommend(data, ctx);
+  const both = recommend(data, { ...ctx, useTheory: true });
+  const pos = (rows, n) => rows.findIndex((r) => r.hero.name === n);
+  // consigliato dalle guide sulla mappa: sale; sconsigliato: scende
+  assert.ok(pos(both, "Mei") <= pos(stat, "Mei") || pos(stat, "Mei") === 0, "Mei sale");
+  assert.ok(pos(both, "Widowmaker") >= pos(stat, "Widowmaker"), "Widowmaker scende");
+  // un motivo pieno delle guide (2 punti) pesa più di 2 punti di win rate... ma meno dello stesso scarto in entrambi
+  assert.ok(2 * THEORY_SHARE * GUIDE_TO_WR > 2 * (1 - THEORY_SHARE) * GUIDE_TO_WR, "teoria leggermente più pesante");
+  // stima invariata
+  for (const r of both) assert.ok(Math.abs(r.estimate - stat.find((x) => x.hero.id === r.hero.id).estimate) < 1e-12);
+  // ban: mescolati, consigliati dalle guide in alto
+  const bans = blendedBanSuggestions(data, TT, { mapSlug: "kings-row" });
+  const plain = banSuggestions(data, { mapSlug: "kings-row", perRole: 99 });
+  assert.ok(Object.values(bans).every((rows) => rows.length === 2));
+  const reinStat = plain.Tank.findIndex((r) => r.hero.name === "Reinhardt");
+  assert.ok(bans.Tank.some((r) => r.hero.name === "Reinhardt") || reinStat > 6, "Reinhardt (consigliato dalle guide) tra i ban se non è in fondo nei numeri");
 });

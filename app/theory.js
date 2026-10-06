@@ -235,11 +235,13 @@ export function swapAdvice(data, theory, { hero, rows = null, enemies = [], guid
       : `per le guide è più adatto a questa partita (${names(countered.map((h) => h.name)) || "mappa e avversari"})`;
     return { hero: best.r.hero, gain: best.gain, why, kind: "teoria", countered };
   }
+  // "nei dati": solo la parte statistica (la stima), anche quando il punteggio mescola statistiche e teoria
+  const dataGain = typeof best.r.estimate === "number" && typeof cur.estimate === "number" ? best.r.estimate - cur.estimate : best.gain;
   const why = beats.length
-    ? `in teoria batte ${names(beats)}${best.gain >= 0.005 ? ` e nei dati rende ${pct(best.gain)} in più` : ""}`
-    : best.gain >= 0.005 ? `nei dati rende ${pct(best.gain)} in più con questi avversari`
+    ? `in teoria batte ${names(beats)}${dataGain >= 0.005 ? ` e nei dati rende ${pct(dataGain)} in più` : ""}`
+    : dataGain >= 0.005 ? `nei dati rende ${pct(dataGain)} in più con questi avversari`
       : `soffre meno questi avversari (${names(countered.map((h) => h.name))} counterano ${hero.name})`;
-  return { hero: best.r.hero, gain: best.gain, why, kind: beats.length || best.gain < 0.005 ? "teoria" : "statistica", countered };
+  return { hero: best.r.hero, gain: best.gain, why, kind: beats.length || dataGain < 0.005 ? "teoria" : "statistica", countered };
 }
 
 export function playGuide(data, theory, { hero, mapSlug = null, side = null, enemies = [], allies = [], partner = null, partners = null, rows = null, guide = false } = {}) {
