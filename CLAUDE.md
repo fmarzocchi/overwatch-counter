@@ -210,9 +210,16 @@ Le ricerche web sono al massimo 200 per turno, in comune tra tutti gli agenti: i
 Secondo giro (2026-10-06, "continua la ricerca"): 4 agenti con tetto di 45 ricerche ciascuno e salvataggio dopo ogni
 eroe (istruzioni comuni in `scratchpad/research2/PROMPT.md`): +13 consigliati, +7 sconsigliati, +16 caratteristiche
 (scartati: Juno, fonte sulla modalità Clash; Sombra, kit Danni superato; tolti per contrasto Reinhardt/Ilios,
-Winston/Nepal, Sigma/Gibilterra). Ora OGNI eroe ha `mapFeatures` (tipo di mappa adatto). Senza nessuna mappa precisa
-dalle guide restano D.Mon, Domina, Hazard, Emre, Freja, Sierra, Jetpack Cat, Juno, Lifeweaver, Mizuki, Wuyang: le guide
-per loro danno solo statistiche (escluse) o il tipo di mappa. Fonti spesso vecchie (Icy Veins era OW1, 2022-24).
+Winston/Nepal, Sigma/Gibilterra). Ora OGNI eroe ha `mapFeatures` (tipo di mappa adatto).
+Terzo e quarto giro (2026-10-06, l'utente: "fonti aggiornate ad agosto-ottobre 2026", "devi trovare qualcosa per ogni
+eroe"): solo fonti 2025-2026 con `date` per voce (`scratchpad/research3/`, `research4/`), poi ricerche mappa per mappa,
+in altre lingue e sui resoconti delle partite pro (owtv.gg: OWCS 2026, Midseason Championship, World Cup 2026 — sono
+le fonti che hanno funzionato). +24 consigliati, +7 sconsigliati: Jetpack Cat, Freja, Sierra, Domina, Emre (partite pro),
+Mizuki (Shambali, pro), Wuyang (Neon Junction, Ilios), Lifeweaver (fonti 2023 come ripiego, nessuna più recente).
+Ancora senza mappe precise: **D.Mon** (uscita l'11/08/2026), **Hazard**, **Juno** — per loro le ricerche danno solo
+tabelle di win rate (escluse: l'app ha già le statistiche) e guide sulle abilità; hanno comunque il tipo di mappa adatto.
+I riassunti di WebSearch non mostrano le tabelle pick/ban dei resoconti owtv.gg e WebFetch è bloccato: lì potrebbe
+esserci di più. Fonti degli altri eroi spesso vecchie (Icy Veins era OW1, 2022-24).
 
 ## Più giocatori e "chi ha preso cosa" (2026-10-05, richiesta dell'utente)
 

@@ -1584,7 +1584,9 @@
   "mapFeatures": {
    "likes": [
     "close-quarters",
-    "chokepoints"
+    "chokepoints",
+    "open-spaces",
+    "flank-routes"
    ],
    "dislikes": [
     "high-ground",
@@ -1951,7 +1953,9 @@
    "https://games.gg/overwatch/guides/overwatch-domina-guide-master-the-poke-tank-and-dominate/",
    "https://esports.gg/news/overwatch/overwatch-domina-release-date-release-time-abilities-and-lore/",
    "https://roonby.com/2026/02/27/domina-overwatch-guide-tips-how-to-play-her/amp/",
-   "https://1v9.gg/blog/overwatch-domina-guide"
+   "https://1v9.gg/blog/overwatch-domina-guide",
+   "https://r.datuan.dev/r/Competitiveoverwatch/",
+   "https://owtv.gg/news/grand-finals-recap-owcs-pre-season-bootcamp"
   ],
   "abilities": [
    {
@@ -2069,7 +2073,8 @@
    ],
    "dislikes": [
     "open-spaces",
-    "close-quarters"
+    "close-quarters",
+    "flank-routes"
    ],
    "why": "Tank da poke a media/lunga distanza; Sonic Repulsors stordisce solo contro i muri e butta giù dai bordi (es. ponte di Eichenwalde)."
   },
@@ -2513,7 +2518,10 @@
    "https://esports.gg/news/overwatch/overwatch-finally-welcomes-emre-as-a-playable-hero/",
    "https://mobalytics.gg/overwatch/heroes/emre-guide",
    "https://www.dexerto.com/wikis/overwatch/heroes/damage/emre/",
-   "https://bo3.gg/games/articles/overwatch-emre-hero-guide"
+   "https://bo3.gg/games/articles/overwatch-emre-hero-guide",
+   "https://owtv.gg/news/flexibility-galore-owcs-japan-stage-1-week-2-review",
+   "https://owtv.gg/news/back-at-it-again-owcs-korea-stage-one-week-two-review",
+   "https://owtv.gg/news/six-teams-one-tight-race-owcs-emea-stage-1-week-1-review"
   ],
   "abilities": [
    {
@@ -2570,7 +2578,8 @@
    ],
    "dislikes": [
     "flank-routes",
-    "open-spaces"
+    "open-spaces",
+    "close-quarters"
    ],
    "why": "Fucile a raffica a media-lunga distanza con Take Aim; granata utile sui choke; teme chi lo aggira"
   },
@@ -2646,7 +2655,8 @@
    "https://nerdburglars.net/question/what-are-the-best-counters-to-freja/",
    "https://www.dexerto.com/overwatch/overwatch-freja-guide-abilities-ultimate-tips-3131604/",
    "https://esports.gg/news/overwatch/overwatch-season-1-patch-notes-2026-all-buffs-nerfs-and-updates/",
-   "https://mobalytics.gg/overwatch/heroes/freja-guide"
+   "https://mobalytics.gg/overwatch/heroes/freja-guide",
+   "https://www.dexerto.com/overwatch/overwatch-freja-guide-abilities-ultimate-tips-3131604"
   ],
   "abilities": [
    {
@@ -3238,7 +3248,8 @@
    "https://www.oneesports.gg/overwatch/overwatch-2-hazard-guide-abilities/",
    "https://overwatch.fandom.com/wiki/June_16,_2026_Patch",
    "https://x.com/OWCavalry/status/2031430108574060820",
-   "https://mobalytics.gg/overwatch/heroes/hazard-guide"
+   "https://mobalytics.gg/overwatch/heroes/hazard-guide",
+   "https://owtv.gg/news/back-at-it-again-owcs-korea-stage-one-week-two-review"
   ],
   "abilities": [
    {
@@ -3323,7 +3334,8 @@
     "close-quarters",
     "env-kills",
     "high-ground",
-    "flank-routes"
+    "flank-routes",
+    "chokepoints"
    ],
    "dislikes": [
     "long-sightlines",
@@ -3614,7 +3626,9 @@
    "https://screenrant.com/overwatch-jetpack-cat-build-best-abilities-ultimate-perks-tips/",
    "https://www.thegamer.com/overwatch-jetpack-cat-hero-ability-tips-guide/",
    "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
-   "https://games.gg/hi/news/overwatch-adds-jetpack-cat-hero-with-tether-flight/"
+   "https://games.gg/hi/news/overwatch-adds-jetpack-cat-hero-with-tether-flight/",
+   "https://mobalytics.gg/overwatch/jetpack-cat-guide",
+   "https://www.twoaveragegamers.com/overwatch-2026-spotlight-5-new-heroes-jetpack-cat-and-why-its-a-big-deal/"
   ],
   "abilities": [
    {
@@ -3710,7 +3724,6 @@
   "mapFeatures": {
    "likes": [
     "env-kills",
-    "open-spaces",
     "high-ground",
     "flank-routes"
    ],
@@ -4177,7 +4190,10 @@
    "https://turboboost.gg/article/how-to-play-juno-in-overwatch",
    "https://mobalytics.gg/overwatch/heroes/juno-guide",
    "https://esports.gg/news/overwatch/overwatch-season-2-patch-notes-now-live-perk-updates-galore/",
-   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/"
+   "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
+   "https://mobalytics.gg/overwatch/guides/flyers-team-comp",
+   "https://liquipedia.net/overwatch/Overwatch_Champions_Series/2026/EMEA/Stage_2",
+   "https://www.dexerto.com/overwatch/overwatch-2-juno-guide-abilities-ultimate-tips-and-more-2832060/"
   ],
   "abilities": [
    {
@@ -4266,7 +4282,8 @@
   "mapFeatures": {
    "likes": [
     "open-spaces",
-    "high-ground"
+    "high-ground",
+    "flank-routes"
    ],
    "dislikes": [
     "close-quarters"
@@ -4589,7 +4606,12 @@
    "https://esports.gg/news/overwatch/all-overwatch-season-4-patch-notes-buffs-nerfs-adjustments/",
    "https://mobalytics.gg/overwatch/heroes/lifeweaver-guide",
    "https://www.ggrecon.com/articles/how-have-pros-used-lifeweaver-in-overwatch-league",
-   "https://ggrecon.com/guides/overwatch-2-lifeweaver-abilities"
+   "https://ggrecon.com/guides/overwatch-2-lifeweaver-abilities",
+   "https://esports.gg/news/overwatch/overwatch-lifeweaver-guide-grow-a-better-strategy-and-save-lives/",
+   "https://liquipedia.net/overwatch/Overwatch_Champions_Series/2026/EMEA/Stage_1",
+   "https://liquipedia.net/overwatch/Overwatch_Champions_Series/2026/EMEA/Stage_2",
+   "https://mobalytics.gg/overwatch/guides/poke-team-comp",
+   "https://www.vpesports.com/overwatch-2-clip-showcases-the-devastating-power-of-the-roadhog-and-lifeweaver-combo-on-ilios"
   ],
   "abilities": [
    {
@@ -4678,7 +4700,9 @@
    "likes": [
     "high-ground",
     "chokepoints",
-    "env-kills"
+    "env-kills",
+    "open-spaces",
+    "long-sightlines"
    ],
    "dislikes": [],
    "why": "La piattaforma sfrutta i dislivelli; è lento e vulnerabile ai fiancheggiatori."
@@ -5553,7 +5577,13 @@
    "https://www.thegamer.com/overwatch-mizuki-tips-tricks-hero-guide/",
    "https://overwatch.fandom.com/wiki/June_16,_2026_Patch",
    "https://mobalytics.gg/overwatch/heroes/mizuki-guide",
-   "https://games.gg/overwatch/guides/overwatch-mizuki-guide-abilities-perks-and-playstyle-explained/"
+   "https://games.gg/overwatch/guides/overwatch-mizuki-guide-abilities-perks-and-playstyle-explained/",
+   "https://owtv.gg/news/owcs-pacific-stage-1-week-1-review",
+   "https://owtv.gg/news/weibo-gaming-vs-spacestation-gaming-full-match-recap",
+   "https://owtv.gg/news/the-biggest-upset-ever-france-vs-south-korea",
+   "https://owtv.gg/news/flexibility-galore-owcs-japan-stage-1-week-2-review",
+   "https://owtv.gg/news/owcs-japan-stage-1-week-1-review",
+   "https://owtv.gg/news/the-road-to-tokyo-owcs-asia-stage-1-preview"
   ],
   "abilities": [
    {
@@ -7309,7 +7339,8 @@
    "https://www.esports.net/news/overwatch-sierra-kit-low-elo/",
    "https://idcgames.com/en/overwatch/news/overwatch-launches-season-2-summit,-introducing-sierra,-map-reworks,-and-a-wave-of-new-content-2026-04-14-11-25-12835",
    "https://mobalytics.gg/overwatch/heroes/sierra-guide",
-   "https://idcgames.com/en/overwatch/news/overwatch-reveals-sierra-gameplay,-introducing-a-dps-designed-to-redefine-combat-control-2026-04-10-11-30-12825"
+   "https://idcgames.com/en/overwatch/news/overwatch-reveals-sierra-gameplay,-introducing-a-dps-designed-to-redefine-combat-control-2026-04-10-11-30-12825",
+   "https://pixelnitro.com/?p=4084"
   ],
   "abilities": [
    {
@@ -7387,8 +7418,7 @@
     "flank-routes"
    ],
    "dislikes": [
-    "close-quarters",
-    "long-sightlines"
+    "close-quarters"
    ],
    "why": "Usa angoli alti e laterali raggiunti col drone; mappe con strutture alte la aiutano"
   },
@@ -9667,7 +9697,12 @@
    "https://www.thegamer.com/overwatch-2-wuyang-hero-guide/",
    "https://turboboost.gg/article/wuyang-overwatch-guide",
    "https://esports.gg/news/overwatch/overwatch-2-wuyang-trial-abilities-and-release-date/",
-   "https://mobalytics.gg/overwatch/heroes/wuyang-guide"
+   "https://mobalytics.gg/overwatch/heroes/wuyang-guide",
+   "https://ofzenandcomputing.com/wuyang-guide-overwatch-abilities-tips/",
+   "https://owtv.gg/news/four-teams-remain-after-a-ruthless-day-of-quarter-finals",
+   "https://owtv.gg/news/gen-g-are-back-owcs-emea-stage-3-week-5-summary",
+   "https://owtv.gg/news/crazy-raccoon-vs-al-qadsiah-full-recap",
+   "https://owtv.gg/news/the-emea-elite-hound-al-qadsiah-to-the-top-or-emea-owcs-week-2-summary"
   ],
   "abilities": [
    {
@@ -10408,6 +10443,18 @@
       "why": "Sogno da cecchino: dietro la statua davanti al 1° punto, poi sulle passerelle",
       "side": null,
       "src": "https://dotesports.com/overwatch/news/the-best-overwatch-2-maps-for-widowmaker"
+     },
+     {
+      "hero": "Freja",
+      "why": "Una delle mappe migliori per Freja secondo la guida Mobalytics",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/heroes/freja-guide"
+     },
+     {
+      "hero": "Emre",
+      "why": "In OWCS Giappone ans su Emre ottiene i primi kill nei fight su Blizzard World",
+      "side": null,
+      "src": "https://owtv.gg/news/flexibility-galore-owcs-japan-stage-1-week-2-review"
      }
     ],
     "Support": [
@@ -10416,6 +10463,12 @@
       "why": "Angoli riparati per curare al sicuro: tettoia al primo punto, molte alture nel secondo",
       "side": null,
       "src": "https://www.icy-veins.com/overwatch/ana-maps"
+     },
+     {
+      "hero": "Lifeweaver",
+      "why": "In attacco Petal Platform porta la Widowmaker in alto per scoprire la difesa.",
+      "side": "attack",
+      "src": "https://www.ggrecon.com/articles/how-have-pros-used-lifeweaver-in-overwatch-league"
      }
     ]
    },
@@ -10605,6 +10658,12 @@
       "why": "In difesa assorbe molto danno ed elimina in fretta i supporti nemici",
       "side": "defense",
       "src": "https://www.thegamer.com/overwatch-2-best-tanks-for-each-map/"
+     },
+     {
+      "hero": "Domina",
+      "why": "Muro d'acciaio sul carico o su un choke, quasi impossibile da scalzare se Sigma è bannato",
+      "side": null,
+      "src": "https://r.datuan.dev/r/Competitiveoverwatch/"
      }
     ],
     "Damage": [
@@ -10639,6 +10698,12 @@
       "why": "Percorsi laterali e punti alti; Dragonblade nel 3° tratto stretto",
       "side": "attack",
       "src": "https://www.sportskeeda.com/esports/how-play-circuit-royal-map-overwatch-2"
+     },
+     {
+      "hero": "Sierra",
+      "why": "Lunghe linee di tiro: sta indietro e spara da lontano (perk Tight Grip)",
+      "side": null,
+      "src": "https://1v9.gg/blog/overwatch-sierra-guide"
      }
     ],
     "Support": [
@@ -10815,6 +10880,12 @@
       "why": "Molti angoli stretti da cui i colpi alla testa sono vantaggiosi",
       "side": null,
       "src": "https://www.sportskeeda.com/esports/how-play-colosseo-map-overwatch-2"
+     },
+     {
+      "hero": "Freja",
+      "why": "Tra le mappe migliori per Freja: linee di tiro lunghe e punti rialzati",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/heroes/freja-guide"
      }
     ],
     "Support": [
@@ -10951,6 +11022,18 @@
       "why": "In attacco la mobilità supera la strozzatura e raggiunge i bersagli",
       "side": "attack",
       "src": "https://www.sportskeeda.com/esports/how-play-dorado-map-overwatch-2"
+     },
+     {
+      "hero": "Freja",
+      "why": "Molti rilievi e tetti: con Updraft prende l'angolo alto sul nemico",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/heroes/freja-guide"
+     },
+     {
+      "hero": "Sierra",
+      "why": "Tetti e rialzi: il drone diventa un ottimo mezzo di rotazione (perk Full Flight)",
+      "side": null,
+      "src": "https://1v9.gg/blog/overwatch-sierra-guide"
      }
     ],
     "Support": [
@@ -11355,6 +11438,12 @@
       "hero": "Winston",
       "why": "Dive contro la difesa arroccata sulle alture del punto A",
       "side": "attack"
+     },
+     {
+      "hero": "Domina",
+      "why": "Oppressiva sul carico e sui choke quando Sigma è bannato (Sigma la domina altrimenti)",
+      "side": null,
+      "src": "https://r.datuan.dev/r/Competitiveoverwatch/"
      }
     ],
     "Damage": [
@@ -11383,6 +11472,18 @@
       "why": "Favorisce i DPS a lungo raggio: Pharah tra gli eroi che ci rendono bene",
       "side": null,
       "src": "https://gamersdecide.com/articles/overwatch-2-best-maps-for-dps"
+     },
+     {
+      "hero": "Sierra",
+      "why": "Lunghe linee di tiro: sta indietro e spara da lontano (perk Tight Grip)",
+      "side": null,
+      "src": "https://1v9.gg/blog/overwatch-sierra-guide"
+     },
+     {
+      "hero": "Emre",
+      "why": "In OWCS Corea RONG protegge l'Emre di Kilo dal ban prima di Havana",
+      "side": null,
+      "src": "https://owtv.gg/news/back-at-it-again-owcs-korea-stage-one-week-two-review"
      }
     ],
     "Support": [
@@ -11396,6 +11497,12 @@
       "why": "In difesa: Torretta sul cornicione davanti allo spawn nemico, cura il piano terra",
       "side": "defense",
       "src": "https://sportskeeda.com/esports/overpowered-illari-healing-pylons-overwatch-2"
+     },
+     {
+      "hero": "Lifeweaver",
+      "why": "Provato in attacco: Petal Platform per contendere le alture difensive.",
+      "side": "attack",
+      "src": "https://www.ggrecon.com/articles/how-have-pros-used-lifeweaver-in-overwatch-league"
      }
     ]
    },
@@ -11414,6 +11521,11 @@
      "hero": "Echo",
      "why": "Molto aperta: in aria è un bersaglio facile per gli hitscan",
      "src": "https://us.forums.blizzard.com/en/overwatch/t/what-are-the-best-and-worst-maps-for-echo/630688"
+    },
+    {
+     "hero": "Jetpack Cat",
+     "why": "Mappa piatta e aperta: poco spazio per volare, serve stare coi compagni.",
+     "src": "https://mobalytics.gg/overwatch/jetpack-cat-guide"
     }
    ],
    "guideUncertain": false,
@@ -11509,6 +11621,12 @@
       "hero": "Lúcio",
       "why": "Supporto consigliato per la composizione sulla mappa",
       "side": null
+     },
+     {
+      "hero": "Lifeweaver",
+      "why": "Apertura in attacco: piattaforma alla Widowmaker per rivaleggiare con l'altura dei difensori.",
+      "side": "attack",
+      "src": "https://www.ggrecon.com/articles/how-have-pros-used-lifeweaver-in-overwatch-league"
      }
     ]
    },
@@ -11657,6 +11775,18 @@
       "hero": "Zenyatta",
       "why": "Scelta comune su tutti e tre i punti",
       "side": null
+     },
+     {
+      "hero": "Lifeweaver",
+      "why": "Pozzi e bordi: Life Grip salva gli alleati dai ganci del Roadhog e dalle cadute.",
+      "side": null,
+      "src": "https://www.vpesports.com/overwatch-2-clip-showcases-the-devastating-power-of-the-roadhog-and-lifeweaver-combo-on-ilios"
+     },
+     {
+      "hero": "Wuyang",
+      "why": "Tidal Blast + Kitsune Rush hanno vinto uno scontro chiave e convertito il vantaggio ult",
+      "side": null,
+      "src": "https://owtv.gg/news/gen-g-are-back-owcs-emea-stage-3-week-5-summary"
      }
     ]
    },
@@ -12277,7 +12407,14 @@
       "src": "https://www.exitlag.com/blog/overwatch-shion/"
      }
     ],
-    "Support": []
+    "Support": [
+     {
+      "hero": "Wuyang",
+      "why": "Comp poke Sojourn/Pharah/Wuyang/Kiriko/Ramattra dominante in attacco ai quarti Midseason",
+      "side": "attack",
+      "src": "https://owtv.gg/news/four-teams-remain-after-a-ruthless-day-of-quarter-finals"
+     }
+    ]
    },
    "avoid": [],
    "guideUncertain": true
@@ -12407,6 +12544,12 @@
       "why": "Obiettivi stretti: i nemici devono avvicinarsi e restano a portata di mischia",
       "side": null,
       "src": "https://icy-veins.com/overwatch/brigitte-maps"
+     },
+     {
+      "hero": "Lifeweaver",
+      "why": "Molti precipizi: Life Grip tira indietro chi sta per essere buttato giù.",
+      "side": null,
+      "src": "https://esports.gg/news/overwatch/overwatch-lifeweaver-guide-grow-a-better-strategy-and-save-lives/"
      }
     ]
    },
@@ -12425,6 +12568,11 @@
      "hero": "Ashe",
      "why": "Punti stretti e poche linee di tiro: Ashe fatica",
      "src": "https://www.gameslearningsociety.org/wiki/is-ashe-good-for-every-map/"
+    },
+    {
+     "hero": "Freja",
+     "why": "Tra le mappe peggiori per Freja secondo Mobalytics (spazi stretti, terreno piatto)",
+     "src": "https://mobalytics.gg/overwatch/heroes/freja-guide"
     }
    ],
    "guideUncertain": true,
@@ -12505,7 +12653,13 @@
      }
     ]
    },
-   "avoid": [],
+   "avoid": [
+    {
+     "hero": "Freja",
+     "why": "Spazi stretti e molto terreno piatto: Freja perde i punti alti",
+     "src": "https://mobalytics.gg/overwatch/heroes/freja-guide"
+    }
+   ],
    "guideUncertain": true
   },
   "new-queen-street": {
@@ -12611,6 +12765,11 @@
      "hero": "Venture",
      "why": "Postazioni da poke e spazi aperti: difficile arrivare vicino ai nemici",
      "src": "https://mobalytics.gg/overwatch/heroes/venture-guide"
+    },
+    {
+     "hero": "Jetpack Cat",
+     "why": "Aree aperte e piatte: meno spazio per il volo, gioca vicino alla squadra.",
+     "src": "https://mobalytics.gg/overwatch/jetpack-cat-guide"
     }
    ],
    "guideUncertain": true,
@@ -12711,6 +12870,12 @@
       "why": "Drill Dash in verticale fino al finestrino in alto dell'autobus",
       "side": null,
       "src": "https://www.boostingfactory.com/overwatch/blog/overwatch-2-venture-guide"
+     },
+     {
+      "hero": "Sierra",
+      "why": "Molti punti alti: il drone Anchor serve per rotazioni e angoli rialzati",
+      "side": null,
+      "src": "https://1v9.gg/blog/overwatch-sierra-guide"
      }
     ],
     "Support": [
@@ -12723,6 +12888,12 @@
       "hero": "Lúcio",
       "why": "Velocità per il dive su mappa aperta",
       "side": "attack"
+     },
+     {
+      "hero": "Jetpack Cat",
+      "why": "Molte strutture verticali: vola in permanenza e si riposiziona al sicuro.",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/jetpack-cat-guide"
      }
     ]
    },
@@ -12861,7 +13032,13 @@
      }
     ]
    },
-   "avoid": [],
+   "avoid": [
+    {
+     "hero": "Freja",
+     "why": "Tra le mappe peggiori per Freja secondo Mobalytics (spazi stretti, terreno piatto)",
+     "src": "https://mobalytics.gg/overwatch/heroes/freja-guide"
+    }
+   ],
    "guideUncertain": false,
    "who": {
     "City Center e Gardens: cielo alto e copertura, ottimi per Pharah ed Echo.": {
@@ -12947,6 +13124,12 @@
       "why": "Alternativa: Exo Boots lo portano sui tanti punti sopraelevati della mappa",
       "side": null,
       "src": "https://game8.co/games/Overwatch2/archives/391309"
+     },
+     {
+      "hero": "Jetpack Cat",
+      "why": "Strutture alte e verticali adatte al volo costante.",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/jetpack-cat-guide"
      }
     ]
    },
@@ -13026,6 +13209,12 @@
       "why": "Molta copertura e verticalità: il forum la cita fra le sue migliori",
       "side": null,
       "src": "https://us.forums.blizzard.com/en/overwatch/t/what-are-the-best-and-worst-maps-for-echo/630688"
+     },
+     {
+      "hero": "Emre",
+      "why": "In OWCS Giappone Ky0n su Emre gioca da campione su Rialto, mappa da hitscan",
+      "side": null,
+      "src": "https://owtv.gg/news/flexibility-galore-owcs-japan-stage-1-week-2-review"
      }
     ],
     "Support": [
@@ -13267,6 +13456,12 @@
       "hero": "Ashe",
       "why": "Push in generale: linee lunghe e alture",
       "side": null
+     },
+     {
+      "hero": "Emre",
+      "why": "In OWCS EMEA Ade (Al Qadsiah) rende in modo eccellente con Emre su Runasapi",
+      "side": null,
+      "src": "https://owtv.gg/news/six-teams-one-tight-race-owcs-emea-stage-1-week-1-review"
      }
     ],
     "Support": [
@@ -13376,7 +13571,13 @@
      }
     ]
    },
-   "avoid": [],
+   "avoid": [
+    {
+     "hero": "Jetpack Cat",
+     "why": "Mappa piatta con obiettivo aperto: poco spazio, resta vicina alla squadra.",
+     "src": "https://mobalytics.gg/overwatch/jetpack-cat-guide"
+    }
+   ],
    "guideUncertain": false,
    "who": {
     "Volcano: la lava attorno al punto rende Lúcio fortissimo con le spinte.": {
@@ -13435,6 +13636,12 @@
       "hero": "Moira",
       "why": "Vie laterali per aggirare, Svanire per fuggire",
       "side": null
+     },
+     {
+      "hero": "Mizuki",
+      "why": "Scelto dai pro come risposta a Cat/Bastion: Sigma+Mizuki isolano la backline nemica",
+      "side": null,
+      "src": "https://owtv.gg/news/weibo-gaming-vs-spacestation-gaming-full-match-recap"
      }
     ]
    },
@@ -13667,6 +13874,12 @@
       "hero": "Baptiste",
       "why": "Composizione difensiva su linee lunghe",
       "side": "defense"
+     },
+     {
+      "hero": "Jetpack Cat",
+      "why": "Layout verticale che permette di cambiare posizione in volo di continuo.",
+      "side": null,
+      "src": "https://mobalytics.gg/overwatch/jetpack-cat-guide"
      }
     ]
    },
@@ -13713,6 +13926,11 @@
      "hero": "Symmetra",
      "why": "Mappa grande a lunghe distanze: la sua sfera e le torrette rendono poco",
      "src": "https://icy-veins.com/overwatch/symmetra-maps"
+    },
+    {
+     "hero": "Domina",
+     "why": "Nel Grand Final del pre-season OWCS la sua scarsa mobilità fu punita e persero il primo punto",
+     "src": "https://owtv.gg/news/grand-finals-recap-owcs-pre-season-bootcamp"
     }
    ],
    "guideUncertain": false,
