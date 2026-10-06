@@ -682,8 +682,11 @@ try {
     await p12.click("#guide-body .more-btn");
     const hero = (await text(p12, "#t-guide")).replace(/^Come giocare /, "");
     const guide = await text(p12, "#guide-body");
-    const left = (theory[hero]?.abilities ?? []).map((a) => a.name).filter((n) => guide.replace(/«IT [^»]+»/g, "").includes(n));
-    check("abilità col nome italiano del gioco (names_it.json), anche nei consigli", guide.includes("«IT ") && left.length === 0,
+    // nessun nome inglese, né delle abilità dell'eroe né di quelle degli altri citate nei consigli (es. Dragonblade di Genji)
+    const allEn = [...new Set(Object.values(abilities).flatMap((m) => Object.keys(m)))];
+    const rest = guide.replace(/«IT [^»]+»/g, "");
+    const left = allEn.filter((n) => new RegExp(`(^|[^\\w])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w])`).test(rest));
+    check("abilità col nome italiano del gioco (names_it.json), anche quelle degli altri eroi nei consigli", guide.includes("«IT ") && left.length === 0,
       `${hero}: ancora in inglese ${left.join(", ")}`);
     await p12.click("#guide-dialog [data-close]");
     await c12.close();

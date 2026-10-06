@@ -212,22 +212,33 @@ function localizeTheory(raw) {
     if (x && typeof x === "object") for (const k of Object.keys(x)) if (!SKIP.has(k)) x[k] = swapIn(x[k], swaps);
     return x;
   };
+  const toRe = (pairs) => pairs.filter(([en, it]) => en !== it).sort((a, b) => b[0].length - a[0].length)
+    .map(([en, it]) => [new RegExp(`(^|[^\\w])${esc(en)}(?![\\w])`, "g"), `$1${it}`]);
+  // abilità di TUTTI gli eroi (nei consigli di Ana c'è la Dragonblade di Genji): solo i nomi senza ambiguità
+  const all = new Map();
+  for (const names of Object.values(IT.abilities ?? {})) {
+    for (const [en, it] of Object.entries(names)) all.set(en, all.has(en) && all.get(en) !== it ? null : it);
+  }
+  const global = [...all].filter(([, it]) => it);
   for (const [hero, t] of Object.entries(raw)) {
-    const names = IT.abilities?.[hero];
-    if (hero.startsWith("_") || !names || !Array.isArray(t?.abilities)) continue;
-    const byKey = Object.fromEntries(Object.entries(names).map(([en, it]) => [key(en), it]));
-    const swaps = [];
-    for (const a of t.abilities) {
-      const it = byKey[key(a.name ?? "")];
-      if (!it) continue;
-      if (it !== a.name) swaps.push([a.name, it]);
-      a.en = a.name;
-      a.name = it;
-      a.it = null;
+    if (!t || typeof t !== "object") continue;
+    const names = hero.startsWith("_") ? null : IT.abilities?.[hero];
+    const own = [];
+    if (names && Array.isArray(t.abilities)) {
+      const byKey = Object.fromEntries(Object.entries(names).map(([en, it]) => [key(en), it]));
+      for (const a of t.abilities) {
+        const it = byKey[key(a.name ?? "")];
+        if (!it) continue;
+        own.push([a.name, it]);
+        a.en = a.name;
+        a.name = it;
+        a.it = null;
+      }
+      if (t.priority?.ability && byKey[key(t.priority.ability)]) t.priority.ability = byKey[key(t.priority.ability)];
     }
-    if (t.priority?.ability && byKey[key(t.priority.ability)]) t.priority.ability = byKey[key(t.priority.ability)];
-    swaps.sort((x, y) => y[0].length - x[0].length);
-    swapIn(t, swaps.map(([en, it]) => [new RegExp(`(^|[^\\w])${esc(en)}(?![\\w])`, "g"), `$1${it}`]));
+    // prima i nomi dell'eroe stesso (come scritti nella teoria), poi quelli degli altri
+    const ownEn = new Set(own.map(([en]) => en));
+    swapIn(t, [...toRe(own), ...toRe(global.filter(([en]) => !ownEn.has(en)))]);
   }
   raw._localized = true;
 }
