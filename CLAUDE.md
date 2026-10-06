@@ -221,7 +221,9 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
 1. **Riquadro del giocatore** (colpo d'occhio): l'eroe da prendere grande (volto + nome) con UNA sola cifra (la stima);
    prima degli avversari un solo motivo in parole (`headline()`, es. "Forte su King's Row"); con gli avversari
    **Batte/Teme** con i volti (`matchups()`: numeri + teoria, coerente con "Punta/Attento" della guida);
-   "Segna come preso" (un tocco); 2 alternative (solo volti) + "＋" (eroe diverso → banner "Tocca l'eroe preso
+   "Segna come preso" (un tocco); 2 alternative (volti con stelline nel colore del giocatore = `choiceStars(i)`, la stessa
+   classifica della griglia durante "＋"; con gli avversari, sotto, volti piccoli di chi batte col bordo verde e chi teme col
+   bordo rosso, da `matchups()`, senza scritte: `altButton()`, richiesta del 2026-10-06, e2e "alternative: …") + "＋" (eroe diverso → banner "Tocca l'eroe preso
    da X" al posto del selettore, `choosePicker`). Eroe preso: il riquadro resta fermo su quell'eroe; se conviene davvero
    compare "Passa a …" (`swapAdvice()`: +1,5% nei numeri, o counterato in teoria da 2+ avversari e l'alternativa non
    rende meno; mai per il n. 1 della lista). Niente percentuali "Mappa/Avversari/Con": sono nel livello 3.

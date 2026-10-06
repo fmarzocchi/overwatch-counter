@@ -553,6 +553,21 @@ function matchupRow(top) {
   return el("div", { class: "mu" }, grp("good", "Batte", m.strong), grp("bad", "Teme", m.weak));
 }
 
+// alternativa sotto "Segna come preso": volto con le stelline (buona scelta, colore del giocatore) e, con gli avversari
+// segnati, i volti piccoli di chi batte (bordo verde) e di chi teme (bordo rosso), come «Batte/Teme» ma senza scritte
+function altButton(i, r, n) {
+  const m = match.enemies.length ? matchups(r) : { strong: [], weak: [] };
+  const names = (xs) => xs.map((x) => x.hero.name).join(", ");
+  const mini = (cls, xs) => (xs.length ? el("span", { class: `alt-mu ${cls}`, "aria-hidden": "true" }, xs.map((x) => face(x.hero))) : null);
+  return el("button", {
+    type: "button", class: "alt", onclick: () => openGuide(i, r.hero),
+    "aria-label": `In alternativa ${r.hero.name}, stima ${est(r)}${n ? `, ${n} stell${n > 1 ? "e" : "a"} su 3` : ""}` +
+      `${m.strong.length ? `, batte ${names(m.strong)}` : ""}${m.weak.length ? `, teme ${names(m.weak)}` : ""}. Tocca per come giocarla`,
+  },
+  el("span", { class: "alt-face" }, face(r.hero), n ? el("span", { class: "alt-stars", "aria-hidden": "true" }, "★".repeat(n)) : null),
+  mini("good", m.strong), mini("bad", m.weak));
+}
+
 function pickCard(p, i) {
   const rows = lastDuo.lists[i] ?? [];
   const top = rows[0];
@@ -572,6 +587,7 @@ function pickCard(p, i) {
   const why = match.enemies.length ? null : headline(top, partnersOf(i));
   const sw = took ? swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() }) : null;
   const alts = took ? [] : rows.slice(1, SHOWN);
+  const altStars = alts.length ? choiceStars(i) : null;
   return el("article", { class: `pick glass${took ? " took" : ""}`, style, "aria-label": `${p.name}: ${took ? "ha preso" : "consigliato"} ${top.hero.name}` },
     head,
     note ? el("div", { class: "pick-note warn-note" }, note)
@@ -597,10 +613,7 @@ function pickCard(p, i) {
     }, took ? [icon("check"), "Preso"] : "Segna come preso"),
     // alternative: solo volti (il nome è nell'etichetta per i lettori di schermo); "+" = ha preso un altro eroe
     took ? null : el("div", { class: "alts" },
-      alts.map((r) => el("button", {
-        type: "button", class: "alt", onclick: () => openGuide(i, r.hero),
-        "aria-label": `In alternativa ${r.hero.name}, stima ${est(r)}. Tocca per come giocarla`,
-      }, face(r.hero))),
+      alts.map((r) => altButton(i, r, altStars.get(sid(r.hero.id)) ?? 0)),
       el("button", {
         type: "button", class: "alt alt-other", onclick: () => choosePicker(i),
         "aria-label": `${p.name} ha preso un altro eroe: toccalo nella griglia`,
@@ -902,7 +915,12 @@ function gridStars() {
       mapSlug: match.mapSlug, side: match.side, ours: team.filter(Boolean).map((h) => h.id), mates: match.allies, mode,
     }).filter((r) => !banned.has(sid(r.hero.id))));
   }
-  const i = g === "picked" ? match.pickFor : -1;
+  return choiceStars(g === "picked" ? match.pickFor : -1);
+}
+// quanto un eroe è una buona scelta per il giocatore i (-1 = per la squadra): gli eroi degli altri contano come alleati.
+// Usate dalla griglia (Alleati, "＋") e dalle alternative nei riquadri.
+function choiceStars(i) {
+  const team = lastDuo?.team ?? [];
   const allies = [...new Set([...team.filter((h, j) => h && j !== i).map((h) => sid(h.id)), ...match.allies.map(sid)])];
   return rankStars(recommend(i >= 0 ? playerData(i) : data, {
     role: null, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies, bans: match.bans,

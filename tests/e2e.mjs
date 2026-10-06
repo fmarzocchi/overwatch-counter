@@ -224,6 +224,22 @@ try {
   check("3 consigli per giocatore: uno grande e 2 alternative piccole", cards.every((c) => c.alts === 2), JSON.stringify(cards));
   check("ordinati dal migliore (stima non crescente, salvo bonus preferiti)", cards.every((c) => c.est.every((v, k) => !k || v <= c.est[k - 1] + 1.01)), JSON.stringify(cards));
   await toTop(page);
+  const altInfo = await page.locator(".pick .alt:not(.alt-other)").evaluateAll((bs) => bs.map((b) => {
+    const card = b.closest(".pick").getBoundingClientRect();
+    const r = b.getBoundingClientRect();
+    const ring = (cls) => [...b.querySelectorAll(`.alt-mu.${cls} .face`)].map((f) => getComputedStyle(f).boxShadow);
+    return { label: b.getAttribute("aria-label"), stars: b.querySelector(".alt-stars")?.textContent ?? "", text: (() => { const c = b.cloneNode(true); c.querySelectorAll(".face, .alt-stars").forEach((f) => f.remove()); return c.textContent.trim(); })(),
+      good: ring("good"), bad: ring("bad"), inside: r.left >= card.left - 0.5 && r.right <= card.right + 0.5, color: b.querySelector(".alt-stars") ? getComputedStyle(b.querySelector(".alt-stars")).color : null };
+  }));
+  check("alternative: stelline (buona scelta) nel colore del giocatore", altInfo.some((a) => a.stars.length) && altInfo.every((a) => /^★{0,3}$/.test(a.stars))
+    && altInfo.filter((a) => a.stars).every((a) => ["rgb(255, 179, 64)", "rgb(255, 111, 174)"].includes(a.color)), JSON.stringify(altInfo));
+  check("alternative: chi batte (bordo verde) e chi teme (bordo rosso) solo coi volti, senza scritte",
+    altInfo.some((a) => a.good.length + a.bad.length) && altInfo.every((a) => !a.text && a.good.length <= 3 && a.bad.length <= 3
+      && a.good.every((x) => x.includes("rgb(50, 215, 75)")) && a.bad.every((x) => x.includes("rgb(255, 105, 97)"))
+      && [...a.label.matchAll(/(?:batte|teme) (.+?)(?=, (?:batte|teme) |\. )/g)].every((g) => g[1].split(", ").every((n) => ["Pharah", "Winston", "Reinhardt"].includes(n)))),
+    JSON.stringify(altInfo));
+  check("alternative: tutto dentro il riquadro", altInfo.every((a) => a.inside), JSON.stringify(altInfo.map((a) => a.inside)));
+  await shot(page, "05e-alternative");
   const altName = (await page.locator(".pick").nth(0).locator(".alt:not(.alt-other)").first().getAttribute("aria-label")).match(/^In alternativa (.+), stima/)[1];
   await page.locator(".pick").nth(0).locator(".alt").first().click();
   await page.locator("#guide-dialog[open]").waitFor();

@@ -237,12 +237,26 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 }
 
 /* alternative: solo volti; "+" = ha preso un eroe diverso (lo si tocca nella griglia) */
-.alts { display: flex; justify-content: center; align-items: center; }
+.alts { display: flex; justify-content: center; align-items: flex-start; }
 .alt {
-  display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; margin: 0 2px;
-  border: 0; border-radius: 50%; background: transparent;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 44px; min-height: 44px;
+  padding: 5px 0 0; margin: 0 2px; border: 0; border-radius: 14px; background: transparent; color: inherit;
 }
+.alt-face { position: relative; display: inline-flex; }
 .alt .face { width: 34px; height: 34px; font-size: 11px; box-shadow: 0 0 0 1.5px var(--edge); }
+/* stelline sul bordo basso del volto, nel colore del giocatore (come nella griglia mentre si sceglie per lui) */
+.alt-stars {
+  position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); padding: 0 3px; border-radius: 999px;
+  font-size: 9.5px; line-height: 11px; letter-spacing: -0.5px; white-space: nowrap; color: var(--pc, var(--amber));
+  background: rgba(0, 0, 0, .78);
+}
+/* chi batte (verde) e chi teme (rosso): volti piccoli, senza scritte */
+.alt-mu { display: flex; justify-content: center; margin-top: 4px; padding-left: 3px; }
+.alt-face + .alt-mu { margin-top: 8px; }
+.alt-mu .face { width: 15px; height: 15px; font-size: 6px; margin-left: -3px; box-shadow: 0 0 0 1px rgba(18, 18, 26, .95), 0 0 0 2.5px var(--ring); }
+.alt-mu.good { --ring: var(--good); }
+.alt-mu.bad { --ring: var(--bad); }
+.alt-other { height: 44px; padding: 0; }
 .alt-other .ic {
   width: 34px; height: 34px; padding: 8px; border-radius: 50%; background: var(--glass-2); color: var(--text);
 }
@@ -650,6 +664,7 @@ dialog .search { margin: 0 16px 6px; }
   .groups-seg button { font-size: 13.5px; }
   .groups-seg b { margin-left: 3px; padding: 1px 4px; }
   .took-btn { font-size: 13px; padding: 0 4px; }
-  .alt { width: 42px; height: 42px; margin: 0 1px; }
+  .alt { min-width: 42px; margin: 0 1px; }
+  .alt-other { height: 42px; }
   .dock button { padding: 0 14px; }
 }
