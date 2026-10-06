@@ -352,7 +352,7 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   line-height: 1.35; background: rgba(0, 0, 0, .55); color: var(--pc, var(--amber)); border: 1px dashed var(--pc, var(--amber));
 }
 .hero .tag.tag-took { background: var(--pc); color: #111; border-style: solid; }
-/* stelline (0–3) sul bordo basso del volto: rosse = pericolo nemico, nere col bordo bianco = da bannare,
+/* stelline (0–3) sul bordo basso del volto: rosse = pericolo nemico, bianche = da bannare,
    dorate (o col colore del giocatore che sta scegliendo) = buona scelta per voi */
 .hero .stars {
   position: absolute; left: 50%; top: 39px; transform: translateX(-50%); padding: 0 4px; border-radius: 999px;
@@ -361,7 +361,7 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 }
 .hero .stars[hidden] { display: none; }
 .hero .stars.st-enemies { color: #ff453a; }
-.hero .stars.st-bans { color: #000; -webkit-text-stroke: 1px #fff; background: rgba(255, 255, 255, .28); font-size: 12px; }
+.hero .stars.st-bans { color: #fff; background: rgba(0, 0, 0, .85); font-size: 12px; text-shadow: 0 0 3px rgba(255, 255, 255, .55); }
 .hero .stars.st-allies { color: var(--amber); }
 .hero .stars.st-picked { color: var(--sc, var(--amber)); }
 

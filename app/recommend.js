@@ -181,6 +181,8 @@ export function guideStars(row) {
   return v >= 3 ? 3 : v >= 1.5 ? 2 : v >= 0.5 ? 1 : 0;
 }
 
+const hookText = (a) => `${a.name} vicino ai bordi: butta giù i nemici (mappa con burroni)`;
+
 // perché, in modalità guide: le stesse righe di details() ma solo dalle guide
 export function guideDetails(row) {
   const g = row.guide;
@@ -188,6 +190,7 @@ export function guideDetails(row) {
   const out = [];
   if (g.map.strong) out.push({ good: true, kind: "teoria", text: `consigliato su ${row.baseLabel}: ${g.map.strong.why}` });
   if (g.map.avoid) out.push({ good: false, kind: "teoria", text: `sconsigliato su ${row.baseLabel}: ${g.map.avoid.why}` });
+  if (g.map.hook) out.push({ good: true, kind: "teoria", text: hookText(g.map.hook) });
   if (g.map.style) out.push({ good: true, kind: "teoria", text: `stile adatto a ${row.baseLabel}` });
   if (g.map.likes.length) out.push({ good: true, kind: "teoria", text: `la mappa lo favorisce (${g.map.likes.map((f) => FEATURE_IT[f] ?? f).join(", ")})` });
   if (g.map.dislikes.length) out.push({ good: false, kind: "teoria", text: `la mappa lo sfavorisce (${g.map.dislikes.map((f) => FEATURE_IT[f] ?? f).join(", ")})` });
@@ -209,7 +212,7 @@ export function guideBanSuggestions(data, theory, { mapSlug = null, side = null,
     const beats = t ? mine.filter((m) => t.counters.has(m.name)) : [];
     const strength = fit.points;
     const threat = GUIDE_POINTS.beats * beats.length;
-    const why = [fit.strong ? `per le guide è forte qui: ${fit.strong.why}` : null,
+    const why = [fit.strong ? `per le guide è forte qui: ${fit.strong.why}` : null, fit.hook && !fit.strong ? hookText(fit.hook) : null,
       beats.length ? `batte ${beats.map((x) => x.name).join(" e ")}` : null].filter(Boolean).join("; ");
     return { hero: h, score: strength + threat, strength, threat, beats, why };
   });
@@ -512,6 +515,7 @@ export function details(row) {
   const lines = [];
   if (g?.strong) lines.push({ good: true, kind: "teoria", text: `consigliato dalle guide su ${row.baseLabel}: ${g.strong.why}` });
   if (g?.avoid) lines.push({ good: false, kind: "teoria", text: `sconsigliato dalle guide su ${row.baseLabel}: ${g.avoid.why}` });
+  if (g?.hook) lines.push({ good: true, kind: "teoria", text: hookText(g.hook) });
   return [...lines, ...statDetails(row)];
 }
 function statDetails(row) {

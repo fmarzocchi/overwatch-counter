@@ -185,10 +185,10 @@ export function allyDirected(a) {
 // Quanto un eroe è adatto alla mappa secondo guide, coach e giocatori forti (theory.json → _maps[slug]):
 //   strong (consigliato, eventualmente solo in attacco o in difesa) +2, avoid (sconsigliato) −2,
 //   stile adatto alla mappa (goodStyles) +0.5, caratteristiche della mappa che l'eroe ama/odia (mapFeatures) ±0.25 l'una (max ±1).
-export const GUIDE_POINTS = { strong: 2, avoid: 2, style: 0.5, feature: 0.25, beats: 1, synergy: 0.5, favorite: 0.5 };
+export const GUIDE_POINTS = { strong: 2, avoid: 2, style: 0.5, feature: 0.25, hook: 1, beats: 1, synergy: 0.5, favorite: 0.5 };
 export function mapFit(theory, mapSlug, hero, side = null) {
   const m = mapSlug ? theory?.maps?.[mapSlug] : null;
-  const none = { strong: null, avoid: null, style: false, likes: [], dislikes: [], points: 0 };
+  const none = { strong: null, avoid: null, style: false, likes: [], dislikes: [], hook: null, points: 0 };
   if (!m || !hero) return none;
   const strong = (m.strong?.[hero.role] ?? []).find((x) => x.hero === hero.name && (!x.side || !side || x.side === side)) ?? null;
   const avoid = (m.avoid ?? []).find((x) => x.hero === hero.name) ?? null;
@@ -200,8 +200,11 @@ export function mapFit(theory, mapSlug, hero, side = null) {
   const dislikes = (mf?.dislikes ?? []).filter((f) => feats.has(f));
   const P = GUIDE_POINTS;
   const featPts = Math.max(-1, Math.min(1, P.feature * (likes.length - dislikes.length)));
-  const points = (strong ? P.strong : 0) - (avoid ? P.avoid : 0) + (style ? P.style : 0) + featPts;
-  return { strong, avoid, style, likes, dislikes, points };
+  // mappe con burroni/pozzi: un gancio (tira a sé il nemico) vicino al bordo è un'uccisione sicura → +1 a parte
+  const hook = feats.has("env-kills")
+    ? (theory?.idx?.[hero.name]?.abilities ?? []).find((a) => (a.tags ?? []).includes("hook")) ?? null : null;
+  const points = (strong ? P.strong : 0) - (avoid ? P.avoid : 0) + (style ? P.style : 0) + featPts + (hook ? P.hook : 0);
+  return { strong, avoid, style, likes, dislikes, hook, points };
 }
 
 // Consigli delle mappe che citano eroi come esempi ("Eroi mobili (Genji, Winston) per superare il varco"):

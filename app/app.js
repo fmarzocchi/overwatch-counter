@@ -883,7 +883,7 @@ function tapPicked(id) {
 // ---------- stelline sotto gli eroi della griglia ----------
 // Cambiano col selettore e con ogni scelta (mappa, lato, ban, avversari, alleati, eroi presi), ruolo per ruolo:
 //   Avversari (rosse) = quanto è pericoloso quel nemico: forte sulla mappa dal suo lato + quanto batte la vostra squadra,
-//     soprattutto i vostri eroi (threatScores); Ban (nere col bordo bianco) = stesso calcolo dei ban consigliati;
+//     soprattutto i vostri eroi (threatScores); Ban (bianche) = stesso calcolo dei ban consigliati;
 //   Alleati / eroe preso da un giocatore (dorate o col colore del giocatore) = quanto è una buona scelta per voi.
 // Seguono la modalità scelta nel Profilo (statistiche, statistiche + teoria, solo guide).
 const STAR_WHAT = { enemies: "pericolo", bans: "da bannare", allies: "buona scelta", picked: "buona scelta" };

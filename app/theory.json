@@ -11484,6 +11484,11 @@
    "strong": {
     "Tank": [
      {
+      "hero": "Roadhog",
+      "why": "Santuario e Villaggio: il gancio vicino ai bordi butta i nemici nel pozzo",
+      "side": null
+     },
+     {
       "hero": "Winston",
       "why": "Tank consigliato nella composizione migliore per Nepal",
       "side": null
@@ -12233,6 +12238,11 @@
    ],
    "strong": {
     "Tank": [
+     {
+      "hero": "Roadhog",
+      "why": "Scogliere a strapiombo: il gancio vicino al bordo butta giù i nemici",
+      "side": null
+     },
      {
       "hero": "Junker Queen",
       "why": "Push in generale: tank da rush con Lúcio",

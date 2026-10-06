@@ -372,3 +372,20 @@ test("in breve: consigli interi, mai troncati con i puntini", () => {
     for (const it of g.sections.flatMap((x) => x.items)) assert.ok(!/…|\.\.\./.test(`${it.text} ${it.short ?? ""}`), `${h.name}: ${it.text}`);
   }
 });
+
+test("gancio sulle mappe con burroni: +1 a Roadhog (e JQ), niente altrove; Roadhog ban tank su Nepal in modalità guide", () => {
+  const TT = buildTheory(data, JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url))), null);
+  const P = GUIDE_POINTS;
+  const nepal = mapFit(TT, "nepal", hero("Roadhog"));
+  assert.ok(nepal.hook, "Nepal ha burroni: il gancio conta");
+  assert.ok(mapFit(TT, "nepal", hero("Junker Queen")).hook);
+  assert.equal(mapFit(TT, "nepal", hero("Reinhardt")).hook, null);
+  const noEnv = Object.keys(TT.maps).find((s) => !(TT.maps[s].features ?? []).includes("env-kills"));
+  assert.equal(mapFit(TT, noEnv, hero("Roadhog")).hook, null, noEnv);
+  const withoutHook = nepal.points - P.hook;
+  assert.ok(Math.abs(withoutHook - ((nepal.strong ? P.strong : 0) + (nepal.style ? P.style : 0)
+    + Math.max(-1, Math.min(1, P.feature * (nepal.likes.length - nepal.dislikes.length))))) < 1e-9);
+  const rec = guideBanSuggestions(data, TT, { mapSlug: "nepal" });
+  assert.equal(rec.Tank[0].hero.name, "Roadhog");
+  assert.match(rec.Tank[0].why, /pozzo|bordi/);
+});

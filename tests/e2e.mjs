@@ -160,8 +160,8 @@ try {
   check("2 ban contati", (await text(page, "[data-count=bans]")) === "2");
   const sb = await starsOf(page);
   const sbv = Object.values(sb);
-  check("stelline Ban: nere col bordo bianco su tutta la griglia", sbv.some((x) => x.n === 3)
-    && sbv.every((x) => !x.n || (x.cls.includes("st-bans") && x.color === "rgb(0, 0, 0)" && x.stroke === "rgb(255, 255, 255)")), JSON.stringify(sbv.find((x) => x.n)));
+  check("stelline Ban: bianche su fondo scuro su tutta la griglia", sbv.some((x) => x.n === 3)
+    && sbv.every((x) => !x.n || (x.cls.includes("st-bans") && x.color === "rgb(255, 255, 255)")), JSON.stringify(sbv.find((x) => x.n)));
   check("stelline Ban: i ban consigliati hanno 3 stelle, i vostri eroi e i preferiti nessuna",
     br.heroes.every((n) => sb[n]?.n === 3) && ["Mercy", "Juno", ...picksNoBans].every((n) => !sb[n]?.n),
     br.heroes.map((n) => `${n}:${sb[n]?.n}`).join());
