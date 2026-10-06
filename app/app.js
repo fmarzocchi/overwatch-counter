@@ -1134,6 +1134,7 @@ async function refresh() {
 // ---------- tutto insieme ----------
 
 function render() {
+  syncBack();
   renderFresh();
   if (!data) return;
   if (!$("#grid .hero")) {
@@ -1155,6 +1156,7 @@ function showView(name) {
   $$(".tabs [data-view]").forEach((b) => (b.dataset.view === name ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
   if (name === "profile" && data) renderProfile();
   store.set("owc.view", name);
+  syncBack();
   window.scrollTo(0, 0);
   // i nomi si misurano solo a vista (nascosti hanno larghezza 0)
   if (name === "match" && data) { renderPicks(); fitNames($("#grid")); fitBanRecs(); }
@@ -1205,6 +1207,48 @@ function wire() {
   $("#token-clear").addEventListener("click", () => { store.del("owc.token"); renderProfile(); toast("Token rimosso."); });
 }
 
+// ---------- tasto/gesto "indietro" di Android ----------
+// L'APK torna indietro nella cronologia della pagina (e chiude l'app solo quando non c'è niente prima): ogni "livello"
+// aperto — un foglio (mappa, preferiti, Come giocarla, Perché), il Profilo, "Tocca l'eroe preso da…" — è un passo
+// nella cronologia. Indietro chiude il livello in cima; chiuso con un pulsante, il passo si toglie da solo.
+let backDepth = 0; // passi aggiunti alla cronologia
+let ownBack = false; // history.go chiamato dall'app (non dall'utente)
+const dialogOrder = []; // fogli aperti, l'ultimo in cima
+function wantedDepth() {
+  return dialogOrder.length + ($("#view-profile").hidden ? 0 : 1) + (match.group === "picked" ? 1 : 0);
+}
+function syncBack() {
+  const want = wantedDepth();
+  while (backDepth < want) { history.pushState({ owc: ++backDepth }, ""); }
+  if (backDepth > want) {
+    const n = backDepth - want;
+    backDepth = want;
+    ownBack = true;
+    history.go(-n);
+  }
+}
+function wireBack() {
+  // pagina ricaricata (es. versione nuova) con passi già in cronologia: si riparte da lì e syncBack li toglie
+  if (typeof history.state?.owc === "number") backDepth = history.state.owc;
+  else history.replaceState({ owc: 0 }, "");
+  for (const d of $$("dialog")) {
+    new MutationObserver(() => {
+      const k = dialogOrder.indexOf(d);
+      if (d.open && k < 0) dialogOrder.push(d);
+      if (!d.open && k >= 0) dialogOrder.splice(k, 1);
+      syncBack();
+    }).observe(d, { attributes: true, attributeFilter: ["open"] });
+  }
+  window.addEventListener("popstate", () => {
+    if (ownBack) { ownBack = false; return; }
+    backDepth = Math.max(0, backDepth - 1);
+    const top = dialogOrder[dialogOrder.length - 1];
+    if (top) top.close();
+    else if (match.group === "picked") { match.group = "enemies"; saveMatch(); render(); }
+    else if (!$("#view-profile").hidden) showView("match");
+  });
+}
+
 async function autoRefresh() {
   if (document.visibilityState === "hidden" || refreshing || !lastLoad) return;
   if (Date.now() - lastLoad < AUTO_REFRESH_MS) return;
@@ -1219,6 +1263,7 @@ async function autoRefresh() {
 
 async function start() {
   wire();
+  wireBack();
   document.addEventListener("pointerdown", autoRefresh, { capture: true, passive: true });
   window.addEventListener("scroll", updateMini, { passive: true });
   const refit = () => {

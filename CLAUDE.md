@@ -267,6 +267,13 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
     (`localizeTheory()`, nomi globali senza ambiguità).
   - OverFast ha anche i **perk** (nomi e descrizioni in italiano, niente statistiche): non ancora usati.
 
+## Tasto/gesto "indietro" di Android (2026-10-06)
+
+L'APK fa già `web.goBack()` se la pagina ha cronologia, altrimenti chiude. L'app aggiunge un passo di cronologia per
+ogni livello aperto (fogli, Profilo, "Tocca l'eroe preso da…"): `wireBack()`/`syncBack()` in app.js (MutationObserver
+sull'attributo `open` dei dialog); indietro chiude il livello in cima, un livello chiuso con un pulsante toglie il suo
+passo (`history.go`). e2e "indietro …"; sull'emulatore `KEYCODE_BACK` dal Profilo (l'app deve restare aperta).
+
 ## L'app (PWA) — come deve essere
 
 Tema scuro, bersagli grandi (min 48 px), pensata per una mano sola.

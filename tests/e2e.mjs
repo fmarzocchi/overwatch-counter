@@ -698,6 +698,41 @@ try {
     await c12.close();
   }
 
+  // ---------- tasto/gesto «indietro» di Android: chiude il livello in cima, non l'app ----------
+  {
+    const { ctx: c14, page: p14 } = await newPage({ serviceWorkers: "block" });
+    lastPage = p14;
+    await p14.goto(BASE);
+    await p14.locator(".pick .pick-main").first().waitFor();
+    const depth = () => p14.evaluate(() => history.state?.owc ?? 0);
+    const d0 = await depth();
+    await p14.locator(".pick .pick-main").first().click();
+    await p14.locator("#guide-dialog[open]").waitFor();
+    await p14.click("#guide-body .why-btn");
+    await p14.locator("#why-dialog[open]").waitFor();
+    await p14.goBack();
+    await p14.waitForTimeout(150);
+    const s1 = await p14.evaluate(() => [document.querySelector("#why-dialog").open, document.querySelector("#guide-dialog").open]);
+    await p14.goBack();
+    await p14.waitForTimeout(150);
+    const s2 = await p14.evaluate(() => [document.querySelector("#why-dialog").open, document.querySelector("#guide-dialog").open]);
+    check("indietro: chiude prima «Perché», poi «Come giocarla»", s1.join() === "false,true" && s2.join() === "false,false", JSON.stringify([s1, s2]));
+    await p14.click(".tabs [data-view=profile]");
+    await p14.goBack();
+    await p14.waitForTimeout(150);
+    check("indietro dal Profilo: torna alla Partita", await p14.locator("#view-match").isVisible());
+    await p14.click("#map-btn");
+    await p14.click("#map-dialog [data-close]");
+    await p14.waitForTimeout(150);
+    check("foglio chiuso col pulsante: nessun passo in più nella cronologia", (await depth()) === d0, `${await depth()} vs ${d0}`);
+    await toTop(p14);
+    await p14.locator(".pick").nth(0).locator(".alt-other").click();
+    await p14.goBack();
+    await p14.waitForTimeout(150);
+    check("indietro durante «Tocca l'eroe preso»: annulla, torna il selettore", await p14.locator("#groups").isVisible());
+    await c14.close();
+  }
+
   // ---------- «Consigli solo da guide e pro»: niente statistiche di counterwatch ----------
   {
     const { ctx: c13, page: p13 } = await newPage({ viewport: { width: 407, height: 833 }, serviceWorkers: "block" });

@@ -25,8 +25,10 @@ echo "schermo ${W}x${H}"
 adb shell input tap $((W * 3 / 4)) $((H * 90 / 100))   # scheda "Profilo" (barra flottante in basso)
 sleep 4
 shot 2-profilo
-adb shell input tap $((W / 4)) $((H * 90 / 100))       # scheda "Partita"
+adb shell input keyevent KEYCODE_BACK                  # tasto indietro: dal Profilo torna alla Partita, l'app resta aperta
 sleep 3
+shot 2b-indietro
+if [ -z "$(adb shell pidof "$PKG" || true)" ]; then echo "ERRORE: il tasto indietro ha chiuso l'app"; exit 1; fi
 adb shell input swipe $((W / 2)) $((H * 80 / 100)) $((W / 2)) $((H * 35 / 100)) 300   # scorre alla griglia
 sleep 2
 adb shell input tap $((W * 12 / 100)) $((H * 60 / 100))  # tocca un eroe (avversario)
