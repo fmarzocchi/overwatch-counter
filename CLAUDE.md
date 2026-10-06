@@ -233,7 +233,13 @@ esserci di più. Fonti degli altri eroi spesso vecchie (Icy Veins era OW1, 2022-
 - Profilo: **da 1 a 5 giocatori** (`MAX_PLAYERS`), "＋ Aggiungi giocatore" (il nuovo prende il ruolo che manca nella coda
   1 tank/2 danni/2 supporti) e "Rimuovi" a due tocchi. Ognuno ha un **colore** (`--p0`…`--p4`): riquadro, griglia, barra.
 - Partita: eroe scelto → `match.picked[i]`, con un tocco nella lista dei preferiti, in "Scegline un altro", nel foglio "＋",
-  nella guida ("Segna: X l'ha scelto") o "Un altro eroe" + tocco nella griglia (poi si torna agli Avversari). Un eroe preso esce da ban/avversari/alleati. Griglia: **tratteggio** = consigliato a quel
+  nella guida ("Segna: X l'ha scelto") o "Un altro eroe" + tocco nella griglia (poi si torna agli Avversari).
+  **Regole di Overwatch 2** (2026-10-06, segnalazione dell'utente: Sigma scelto e toccato in "Chi soffrite di più" veniva
+  deselezionato): un ban vale per le due squadre (bannato = fuori da scelte, alleati e avversari); nella vostra squadra
+  (eroi presi + alleati) un eroe c'è una volta sola; gli avversari possono avere lo stesso eroe vostro (**mirror**): un eroe
+  può essere insieme preso/alleato e avversario. `toggleIn()`/`setPicked()`/`groupsOf()` in app.js; `fitMatch()` sistema le
+  partite salvate incoerenti. Mirror in griglia: fondo rosso + anello del giocatore + "F✓". e2e "incroci: …" (35 controlli: scelto ↔
+  avversario ↔ alleato ↔ ban, Annulla, guida, limiti, riavvio, Nuova partita; screenshot 05i). Griglia: **tratteggio** = consigliato a quel
   giocatore, **pieno + "F✓"** = preso. (La riga "Chi ha preso cosa" è stata tolta nel ridisegno: era un doppione.)
 - Alleati = gli ALTRI della squadra: max `5 − giocatori` (il pulsante sparisce in 5).
 - Logica: `recommendTeam()` (`recommendDuo` è lo stesso): eroi presi fissi (e alleati per gli altri; in cima alla loro lista

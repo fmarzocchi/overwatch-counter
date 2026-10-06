@@ -77,6 +77,14 @@ function fitMatch() {
   if (!["bans", "enemies", "allies", "picked"].includes(match.group)) match.group = "enemies";
   if (match.allies.length > limitOf("allies")) match.allies = match.allies.slice(0, limitOf("allies"));
   if (match.group === "allies" && !limitOf("allies")) match.group = "enemies";
+  // regole di gioco anche sulle partite salvate prima: bannato = né giocato né avversario; un eroe una volta per squadra
+  const banned = new Set(match.bans.map(sid));
+  const uniq = (xs) => xs.filter((x, k) => xs.findIndex((y) => sid(y) === sid(x)) === k);
+  match.picked = match.picked.map((x, k) => (x && !banned.has(sid(x)) && match.picked.findIndex((y) => y && sid(y) === sid(x)) === k ? x : null));
+  const ours = new Set(match.picked.filter(Boolean).map(sid));
+  match.bans = uniq(match.bans);
+  match.enemies = uniq(match.enemies).filter((x) => !banned.has(sid(x)));
+  match.allies = uniq(match.allies).filter((x) => !banned.has(sid(x)) && !ours.has(sid(x)));
 }
 
 let data = null;
@@ -1025,9 +1033,12 @@ function fitNames(container) {
   for (const nm of nms) fitText(nm);
 }
 
-function groupOf(id) {
-  return Object.keys(LIMITS).find((g) => match[g].map(sid).includes(id)) ?? null;
-}
+// Regole di Overwatch 2: un ban vale per tutte e due le squadre; nella vostra squadra (eroi presi + alleati) un eroe
+// c'è una volta sola; gli avversari possono avere gli STESSI eroi vostri (mirror). Quindi un eroe può essere insieme
+// vostro e avversario, mai bannato e giocato.
+const inGroup = (g, id) => match[g].some((x) => sid(x) === id);
+const groupsOf = (id) => Object.keys(LIMITS).filter((g) => inGroup(g, id));
+const OUR_SIDE = ["allies"]; // con match.picked: la vostra squadra
 const pickerOf = (id) => match.picked.findIndex((x) => x && sid(x) === id);
 
 function tapHero(id) {
@@ -1036,19 +1047,24 @@ function tapHero(id) {
 }
 
 // un tocco mette l'eroe nel gruppo (ban, avversari, alleati) o ve lo toglie
+const dropFrom = (g, id) => { match[g] = match[g].filter((x) => sid(x) !== id); };
 function toggleIn(g, id) {
-  const cur = groupOf(id);
-  if (cur === g) {
-    match[g] = match[g].filter((x) => sid(x) !== id);
+  if (inGroup(g, id)) {
+    dropFrom(g, id);
   } else {
     if (match[g].length >= limitOf(g)) {
       toast(g === "allies" && !limitOf(g) ? `Siete già in ${MAX_PLAYERS}: segnate gli eroi presi nei vostri riquadri.`
         : `Al massimo ${limitOf(g)} ${GROUP_WORD[g]}: togline uno toccandolo.`);
       return;
     }
-    if (cur) match[cur] = match[cur].filter((x) => sid(x) !== id);
-    const who = pickerOf(id);
-    if (who >= 0) match.picked[who] = null;
+    // ban: esce da tutto; alleato: esce dai ban e dagli eroi presi (nella vostra squadra una volta sola);
+    // avversario: esce solo dai ban (può essere anche vostro: mirror)
+    const off = g === "bans" ? ["enemies", ...OUR_SIDE] : ["bans"];
+    for (const o of off) dropFrom(o, id);
+    if (g !== "enemies") {
+      const who = pickerOf(id);
+      if (who >= 0) match.picked[who] = null;
+    }
     match[g] = [...match[g], id];
   }
   saveMatch();
@@ -1056,11 +1072,12 @@ function toggleIn(g, id) {
 }
 
 // Eroe scelto da un giocatore: un tocco su una riga della lista dei preferiti, su "Scegline un altro", nel foglio "＋",
-// nella guida ("Segna: X l'ha scelto") o nella griglia ("Un altro eroe"). Un eroe scelto esce da ban/avversari/alleati.
+// nella guida ("Segna: X l'ha scelto") o nella griglia ("Un altro eroe"). Un eroe scelto esce dai ban e dagli alleati
+// (e da un altro giocatore), NON dagli avversari: anche loro possono averlo (mirror).
 function setPicked(i, id) {
   const who = pickerOf(id);
   if (who >= 0) match.picked[who] = null;
-  for (const g of Object.keys(LIMITS)) match[g] = match[g].filter((x) => sid(x) !== id);
+  for (const g of ["bans", ...OUR_SIDE]) dropFrom(g, id);
   match.picked[i] = id;
 }
 
@@ -1157,23 +1174,23 @@ function renderGrid() {
   else grid.style.removeProperty("--sc");
   for (const b of $$("#grid .hero")) {
     const id = b.dataset.id;
-    const g = groupOf(id);
+    const gs = groupsOf(id);
     const took = pickerOf(id);
     const rec = took >= 0 ? -1 : recs.indexOf(id);
     const who = took >= 0 ? took : rec;
-    b.classList.toggle("in-bans", g === "bans");
-    b.classList.toggle("in-enemies", g === "enemies");
-    b.classList.toggle("in-allies", g === "allies");
+    b.classList.toggle("in-bans", gs.includes("bans"));
+    b.classList.toggle("in-enemies", gs.includes("enemies"));
+    b.classList.toggle("in-allies", gs.includes("allies"));
     b.classList.toggle("fav", favs.has(id));
     b.classList.toggle("took", took >= 0);
     b.classList.toggle("rec", rec >= 0);
     if (who >= 0) b.style.setProperty("--pc", `var(--p${who})`);
     else b.style.removeProperty("--pc");
-    const inGroup = match.group === "picked" ? took === match.pickFor : g === match.group;
-    b.setAttribute("aria-pressed", String(inGroup));
+    const pressed = match.group === "picked" ? took === match.pickFor : gs.includes(match.group);
+    b.setAttribute("aria-pressed", String(pressed));
     const whoName = who >= 0 ? profile.players[who].name : "";
     const n = stars.get(id) ?? 3;
-    b.setAttribute("aria-label", `${byId[id].name}${g ? `, ${GROUP_ONE[g]}` : ""}` +
+    b.setAttribute("aria-label", `${byId[id].name}${gs.map((g) => `, ${GROUP_ONE[g]}`).join("")}` +
       `${took >= 0 ? `, preso da ${whoName}` : rec >= 0 ? `, consigliato a ${whoName}` : ""}` +
       `, ${STAR_WHAT[match.group]} ${starsLabel(n)}`);
     let st = $(".stars", b);

@@ -443,10 +443,11 @@ try {
   for (const n of ["Genji", "Mercy", "Tracer"]) await heroBtn(page, n).click();
   check("max 5 avversari, avviso chiaro", (await text(page, "[data-count=enemies]")) === "5"
     && (await text(page, "#toast")).includes("Al massimo 5"));
-  // un tocco su un eroe di un altro gruppo lo sposta
+  // un avversario toccato tra gli Alleati: lo hanno tutte e due le squadre (mirror, regola di Overwatch 2)
   await page.click("#groups [data-group=allies]");
   await heroBtn(page, "Mercy").click();
-  check("tocco sposta tra gruppi", (await text(page, "[data-count=enemies]")) === "4" && (await text(page, "[data-count=allies]")) === "2");
+  check("avversario toccato tra gli Alleati: in tutte e due le squadre (mirror)", (await text(page, "[data-count=enemies]")) === "5"
+    && (await text(page, "[data-count=allies]")) === "2");
   // ruolo cambiato al volo
   await toTop(page);
   const fabioBefore = (await pickNames(page))[0];
@@ -511,14 +512,14 @@ try {
   // ---------- memoria e nuova partita ----------
   await page.reload();
   await page.locator(CARD).first().waitFor();
-  check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "4"
+  check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "5"
     && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes(ILIOS));
   await page.click("#new-match");
   check("nuova partita: azzera tutto tranne il profilo", (await text(page, "[data-count=enemies]")) === "0"
     && (await text(page, "[data-count=bans]")) === "0" && (await text(page, "#map-name")).includes("Scegli mappa")
     && (await text(page, ".picks")).includes("Giulia"));
   await page.click("#toast .toast-btn");
-  check("nuova partita: «Annulla» nel messaggio ripristina la partita", (await text(page, "[data-count=enemies]")) === "4"
+  check("nuova partita: «Annulla» nel messaggio ripristina la partita", (await text(page, "[data-count=enemies]")) === "5"
     && (await text(page, "#map-name")).includes(ILIOS));
   await page.click("#new-match");
 
@@ -760,7 +761,7 @@ try {
       }
     }
 
-    // segnare un eroe preso lo toglie dagli altri gruppi; ritoccarlo lo toglie; un tocco su un altro giocatore cambia chi sceglie
+    // segnare un eroe preso: resta tra gli avversari (mirror); ritoccarlo lo toglie; un tocco su un altro giocatore cambia chi sceglie
     const { ctx: c10, page: p10 } = await newPage({ serviceWorkers: "block" });
     lastPage = p10;
     await p10.goto(BASE);
@@ -770,7 +771,7 @@ try {
     await pickFromGrid(p10, 1);
     await heroBtn(p10, "Mercy").click();
     const m1 = await matchState(p10);
-    check("«Altro»: eroe preso tolto dagli avversari e assegnato al giocatore", !m1.enemies.length && String(m1.picked[1]) === heroId("Mercy") && m1.picked[0] === null, JSON.stringify(m1));
+    check("«Altro»: eroe preso assegnato al giocatore, resta avversario (mirror)", m1.enemies.map(String).includes(heroId("Mercy")) && String(m1.picked[1]) === heroId("Mercy") && m1.picked[0] === null, JSON.stringify(m1));
     await toTop(p10);
     await p10.locator(".pick").nth(1).locator(".chosen-chip").click();
     check("«✓ Scelto» ritoccato: l'eroe non è più segnato", (await matchState(p10)).picked[1] === null);
@@ -1093,6 +1094,192 @@ try {
     check("aggiorna con token: max 1 richiesta ogni 10 min", (await p4.locator("#toast").innerText({ timeout: 5000 }).catch(() => "")) !== "" &&
       await p4.waitForFunction(() => document.querySelector("#toast").innerText.includes("già chiesto"), null, { timeout: 5000 }).then(() => true, () => false));
     await c4.close();
+  }
+
+  // ---------- stati incrociati: eroe scelto / avversari / alleati / ban (regole di Overwatch 2) ----------
+  // un ban vale per tutte e due le squadre; nella vostra squadra un eroe c'è una volta; gli avversari possono avere
+  // lo stesso eroe vostro (mirror). Segnalazione dell'utente: Sigma scelto, toccato in «Chi soffrite di più» → si deselezionava.
+  {
+    const { ctx: cx, page: px } = await newPage({ serviceWorkers: "block" });
+    lastPage = px;
+    const ids = (...ns) => ns.map(heroId);
+    const PROF = { players: [
+      { name: "Fabio", rank: "Diamante", roles: ["Tank"], favorites: ids("Sigma", "Reinhardt", "Winston") },
+      { name: "Giulia", rank: "Oro", roles: ["Support"], favorites: ids("Ana", "Kiriko") }], useTheory: false, guideOnly: false };
+    const M0 = { roles: ["Tank", "Support"], picked: [null, null], pickFor: 0, mapSlug: "kings-row", side: "defense",
+      bans: [], enemies: [], allies: [], group: "enemies" };
+    const seed = async (m) => {
+      await px.evaluate(([p, mm]) => { localStorage.setItem("owc.profile", JSON.stringify(p)); localStorage.setItem("owc.match", JSON.stringify(mm)); }, [PROF, m]);
+      await px.reload();
+      await px.locator(CARD).first().waitFor();
+    };
+    await px.goto(BASE);
+    await px.locator(CARD).first().waitFor();
+    await seed(M0);
+    const st = () => matchState(px);
+    const has = (arr, n) => (arr ?? []).map(String).includes(heroId(n));
+    const threatTile = (n) => px.locator("#threats .hero", { has: px.locator(".nm", { hasText: new RegExp(`^${n}$`) }) });
+    const threatNames = () => px.locator("#threats .hero .nm").allInnerTexts();
+    const gridCls = (n) => heroBtn(px, n).evaluate((b) => [...b.classList]);
+    const cardName = (k) => px.locator(".pick").nth(k).locator(".pick-name").innerText().catch(() => "");
+
+    check("incroci: «Chi soffrite di più» nascosto senza eroi scelti né alleati", await px.locator("#threats").isHidden());
+
+    // un tank scelto da Fabio che compare anche tra i più pericolosi (il caso segnalato: Sigma)
+    const tanks = data.heroes.filter((h) => h.role === "Tank").map((h) => itn(h.name));
+    let X = null;
+    for (const n of ["Sigma", ...tanks.filter((t) => t !== "Sigma")]) {
+      await seed({ ...M0, picked: [heroId(n), null] });
+      if ((await threatNames()).includes(n)) { X = n; break; }
+    }
+    check("incroci: c'è un eroe scelto che è anche tra «Chi soffrite di più»", !!X, "nessun tank scelto compare tra i pericoli");
+    if (X) {
+      check(`incroci: ${X} scelto → riquadro visibile, ${X} non ancora avversario`, await px.locator("#threats").isVisible()
+        && (await threatTile(X).getAttribute("aria-pressed")) === "false");
+      await threatTile(X).click();
+      let s = await st();
+      check(`incroci: tocco su ${X} in «Chi soffrite di più» → avversario E resta scelto da Fabio (mirror)`,
+        has(s.enemies, X) && String(s.picked[0]) === heroId(X) && (await cardName(0)) === X
+        && (await threatTile(X).getAttribute("aria-pressed")) === "true" && (await text(px, "[data-count=enemies]")) === "1", JSON.stringify(s));
+      const cls = await gridCls(X);
+      check(`incroci: in griglia ${X} è sia «preso da Fabio» sia avversario`, cls.includes("took") && cls.includes("in-enemies")
+        && (await heroBtn(px, X).getAttribute("aria-pressed")) === "true", cls.join(" "));
+      await px.evaluate(() => window.scrollTo(0, document.querySelector("#groups").getBoundingClientRect().top + window.scrollY - 60));
+      await shot(px, "05i-mirror");
+      check(`incroci: ${X} avversario non sparisce dai consigli di Fabio (è ancora il suo eroe)`, (await pickNames(px))[0] === X);
+      await threatTile(X).click();
+      s = await st();
+      check(`incroci: secondo tocco → ${X} non più avversario, sempre scelto`, !has(s.enemies, X) && String(s.picked[0]) === heroId(X), JSON.stringify(s));
+      await heroBtn(px, X).click();
+      s = await st();
+      check(`incroci: tocco su ${X} nella griglia Avversari → avversario, sempre scelto`, has(s.enemies, X) && String(s.picked[0]) === heroId(X), JSON.stringify(s));
+      await px.reload();
+      await px.locator(CARD).first().waitFor();
+      s = await st();
+      check("incroci: dopo il riavvio scelto e avversario restano entrambi", has(s.enemies, X) && String(s.picked[0]) === heroId(X), JSON.stringify(s));
+    }
+
+    // avversario già segnato → lo scelgo io: resta avversario
+    await seed({ ...M0, enemies: ids("Reinhardt") });
+    await px.locator(".pick").nth(0).locator(".fav-row", { has: px.locator(".fr-name", { hasText: /^Reinhardt$/ }) }).click();
+    let s = await st();
+    check("incroci: scelgo un eroe già avversario → scelto e ancora avversario", String(s.picked[0]) === heroId("Reinhardt") && has(s.enemies, "Reinhardt"), JSON.stringify(s));
+    await px.locator("#toast button", { hasText: "Annulla" }).click();
+    s = await st();
+    check("incroci: «Annulla» la scelta → non scelto, l'avversario resta", s.picked[0] === null && has(s.enemies, "Reinhardt"), JSON.stringify(s));
+    // dalla guida: «Segna: Fabio l'ha scelto»
+    await px.locator(".pick").nth(0).locator(".fav-row", { has: px.locator(".fr-name", { hasText: /^Reinhardt$/ }) }).click();
+    await px.locator(".pick").nth(0).locator(".pick-cta").click();
+    await px.locator("#guide-dialog[open]").waitFor();
+    await px.click("#guide-body .took-btn");
+    s = await st();
+    check("incroci: dalla guida tolgo la scelta → l'avversario resta", s.picked[0] === null && has(s.enemies, "Reinhardt"), JSON.stringify(s));
+    await px.click("#guide-body .took-btn");
+    s = await st();
+    check("incroci: dalla guida la segno di nuovo → scelto e avversario", String(s.picked[0]) === heroId("Reinhardt") && has(s.enemies, "Reinhardt"), JSON.stringify(s));
+    await px.keyboard.press("Escape");
+    await px.locator("#guide-dialog").evaluate((d) => d.open && d.close());
+
+    // alleato e avversario insieme; alleato poi scelto da Fabio; poi bannato
+    await seed({ ...M0, group: "allies" });
+    await heroBtn(px, "Winston").click();
+    await px.click("#groups [data-group=enemies]");
+    await heroBtn(px, "Winston").click();
+    s = await st();
+    check("incroci: lo stesso eroe alleato e avversario (mirror)", has(s.allies, "Winston") && has(s.enemies, "Winston"), JSON.stringify(s));
+    check("incroci: con un alleato «Chi soffrite di più» compare", await px.locator("#threats").isVisible());
+    await px.locator(".pick").nth(0).locator(".fav-row", { has: px.locator(".fr-name", { hasText: /^Winston$/ }) }).count()
+      .then((k) => check("incroci: un alleato non compare tra le scelte di Fabio (è già di un compagno)", k === 0));
+    await pickFromGrid(px, 0);
+    await heroBtn(px, "Winston").click();
+    s = await st();
+    check("incroci: Fabio sceglie l'eroe dell'alleato → esce dagli alleati, resta avversario", String(s.picked[0]) === heroId("Winston")
+      && !has(s.allies, "Winston") && has(s.enemies, "Winston") && s.group === "enemies", JSON.stringify(s));
+    await px.click("#groups [data-group=allies]");
+    await heroBtn(px, "Winston").click();
+    s = await st();
+    check("incroci: l'eroe di Fabio toccato tra gli Alleati → diventa alleato, Fabio senza scelta (una volta per squadra)",
+      has(s.allies, "Winston") && s.picked[0] === null && has(s.enemies, "Winston"), JSON.stringify(s));
+    await px.click("#groups [data-group=bans]");
+    await heroBtn(px, "Winston").click();
+    s = await st();
+    check("incroci: bannato → fuori da alleati e avversari", has(s.bans, "Winston") && !has(s.allies, "Winston") && !has(s.enemies, "Winston"), JSON.stringify(s));
+    check("incroci: bannato → fuori dai consigli e dalle liste", !(await pickNames(px)).includes("Winston")
+      && (await px.locator(".pick .fav-row .fr-name", { hasText: /^Winston$/ }).count()) === 0);
+    await px.click("#groups [data-group=enemies]");
+    await heroBtn(px, "Winston").click();
+    s = await st();
+    check("incroci: bannato toccato tra gli Avversari → non più bannato, avversario", !has(s.bans, "Winston") && has(s.enemies, "Winston"), JSON.stringify(s));
+
+    // scelto e bannato: il ban toglie la scelta; dai ban consigliati lo stesso
+    await seed({ ...M0, picked: [heroId("Sigma"), null], enemies: ids("Sigma", "Ana") });
+    await px.click("#groups [data-group=bans]");
+    await heroBtn(px, "Sigma").click();
+    s = await st();
+    check("incroci: l'eroe scelto e avversario viene bannato → né scelto né avversario", has(s.bans, "Sigma") && s.picked[0] === null
+      && !has(s.enemies, "Sigma") && has(s.enemies, "Ana"), JSON.stringify(s));
+    const recBan = (await px.locator("#ban-recs .hero:not(.in-bans) .nm").allInnerTexts())[0];
+    await px.click("#groups [data-group=enemies]");
+    await heroBtn(px, recBan).click();
+    await px.click("#groups [data-group=bans]");
+    await px.locator("#ban-recs .hero", { has: px.locator(".nm", { hasText: new RegExp(`^${recBan}$`) }) }).click();
+    s = await st();
+    check(`incroci: avversario bannato dai ban consigliati (${recBan}) → esce dagli avversari`, has(s.bans, recBan) && !has(s.enemies, recBan), JSON.stringify(s));
+    // i ban consigliati non propongono mai eroi scelti né alleati (anche se forti sulla mappa)
+    for (const [tank, sup] of [["Sigma", "Mizuki"], ["Reinhardt", "Wuyang"], ["Winston", "Zenyatta"]]) {
+      await seed({ ...M0, picked: [heroId(tank), null], allies: ids(sup), group: "bans" });
+      const recs = await px.locator("#ban-recs .hero .nm").allInnerTexts();
+      check(`incroci: ban consigliati senza ${tank} (scelto) né ${sup} (alleato)`, recs.length === 9 && !recs.includes(tank) && !recs.includes(sup), recs.join());
+    }
+    // bannato poi scelto da Fabio dal foglio «＋»
+    await seed({ ...M0, bans: ids("Reinhardt") });
+    check("incroci: un bannato non compare tra le scelte", (await px.locator(".pick .fav-row .fr-name", { hasText: /^Reinhardt$/ }).count()) === 0);
+    await pickFromGrid(px, 0);
+    await heroBtn(px, "Reinhardt").click();
+    s = await st();
+    check("incroci: scelgo un bannato dalla griglia → non più bannato, scelto", String(s.picked[0]) === heroId("Reinhardt") && !has(s.bans, "Reinhardt"), JSON.stringify(s));
+
+    // un eroe preso da Giulia passa a Fabio
+    await seed({ ...M0, roles: ["Tank", "Tank"], picked: [null, heroId("Sigma")] });
+    await pickFromGrid(px, 0);
+    await heroBtn(px, "Sigma").click();
+    s = await st();
+    check("incroci: l'eroe di Giulia scelto da Fabio → passa a Fabio (una volta per squadra)", String(s.picked[0]) === heroId("Sigma") && s.picked[1] === null, JSON.stringify(s));
+
+    // limiti: 5 avversari (anche col vostro eroe tra loro), 5 ban
+    await seed({ ...M0, picked: [heroId("Sigma"), null], enemies: ids("Sigma", "Ana", "Genji", "Tracer", "Lúcio") });
+    await heroBtn(px, "Mercy").click();
+    s = await st();
+    check("incroci: 5 avversari (uno è il vostro Sigma) → il sesto è rifiutato, Sigma resta scelto", s.enemies.length === 5 && !has(s.enemies, "Mercy")
+      && String(s.picked[0]) === heroId("Sigma") && (await text(px, "#toast")).includes("Al massimo 5"), JSON.stringify(s));
+    await threatTile("Sigma").count().then(async (k) => { if (k) {
+      await threatTile("Sigma").click();
+      const s2 = await st();
+      check("incroci: con 5 avversari si toglie Sigma da «Chi soffrite di più» → resta scelto", !has(s2.enemies, "Sigma") && String(s2.picked[0]) === heroId("Sigma"), JSON.stringify(s2));
+    } });
+    await seed({ ...M0, bans: ids("Ana", "Genji", "Tracer", "Lúcio", "Mercy"), group: "bans" });
+    await heroBtn(px, "Kiriko").click();
+    s = await st();
+    check("incroci: 5 ban → il sesto è rifiutato", s.bans.length === 5 && !has(s.bans, "Kiriko"), JSON.stringify(s));
+
+    // partita salvata da una versione precedente con stati impossibili: si sistema
+    await seed({ ...M0, picked: [heroId("Sigma"), heroId("Sigma")], bans: ids("Ana", "Ana"), enemies: ids("Ana", "Genji", "Genji"), allies: ids("Sigma", "Ana", "Mercy") });
+    s = await st();
+    check("incroci: partita salvata incoerente → sistemata (bannato fuori da tutto, un eroe una volta per squadra)",
+      String(s.picked[0]) === heroId("Sigma") && s.picked[1] === null && s.bans.length === 1 && s.enemies.length === 1 && has(s.enemies, "Genji")
+      && s.allies.length === 1 && has(s.allies, "Mercy"), JSON.stringify(s));
+
+    // «Nuova partita» azzera tutto, «Annulla» ripristina anche il mirror
+    await seed({ ...M0, picked: [heroId("Sigma"), null], enemies: ids("Sigma"), allies: ids("Mercy") });
+    await px.click("#new-match");
+    s = await st();
+    check("incroci: «Nuova partita» azzera scelte, avversari, alleati e ban", s.picked.every((x) => x === null) && !s.enemies.length && !s.allies.length && !s.bans.length);
+    check("incroci: dopo «Nuova partita» niente «Chi soffrite di più»", await px.locator("#threats").isHidden());
+    await px.locator("#toast button", { hasText: "Annulla" }).click();
+    s = await st();
+    check("incroci: «Annulla» ripristina Sigma scelto e avversario", String(s.picked[0]) === heroId("Sigma") && has(s.enemies, "Sigma") && has(s.allies, "Mercy"), JSON.stringify(s));
+    await cx.close();
+    lastPage = page;
   }
 
   check("nessun errore JavaScript", errors.length === 0, errors.join("\n"));
