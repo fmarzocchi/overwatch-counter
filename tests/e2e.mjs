@@ -187,7 +187,13 @@ try {
   const sbv = Object.values(sb);
   check("stelline Ban: bianche su fondo scuro, da 1 a 5 su tutta la griglia", sbv.every((x) => x.n >= 1 && x.n <= 5
     && x.cls.includes("st-bans") && x.color === "rgb(255, 255, 255)") && sbv.some((x) => x.n === 5), JSON.stringify(sbv.find((x) => x.n !== 5)));
-  check("stelline Ban: i ban consigliati hanno 5 stelle", br.heroes.every((n) => sb[n]?.n === 5), br.heroes.map((n) => `${n}:${sb[n]?.n}`).join());
+  const brStars = await page.locator("#ban-recs .hero").evaluateAll((bs) => bs.map((b) => [b.querySelector(".nm").textContent,
+    b.querySelector(".stars")?.textContent ?? "", getComputedStyle(b.querySelector(".stars") ?? b).color]));
+  check("ban consigliati: con le stelline bianche (1–5), le stesse della griglia", brStars.every(([n, st, c]) => /^★{1,5}$/.test(st)
+    && c === "rgb(255, 255, 255)" && sb[n]?.n === st.length), JSON.stringify(brStars));
+  const roleTop = (role) => Math.max(...Object.entries(sb).filter(([n]) => roleOf(n) === role && !br.heroes.includes(n)).map(([, x]) => x.n));
+  check("stelline Ban: i ban consigliati hanno almeno tante stelle quanto gli altri del ruolo",
+    br.heroes.every((n) => sb[n].n >= roleTop(roleOf(n))), br.heroes.map((n) => `${n}:${sb[n]?.n}`).join());
   await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
   await shot(page, "04c-stelline-ban");
   check("stelline: mai un eroe senza stelle, numero e stelle disegnate coincidono (1–5)", sbv.every((x) => x.n >= 1 && x.n <= 5 && x.shown === x.n));

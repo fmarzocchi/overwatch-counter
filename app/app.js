@@ -814,6 +814,7 @@ function renderBanRecs() {
     : profile.useTheory && T ? `Forti su questa mappa${vs} (statistiche e guide)` : `Forti su questa mappa${vs}`;
   const banned = new Set(match.bans.map(sid));
   $("#t-ban-recs").textContent = `Ban consigliati per ${map.name}`;
+  const bst = banStars();
   fill($("#ban-recs-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
     el("span", { class: `br-role-lab r-${role}` }, ROLE_IT[role]),
     el("div", { class: "br-heroes" }, rec[role].map((r) => {
@@ -821,10 +822,12 @@ function renderBanRecs() {
       const on = banned.has(id);
       const why = r.why ?? ([r.strength >= 0.003 ? `forte su ${map.name}` : null,
         r.beats.length ? `batte ${r.beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || `tra i migliori su ${map.name}`);
+      const n = bst.get(id) ?? 3;
       return el("button", {
-        type: "button", class: `hero${on ? " in-bans" : ""}`, "data-id": id, "aria-pressed": String(on), title: why,
-        "aria-label": `${on ? "Bannato" : "Banna"} ${r.hero.name}: ${why}`, onclick: () => toggleIn("bans", id),
-      }, face(r.hero), el("span", { class: `nm${heroName(r.hero).length >= 10 ? " long" : ""}` }, heroName(r.hero)));
+        type: "button", class: `hero${on ? " in-bans" : ""}`, "data-id": id, "data-stars": String(n), "aria-pressed": String(on), title: why,
+        "aria-label": `${on ? "Bannato" : "Banna"} ${r.hero.name}: ${why}, da bannare ${starsLabel(n)}`, onclick: () => toggleIn("bans", id),
+      }, face(r.hero), el("span", { class: "stars st-bans", "aria-hidden": "true" }, starsTxt(n)),
+      el("span", { class: `nm${heroName(r.hero).length >= 10 ? " long" : ""}` }, heroName(r.hero)));
     })))));
   fitBanRecs();
 }
@@ -1049,14 +1052,20 @@ const STAR_WHAT = { enemies: "pericolo", bans: "da bannare", allies: "buona scel
 const starMode = () => (guideMode() ? "guide" : profile.useTheory && T ? "blend" : "stat");
 const starOpts = (extra = {}) => ({ minSd: STAR_MIN_SD[starMode()], ...extra });
 let starCache = new Map(); // calcoli di questo giro: si svuota a ogni nuovo consiglio (renderPicks)
+// stelline dei ban (griglia e riquadro "Ban consigliati"): quanto conviene bannarlo, 1–5 dal punteggio vero (anche tra i
+// consigliati si vede chi è più urgente); eroi già scelti e alleati: 1 = non bannarlo
+function banStars() {
+  if (!starCache.has("bans")) {
+    const rec = banScores(999);
+    const st = rankStars(BAN_ROLES.flatMap((r) => rec[r]), starOpts());
+    for (const h of data.heroes) if (!st.has(sid(h.id))) st.set(sid(h.id), 1);
+    starCache.set("bans", st);
+  }
+  return starCache.get("bans");
+}
 function gridStars() {
   const g = match.group;
-  if (g === "bans") {
-    const rec = banScores(999);
-    const st = rankStars(BAN_ROLES.flatMap((r) => rec[r]), starOpts({ top: BANS_PER_ROLE }));
-    for (const h of data.heroes) if (!st.has(sid(h.id))) st.set(sid(h.id), 1);
-    return st;
-  }
+  if (g === "bans") return banStars();
   if (g === "enemies") {
     const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
     return rankStars(threatScores(sets, T, {
@@ -1370,6 +1379,7 @@ function render() {
     applySearch($("#hero-q"));
   }
   renderControls();
+  starCache = new Map(); // stelline ricalcolate a ogni giro (anche quelle del riquadro dei ban)
   renderBanRecs();
   renderPicks();
   renderGroups();

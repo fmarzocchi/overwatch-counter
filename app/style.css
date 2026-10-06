@@ -155,6 +155,7 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .ban-recs .hero { min-height: 70px; padding-top: 6px; }
 .ban-recs .hero .face { width: 38px; height: 38px; }
 .ban-recs .hero.in-bans::after { top: 24px; }
+.ban-recs .hero .stars { top: 35px; }
 
 /* ---------- consigli: un riquadro per giocatore ---------- */
 /* Livello 1, colpo d'occhio: l'eroe da prendere (grande), chi batte e chi teme (volti), una sola cifra (la stima).

@@ -324,8 +324,9 @@ rate, ½ punto guide) così eroi quasi alla pari restano tutti a 3; `top` = i pr
 Ricalcolate a ogni tocco (mappa, lato, ban, avversari, alleati, eroi presi), secondo la modalità del Profilo.
 - **Griglia** (`gridStars()`, `span.stars`, `data-stars`): Avversari → rosse (`threatScores()`: forza sulla mappa dal LORO
   lato + quanto battono la vostra squadra, i vostri eroi contano il doppio; anche i bannati hanno le loro stelle);
-  Ban → bianche (`banScores()` condivisa col riquadro "Ban consigliati": i 3 consigliati per ruolo a 5; eroi già scelti
-  e alleati a 1 = "non bannarlo"); Alleati → dorate; "Tocca l'eroe preso da X" → colore del giocatore.
+  Ban → bianche (`banStars()`/`banScores()`, le stesse anche sui volti del riquadro "Ban consigliati", richiesta del
+  2026-10-06: punteggio vero 1–5, senza forzare i consigliati a 5, così si vede chi è più urgente; eroi già scelti e
+  alleati a 1 = "non bannarlo"); Alleati → dorate; "Tocca l'eroe preso da X" → colore del giocatore.
 - **Riquadri e foglio "＋"**: stelline BIANCHE (richiesta: "sotto «segna come preso» devono essere bianche"), stessa
   "buona scelta" (`choiceRows(i)`/`choiceStars(i)`: `recommend(..., {role: null, scoreAll: true})`, con gli eroi degli altri
   come alleati; `scoreAll` = una riga per ogni eroe, senza fare coppia con se stesso). In modalità "solo guide" anche la
