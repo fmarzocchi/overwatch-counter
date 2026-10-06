@@ -128,12 +128,13 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **Rank**: sceglie i dati Ranked della divisione del giocatore (vedi "Dati Ranked").
 - Ban: max **5** (richiesta del 2026-10-05). Avversari: 1–5. Alleati: 0–5 (come chiesto). Preferiti: +1% (non entra nella "stima").
 - **Ban consigliati per la mappa** (richiesta del 2026-10-05): riquadro "Ban consigliati per <mappa>" sotto mappa/lato,
-  visibile con la mappa scelta finché non si segnano avversari, e sempre col selettore su "Ban"; **2 per ruolo**, un tocco li segna/toglie (`toggleIn`).
+  visibile con la mappa scelta finché non si segnano avversari, e sempre col selettore su "Ban"; **3 per ruolo** (dal 2026-10-06,
+  `BANS_PER_ROLE`; una riga per ruolo nel riquadro), un tocco li segna/toglie (`toggleIn`).
   `banSuggestions()` (recommend.js, testata): forza = win rate sulla mappa − 0.5 (media sulle divisioni dei giocatori)
   + minaccia = media del win rate del candidato contro i "vostri eroi" − 0.5. Vostri eroi = dal 2026-10-06 (richiesta
   dell'utente) SOLO quelli già scelti e gli alleati segnati (`ourHeroes()`), mai gli eroi solo consigliati: senza scelte i
-  ban dipendono dalla mappa e dal lato ("Forti su questa mappa"). Non si propongono preferiti, eroi scelti né alleati
-  (un ban vale per entrambe le squadre). Lo stesso per le stelline rosse degli avversari. L'elenco
+  ban dipendono dalla mappa e dal lato ("Forti su questa mappa"). Dal 2026-10-06 (richiesta dell'utente) si propongono
+  ANCHE i preferiti; mai gli eroi già scelti né gli alleati segnati (un ban vale per entrambe le squadre). Lo stesso per le stelline rosse degli avversari. L'elenco
   non cambia mentre si segnano i ban (si vedono barrati). e2e "ban consigliati …", "ban: al massimo 5".
 - Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
 - **3 consigli per giocatore** (dal migliore): uno grande e 2 alternative (vedi "Design: tre livelli"); i perché in
@@ -323,8 +324,8 @@ rate, ½ punto guide) così eroi quasi alla pari restano tutti a 3; `top` = i pr
 Ricalcolate a ogni tocco (mappa, lato, ban, avversari, alleati, eroi presi), secondo la modalità del Profilo.
 - **Griglia** (`gridStars()`, `span.stars`, `data-stars`): Avversari → rosse (`threatScores()`: forza sulla mappa dal LORO
   lato + quanto battono la vostra squadra, i vostri eroi contano il doppio; anche i bannati hanno le loro stelle);
-  Ban → bianche (`banScores()` condivisa col riquadro "Ban consigliati": i 2 consigliati per ruolo a 5; vostri eroi,
-  preferiti, presi e alleati a 1 = "non bannarlo"); Alleati → dorate; "Tocca l'eroe preso da X" → colore del giocatore.
+  Ban → bianche (`banScores()` condivisa col riquadro "Ban consigliati": i 3 consigliati per ruolo a 5; eroi già scelti
+  e alleati a 1 = "non bannarlo"); Alleati → dorate; "Tocca l'eroe preso da X" → colore del giocatore.
 - **Riquadri e foglio "＋"**: stelline BIANCHE (richiesta: "sotto «segna come preso» devono essere bianche"), stessa
   "buona scelta" (`choiceRows(i)`/`choiceStars(i)`: `recommend(..., {role: null, scoreAll: true})`, con gli eroi degli altri
   come alleati; `scoreAll` = una riga per ogni eroe, senza fare coppia con se stesso). In modalità "solo guide" anche la

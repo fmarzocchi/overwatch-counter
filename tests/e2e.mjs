@@ -150,15 +150,18 @@ try {
   check("Hybrid: attacco/difesa visibile", await page.locator("#side").isVisible());
   await page.click("#side [data-side=defense]");
   check("difesa selezionata", (await page.getAttribute("#side [data-side=defense]", "aria-pressed")) === "true");
-  // ban consigliati per la mappa: 2 per ruolo, mai i vostri eroi né i preferiti; un tocco li segna
+  // ban consigliati per la mappa: 3 per ruolo (anche i preferiti, mai gli eroi già scelti); un tocco li segna
   await toTop(page);
   const br = await page.evaluate(() => ({ visible: !document.querySelector("#ban-recs").hidden, title: document.querySelector("#t-ban-recs").textContent,
     heroes: [...document.querySelectorAll("#ban-recs .hero")].map((b) => b.querySelector(".nm").textContent) }));
   const roleOf = (n) => data.heroes.find((h) => h.name === toEn(n))?.role;
-  check("mappa scelta: «Ban consigliati per King's Row», 2 per ruolo", br.visible && br.title === "Ban consigliati per King's Row"
-    && br.heroes.length === 6 && ["Tank", "Damage", "Support"].every((r) => br.heroes.filter((n) => roleOf(n) === r).length === 2), JSON.stringify(br));
-  check("ban consigliati: mai i preferiti (un ban vale per tutti); nessuno ha scelto → solo la mappa, non gli eroi consigliati",
-    br.heroes.every((n) => !["Mercy", "Juno"].includes(n)) && (await text(page, "#ban-recs .br-sub")) === "Forti su questa mappa",
+  check("mappa scelta: «Ban consigliati per King's Row», 3 per ruolo", br.visible && br.title === "Ban consigliati per King's Row"
+    && br.heroes.length === 9 && ["Tank", "Damage", "Support"].every((r) => br.heroes.filter((n) => roleOf(n) === r).length === 3), JSON.stringify(br));
+  // i preferiti si possono proporre: con «solo statistiche» su King's Row i ban sono i più forti del ruolo, preferiti o no
+  const strongest = (role) => data.heroes.filter((h) => h.role === role).map((h) => [itn(h.name), (data.maps.find((m) => m.slug === "kings-row").winRates[String(h.id)] ?? data.overall[String(h.id)])])
+    .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n]) => n);
+  check("ban consigliati: nessuno ha scelto → solo la mappa (anche i preferiti, se sono tra i più forti)",
+    ["Tank", "Damage", "Support"].every((r) => strongest(r).every((n) => br.heroes.includes(n))) && (await text(page, "#ban-recs .br-sub")) === "Forti su questa mappa",
     `${br.heroes.join()} / ${await text(page, "#ban-recs .br-sub")}`);
   // cambia il consiglio di Fabio (altro ruolo): i ban non cambiano, perché non ha ancora scelto
   await page.locator(".pick").nth(0).locator(".role-btn").click();
@@ -184,9 +187,7 @@ try {
   const sbv = Object.values(sb);
   check("stelline Ban: bianche su fondo scuro, da 1 a 5 su tutta la griglia", sbv.every((x) => x.n >= 1 && x.n <= 5
     && x.cls.includes("st-bans") && x.color === "rgb(255, 255, 255)") && sbv.some((x) => x.n === 5), JSON.stringify(sbv.find((x) => x.n !== 5)));
-  check("stelline Ban: i ban consigliati hanno 5 stelle, i preferiti 1 (non si bannano)",
-    br.heroes.every((n) => sb[n]?.n === 5) && ["Mercy", "Juno"].every((n) => sb[n]?.n === 1),
-    [...br.heroes, "Mercy", "Juno"].map((n) => `${n}:${sb[n]?.n}`).join());
+  check("stelline Ban: i ban consigliati hanno 5 stelle", br.heroes.every((n) => sb[n]?.n === 5), br.heroes.map((n) => `${n}:${sb[n]?.n}`).join());
   await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
   await shot(page, "04c-stelline-ban");
   check("stelline: mai un eroe senza stelle, numero e stelle disegnate coincidono (1–5)", sbv.every((x) => x.n >= 1 && x.n <= 5 && x.shown === x.n));
@@ -532,7 +533,7 @@ try {
     await p7.click("#side [data-side=attack]");
     if (vp.width === 390) {
       check("statistiche + teoria: ban consigliati da entrambe", (await text(p7, "#ban-recs .br-sub")).includes("statistiche e guide")
-        && (await p7.locator("#ban-recs .hero").count()) === 6);
+        && (await p7.locator("#ban-recs .hero").count()) === 9);
     }
     for (const [g, names] of [["bans", ["Ana", "Kiriko", "Widowmaker", "Tracer"]], ["enemies", ["Reinhardt", "Genji", "Pharah", "Mercy", "Lúcio"]], ["allies", ["Winston", "Sojourn", "Baptiste"]]]) {
       await toTop(p7);
@@ -922,7 +923,7 @@ try {
     const cardsTxt = await p13.locator(".pick").evaluateAll((cs) => cs.map((c) => c.innerText));
     check("solo guide: nei riquadri stelline, nessuna percentuale", cardsTxt.every((t) => /★/.test(t) && !/\d+[.,]\d%/.test(t)), cardsTxt.join(" | "));
     const sub = await text(p13, "#ban-recs .br-sub");
-    check("solo guide: ban consigliati dalle guide (2 per ruolo)", sub.includes("guide") && (await p13.locator("#ban-recs .hero").count()) === 6, sub);
+    check("solo guide: ban consigliati dalle guide (3 per ruolo)", sub.includes("guide") && (await p13.locator("#ban-recs .hero").count()) === 9, sub);
     await shot(p13, "17-solo-guide");
     await p13.click("#groups [data-group=enemies]");
     for (const n of ["Pharah", "Winston"]) await heroBtn(p13, n).click();

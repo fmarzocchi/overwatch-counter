@@ -779,8 +779,8 @@ function renderPicks() {
 }
 
 // ---------- ban consigliati (inizio partita) ----------
-// Con la mappa scelta, prima di segnare gli avversari o col selettore su "Ban": 2 per ruolo (banSuggestions), eroi forti su quella mappa e
-// contro i vostri. "Vostri" = quelli che vi consiglierei SENZA ban (o già presi): non si propongono, come i preferiti
+// Con la mappa scelta, prima di segnare gli avversari o col selettore su "Ban": 3 per ruolo (banSuggestions), eroi forti su quella mappa e
+// contro i vostri (già scelti o alleati segnati). Si propongono anche i preferiti; mai gli eroi già scelti né gli alleati
 // (un ban vale per tutte e due le squadre). L'elenco non cambia mentre si segnano i ban: si vedono barrati.
 // punteggi dei ban (stesso calcolo per il riquadro e per le stelline della griglia): {Tank: [righe ordinate], …}
 // "Vostri eroi" = solo quelli GIÀ SCELTI e gli alleati segnati (richiesta del 2026-10-06): senza scelte i ban dipendono
@@ -791,7 +791,8 @@ function banScores(perRole) {
   const opts = {
     mapSlug: match.mapSlug, side: match.side, perRole,
     ours: ourHeroes(),
-    keep: [...profile.players.flatMap((p) => p.favorites), ...match.picked.filter(Boolean), ...match.allies],
+    // si possono proporre anche i preferiti (richiesta del 2026-10-06): niente ban solo per eroi già scelti e alleati
+    keep: [...match.picked.filter(Boolean), ...match.allies],
   };
   const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
   return guide ? guideBanSuggestions(data, T, opts)
@@ -1042,7 +1043,7 @@ function tapPicked(id) {
 // Griglia, secondo il selettore:
 //   Avversari (rosse) = quanto è pericoloso quel nemico: forte sulla mappa dal suo lato + quanto batte la vostra squadra,
 //     soprattutto i vostri eroi (threatScores); Ban (bianche) = stesso calcolo dei ban consigliati (i vostri eroi,
-//     i preferiti e gli alleati non si bannano: 1 stella); Alleati / eroe preso da un giocatore (dorate o col colore del
+//     eroi già scelti e alleati non si bannano: 1 stella); Alleati / eroe preso da un giocatore (dorate o col colore del
 //     giocatore) = quanto è una buona scelta per voi. Riquadri dei giocatori: stelline bianche, stessa "buona scelta".
 const STAR_WHAT = { enemies: "pericolo", bans: "da bannare", allies: "buona scelta", picked: "buona scelta" };
 const starMode = () => (guideMode() ? "guide" : profile.useTheory && T ? "blend" : "stat");

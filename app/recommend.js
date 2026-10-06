@@ -126,9 +126,9 @@ export function recommend(
 //   minaccia = media, sui vostri eroi (ours), del win rate del candidato contro ciascuno − 0.5
 //   punteggio = forza + minaccia
 // datasets: uno o più dati (es. quelli della divisione di ogni giocatore): si fa la media.
-// keep: id da non proporre (preferiti, eroi presi, alleati); anche ours non si propone.
+// keep: id da non proporre (eroi già scelti, alleati); anche ours non si propone. I preferiti SI propongono (richiesta del 2026-10-06).
 // Restituisce {Tank: [righe], Damage: [...], Support: [...]}, riga = {hero, score, strength, threat, beats: [eroi vostri battuti]}.
-export const BANS_PER_ROLE = 2;
+export const BANS_PER_ROLE = 3; // richiesta dell'utente (2026-10-06): 3 per ruolo
 export const BAN_ROLES = ["Tank", "Damage", "Support"];
 export function banSuggestions(datasets, { mapSlug = null, ours = [], keep = [], perRole = BANS_PER_ROLE } = {}) {
   const sets = (Array.isArray(datasets) ? datasets : [datasets]).filter(Boolean);

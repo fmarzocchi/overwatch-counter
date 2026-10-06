@@ -336,7 +336,7 @@ test("riquadro prima degli avversari: un solo motivo in parole, senza numeri", (
   for (const r of rows) { const h = headline(r); assert.ok(h === null || !/\d/.test(h), h); }
 });
 
-test("ban consigliati: 2 per ruolo, i più forti sulla mappa (senza vostri eroi)", () => {
+test("ban consigliati: 3 per ruolo, i più forti sulla mappa (senza vostri eroi)", () => {
   const map = data.maps.find((m) => m.slug === "havana") ?? mapOf("Escort");
   const rec = banSuggestions(data, { mapSlug: map.slug });
   for (const role of ["Tank", "Damage", "Support"]) {

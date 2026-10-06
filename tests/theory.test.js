@@ -6,7 +6,7 @@ import {
   dominantStyle, styleSimilarity, teamStyle, buildTheory, heroTheory, theoryForPick, playGuide, theoryStatus, THEORY_WEIGHT, allyDirected, swapAdvice,
   mapFit, GUIDE_POINTS, adaptMapText,
 } from "../app/theory.js";
-import { recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, rankStars, headline, THEORY_SHARE, GUIDE_TO_WR,
+import { BANS_PER_ROLE, recommend, recommendDuo, recommendTeam, details, guideBanSuggestions, guideDetails, rankStars, headline, THEORY_SHARE, GUIDE_TO_WR,
   blendedBanSuggestions, banSuggestions } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -315,7 +315,7 @@ test("guide: ban consigliati dalle guide (forti sulla mappa e contro i vostri er
   assert.equal(rec.Tank[0].hero.name, "Reinhardt");
   assert.ok(rec.Damage.some((r) => r.hero.name === "Reaper" || r.hero.name === "Mei"), JSON.stringify(rec.Damage.map((r) => r.hero.name)));
   assert.ok(Object.values(rec).flat().every((r) => !["Winston", "Lúcio"].includes(r.hero.name)));
-  assert.ok(Object.values(rec).every((rows) => rows.length === 2));
+  assert.ok(Object.values(rec).every((rows) => rows.length === BANS_PER_ROLE));
 });
 
 test("guide: nella guida nessuna riga tratta dalle statistiche", () => {
@@ -342,7 +342,7 @@ test("statistiche + teoria: concorrono entrambe, la teoria pesa di più (55%)", 
   // ban: mescolati, consigliati dalle guide in alto
   const bans = blendedBanSuggestions(data, TT, { mapSlug: "kings-row" });
   const plain = banSuggestions(data, { mapSlug: "kings-row", perRole: 99 });
-  assert.ok(Object.values(bans).every((rows) => rows.length === 2));
+  assert.ok(Object.values(bans).every((rows) => rows.length === BANS_PER_ROLE));
   const reinStat = plain.Tank.findIndex((r) => r.hero.name === "Reinhardt");
   assert.ok(bans.Tank.some((r) => r.hero.name === "Reinhardt") || reinStat > 6, "Reinhardt (consigliato dalle guide) tra i ban se non è in fondo nei numeri");
 });
