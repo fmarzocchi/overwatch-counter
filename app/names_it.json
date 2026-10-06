@@ -436,7 +436,11 @@
   "Zarya": "Zarya",
   "Zenyatta": "Zenyatta"
  },
- "maps": {},
+ "maps": {
+  "Ilios": "Ilio",
+  "Lijiang Tower": "Torre di Lijiang",
+  "Watchpoint: Gibraltar": "Osservatorio: Gibilterra"
+ },
  "source": "OverFast API (overfast-api.tekrop.fr), dal sito ufficiale overwatch.blizzard.com (en-us / it-it)",
- "updated": "2026-10-05"
+ "updated": "2026-10-06"
 }

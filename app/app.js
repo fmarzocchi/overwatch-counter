@@ -94,7 +94,9 @@ let IT = { heroes: {}, maps: {}, abilities: {} };
 let heroRe = null;
 let heroIt = {};
 function setHeroNames() {
-  heroIt = Object.fromEntries(Object.entries(IT.heroes ?? {}).filter(([en, it]) => it && en.toLowerCase() !== it.toLowerCase()));
+  // anche le mappe (Ilios → Ilio) citate nei testi della teoria
+  heroIt = Object.fromEntries(Object.entries({ ...(IT.heroes ?? {}), ...(IT.maps ?? {}) })
+    .filter(([en, it]) => it && en.toLowerCase() !== it.toLowerCase()));
   const keys = Object.keys(heroIt).sort((a, b) => b.length - a.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   heroRe = keys.length ? new RegExp(keys.join("|"), "g") : null;
 }

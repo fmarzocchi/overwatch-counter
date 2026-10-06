@@ -28,6 +28,7 @@ try { namesFile = JSON.parse(readFileSync(path.join(ROOT, "app", "names_it.json"
 const namesIt = namesFile.heroes ?? {};
 const shownIt = Object.fromEntries(Object.entries(namesIt).filter(([en, it]) => it && en.toLowerCase() !== it.toLowerCase()));
 const itn = (en) => shownIt[en] ?? en; // nome dei dati → nome mostrato
+const ILIOS = namesFile.maps?.Ilios ?? "Ilios"; // nome della mappa come appare (in italiano: Ilio)
 const toEn = (n) => Object.keys(shownIt).find((en) => shownIt[en] === n) ?? n; // nome mostrato → nome dei dati
 
 const results = [];
@@ -324,21 +325,21 @@ try {
 
   // Control: niente lato
   await page.click("#map-btn");
-  await page.locator("#map-list .map-opt", { hasText: "Ilios" }).click();
+  await page.locator("#map-list .map-opt", { hasText: ILIOS }).click();
   check("Control: attacco/difesa nascosto", !(await page.locator("#side").isVisible()));
 
   // ---------- memoria e nuova partita ----------
   await page.reload();
   await page.locator(".pick .pick-name").first().waitFor();
   check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "4"
-    && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes("Ilios"));
+    && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes(ILIOS));
   await page.click("#new-match");
   check("nuova partita: azzera tutto tranne il profilo", (await text(page, "[data-count=enemies]")) === "0"
     && (await text(page, "[data-count=bans]")) === "0" && (await text(page, "#map-name")).includes("Scegli mappa")
     && (await text(page, ".picks")).includes("Giulia"));
   await page.click("#toast .toast-btn");
   check("nuova partita: «Annulla» nel messaggio ripristina la partita", (await text(page, "[data-count=enemies]")) === "4"
-    && (await text(page, "#map-name")).includes("Ilios"));
+    && (await text(page, "#map-name")).includes(ILIOS));
   await page.click("#new-match");
 
   // ---------- aggiorna senza token ----------
@@ -479,7 +480,7 @@ try {
         await p9.locator(".pick .pick-name").first().waitFor();
         const hb = (name) => p9.locator("#grid .hero", { has: p9.locator(".nm", { hasText: new RegExp(`^${name.replace(/[.:]/g, "\\$&")}$`) }) });
         await p9.click("#map-btn");
-        await p9.locator("#map-list .map-opt", { hasText: "Ilios" }).click();
+        await p9.locator("#map-list .map-opt", { hasText: ILIOS }).click();
         await p9.click("#groups [data-group=enemies]");
         for (const e of ["Winston", "Genji", "Pharah"]) await hb(e).click();
         await toTop(p9);

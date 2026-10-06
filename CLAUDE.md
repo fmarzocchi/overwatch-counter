@@ -240,8 +240,11 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
   - **Abilità**: `localizeTheory()` mette il nome del gioco (es. Biostimolatore, Sovraccarico) anche dentro i consigli.
   - **Eroi**: diversi solo Soldato-76 e Regina dei Junker (D.MON/D.VA = solo maiuscole, ignorati): `tr()` li traduce
     nei testi mostrati (`el`/`fill`/titoli), dati e teoria restano in inglese. e2e: `itn()`/`toEn()`.
-  - **Mappe**: nessuna fonte italiana (OverFast non le traduce, la pagina /maps/ di Blizzard non esiste più): `maps: {}`,
-    restano i nomi di counterwatch. Il codice è pronto (`m.en`, ricerca in entrambe le lingue).
+  - **Mappe**: OverFast non le traduce, la wiki inglese non ha collegamenti all'italiano. La wiki italiana (piccola,
+    2017) conferma solo Ilio, Torre di Lijiang, Osservatorio: Gibilterra (`WIKI_IT` in names_it.py, accettati solo se la
+    pagina esiste): le altre restano col nome di counterwatch (molte sono uguali). `tr()` traduce anche le mappe nei testi.
+  - **Abilità degli altri eroi** citate nei consigli (es. Dragonblade di Genji nei consigli di Ana): tradotte anche loro
+    (`localizeTheory()`, nomi globali senza ambiguità).
   - OverFast ha anche i **perk** (nomi e descrizioni in italiano, niente statistiche): non ancora usati.
 
 ## L'app (PWA) — come deve essere

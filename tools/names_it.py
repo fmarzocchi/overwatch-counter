@@ -96,6 +96,19 @@ def main():
     except (OSError, ValueError, KeyError) as e:
         problems.append(f"mappe non lette ({e})")
 
+    # wiki italiana (piccola e del 2017, senza collegamenti): si accetta un nome solo se la sua pagina esiste lì.
+    # Corrispondenze note dei nomi del gioco; le mappe nuove non ci sono e restano col nome di counterwatch.
+    WIKI_IT = {"Ilios": "Ilio", "Lijiang Tower": "Torre di Lijiang", "Watchpoint: Gibraltar": "Osservatorio: Gibilterra",
+               "Temple of Anubis": "Tempio di Anubi", "Volskaya Industries": "Industrie Volskaya"}
+    try:
+        pages = {x["title"] for x in load(of("wiki_it_allpages.json"))["query"]["allpages"]}
+        ours = {m["name"] for m in load(a.data)["maps"]}
+        for en, it in WIKI_IT.items():
+            if en in ours and it in pages and en not in maps:
+                maps[en] = it
+    except (OSError, ValueError, KeyError) as e:
+        problems.append(f"wiki italiana non letta ({e})")
+
     out = {
         "source": "OverFast API (overfast-api.tekrop.fr), dal sito ufficiale overwatch.blizzard.com (en-us / it-it)",
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
