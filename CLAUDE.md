@@ -130,8 +130,10 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
 - **Ban consigliati per la mappa** (richiesta del 2026-10-05): riquadro "Ban consigliati per <mappa>" sotto mappa/lato,
   visibile con la mappa scelta finché non si segnano avversari, e sempre col selettore su "Ban"; **2 per ruolo**, un tocco li segna/toglie (`toggleIn`).
   `banSuggestions()` (recommend.js, testata): forza = win rate sulla mappa − 0.5 (media sulle divisioni dei giocatori)
-  + minaccia = media del win rate del candidato contro i "vostri eroi" − 0.5. Vostri eroi = quelli consigliati SENZA
-  ban (o già presi): non si propongono, né i preferiti né gli alleati (un ban vale per entrambe le squadre). L'elenco
+  + minaccia = media del win rate del candidato contro i "vostri eroi" − 0.5. Vostri eroi = dal 2026-10-06 (richiesta
+  dell'utente) SOLO quelli già scelti e gli alleati segnati (`ourHeroes()`), mai gli eroi solo consigliati: senza scelte i
+  ban dipendono dalla mappa e dal lato ("Forti su questa mappa"). Non si propongono preferiti, eroi scelti né alleati
+  (un ban vale per entrambe le squadre). Lo stesso per le stelline rosse degli avversari. L'elenco
   non cambia mentre si segnano i ban (si vedono barrati). e2e "ban consigliati …", "ban: al massimo 5".
 - Coppia: `recommendDuo` prova tutte le coppie (eroi diversi) e somma anche la sinergia tra i due.
 - **3 consigli per giocatore** (dal migliore): uno grande e 2 alternative (vedi "Design: tre livelli"); i perché in

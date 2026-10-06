@@ -783,18 +783,14 @@ function renderPicks() {
 // contro i vostri. "Vostri" = quelli che vi consiglierei SENZA ban (o già presi): non si propongono, come i preferiti
 // (un ban vale per tutte e due le squadre). L'elenco non cambia mentre si segnano i ban: si vedono barrati.
 // punteggi dei ban (stesso calcolo per il riquadro e per le stelline della griglia): {Tank: [righe ordinate], …}
+// "Vostri eroi" = solo quelli GIÀ SCELTI e gli alleati segnati (richiesta del 2026-10-06): senza scelte i ban dipendono
+// dalla mappa (e dal lato), mai dagli eroi solo consigliati.
+const ourHeroes = () => [...new Set([...match.picked.filter(Boolean), ...match.allies].map(sid))];
 function banScores(perRole) {
-  const players = profile.players.map((p, i) => ({
-    role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites, data: playerData(i), picked: match.picked[i],
-  }));
   const guide = guideMode();
-  const { team } = recommendTeam(data, {
-    players, mapSlug: match.mapSlug, side: match.side, bans: [], enemies: [], allies: match.allies, theory: T, useTheory: !!profile.useTheory,
-    guideOnly: guide,
-  });
   const opts = {
     mapSlug: match.mapSlug, side: match.side, perRole,
-    ours: team.filter(Boolean).map((h) => h.id),
+    ours: ourHeroes(),
     keep: [...profile.players.flatMap((p) => p.favorites), ...match.picked.filter(Boolean), ...match.allies],
   };
   const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
@@ -811,8 +807,10 @@ function renderBanRecs() {
   if (!show) return;
   const guide = guideMode();
   const rec = banScores(BANS_PER_ROLE);
-  $(".br-sub", box).textContent = guide ? "Forti su questa mappa per guide e giocatori forti, e contro i vostri eroi"
-    : profile.useTheory && T ? "Forti su questa mappa e contro i vostri eroi (statistiche e guide)" : "Forti su questa mappa e contro i vostri eroi";
+  // "contro i vostri eroi" solo se ce ne sono (scelti o alleati segnati)
+  const vs = ourHeroes().length ? " e contro i vostri eroi" : "";
+  $(".br-sub", box).textContent = guide ? `Forti su questa mappa per guide e giocatori forti${vs}`
+    : profile.useTheory && T ? `Forti su questa mappa${vs} (statistiche e guide)` : `Forti su questa mappa${vs}`;
   const banned = new Set(match.bans.map(sid));
   $("#t-ban-recs").textContent = `Ban consigliati per ${map.name}`;
   fill($("#ban-recs-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
@@ -1052,7 +1050,6 @@ const starOpts = (extra = {}) => ({ minSd: STAR_MIN_SD[starMode()], ...extra });
 let starCache = new Map(); // calcoli di questo giro: si svuota a ogni nuovo consiglio (renderPicks)
 function gridStars() {
   const g = match.group;
-  const team = lastDuo?.team ?? [];
   if (g === "bans") {
     const rec = banScores(999);
     const st = rankStars(BAN_ROLES.flatMap((r) => rec[r]), starOpts({ top: BANS_PER_ROLE }));
@@ -1062,7 +1059,7 @@ function gridStars() {
   if (g === "enemies") {
     const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
     return rankStars(threatScores(sets, T, {
-      mapSlug: match.mapSlug, side: match.side, ours: team.filter(Boolean).map((h) => h.id), mates: match.allies, mode: starMode(),
+      mapSlug: match.mapSlug, side: match.side, ours: match.picked.filter(Boolean), mates: match.allies, mode: starMode(),
     }), starOpts());
   }
   return choiceStars(g === "picked" ? match.pickFor : -1);
@@ -1072,7 +1069,6 @@ function gridStars() {
 function choiceRows(i) {
   const key = `rows${i}`;
   if (!starCache.has(key)) {
-    const team = lastDuo?.team ?? [];
     const allies = [...new Set([...match.picked.filter((x, j) => x && j !== i).map(sid), ...match.allies.map(sid)])];
     const rows = recommend(i >= 0 ? playerData(i) : data, {
       role: null, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies, bans: match.bans, scoreAll: true,

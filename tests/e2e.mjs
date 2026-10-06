@@ -154,12 +154,17 @@ try {
   await toTop(page);
   const br = await page.evaluate(() => ({ visible: !document.querySelector("#ban-recs").hidden, title: document.querySelector("#t-ban-recs").textContent,
     heroes: [...document.querySelectorAll("#ban-recs .hero")].map((b) => b.querySelector(".nm").textContent) }));
-  const picksNoBans = await pickNames(page);
   const roleOf = (n) => data.heroes.find((h) => h.name === toEn(n))?.role;
   check("mappa scelta: «Ban consigliati per King's Row», 2 per ruolo", br.visible && br.title === "Ban consigliati per King's Row"
     && br.heroes.length === 6 && ["Tank", "Damage", "Support"].every((r) => br.heroes.filter((n) => roleOf(n) === r).length === 2), JSON.stringify(br));
-  check("ban consigliati: mai i vostri eroi né i preferiti (un ban vale per tutti)",
-    br.heroes.every((n) => !picksNoBans.includes(n) && !["Mercy", "Juno"].includes(n)), `${br.heroes.join()} / ${picksNoBans.join()}`);
+  check("ban consigliati: mai i preferiti (un ban vale per tutti); nessuno ha scelto → solo la mappa, non gli eroi consigliati",
+    br.heroes.every((n) => !["Mercy", "Juno"].includes(n)) && (await text(page, "#ban-recs .br-sub")) === "Forti su questa mappa",
+    `${br.heroes.join()} / ${await text(page, "#ban-recs .br-sub")}`);
+  // cambia il consiglio di Fabio (altro ruolo): i ban non cambiano, perché non ha ancora scelto
+  await page.locator(".pick").nth(0).locator(".role-btn").click();
+  const brTank = await page.locator("#ban-recs .hero .nm").allInnerTexts();
+  while ((await page.locator(".pick").nth(0).locator(".role-btn").innerText()) !== "Danni") await page.locator(".pick").nth(0).locator(".role-btn").click();
+  check("ban consigliati: non dipendono dai consigli di chi non ha scelto", brTank.join() === br.heroes.join(), `${br.heroes.join()} → ${brTank.join()}`);
   await shot(page, "04b-ban-consigliati");
   await page.locator("#ban-recs .hero").first().click();
   await toTop(page);
@@ -179,9 +184,9 @@ try {
   const sbv = Object.values(sb);
   check("stelline Ban: bianche su fondo scuro, da 1 a 5 su tutta la griglia", sbv.every((x) => x.n >= 1 && x.n <= 5
     && x.cls.includes("st-bans") && x.color === "rgb(255, 255, 255)") && sbv.some((x) => x.n === 5), JSON.stringify(sbv.find((x) => x.n !== 5)));
-  check("stelline Ban: i ban consigliati hanno 5 stelle, i vostri eroi e i preferiti 1 (non si bannano)",
-    br.heroes.every((n) => sb[n]?.n === 5) && ["Mercy", "Juno", ...picksNoBans].every((n) => sb[n]?.n === 1),
-    [...br.heroes, "Mercy", "Juno", ...picksNoBans].map((n) => `${n}:${sb[n]?.n}`).join());
+  check("stelline Ban: i ban consigliati hanno 5 stelle, i preferiti 1 (non si bannano)",
+    br.heroes.every((n) => sb[n]?.n === 5) && ["Mercy", "Juno"].every((n) => sb[n]?.n === 1),
+    [...br.heroes, "Mercy", "Juno"].map((n) => `${n}:${sb[n]?.n}`).join());
   await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
   await shot(page, "04c-stelline-ban");
   check("stelline: mai un eroe senza stelle, numero e stelle disegnate coincidono (1–5)", sbv.every((x) => x.n >= 1 && x.n <= 5 && x.shown === x.n));
