@@ -235,6 +235,67 @@ export function blendedBanSuggestions(datasets, theory, opts = {}) {
   }));
 }
 
+// ---------- stelline sotto gli eroi della griglia ----------
+// Pericolo di un eroe NEMICO: forte sulla mappa (e sul suo lato, che è l'opposto del vostro) e quanto batte la vostra
+// squadra — i vostri eroi (ours) contano il doppio degli altri compagni (mates). Stessa scala dei ban; con la teoria
+// attiva si mescola come nei consigli (45/55), in modalità guide solo teoria.
+export function threatScores(datasets, theory, { mapSlug = null, side = null, ours = [], mates = [], mode = "stat" } = {}) {
+  const sets = (Array.isArray(datasets) ? datasets : [datasets]).filter(Boolean);
+  const base = sets[0];
+  const byId = Object.fromEntries(base.heroes.map((h) => [sid(h.id), h]));
+  const enemySide = side === "attack" ? "defense" : side === "defense" ? "attack" : null;
+  const map = mapSlug ? base.maps.find((m) => m.slug === mapSlug) : null;
+  const team = [...ours.map((x) => [sid(x), 2]), ...mates.map((x) => [sid(x), 1])].filter(([x]) => byId[x]);
+  const wsum = team.reduce((a, [, w]) => a + w, 0) || 1;
+  const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  return base.heroes.map((h) => {
+    const id = sid(h.id);
+    let stat = 0, guide = 0;
+    if (mode !== "guide") {
+      const strength = avg(sets.map((d) => {
+        const m = mapSlug ? d.maps.find((x) => x.slug === mapSlug) : null;
+        return (m?.winRates?.[id] ?? d.overall?.[id] ?? 0.5) - 0.5;
+      })) + (enemySide && hasSides(map) ? sideBonus(h, enemySide) : 0);
+      const threat = team.reduce((a, [o, w]) => {
+        const v = avg(sets.map((d) => d.counters?.[id]?.[o]).filter((x) => typeof x === "number"));
+        return a + w * (v ? v - 0.5 : 0);
+      }, 0) / wsum;
+      stat = strength + threat;
+    }
+    if (mode !== "stat" && theory) {
+      const fit = mapFit(theory, mapSlug, h, enemySide);
+      const t = theory.idx?.[h.name];
+      const beats = team.reduce((a, [o, w]) => a + (t?.counters.has(byId[o].name) ? w : 0) - (t?.counteredBy.has(byId[o].name) ? w : 0), 0) / wsum;
+      guide = fit.points + GUIDE_POINTS.beats * beats * Math.min(team.length, 3);
+    }
+    const score = mode === "guide" ? guide : mode === "blend" ? W_STAT * stat + W_THEORY * guide : stat;
+    return { hero: h, score };
+  });
+}
+
+// Da punteggi a 0–3 stelle, in base alla posizione (le scale cambiano con la modalità), ruolo per ruolo come la griglia:
+// 3 ai migliori ~12%, 2 ai successivi fino al 30%, 1 fino al 55%; niente stelle se i punteggi sono tutti uguali.
+// top: i primi `top` di ogni ruolo hanno comunque 3 stelle (es. i 2 ban consigliati per ruolo).
+export function rankStars(rows, { byRole = true, top = 0 } = {}) {
+  const out = new Map();
+  const groups = new Map();
+  for (const r of rows) {
+    const k = byRole ? r.hero.role : "";
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+  for (const g of groups.values()) {
+    const sorted = [...g].sort((a, b) => b.score - a.score || a.hero.name.localeCompare(b.hero.name));
+    const n = sorted.length;
+    const lo = sorted[n - 1].score;
+    sorted.forEach((r, k) => {
+      const stars = r.score - lo < 1e-9 ? 0 : k < Math.max(top, n * 0.12) ? 3 : k < n * 0.3 ? 2 : k < n * 0.55 ? 1 : 0;
+      out.set(sid(r.hero.id), stars);
+    });
+  }
+  return out;
+}
+
 // Squadra di 1–5 giocatori. players: [{role, favorites, onlyFavorites, data?, picked?}, …]; il resto come recommend().
 // data del giocatore (es. dati della sua divisione, vedi withDivision) se presente, altrimenti quelli generali.
 // picked: eroe GIÀ PRESO da quel giocatore → resta fisso, conta come alleato per gli altri e la sua lista

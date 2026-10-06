@@ -62,6 +62,13 @@ async function newPage(ctxOpts = {}) {
 }
 const shot = (page, name) => page.screenshot({ path: path.join(SHOTS, `${name}.png`) });
 const text = (page, sel) => page.locator(sel).innerText();
+// stelline della griglia: {nome mostrato: {n, cls, color, stroke}}
+const starsOf = (page) => page.evaluate(() => Object.fromEntries([...document.querySelectorAll("#grid .hero")].map((b) => {
+  const st = b.querySelector(".stars");
+  const cs = st && getComputedStyle(st);
+  return [b.querySelector(".nm").textContent, { n: Number(b.dataset.stars), shown: !!st && !st.hidden && st.textContent.length,
+    cls: st?.className ?? "", color: cs?.color, stroke: cs?.webkitTextStrokeColor, role: b.closest("[data-block]")?.dataset.block }];
+})));
 const heroBtn = (page, name) => page.locator("#grid .hero", { has: page.locator(".nm", { hasText: new RegExp(`^${name}$`) }) });
 // in cima alla pagina il riquadro dei consigli è completo (scorrendo si compatta)
 const toTop = async (page) => { await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(50); };
@@ -151,6 +158,16 @@ try {
   await heroBtn(page, "Ana").click();
   await heroBtn(page, "Kiriko").click();
   check("2 ban contati", (await text(page, "[data-count=bans]")) === "2");
+  const sb = await starsOf(page);
+  const sbv = Object.values(sb);
+  check("stelline Ban: nere col bordo bianco su tutta la griglia", sbv.some((x) => x.n === 3)
+    && sbv.every((x) => !x.n || (x.cls.includes("st-bans") && x.color === "rgb(0, 0, 0)" && x.stroke === "rgb(255, 255, 255)")), JSON.stringify(sbv.find((x) => x.n)));
+  check("stelline Ban: i ban consigliati hanno 3 stelle, i vostri eroi e i preferiti nessuna",
+    br.heroes.every((n) => sb[n]?.n === 3) && ["Mercy", "Juno", ...picksNoBans].every((n) => !sb[n]?.n),
+    br.heroes.map((n) => `${n}:${sb[n]?.n}`).join());
+  await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
+  await shot(page, "04c-stelline-ban");
+  check("stelline: numero e stelle disegnate coincidono (0–3)", sbv.every((x) => x.n >= 0 && x.n <= 3 && (x.n ? x.shown === x.n : !x.shown)));
   await toTop(page);
   const afterBans = await pickNames(page);
   check("consigli senza eroi bannati", !afterBans.includes("Ana") && !afterBans.includes("Kiriko"), afterBans.join());
@@ -164,6 +181,27 @@ try {
 
   // ---------- durante: avversari e alleati ----------
   await page.click("#groups [data-group=enemies]");
+  const se = await starsOf(page);
+  const sev = Object.values(se);
+  check("stelline Avversari: rosse", sev.filter((x) => x.n).length >= 10
+    && sev.every((x) => !x.n || (x.cls.includes("st-enemies") && x.color === "rgb(255, 69, 58)")), JSON.stringify(sev.find((x) => x.n)));
+  check("stelline Avversari: 3 stelle in ogni ruolo, nessuna agli eroi bannati",
+    ["tank", "damage", "support"].every((r) => sev.some((x) => x.n === 3 && (x.role ?? "").toLowerCase().startsWith(r)))
+    && !se.Ana.n && !se.Kiriko.n, JSON.stringify(sev.map((x) => `${x.role}:${x.n}`)));
+  await page.click("#side [data-side=attack]");
+  const se2 = await starsOf(page);
+  await page.click("#side [data-side=defense]");
+  check("stelline Avversari: cambiano col lato (il loro è l'opposto del vostro)", Object.keys(se).some((n) => se[n].n !== se2[n].n));
+  const danger = Object.keys(se).find((n) => se[n].n === 3);
+  await page.click("#groups [data-group=bans]");
+  await heroBtn(page, danger).click();
+  await page.click("#groups [data-group=enemies]");
+  check("stelline Avversari: cambiano coi ban (un eroe bannato non ne ha)", !(await starsOf(page))[danger].n, danger);
+  await page.click("#groups [data-group=bans]");
+  await heroBtn(page, danger).click();
+  await page.click("#groups [data-group=enemies]");
+  await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
+  await shot(page, "05d-stelline-avversari");
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
   check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
   check("con gli avversari segnati i ban consigliati spariscono", await page.locator("#ban-recs").isHidden());
@@ -262,6 +300,9 @@ try {
   await closeAll();
   check("senza alleati: niente riga «Alleati», la sinergia col compagno è «Con Giulia»", !/Alleati [+−]/.test(sumF) && /Con Giulia [+−]/.test(sumF), sumF);
   await page.click("#groups [data-group=allies]");
+  const sa = Object.values(await starsOf(page));
+  check("stelline Alleati: dorate (buona scelta per voi)", sa.some((x) => x.n === 3)
+    && sa.every((x) => !x.n || (x.cls.includes("st-allies") && x.color === "rgb(255, 179, 64)")), JSON.stringify(sa.find((x) => x.n)));
   await heroBtn(page, "Lúcio").click();
   await toTop(page);
   const sumA = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
@@ -311,6 +352,11 @@ try {
   // Giulia ha preso un eroe non preferito: «Passa a» (riquadro e guida) propone solo preferiti
   await toTop(page);
   await page.locator(".pick").nth(1).locator(".alt-other").click();
+  const sp = Object.values(await starsOf(page));
+  check("stelline durante la scelta dell'eroe di Giulia: col suo colore", sp.some((x) => x.n === 3)
+    && sp.every((x) => !x.n || (x.cls.includes("st-picked") && x.color === "rgb(255, 111, 174)")), JSON.stringify(sp.find((x) => x.n)));
+  await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
+  await shot(page, "06c-stelline-scelta");
   await heroBtn(page, "Brigitte").click();
   await toTop(page);
   const swapCard = await page.locator(".pick").nth(1).locator(".swap b").allInnerTexts();

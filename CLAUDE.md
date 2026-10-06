@@ -277,6 +277,21 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
     (`localizeTheory()`, nomi globali senza ambiguità).
   - OverFast ha anche i **perk** (nomi e descrizioni in italiano, niente statistiche): non ancora usati.
 
+## Stelline sotto gli eroi della griglia (2026-10-06, richiesta dell'utente)
+
+Ogni volto della griglia (#grid) ha 0–3 stelline (`span.stars` sul bordo basso del volto, `data-stars` sul pulsante),
+ricalcolate a ogni tocco (mappa, lato, ban, avversari, alleati, eroi presi) e secondo la modalità del Profilo
+(statistiche / + teoria / solo guide). Classifica **ruolo per ruolo** (`rankStars()`: 3 ai migliori ~12%, 2 fino al 30%,
+1 fino al 55%; nessuna se i punteggi sono tutti uguali). `gridStars()` in app.js, secondo il selettore:
+- **Avversari → rosse** (`threatScores()`): forza sulla mappa dal LORO lato (l'opposto del vostro: `sideBonus`/`mapFit`)
+  + quanto battono la vostra squadra; i vostri eroi (presi o n. 1 dei consigli) contano il doppio degli alleati. Bannati: niente.
+- **Ban → nere col bordo bianco**: stesso calcolo del riquadro "Ban consigliati" (`banScores()` condivisa); i 2 consigliati
+  per ruolo hanno sempre 3 stelle (`top`); vostri eroi, preferiti, presi e alleati: niente (un ban vale per tutti).
+- **Alleati → dorate**; **scelta dell'eroe preso da un giocatore ("＋") → col colore del giocatore** (`--sc`):
+  `recommend()` su tutti i ruoli con gli eroi degli altri come alleati (buona scelta per voi).
+Collaudo: `recommend.test.js` (formula, stelle) ed e2e "stelline …" (colori, ban consigliati = 3, cambiano col lato e coi
+ban); screenshot 04c, 05d, 06c.
+
 ## Tasto/gesto "indietro" di Android (2026-10-06)
 
 L'APK fa già `web.goBack()` se la pagina ha cronologia, altrimenti chiude. L'app aggiunge un passo di cronologia per

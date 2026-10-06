@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   recommend, recommendDuo, recommendTeam, matchups, headline, MATCHUP_MIN, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
-  banSuggestions, BANS_PER_ROLE,
+  banSuggestions, BANS_PER_ROLE, threatScores, rankStars,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -381,4 +381,37 @@ test("ban consigliati: con più divisioni si fa la media", () => {
       if (map.winRates[String(r.hero.id)] !== undefined) close(r.strength, a.strength + 0.01, r.hero.name);
     }
   }
+});
+
+test("stelline: pericolo dei nemici = forza sulla mappa + quanto battono i vostri eroi (peso doppio)", () => {
+  const map = data.maps.find((m) => m.slug === "kings-row");
+  const ours = [id("Mercy"), id("Soldier: 76")].filter(Boolean);
+  const rows = threatScores(data, null, { mapSlug: map.slug, ours });
+  assert.equal(rows.length, data.heroes.length);
+  const h = data.heroes[0];
+  const sidH = String(h.id);
+  const strength = (map.winRates[sidH] ?? data.overall[sidH] ?? 0.5) - 0.5;
+  const threat = ours.reduce((a, o) => a + 2 * ((data.counters[sidH]?.[String(o)] ?? 0.5) - 0.5), 0) / (2 * ours.length);
+  close(rows.find((r) => r.hero.id === h.id).score, strength + threat, h.name);
+  // un compagno vale la metà dei vostri eroi
+  const mixed = threatScores(data, null, { mapSlug: map.slug, ours: [ours[0]], mates: [ours[1]] });
+  const t2 = (2 * ((data.counters[sidH]?.[String(ours[0])] ?? 0.5) - 0.5) + ((data.counters[sidH]?.[String(ours[1])] ?? 0.5) - 0.5)) / 3;
+  close(mixed.find((r) => r.hero.id === h.id).score, strength + t2, `${h.name} con un compagno`);
+});
+
+test("stelline: 0–3 ruolo per ruolo, i primi `top` sempre a 3, nessuna se i punteggi sono uguali", () => {
+  const rows = threatScores(data, null, { mapSlug: "kings-row", ours: [id("Mercy")] });
+  const st = rankStars(rows);
+  for (const role of ["Tank", "Damage", "Support"]) {
+    const rr = rows.filter((r) => r.hero.role === role).sort((a, b) => b.score - a.score);
+    assert.equal(st.get(String(rr[0].hero.id)), 3, role);
+    assert.equal(st.get(String(rr.at(-1).hero.id)), 0, role);
+    const n = rr.map((r) => st.get(String(r.hero.id)));
+    assert.ok(n.every((x, k) => !k || x <= n[k - 1]), `${role}: stelle non crescenti ${n}`);
+  }
+  const ban = banSuggestions(data, { mapSlug: "kings-row", perRole: 999 });
+  const sb = rankStars(Object.values(ban).flat(), { top: BANS_PER_ROLE });
+  for (const role of Object.keys(ban)) for (const r of ban[role].slice(0, BANS_PER_ROLE)) assert.equal(sb.get(String(r.hero.id)), 3);
+  const flat = rankStars(data.heroes.map((hero) => ({ hero, score: 0 })));
+  assert.ok([...flat.values()].every((x) => x === 0));
 });

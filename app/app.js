@@ -1,5 +1,5 @@
-import { recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES,
-  guideBanSuggestions, blendedBanSuggestions, guideDetails, guideStars } from "./recommend.js";
+import { recommend, recommendTeam, breakdown, details, hasSides, withDivision, heroProfile, matchups, headline, banSuggestions, BAN_ROLES,
+  BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, guideStars, threatScores, rankStars } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
 
@@ -624,13 +624,8 @@ function renderPicks() {
 // Con la mappa scelta, prima di segnare gli avversari o col selettore su "Ban": 2 per ruolo (banSuggestions), eroi forti su quella mappa e
 // contro i vostri. "Vostri" = quelli che vi consiglierei SENZA ban (o già presi): non si propongono, come i preferiti
 // (un ban vale per tutte e due le squadre). L'elenco non cambia mentre si segnano i ban: si vedono barrati.
-function renderBanRecs() {
-  const box = $("#ban-recs");
-  const map = currentMap();
-  // a inizio partita (avversari non ancora segnati) o quando si sceglie "Ban"
-  const show = !!map && (!match.enemies.length || match.group === "bans");
-  box.hidden = !show;
-  if (!show) return;
+// punteggi dei ban (stesso calcolo per il riquadro e per le stelline della griglia): {Tank: [righe ordinate], …}
+function banScores(perRole) {
   const players = profile.players.map((p, i) => ({
     role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites, data: playerData(i), picked: match.picked[i],
   }));
@@ -640,13 +635,24 @@ function renderBanRecs() {
     guideOnly: guide,
   });
   const opts = {
-    mapSlug: match.mapSlug, side: match.side,
+    mapSlug: match.mapSlug, side: match.side, perRole,
     ours: team.filter(Boolean).map((h) => h.id),
     keep: [...profile.players.flatMap((p) => p.favorites), ...match.picked.filter(Boolean), ...match.allies],
   };
   const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
-  const rec = guide ? guideBanSuggestions(data, T, opts)
+  return guide ? guideBanSuggestions(data, T, opts)
     : profile.useTheory && T ? blendedBanSuggestions(sets, T, opts) : banSuggestions(sets, opts);
+}
+
+function renderBanRecs() {
+  const box = $("#ban-recs");
+  const map = currentMap();
+  // a inizio partita (avversari non ancora segnati) o quando si sceglie "Ban"
+  const show = !!map && (!match.enemies.length || match.group === "bans");
+  box.hidden = !show;
+  if (!show) return;
+  const guide = guideMode();
+  const rec = banScores(BANS_PER_ROLE);
   $(".br-sub", box).textContent = guide ? "Forti su questa mappa per guide e giocatori forti, e contro i vostri eroi"
     : profile.useTheory && T ? "Forti su questa mappa e contro i vostri eroi (statistiche e guide)" : "Forti su questa mappa e contro i vostri eroi";
   const banned = new Set(match.bans.map(sid));
@@ -874,9 +880,44 @@ function tapPicked(id) {
   toast(`${profile.players[i].name} ha preso ${byId[id].name} ✓`, 2000);
 }
 
+// ---------- stelline sotto gli eroi della griglia ----------
+// Cambiano col selettore e con ogni scelta (mappa, lato, ban, avversari, alleati, eroi presi), ruolo per ruolo:
+//   Avversari (rosse) = quanto è pericoloso quel nemico: forte sulla mappa dal suo lato + quanto batte la vostra squadra,
+//     soprattutto i vostri eroi (threatScores); Ban (nere col bordo bianco) = stesso calcolo dei ban consigliati;
+//   Alleati / eroe preso da un giocatore (dorate o col colore del giocatore) = quanto è una buona scelta per voi.
+// Seguono la modalità scelta nel Profilo (statistiche, statistiche + teoria, solo guide).
+const STAR_WHAT = { enemies: "pericolo", bans: "da bannare", allies: "buona scelta", picked: "buona scelta" };
+function gridStars() {
+  const g = match.group;
+  const team = lastDuo?.team ?? [];
+  const mode = guideMode() ? "guide" : profile.useTheory && T ? "blend" : "stat";
+  if (g === "bans") {
+    const rec = banScores(999);
+    return rankStars(BAN_ROLES.flatMap((r) => rec[r]), { top: BANS_PER_ROLE });
+  }
+  if (g === "enemies") {
+    const banned = new Set(match.bans.map(sid));
+    const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
+    return rankStars(threatScores(sets, T, {
+      mapSlug: match.mapSlug, side: match.side, ours: team.filter(Boolean).map((h) => h.id), mates: match.allies, mode,
+    }).filter((r) => !banned.has(sid(r.hero.id))));
+  }
+  const i = g === "picked" ? match.pickFor : -1;
+  const allies = [...new Set([...team.filter((h, j) => h && j !== i).map((h) => sid(h.id)), ...match.allies.map(sid)])];
+  return rankStars(recommend(i >= 0 ? playerData(i) : data, {
+    role: null, mapSlug: match.mapSlug, side: match.side, enemies: match.enemies, allies, bans: match.bans,
+    favorites: i >= 0 ? profile.players[i].favorites : [], theory: T, useTheory: !!profile.useTheory, guideOnly: guideMode(),
+  }));
+}
+
 function renderGrid() {
   const recs = (lastDuo?.lists ?? []).map((rows) => (rows[0] && !rows[0].picked ? sid(rows[0].hero.id) : null));
   const favs = new Set(profile.players.flatMap((p) => p.favorites.map(sid)));
+  const stars = gridStars();
+  const grid = $("#grid");
+  grid.dataset.stars = match.group;
+  if (match.group === "picked") grid.style.setProperty("--sc", `var(--p${match.pickFor})`);
+  else grid.style.removeProperty("--sc");
   for (const b of $$("#grid .hero")) {
     const id = b.dataset.id;
     const g = groupOf(id);
@@ -894,8 +935,19 @@ function renderGrid() {
     const inGroup = match.group === "picked" ? took === match.pickFor : g === match.group;
     b.setAttribute("aria-pressed", String(inGroup));
     const whoName = who >= 0 ? profile.players[who].name : "";
+    const n = stars.get(id) ?? 0;
     b.setAttribute("aria-label", `${byId[id].name}${g ? `, ${GROUP_ONE[g]}` : ""}` +
-      `${took >= 0 ? `, preso da ${whoName}` : rec >= 0 ? `, consigliato a ${whoName}` : ""}`);
+      `${took >= 0 ? `, preso da ${whoName}` : rec >= 0 ? `, consigliato a ${whoName}` : ""}` +
+      `${n ? `, ${STAR_WHAT[match.group]} ${n} stell${n > 1 ? "e" : "a"} su 3` : ""}`);
+    let st = $(".stars", b);
+    if (!st) {
+      st = el("span", { class: "stars", "aria-hidden": "true" });
+      b.append(st);
+    }
+    st.className = `stars st-${match.group}`;
+    st.textContent = "★".repeat(n);
+    st.hidden = !n;
+    b.dataset.stars = String(n);
     $(".tag", b)?.remove();
     if (who >= 0) {
       b.append(el("span", { class: `tag${took >= 0 ? " tag-took" : ""}`, "aria-hidden": "true" },
