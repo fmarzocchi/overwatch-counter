@@ -3,7 +3,7 @@
 
 Fonte: OverFast API (dati del sito ufficiale overwatch.blizzard.com), stesso eroe in en-us e it-it: le abilità si
 confrontano per posizione. Le chiavi sono i nomi inglesi usati da counterwatch (data.json) e da theory.json.
-Le mappe non hanno una versione italiana in queste fonti: restano vuote (l'app usa i nomi di counterwatch).
+Mappe: dalla wiki di Overwatch (wiki_maps_langlinks.json: titolo inglese → pagina italiana); senza, restano vuote.
 
 Uso:  python3 tools/names_it.py DIR [--data app/data.json] [--theory app/theory.json] [--out app/names_it.json]
       (DIR = cartella "blizzard" estratta dal ramo fixtures-blizzard)
@@ -74,17 +74,39 @@ def main():
     if missing:
         problems.append(f"senza nomi ufficiali: {', '.join(missing)}")
 
+    maps = {}
+    try:
+        q = load(of("wiki_maps_langlinks.json"))["query"]
+        alias = {}
+        for kind in ("normalized", "redirects"):
+            for x in q.get(kind, []):
+                alias[x["to"]] = alias.get(x["from"], x["from"])
+        for page in q.get("pages", {}).values():
+            it = next((l.get("*") or l.get("title") for l in page.get("langlinks", []) if l.get("lang") == "it"), None)
+            if it:
+                en = page["title"]
+                while en in alias and alias[en] != en:
+                    en = alias.pop(en)
+                maps[en] = it
+        ours = {key(m["name"]): m["name"] for m in load(a.data)["maps"]}
+        maps = {ours[key(en)]: it for en, it in maps.items() if key(en) in ours}
+        missing_maps = sorted(set(ours.values()) - set(maps))
+        if missing_maps:
+            problems.append(f"mappe senza nome italiano: {', '.join(missing_maps)}")
+    except (OSError, ValueError, KeyError) as e:
+        problems.append(f"mappe non lette ({e})")
+
     out = {
         "source": "OverFast API (overfast-api.tekrop.fr), dal sito ufficiale overwatch.blizzard.com (en-us / it-it)",
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "heroes": heroes,
-        "maps": {},
+        "maps": maps,
         "abilities": abilities,
     }
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1, sort_keys=True)
         f.write("\n")
-    print(f"{a.out}: {len(heroes)} eroi, {sum(len(v) for v in abilities.values())} abilità")
+    print(f"{a.out}: {len(heroes)} eroi, {len(maps)} mappe, {sum(len(v) for v in abilities.values())} abilità")
     for p in problems:
         print("  -", p)
     return 0 if abilities else 1

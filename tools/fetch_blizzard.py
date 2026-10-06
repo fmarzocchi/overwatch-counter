@@ -4,7 +4,9 @@
 Servono per i nomi ITALIANI del gioco: l'inglese fa da chiave, perché è la lingua dei dati di counterwatch e di
 theory.json. Due fonti, salvate così come arrivano (il confronto si fa dopo, con tools/names_it.py):
   1. OverFast API (overfast-api.tekrop.fr): JSON ricavato dal sito ufficiale, con le lingue (locale=it-it);
-  2. il sito ufficiale overwatch.blizzard.com (pagine HTML), se risponde.
+  2. il sito ufficiale overwatch.blizzard.com (pagine HTML), se risponde;
+  3. mappe: la wiki di Overwatch (overwatch.fandom.com) collega ogni pagina inglese a quella italiana (langlinks):
+     il titolo italiano è il nome della mappa nel gioco. Una sola richiesta con i nomi di app/data.json.
 Una fonte che non risponde (3 errori di fila) si salta; c'è un tempo massimo (--budget) e si salva comunque
 quello che si è scaricato.
 
@@ -18,6 +20,7 @@ import os
 import re
 import sys
 import time
+import urllib.parse
 import urllib.request
 
 BLIZZARD = "https://overwatch.blizzard.com"
@@ -72,6 +75,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--pause", type=float, default=1.0)
     ap.add_argument("--budget", type=float, default=1200, help="secondi massimi in tutto")
+    ap.add_argument("--data", default="app/data.json", help="per l'elenco delle mappe")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -100,6 +104,25 @@ def main():
                 save(f"overfast_{lang}_hero_{key}.json", txt)
     log(f"OverFast: {of.ok} risposte")
 
+    # 3. mappe: titoli italiani dalla wiki (langlinks)
+    try:
+        with open(a.data, encoding="utf-8") as f:
+            maps = [m["name"] for m in json.load(f)["maps"]]
+    except (OSError, ValueError, KeyError) as e:
+        maps = []
+        log(f"elenco mappe non letto: {e}")
+    wiki = Source("Wiki", a.budget, a.pause)
+    for _ in range(2):  # due tentativi
+        if not maps:
+            break
+        q = urllib.parse.urlencode({"action": "query", "titles": "|".join(maps), "prop": "langlinks", "lllang": "it",
+                                    "lllimit": "max", "redirects": "1", "format": "json"})
+        txt = wiki.get(f"https://overwatch.fandom.com/api.php?{q}")
+        if txt:
+            save("wiki_maps_langlinks.json", txt)
+            break
+    log(f"Wiki: {wiki.ok} risposte")
+
     # 2. sito ufficiale
     bz = Source("Blizzard", a.budget, a.pause)
     slugs = set()
@@ -118,7 +141,7 @@ def main():
                 save(f"{lang}_hero_{slug}.html", html)
     log(f"Blizzard: {bz.ok} risposte")
 
-    return 0 if of.ok + bz.ok else 1
+    return 0 if of.ok + bz.ok + wiki.ok else 1
 
 
 if __name__ == "__main__":
