@@ -473,6 +473,10 @@ def main():
     out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     print(f"OK [{data_filter['gameType']}]: {len(hero_list)} eroi, counter {coverage(counters, ids):.0%}, {len(maps)} mappe, "
           f"fonte aggiornata {source_updated} → {out} ({out.stat().st_size // 1024} KB)")
+    # ruoli in chiaro nel log: un cambio di ruolo (es. Sombra Danni → Supporto) o un eroe nuovo si vede subito
+    for role in ("Tank", "Damage", "Support"):
+        print(f"  {role}: " + ", ".join(h["name"] for h in hero_list if h["role"] == role))
+    print("  mappe: " + ", ".join(m["name"] for m in maps))
     if divisions:
         print("  divisioni: " + ", ".join(f"{k}{' (!)' if v.get('error') else ''}" for k, v in divisions.items()))
     for p in problems:
