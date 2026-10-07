@@ -1,0 +1,19 @@
+10-07 19:35:18.624   496   780 I ActivityManager: Start proc 2791:com.google.android.webview:webview_service/u0a144 for service {com.google.android.webview/org.chromium.android_webview.services.VariationsSeedServer}
+10-07 19:35:18.626  2747  2747 E chromium: [ERROR:filesystem_posix.cc(62)] mkdir /data/user/0/io.github.fmarzocchi.owcounter/cache/WebView/Crashpad: No such file or directory (2)
+10-07 19:35:18.649   496   538 I ActivityManager: Start proc 2813:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {io.github.fmarzocchi.owcounter/org.chromium.content.app.SandboxedProcessService0:0}
+10-07 19:35:18.680  2747  2840 W chromium: [WARNING:dns_config_service_posix.cc(341)] Failed to read DnsConfig.
+10-07 19:35:20.558  2813  2903 E chromium: [ERROR:tile_manager.cc(793)] WARNING: tile memory limits exceeded, some content may not draw
+10-07 19:35:28.462  1148  2291 I anhw    : Scheduling Phenotype for a PhenotypeSyncImmediately(6, org.chromium.net.cronet) one off with window [1, 2] in seconds [CONTEXT service_id=51 ]
+10-07 19:35:38.109  3407  3472 W .apps.messagin: Verification of java.net.URLConnection org.chromium.net.impl.CronetUrlRequestContext.openConnection(java.net.URL, java.net.Proxy) took 102.017ms (627.34 bytecodes/s) (1728B approximate peak alloc)
+10-07 19:35:50.463   496   538 I ActivityManager: Start proc 5049:com.android.chrome/u0a131 for service {com.android.chrome/org.chromium.chrome.browser.customtabs.CustomTabsConnectionService}
+10-07 19:36:10.467   496  1277 I ActivityManager: Killing 2813:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a167i0 (adj 0): isolated not needed
+10-07 19:36:11.779   496   538 I ActivityManager: Start proc 5922:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i1 for  {io.github.fmarzocchi.owcounter/org.chromium.content.app.SandboxedProcessService0:0}
+10-07 19:36:11.970  5866  5931 W chromium: [WARNING:dns_config_service_posix.cc(341)] Failed to read DnsConfig.
+10-07 19:36:36.793   496  1636 I ActivityManager: Killing 5922:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a167i1 (adj 0): isolated not needed
+10-07 19:36:37.492   496   538 I ActivityManager: Start proc 6113:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i2 for  {io.github.fmarzocchi.owcounter/org.chromium.content.app.SandboxedProcessService0:0}
+10-07 19:36:37.502  6084  6126 W chromium: [WARNING:dns_config_service_posix.cc(341)] Failed to read DnsConfig.
+10-07 19:36:55.295   496  1795 I ActivityManager: Killing 6113:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a167i2 (adj 0): isolated not needed
+10-07 19:36:56.201   496   538 I ActivityManager: Start proc 6378:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i3 for  {io.github.fmarzocchi.owcounter/org.chromium.content.app.SandboxedProcessService0:0}
+10-07 19:36:56.209  6341  6383 W chromium: [WARNING:dns_config_service_posix.cc(341)] Failed to read DnsConfig.
+10-07 19:37:21.235  6378  6418 E chromium: [ERROR:tile_manager.cc(793)] WARNING: tile memory limits exceeded, some content may not draw
+10-07 19:37:21.237  6378  6418 E chromium: [ERROR:tile_manager.cc(793)] WARNING: tile memory limits exceeded, some content may not draw
