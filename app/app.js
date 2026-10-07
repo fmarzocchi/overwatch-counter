@@ -367,8 +367,14 @@ function profileSection(title, items, kind) {
 const theoryBadge = () => el("span", { class: "theory-badge" }, "Teoria");
 function staleBanner(hero) {
   const st = theoryStatus(T, hero);
-  return st.stale ? el("p", { class: "stale-note" }, `⚠ Teoria da rivedere per ${hero.name}: ${st.reasons.join("; ")}. `
+  // ruolo cambiato da Blizzard ma non ancora da counterwatch (Sombra, Stagione 5): statistiche del vecchio kit
+  const fix = (data?.roleFix ?? []).find((f) => f.name === hero.name);
+  const statsNote = fix ? el("p", { class: "stale-note", "data-rolefix": "1" },
+    `⚠ ${hero.name} ora è ${ROLE_IT[fix.to]} (prima ${ROLE_IT[fix.from]}): counterwatch non si è ancora `
+    + "aggiornato e le sue statistiche sono del vecchio kit. Fidati di più della teoria finché non arrivano i dati nuovi.") : null;
+  const theoryNote = st.stale ? el("p", { class: "stale-note" }, `⚠ Teoria da rivedere per ${hero.name}: ${st.reasons.join("; ")}. `
     + "Le statistiche sono aggiornate; i consigli di teoria potrebbero non valere più.") : null;
+  return statsNote || theoryNote ? el("div", {}, statsNote, theoryNote) : null;
 }
 
 function theorySection(title, items) {
@@ -1172,6 +1178,11 @@ function choiceStars(i) {
 }
 
 function renderGrid() {
+  // eroi già ufficiali ma non ancora su counterwatch (es. Doctrine, Stagione 5): arrivano con i loro dati
+  const soon = data?.officialOnly ?? [];
+  $("#grid-note").hidden = !soon.length;
+  $("#grid-note").textContent = soon.length ? `${soon.join(", ")}: ${soon.length > 1 ? "nuovi, compariranno" : "nuovo, comparirà"} `
+    + "qui quando counterwatch avrà le statistiche." : "";
   const recs = (lastDuo?.lists ?? []).map((rows) => (rows[0] && !rows[0].picked ? sid(rows[0].hero.id) : null));
   const favs = new Set(profile.players.flatMap((p) => p.favorites.map(sid)));
   const stars = gridStars();

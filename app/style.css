@@ -727,3 +727,4 @@ dialog .search { margin: 0 16px 6px; }
   .alt-other { height: 42px; }
   .dock button { padding: 0 14px; }
 }
+.grid-note { margin: 4px var(--side) 0; }

@@ -390,3 +390,57 @@ test("gancio sulle mappe con burroni: +1 a Roadhog (e JQ), niente altrove; Roadh
   assert.ok(hog, `Roadhog tra i 2 ban tank consigliati su Nepal (${rec.Tank.map((r) => r.hero.name)})`);
   assert.match(hog.why, /pozzo|bordi/);
 });
+
+test("Stagione 5 (6 ott 2026): Sombra Supporto senza Hack, Doctrine pronto, niente Sky Noon, patch rivista", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  assert.equal(raw.Sombra.role, "Support");
+  assert.deepEqual(raw.Sombra.abilities.map((a) => a.name), ["Hotfix", "Cyberspace", "Translocator", "EMP"]);
+  assert.equal(raw.Doctrine.role, "Support");
+  // nessun altro eroe cita più l'Hack o il Virus di Sombra; le sue relazioni nuove stanno nella sua scheda
+  for (const [name, h] of Object.entries(raw).filter(([k]) => !k.startsWith("_") && k !== "Sombra")) {
+    for (const k of ["synergies", "counters", "counteredBy"]) {
+      assert.ok(!(h[k] ?? []).some((x) => x.hero === "Sombra"), `${name}.${k}`);
+    }
+    assert.ok(!/\b(Hack|Virus)\b.*Sombra|Sombra.*\b(Hack|Virus)\b/.test(JSON.stringify(h)), name);
+  }
+  assert.ok(!raw["Jetpack Cat"].synergies.some((x) => x.hero === "Cassidy" && /Deadeye/.test(x.why)), "Sky Noon tolto");
+  for (const m of Object.values(raw._maps)) {
+    assert.ok(!Object.values(m.strong ?? {}).flat().some((x) => x.hero === "Sombra") && !(m.avoid ?? []).some((x) => x.hero === "Sombra"));
+  }
+  // dati con Sombra già Supporto (ruolo ufficiale): teoria aggiornata, niente «teoria da rivedere» per la patch del 6/10
+  const sdata = { ...data, heroes: data.heroes.map((h) => (h.name === "Sombra" ? { ...h, role: "Support" } : h)) };
+  const patch = { latest: { date: "2026-10-06", heroes: ["Sombra", "Cassidy", "Jetpack Cat", "Genji", "Roadhog"] } };
+  const T = buildTheory(sdata, raw, patch);
+  for (const n of ["Sombra", "Cassidy", "Jetpack Cat", "Genji", "Roadhog"]) {
+    assert.equal(theoryStatus(T, sdata.heroes.find((h) => h.name === n)).stale, false, n);
+  }
+  // Come giocarla di Sombra Supporto: Hotfix sugli alleati, Cyberspace sui nemici, mai «Hack»
+  const sombra = sdata.heroes.find((h) => h.name === "Sombra");
+  const g = playGuide(sdata, T, { hero: sombra, mapSlug: "kings-row", side: "attack", enemies: ["Mauga", "Ana", "Tracer"].map(id),
+    allies: [id("Winston")] });
+  const txt = JSON.stringify(g);
+  assert.ok(!/\bHack\b/.test(txt), txt.slice(0, 300));
+  assert.ok(allyDirected(raw.Sombra.abilities[0]) && !allyDirected(raw.Sombra.abilities[1]));
+  // Sombra Supporto non è più counterata/consigliata come Danni: recommend per Supporto la include
+  const rows = recommend(sdata, { role: "Support" });
+  assert.ok(rows.some((r) => r.hero.name === "Sombra"));
+  assert.ok(!recommend(sdata, { role: "Damage" }).some((r) => r.hero.name === "Sombra"));
+});
+
+test("eroe e mappa nuovi su counterwatch (Doctrine, Grímsvötn): l'app funziona, con o senza teoria", () => {
+  const raw = JSON.parse(readFileSync(new URL("../app/theory.json", import.meta.url)));
+  const doc = { id: 9054, slug: "doctrine", name: "Doctrine", role: "Support", img: "", style: { POKE: 0.4, RUSH: 0.3, DIVE: 0.3 } };
+  const newMap = { slug: "watchpoint-grimsvotn", name: "Watchpoint: Grímsvötn", mode: "Escort", winRates: { 9054: 0.52 } };
+  const ndata = { ...data, heroes: [...data.heroes, doc], maps: [...data.maps, newMap], overall: { ...data.overall, 9054: 0.51 } };
+  const T = buildTheory(ndata, raw, null);
+  assert.equal(theoryStatus(T, doc).stale, false);
+  const rows = recommend(ndata, { role: "Support", mapSlug: "watchpoint-grimsvotn", side: "attack", enemies: ["Winston"].map(id) });
+  assert.ok(rows.some((r) => r.hero.name === "Doctrine"));
+  const g = playGuide(ndata, T, { hero: doc, mapSlug: "watchpoint-grimsvotn", side: "defense", enemies: ["Winston", "Tracer"].map(id) });
+  assert.ok(g.sections[0].items.length >= 1 && g.sections[0].items.length <= 7);
+  assert.equal(typeof mapFit(T, "watchpoint-grimsvotn", doc, "attack").points, "number");
+  // senza teoria (eroe uscito da poco e non ancora studiato): niente errori, segnalato come «senza teoria»
+  const T0 = buildTheory(ndata, { ...raw, Doctrine: undefined }, null);
+  assert.match(theoryStatus(T0, doc).reasons.join(), /senza teoria/);
+  assert.ok(playGuide(ndata, T0, { hero: doc, mapSlug: "watchpoint-grimsvotn", enemies: ["Winston"].map(id) }).sections.length >= 1);
+});

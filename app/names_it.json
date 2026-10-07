@@ -71,6 +71,13 @@
    "Micro Missiles": "Micromissili",
    "Self-Destruct": "Autodistruzione"
   },
+  "Doctrine": {
+   "Deliverance": "Liberazione",
+   "Eternal Scepter": "Scettro Eterno",
+   "Infuse": "Infusione",
+   "Invigorating Drones": "Droni Rinvigorenti",
+   "Shrouded Momentum": "Sciame Protettivo"
+  },
   "Domina": {
    "Barrier Array": "Barriera Fotonica",
    "Crystal Charge": "Cristallo Esplosivo",
@@ -300,11 +307,11 @@
    "Tactical Visor": "Visore Tattico"
   },
   "Sombra": {
+   "Cyberspace": "Cyberspazio",
    "EMP": "EMP",
-   "Hack": "Hacking",
+   "Hotfix": "Hotfix",
    "Machine Pistol": "Pistola mitragliatrice",
-   "Translocator": "Rilocatore",
-   "Virus": "Virus"
+   "Translocator": "Rilocatore"
   },
   "Symmetra": {
    "Photon Barrier": "Barriera Fotonica",
@@ -391,6 +398,7 @@
   "Cassidy": "Cassidy",
   "D.Mon": "D.MON",
   "D.Va": "D.VA",
+  "Doctrine": "Doctrine",
   "Domina": "Domina",
   "Doomfist": "Doomfist",
   "Echo": "Echo",
@@ -444,5 +452,5 @@
   "Watchpoint: Gibraltar": "Osservatorio: Gibilterra"
  },
  "source": "OverFast API (overfast-api.tekrop.fr), dal sito ufficiale overwatch.blizzard.com (en-us / it-it)",
- "updated": "2026-10-06"
+ "updated": "2026-10-07"
 }

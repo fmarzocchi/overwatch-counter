@@ -1,5 +1,5 @@
 {
- "_info": "Teoria di gioco per eroe (sinergie, counter, come si gioca), raccolta il 2026-10-05 da guide e siti di Overwatch tramite ricerca web (riassunti dei risultati; le pagine non sono state aperte per intero). Le voci basate solo su statistiche sono state tolte. Si può correggere a mano: chiave = nome dell'eroe.",
+ "_info": "Teoria di gioco per eroe (sinergie, counter, come si gioca), raccolta il 2026-10-05 da guide e siti di Overwatch tramite ricerca web (riassunti dei risultati; le pagine non sono state aperte per intero). Le voci basate solo su statistiche sono state tolte. Si può correggere a mano: chiave = nome dell'eroe. Rivista il 2026-10-07 per la Stagione 5 (patch del 6 ott): Sombra riscritta come Supporto, Doctrine aggiunto, tolte le relazioni basate sull'Hack di Sombra e la combo Cassidy + Jetpack Cat (Sky Noon); il resto della patch (soprattutto hitbox e numeri) non cambia la teoria.",
  "Ana": {
   "tags": [
    "sniper",
@@ -584,12 +584,7 @@
     "when": "Per aprire lo scontro sul gruppo o contestare il punto",
     "targets": [],
     "saveFor": [],
-    "avoidOn": [
-     {
-      "hero": "Sombra",
-      "why": "Hack blocca B.O.B. per 3 s"
-     }
-    ]
+    "avoidOn": []
    }
   ],
   "priority": {
@@ -683,10 +678,6 @@
    {
     "hero": "Echo",
     "why": "Sticky Bombs di Echo forzano o distruggono Immortality Field"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack di Sombra blocca le abilità di Baptiste nel momento chiave"
    }
   ],
   "play": {
@@ -1022,10 +1013,6 @@
     "why": "Stun e respinte fermano Winston che si tuffa sui supporti"
    },
    {
-    "hero": "Sombra",
-    "why": "Brigitte protegge i compagni da chi li attacca da vicino come Sombra"
-   },
-   {
     "hero": "D.Va",
     "why": "Brigitte regge bene i tuffi ravvicinati di D.Va"
    }
@@ -1205,10 +1192,6 @@
    {
     "hero": "Wrecking Ball",
     "why": "Piledriver lancia in aria i nemici: colpo in testa facile per Cassidy"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Cassidy finisce in fretta i bersagli hackerati da Sombra"
    }
   ],
   "counters": [
@@ -1302,7 +1285,6 @@
     "targets": [
      "Tracer",
      "Genji",
-     "Sombra",
      "Doomfist"
     ],
     "saveFor": [
@@ -1313,10 +1295,6 @@
      {
       "hero": "Genji",
       "why": "tienila per fermarlo dopo Swift Strike"
-     },
-     {
-      "hero": "Sombra",
-      "why": "tienila dove apparirà col Translocator"
      }
     ],
     "avoidOn": []
@@ -1893,10 +1871,6 @@
   ],
   "counteredBy": [
    {
-    "hero": "Sombra",
-    "why": "L'Hack disattiva del tutto Barrier Array"
-   },
-   {
     "hero": "Mei",
     "why": "Il congelamento passa le barriere e blocca Domina sul posto"
    },
@@ -2063,7 +2037,7 @@
   ],
   "priority": {
    "ability": "Barrier Array",
-   "why": "È la tua difesa e quella del team; senza (es. hackerata da Sombra) resti col solo raggio."
+   "why": "È la tua difesa e quella del team; senza resti col solo raggio."
   },
   "mapFeatures": {
    "likes": [
@@ -2127,10 +2101,6 @@
     "why": "Il gancio lo blocca e lo tira fuori dal tuffo"
    },
    {
-    "hero": "Sombra",
-    "why": "L'Hack lo lascia senza abilità"
-   },
-   {
     "hero": "Cassidy",
     "why": "Flashbang rallenta e blocca le abilità di movimento"
    },
@@ -2159,7 +2129,7 @@
    "tips": [
     "Entra con Rocket Punch sui supporti isolati, poi esci prima che arrivino i CC",
     "Usa Power Block sui colpi in arrivo per caricare il pugno",
-    "Attento a Sombra, Ana e Cassidy: un CC e sei morto"
+    "Attento ad Ana e Cassidy: un CC e sei morto"
    ],
    "attack": "Tuffati sulla backline da un lato mentre il team spinge il carico",
    "defense": "Punisci chi esce dalla copertura e torna indietro prima di finire senza abilità"
@@ -2296,10 +2266,6 @@
     "why": "Echo tiene il passo del salto di Winston: insieme travolgono le retrovie"
    },
    {
-    "hero": "Sombra",
-    "why": "Hack blocca i nemici: Sticky Bombs e Duplicate sul bersaglio hackerato"
-   },
-   {
     "hero": "Zenyatta",
     "why": "Orb della Discordia marca il bersaglio da finire con Focusing Beam"
    }
@@ -2330,10 +2296,6 @@
    {
     "hero": "Soldier: 76",
     "why": "Fuoco hitscan continuo su un bersaglio in aria"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack interrompe il volo e la fa cadere"
    },
    {
     "hero": "Illari",
@@ -2465,10 +2427,6 @@
   ],
   "counteredBy": [
    {
-    "hero": "Sombra",
-    "why": "Hack gli toglie Siphon Blaster e granata: resta solo il fucile"
-   },
-   {
     "hero": "D.Va",
     "why": "Defense Matrix annulla il suo kit"
    },
@@ -2596,10 +2554,6 @@
   ],
   "synergies": [
    {
-    "hero": "Sombra",
-    "why": "Hack rivela i bersagli a Freja"
-   },
-   {
     "hero": "Mei",
     "why": "Il Muro di ghiaccio intrappola i nemici per i colpi caricati"
    }
@@ -2618,10 +2572,6 @@
    {
     "hero": "D.Va",
     "why": "Defense Matrix mangia i dardi di Freja"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack blocca Updraft e Quick Dash: Freja resta senza fuga"
    },
    {
     "hero": "Roadhog",
@@ -2810,10 +2760,6 @@
     "why": "Il raggio non si respinge con Deflect"
    },
    {
-    "hero": "Sombra",
-    "why": "Hack gli toglie Deflect e Swift Strike"
-   },
-   {
     "hero": "Mei",
     "why": "Il getto di ghiaccio non si respinge con Deflect"
    },
@@ -2972,10 +2918,6 @@
    {
     "hero": "Zarya",
     "why": "Gravitone più Dragonstrike: uccisione certa per chi è dentro"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack rivela le posizioni: Storm Arrows e Dragonstrike a colpo sicuro"
    }
   ],
   "counters": [
@@ -3536,10 +3478,6 @@
   ],
   "synergies": [
    {
-    "hero": "Cassidy",
-    "why": "Lifeline porta Cassidy in volo durante Deadeye: ultimate a sorpresa"
-   },
-   {
     "hero": "Ana",
     "why": "Con tank affamati di cure serve un secondo healer forte come Ana"
    },
@@ -3586,10 +3524,6 @@
    {
     "hero": "Sojourn",
     "why": "Il Railgun di Sojourn la colpisce in volo; ha solo 225 HP"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack interrompe Lifeline, Frenetic Flight e Catnapper"
    },
    {
     "hero": "D.Va",
@@ -3980,10 +3914,6 @@
     "why": "Lo colpisce da una distanza che le granate non coprono"
    },
    {
-    "hero": "Sombra",
-    "why": "Hack gli toglie la mina: niente fuga né trappole"
-   },
-   {
     "hero": "Tracer",
     "why": "Movimento imprevedibile che schiva le granate"
    }
@@ -4142,10 +4072,6 @@
    }
   ],
   "counteredBy": [
-   {
-    "hero": "Sombra",
-    "why": "Hack annulla Glide Boost e Hyper Ring e lascia Juno a terra"
-   },
    {
     "hero": "Ashe",
     "why": "Hitscan a distanza colpisce Juno anche mentre plana"
@@ -4356,10 +4282,6 @@
   ],
   "counteredBy": [
    {
-    "hero": "Sombra",
-    "why": "Hack blocca Swift Step e Suzu, le sue vie di salvezza"
-   },
-   {
     "hero": "Widowmaker",
     "why": "Widowmaker la uccide in un colpo prima di Swift Step"
    },
@@ -4561,10 +4483,6 @@
     "why": "Tracer lo uccide prima che possa usare Life Grip"
    },
    {
-    "hero": "Sombra",
-    "why": "Hack blocca tutte le abilità; la sua arma fa pochi danni"
-   },
-   {
     "hero": "Wrecking Ball",
     "why": "Wrecking Ball lo disturba di continuo nella backline"
    },
@@ -4756,10 +4674,6 @@
    }
   ],
   "counteredBy": [
-   {
-    "hero": "Sombra",
-    "why": "Hack lo zittisce; EMP toglie la vita extra di Sound Barrier"
-   },
    {
     "hero": "Winston",
     "why": "Jump Pack lo insegue facilmente; Primal Rage lo spinge via"
@@ -4993,10 +4907,6 @@
    {
     "hero": "Ana",
     "why": "Biotic Grenade (anti-cure) toglie il valore di Cardiac Overdrive"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack ed EMP: CC che ferma Mauga"
    }
   ],
   "play": {
@@ -5141,10 +5051,6 @@
    {
     "hero": "Genji",
     "why": "Il getto di ghiaccio non si respinge con Deflect"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Cryo-Freeze cancella il Virus di Sombra"
    }
   ],
   "counteredBy": [
@@ -5155,10 +5061,6 @@
    {
     "hero": "Junkrat",
     "why": "Le granate scavalcano il Muro di ghiaccio"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack blocca Cryo-Freeze e Muro di ghiaccio"
    },
    {
     "hero": "Winston",
@@ -5225,10 +5127,6 @@
      {
       "hero": "Ana",
       "why": "pulisce la Granata biotica e cura comunque"
-     },
-     {
-      "hero": "Sombra",
-      "why": "cancella il Virus"
      }
     ],
     "avoidOn": []
@@ -5332,10 +5230,6 @@
    {
     "hero": "Hanzo",
     "why": "Hanzo punisce le posizioni esposte di Mercy"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack blocca Resurrect e la fuga con Guardian Angel"
    },
    {
     "hero": "Cassidy",
@@ -5760,10 +5654,6 @@
    {
     "hero": "Widowmaker",
     "why": "Widowmaker la elimina da lontano con un colpo carico"
-   },
-   {
-    "hero": "Sombra",
-    "why": "Hack blocca Fade mentre Moira cura"
    },
    {
     "hero": "Ana",
@@ -6639,10 +6529,6 @@
      {
       "hero": "Ana",
       "why": "il Dardo soporifero interrompe l'ult"
-     },
-     {
-      "hero": "Sombra",
-      "why": "Hack interrompe l'ult"
      }
     ]
    }
@@ -6954,10 +6840,6 @@
     "why": "Grande bersaglio per i fucili; il furto vita tiene vivo Reaper"
    },
    {
-    "hero": "Sombra",
-    "why": "L'Hack impedisce Take a Breather e arriva dall'invisibilità"
-   },
-   {
     "hero": "Baptiste",
     "why": "Immortality Field salva chi è agganciato; Exo Boots evitano il gancio"
    }
@@ -7161,10 +7043,6 @@
   ],
   "counters": [],
   "counteredBy": [
-   {
-    "hero": "Sombra",
-    "why": "Hack la butta giù dalla moto"
-   },
    {
     "hero": "Ana",
     "why": "Dardo soporifero la ferma e la toglie dalla moto"
@@ -7693,10 +7571,6 @@
     "why": "Fiancheggiatrice: punisce una DPS da lontano"
    },
    {
-    "hero": "Sombra",
-    "why": "Fiancheggiatrice: la prende alle spalle"
-   },
-   {
     "hero": "Genji",
     "why": "Fiancheggiatore che la raggiunge e respinge i proiettili"
    },
@@ -7993,168 +7867,146 @@
   "role": "Damage"
  },
  "Sombra": {
+  "role": "Support",
   "tags": [
    "stealth",
    "mobile",
-   "cc",
    "squishy"
   ],
   "synergies": [
    {
-    "hero": "Wrecking Ball",
-    "why": "Segue l'ingaggio di Sombra e la copre in fuga"
+    "hero": "Winston",
+    "why": "Dive: Hotfix sul Winston che salta, Sombra lo segue invisibile col Translocator"
    },
    {
-    "hero": "Winston",
-    "why": "Segue l'ingaggio di Sombra e insegue i bersagli hackerati"
+    "hero": "Wrecking Ball",
+    "why": "Dive: cura il tuffatore restando nascosta, Cyberspace dove la palla scompiglia i nemici"
    },
    {
     "hero": "D.Va",
-    "why": "Segue l'ingaggio di Sombra e insegue i bersagli feriti"
+    "why": "Dive: Hotfix preparato prima del salto, poi Cyberspace sul bersaglio"
    },
    {
-    "hero": "Cassidy",
-    "why": "Burst rapido sui bersagli hackerati o col Virus"
+    "hero": "Tracer",
+    "why": "Hotfix anche da invisibile: tiene in vita chi fiancheggia senza farsi vedere"
    },
    {
-    "hero": "Soldier: 76",
-    "why": "Burst rapido sui bersagli hackerati o col Virus"
-   },
-   {
-    "hero": "Echo",
-    "why": "Sticky Bombs e Duplicate sul bersaglio hackerato"
+    "hero": "Genji",
+    "why": "EMP + Dragonblade: i nemici senza abilità non possono difendersi"
    }
   ],
   "counters": [
    {
-    "hero": "Junkrat",
-    "why": "Hack gli toglie la mina: niente fuga né trappole"
+    "hero": "Torbjörn",
+    "why": "Hotfix hackera la torretta (ricarica a parte): Torbjörn resta senza la sua difesa"
    },
    {
-    "hero": "Shion",
-    "why": "Hack la butta giù dalla moto"
+    "hero": "Symmetra",
+    "why": "Hotfix hackera torrette e teletrasporto"
    },
    {
-    "hero": "Echo",
-    "why": "Hack interrompe il volo e la fa cadere"
-   },
-   {
-    "hero": "Genji",
-    "why": "Hack gli toglie Deflect"
-   },
-   {
-    "hero": "Emre",
-    "why": "Hack gli toglie Siphon Blaster e granata"
-   },
-   {
-    "hero": "Freja",
-    "why": "Hack blocca Updraft e Quick Dash"
+    "hero": "Illari",
+    "why": "Hotfix hackera il Pilone curativo"
    }
   ],
   "counteredBy": [
    {
-    "hero": "Brigitte",
-    "why": "Protegge le retrovie da vicino"
+    "hero": "Tracer",
+    "why": "Arriva in retrovia: Sombra ha solo la Machine Pistol (7 danni a colpo) e un Translocator più corto"
    },
    {
-    "hero": "Baptiste",
-    "why": "Tra i counter più duri indicati dalle guide"
+    "hero": "Winston",
+    "why": "Salta sulle retrovie e il Tesla Cannon colpisce chi gli è vicino anche se si nasconde"
    },
    {
-    "hero": "Torbjörn",
-    "why": "La torretta punisce chi fiancheggia le retrovie"
+    "hero": "Hanzo",
+    "why": "La Freccia sonica rivela chi è invisibile"
    },
    {
-    "hero": "Mei",
-    "why": "Cryo-Freeze cancella il Virus"
+    "hero": "Ana",
+    "why": "La Granata biotica blocca le cure di Hotfix e Cyberspace"
    }
   ],
   "play": {
-   "position": "flank",
+   "position": "backline",
    "targets": [
-    "squishy",
-    "mobile"
+    "squishy"
    ],
    "avoidTargets": [
     "tanky"
    ],
    "tips": [
-    "Non combattere di fronte: entra dalle retrovie",
-    "Hack da invisibile, prima che ti notino",
-    "Virus su un bersaglio hackerato fa danno più in fretta"
+    "Prepara Hotfix sul compagno che sta per tuffarsi, poi cambia angolo col Translocator",
+    "Hotfix si usa anche da invisibile: curi senza farti vedere",
+    "Cyberspace dove si combatte: cura i tuoi e dimezza danni e cure dei nemici",
+    "Hotfix hackera anche pacchi salute e oggetti nemici (torrette, teletrasporto) con una ricarica a parte",
+    "L'EMP costa molto di più di prima: tienilo per lo scontro decisivo"
    ],
-   "attack": "Entra invisibile dietro i difensori e hacka un supporto all'inizio dello scontro",
-   "defense": "Aggira chi attacca e colpisci i supporti mentre spingono il carico"
+   "attack": "Segui il tuffo dei tuoi: Hotfix sul primo che entra, Cyberspace sul gruppo che difende",
+   "defense": "Resta nascosta su un fianco, cura chi tiene la linea e lancia Cyberspace quando arriva l'attacco"
   },
   "uncertain": true,
-  "note": "Dal 6 ottobre 2026 (Stagione 5) Sombra passa al ruolo Supporto con abilità nuove: questa teoria descrive il kit Danni precedente e va rivista. Teoria sul kit Danni attuale. Annunciato: dalla Stagione 5 (6 ott 2026) Sombra diventa Supporto con kit nuovo (Hotfix, Cyberspace): questa scheda va rifatta.",
+  "note": "Kit di Supporto dalla Stagione 5 (6 ott 2026): sinergie e counter ricavati dalle note della patch e dalle prime guide (uscita da un giorno, niente partite pro né guide consolidate). Da rivedere tra qualche settimana.",
   "sources": [
-   "https://gamerant.com/overwatch-2-sombra-rework-guide-abilities-counters-more/",
-   "https://www.gamespot.com/articles/overwatch-2-sombra-hero-guide/1100-6508437/",
-   "https://rankedboost.com/overwatch/counters/sombra/",
-   "https://www.gamesradar.com/games/fps/overwatch-season-5-turns-sombra-into-a-support-hero-reworks-roadhog-to-be-less-annoying-and-adds-cool-vampire-doctrine-to-the-roster/",
-   "https://www.thegamer.com/overwatch-sombra-roadhog-reworks-blizzcon-2026/",
-   "https://www.esportsheaven.com/features/how-to-counter-junkrat-in-overwatch-2/",
-   "https://esports.gg/guides/overwatch/overwatch-shion-counters/",
-   "https://esports.gg/news/overwatch/overwatch-2-season-13-sombra-rework/",
-   "https://gamerant.com/overwatch-2-reaper-guide-tips-tricks-abilities-playstyle/",
-   "https://blizzardwatch.com/2026/09/13/sombra-support-now/",
-   "https://dotesports.com/overwatch/guides/overwatch-sombra-roadhog-rework",
-   "https://www.icy-veins.com/overwatch/sombra-maps"
+   "https://overwatch.blizzard.com/en-us/news/24303008/feed-your-hunger-in-reign-of-talon-season-5-a-grim-doctrine/",
+   "https://esports.gg/news/overwatch/overwatch-season-5-patch-notes/",
+   "https://gamerant.com/overwatch-update-today-patch-notes-sombra-roadhog-reworks/",
+   "https://www.sportskeeda.com/esports/overwatch-season-5-roadhog-sombra-reworks-explained",
+   "https://www.strafe.com/news/read/overwatch-season-5-sombra-roadhog-rework/",
+   "https://www.techtimes.com/articles/328720/20261007/overwatch-season-5-live-sombra-becomes-support-after-five-failed-reworks.htm",
+   "https://elevateboost.fr/blog/overwatch-season-5-october-6-doctrine-sombra-support-ranked-guide"
   ],
   "abilities": [
    {
-    "name": "Hack",
-    "it": "Hack",
+    "name": "Hotfix",
+    "it": "Hotfix",
     "ult": false,
     "tags": [
-     "hack",
-     "cc"
+     "heal"
     ],
-    "use": "Blocca le abilità del nemico per 1 s; da invisibile prima che ti notino",
-    "when": "Su un bersaglio chiave appena prima di attaccarlo",
-    "targets": [
-     "Shion",
-     "Genji"
-    ],
-    "saveFor": [
-     {
-      "hero": "Reaper",
-      "why": "Hack interrompe Death Blossom"
-     }
-    ],
+    "use": "Cura un alleato (65 subito, poi nel tempo fino a 175), anche da invisibile; 2 cariche",
+    "when": "Sul compagno che sta per ingaggiare o su chi sta prendendo danni",
+    "targets": [],
+    "saveFor": [],
     "avoidOn": []
    },
    {
-    "name": "Virus",
-    "it": "Virus",
+    "name": "Cyberspace",
+    "it": "Cyberspazio",
     "ult": false,
     "tags": [
-     "burst"
+     "zone",
+     "heal"
     ],
-    "use": "Proiettile a danno nel tempo, più veloce sui bersagli hackerati",
-    "when": "Subito dopo un Hack, su un bersaglio fragile",
-    "targets": [],
+    "on": "enemies",
+    "use": "Zona che cura i tuoi e indebolisce i nemici dentro (danni e cure dimezzati)",
+    "when": "Nel mezzo dello scontro, dove ci sono alleati e nemici insieme",
+    "targets": [
+     "Mauga",
+     "Reaper",
+     "Bastion",
+     "Soldier: 76"
+    ],
     "saveFor": [],
-    "avoidOn": [
-     {
-      "hero": "Mei",
-      "why": "Cryo-Freeze cancella il Virus"
-     }
-    ]
+    "avoidOn": []
    },
    {
     "name": "Translocator",
-    "it": "Traslocatore",
+    "it": "Rilocatore",
     "ult": false,
     "tags": [
      "escape",
      "mobility"
     ],
-    "use": "Lancia e teletrasportati; ti rende invisibile per 5 s",
-    "when": "Per entrare non vista o fuggire prima di morire",
+    "use": "Lancia il faro e teletrasportati (portata ridotta, 12 m); poi 6,5 s di invisibilità",
+    "when": "Per scappare da chi ti tuffa o per cambiare angolo e curare da dove non ti aspettano",
     "targets": [],
-    "saveFor": [],
+    "saveFor": [
+     {
+      "hero": "Tracer",
+      "why": "tienilo per sfuggire a Tracer o Genji in retrovia"
+     }
+    ],
     "avoidOn": []
    },
    {
@@ -8165,16 +8017,19 @@
      "hack",
      "cc"
     ],
-    "use": "Hackera tutti i nemici nell'area e ne toglie le difese",
-    "when": "Per aprire lo scontro insieme alla squadra",
-    "targets": [],
+    "use": "Danni a tutti i nemici vicini (una parte della loro vita), li hackera e distrugge le barriere",
+    "when": "Per aprire lo scontro decisivo insieme ai tuoi tuffatori",
+    "targets": [
+     "Reinhardt",
+     "Sigma"
+    ],
     "saveFor": [],
     "avoidOn": []
    }
   ],
   "priority": {
-   "ability": "Hack",
-   "why": "Toglie le abilità ai bersagli chiave e prepara Virus"
+   "ability": "Translocator",
+   "why": "È la tua unica fuga: senza, in retrovia sei un bersaglio facile"
   },
   "mapFeatures": {
    "likes": [
@@ -8184,10 +8039,9 @@
    "dislikes": [
     "open-spaces"
    ],
-   "why": "Fiancheggiatrice invisibile: le servono vie laterali e angoli per entrare non vista"
+   "why": "Supporto invisibile: le servono angoli e vie laterali per curare senza farsi vedere"
   },
-  "abilitiesNote": "Kit Danni valido fino al 5/10/2026. Dal 6/10/2026 (Stagione 5) Sombra diventa Supporto: Hotfix (cura, hackera medikit e oggetti) sostituisce Hack, Cyberspace (zona che cura gli alleati e indebolisce i nemici) sostituisce Virus; Translocator ed EMP restano.",
-  "role": "Damage"
+  "abilitiesNote": "Kit di Supporto della Stagione 5: Hack non c'è più (resta solo per pacchi salute e oggetti, dentro Hotfix); Virus sostituito da Cyberspace. Passiva: vede i nemici con l'ultimate carica."
  },
  "Symmetra": {
   "tags": [
@@ -8369,10 +8223,6 @@
     "why": "La torretta punisce i fiancheggiatori nelle retrovie"
    },
    {
-    "hero": "Sombra",
-    "why": "La torretta scopre e colpisce chi fiancheggia"
-   },
-   {
     "hero": "Doomfist",
     "why": "La torretta segnala e punisce i suoi ingaggi dal fianco"
    },
@@ -8443,7 +8293,6 @@
     "targets": [
      "Tracer",
      "Genji",
-     "Sombra",
      "Vendetta"
     ],
     "saveFor": [],
@@ -9110,10 +8959,6 @@
    {
     "hero": "Tracer",
     "why": "La aggira: il fuoco ravvicinato di Widowmaker è debole"
-   },
-   {
-    "hero": "Sombra",
-    "why": "La aggira: il fuoco ravvicinato di Widowmaker è debole"
    }
   ],
   "play": {
@@ -9464,10 +9309,6 @@
   ],
   "counteredBy": [
    {
-    "hero": "Sombra",
-    "why": "L'Hack annulla Adaptive Shield e la palla: resta fermo e grosso"
-   },
-   {
     "hero": "Domina",
     "why": "Sonic Repulsors lo respinge e stordisce contro i muri"
    },
@@ -9500,7 +9341,7 @@
    "tips": [
     "Crea caos e ruota: non restare fermo, i CC ti puniscono",
     "Piledriver sui supporti isolati, poi esci col rampino",
-    "Evita Sombra e i CC: se sei fermo sei un bersaglio grosso"
+    "Evita i CC: se sei fermo sei un bersaglio grosso"
    ],
    "attack": "Disturba la difesa alle spalle per far avanzare il team sul carico",
    "defense": "Ruota sul carico e spezza le spinte con Piledriver"
@@ -10038,10 +9879,6 @@
     "why": "D.Va lo raggiunge subito e Defense Matrix assorbe le sue sfere"
    },
    {
-    "hero": "Sombra",
-    "why": "Sombra lo prende alle spalle: Zenyatta non ha fuga"
-   },
-   {
     "hero": "Junker Queen",
     "why": "Rampage blocca la cura di Transcendence"
    },
@@ -10237,11 +10074,6 @@
      {
       "hero": "Tracer",
       "why": "Flashpoint: esplora e contesta i punti in fretta",
-      "side": null
-     },
-     {
-      "hero": "Sombra",
-      "why": "Flashpoint: mobilità e informazioni sulle rotazioni nemiche",
       "side": null
      },
      {
@@ -11194,12 +11026,6 @@
       "src": "https://gamerant.com/overwatch-2-cassidy-guide-tips-tricks-abilities-playstyle/"
      },
      {
-      "hero": "Sombra",
-      "why": "Stealth e Translocator per aggirare: ponte, poi scala a sinistra verso i medikit",
-      "side": null,
-      "src": "https://www.icy-veins.com/overwatch/sombra-maps"
-     },
-     {
       "hero": "Junkrat",
       "why": "Tiene un collo di bottiglia e lancia granate: spazi chiusi dove rimbalzano",
       "side": null,
@@ -11321,11 +11147,6 @@
     "Damage": [
      {
       "hero": "Tracer",
-      "why": "Mobilità nel primo scontro e negli aggiramenti",
-      "side": null
-     },
-     {
-      "hero": "Sombra",
       "why": "Mobilità nel primo scontro e negli aggiramenti",
       "side": null
      },
@@ -12555,11 +12376,6 @@
    },
    "avoid": [
     {
-     "hero": "Sombra",
-     "why": "Shrine: pilastro centrale limita l'EMP; Sanctum semi-aperto, pistola e poca mobilità",
-     "src": "https://www.icy-veins.com/overwatch/sombra-maps"
-    },
-    {
      "hero": "Hanzo",
      "why": "Nessuna altura con vista libera sui punti di cattura; Dragonstrike prevedibile",
      "src": "https://www.icy-veins.com/overwatch/hanzo-maps"
@@ -13057,7 +12873,7 @@
    ],
    "envKills": "",
    "tips": [
-    "Molte vie laterali ed edifici aperti: Genji, Reaper e Sombra colpiscono da angoli inattesi.",
+    "Molte vie laterali ed edifici aperti: Genji e Reaper colpiscono da angoli inattesi.",
     "Secondo tratto: strade strette tra palazzi alti, conta la mobilità verticale.",
     "Preparatevi a scontri ravvicinati quando il carico passa nelle vie strette."
    ],
@@ -13150,10 +12966,9 @@
       "Tank"
      ]
     },
-    "Molte vie laterali ed edifici aperti: Genji, Reaper e Sombra colpiscono da angoli inattesi.": {
+    "Molte vie laterali ed edifici aperti: Genji e Reaper colpiscono da angoli inattesi.": {
      "tags": [
       "dive",
-      "stealth",
       "mobile"
      ],
      "roles": [
@@ -13959,7 +13774,144 @@
    }
   }
  },
- "_researched": "2026-10-05",
+ "_researched": "2026-10-07",
  "_mapsResearched": "2026-10-06",
- "_heroMapsResearched": "2026-10-06"
+ "_heroMapsResearched": "2026-10-06",
+ "Doctrine": {
+  "role": "Support",
+  "tags": [
+   "main-healer",
+   "mobile"
+  ],
+  "synergies": [
+   {
+    "hero": "Doomfist",
+    "why": "Deliverance insieme a Meteor Strike: nemici con meno vita massima, colpo che uccide"
+   },
+   {
+    "hero": "Reaper",
+    "why": "Deliverance insieme a Death Blossom: nemici indeboliti, ultimate più letale"
+   },
+   {
+    "hero": "Genji",
+    "why": "Invigorating Drones (+30% velocità d'attacco) su chi ingaggia: più danni durante Dragonblade"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Drones su un alleato aggressivo: più cure e velocità d'attacco mentre fiancheggia"
+   }
+  ],
+  "counters": [],
+  "counteredBy": [
+   {
+    "hero": "Winston",
+    "why": "Durante Shrouded Momentum non può attaccare né usare abilità: facile da inseguire"
+   },
+   {
+    "hero": "Tracer",
+    "why": "Lo raggiunge dopo che ha usato Shrouded Momentum, quando non ha più fuga"
+   },
+   {
+    "hero": "Genji",
+    "why": "Tuffatore mobile: lo insegue quando ha speso la mobilità"
+   },
+   {
+    "hero": "Ana",
+    "why": "La Granata biotica blocca le cure dello Scepter e dei Drones"
+   }
+  ],
+  "play": {
+   "position": "backline",
+   "targets": [
+    "squishy"
+   ],
+   "avoidTargets": [
+    "tanky"
+   ],
+   "tips": [
+    "Decidi prima quale abilità potenziare, poi premi Infuse: sprecarlo è l'errore più comune",
+    "Infuse sullo Scepter quando più bersagli sono in fila: colpo più forte che trapassa",
+    "Drones su chi sta già premendo il nemico, non per forza su chi ha meno vita",
+    "Shrouded Momentum: durante lo spostamento non puoi attaccare, usalo per scappare o cambiare posizione",
+    "Deliverance è una zona ampia e lenta: lanciala sul gruppo nemico insieme alle ultimate dei tuoi"
+   ],
+   "attack": "Drones sul tuffatore che apre lo scontro, Deliverance insieme alla sua ultimate",
+   "defense": "Cura dalla distanza media e tieni Shrouded Momentum per sfuggire ai tuffatori"
+  },
+  "uncertain": true,
+  "note": "Eroe nuovo della Stagione 5 (6 ott 2026): teoria dalle prime guide e dalle note della patch, niente partite pro. Comparirà nell'app quando counterwatch avrà le sue statistiche.",
+  "sources": [
+   "https://www.thegamer.com/overwatch-doctrine-abilities-tips-guide/",
+   "https://esports.gg/news/overwatch/overwatch-doctrine-abilities-ultimate-perks-and-more/",
+   "https://dotesports.com/overwatch/guides/overwatch-doctrine-abilities",
+   "https://mobalytics.gg/overwatch/heroes/doctrine-guide",
+   "https://www.yardbarker.com/entertainment/articles/overwatch_season_5_hero_guide_infuse_your_allies_with_power_as_doctrine/s1_17456_44307501",
+   "https://overwatch.blizzard.com/en-us/heroes/doctrine/"
+  ],
+  "abilities": [
+   {
+    "name": "Invigorating Drones",
+    "it": "Droni Rinvigorenti",
+    "ult": false,
+    "tags": [
+     "heal",
+     "damage-amp"
+    ],
+    "use": "Droni su un alleato: lo curano e gli danno +30% di velocità d'attacco (con Infuse anche a te)",
+    "when": "Su chi sta ingaggiando o può continuare a combattere",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   },
+   {
+    "name": "Shrouded Momentum",
+    "it": "Sciame Protettivo",
+    "ult": false,
+    "tags": [
+     "mobility",
+     "escape"
+    ],
+    "use": "Scatto con 40% di danni ridotti (con Infuse voli liberamente); 8 s di ricarica",
+    "when": "Per scappare da un tuffo o prendere un'altura",
+    "targets": [],
+    "saveFor": [
+     {
+      "hero": "Winston",
+      "why": "tienilo per sfuggire a Winston o Tracer"
+     }
+    ],
+    "avoidOn": []
+   },
+   {
+    "name": "Deliverance",
+    "it": "Liberazione",
+    "ult": true,
+    "tags": [
+     "heal",
+     "burst"
+    ],
+    "on": "enemies",
+    "use": "Zona che dà vita extra ai tuoi e toglie vita massima ai nemici per 6 s",
+    "when": "Insieme alle ultimate dei compagni, sul gruppo nemico",
+    "targets": [],
+    "saveFor": [],
+    "avoidOn": []
+   }
+  ],
+  "priority": {
+   "ability": "Infuse",
+   "why": "Potenzia la prossima abilità (2 cariche): decidere bene dove usarlo fa la differenza"
+  },
+  "mapFeatures": {
+   "likes": [
+    "high-ground",
+    "open-spaces"
+   ],
+   "dislikes": [
+    "flank-routes"
+   ],
+   "why": "Cura a media distanza e vola sulle alture con Infuse; soffre chi lo aggira"
+  },
+  "abilitiesNote": "Eternal Scepter (arma) cura gli alleati e danneggia i nemici con lo stesso colpo. Passiva Survivor: dopo un'abilità di movimento si rigenera."
+ }
 }

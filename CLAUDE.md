@@ -80,6 +80,27 @@ database **Supabase** (sola lettura, chiave pubblica). `fetch_data.py` fa lo ste
   workflow riscarica i file pubblicati (`--prev-divisions`) e li riusa se freschi (~60 richieste ogni 12 h).
   L'app carica solo i file dei rank dei due giocatori (`withDivision()`); ognuno ha i consigli sui suoi dati.
 
+## Stagione 5 (patch del 6 ott 2026) — aggiornata il 2026-10-07 (richiesta dell'utente)
+
+- **Sombra da Danni a Supporto**; **Doctrine** eroe nuovo (Supporto, n. 54); mappa nuova **Watchpoint: Grímsvötn**
+  (Escort); bilanciamenti (Genji, Cassidy, Jetpack Cat: niente più "Sky Noon", Roadhog, ~40 hitbox…).
+- **Ruolo ufficiale sopra counterwatch**: counterwatch (7/10) tiene ancora Sombra nei Danni e non ha né Doctrine né
+  Grímsvötn. `fetch_data.py` legge i ruoli ufficiali (OverFast `/heroes`, ripiego: pagina Blizzard `a.hero-card[data-role]`;
+  1 richiesta) e corregge: `data.json → roleFix [{name, from, to}]`, `officialOnly [nomi]` (ufficiali ma senza dati
+  counterwatch). Fonte muta → si riapplicano le correzioni precedenti finché counterwatch non cambia. Il log elenca
+  eroi per ruolo e mappe. Test: test_fetch n. 17. App: Sombra tra i Supporti; in "Come giocarla"/"Perché" l'avviso
+  "statistiche del vecchio kit" (`staleBanner`, `[data-rolefix]`); sotto la griglia `#grid-note` ("Doctrine: nuovo,
+  comparirà…"). e2e "Stagione 5: …" (screenshot 18).
+- **Teoria**: Sombra riscritta (Hotfix, Cyberspace, Translocator, EMP; `uncertain`, prime guide + note patch), Doctrine
+  aggiunto (pronto per quando counterwatch lo avrà), tolte dagli altri eroi tutte le relazioni basate su Hack/Virus di
+  Sombra e dalle mappe le citazioni di Sombra Danni, tolta la sinergia Cassidy/Jetpack Cat in Deadeye. `_researched` =
+  2026-10-07: la patch del 6/10 (che cita 44 eroi, quasi tutti per le hitbox) è stata rivista, niente più "teoria da
+  rivedere". Grímsvötn: nessuna guida esiste ancora → nessuna voce in `_maps` (l'app funziona senza: test "eroe e mappa
+  nuovi"). Da rifare tra qualche settimana: Sombra/Doctrine/Grímsvötn con guide e partite pro.
+- Nomi italiani rigenerati (workflow "Pagine Blizzard"): Cyberspazio, Rilocatore, Scettro Eterno, Infusione, Droni
+  Rinvigorenti, Sciame Protettivo, Liberazione. `names_it.py` ora include gli eroi della teoria non ancora su counterwatch
+  e, se inglese e italiano non si allineano (Roadhog: l'italiano ha già Trash Compactor), tiene i nomi precedenti.
+
 ## I dati (formato di app/data.json)
 
 ```
@@ -94,6 +115,8 @@ synergies      {heroId: {allyId: win rate della coppia}}   (metà matrice: cerca
 counterScores  {heroId: {opponentId: punteggio counter di counterwatch}}   (non ancora usato)
 maps           [{slug, name, mode: Control|Escort|Hybrid|Push|Flashpoint, winRates {heroId: wr}}]
 filter         {gameType: "Ranked"|"All", why?: perché non Ranked, mapsAll?: [mappe prese dalle pagine]}
+roleFix        [{name, from, to}]: ruoli corretti con quelli ufficiali Blizzard (counterwatch indietro)
+officialOnly   [nomi]: eroi ufficiali non ancora su counterwatch (senza statistiche, non mostrati)
 ```
 Le chiavi degli id sono **stringhe**. I win rate sono "shrunk" (corretti per i campioni piccoli), 0–1.
 Le differenze sono piccole (±1–5%): è normale. Ad oggi: 53 eroi, 30 mappe, modalità 5v5.
@@ -186,7 +209,7 @@ Come è stato risolto (dirlo all'utente, non spacciarlo per statistica):
   avoidOn, on?}], `priority`, `mapFeatures`, `abilitiesNote`, `role` (ruolo al momento della ricerca: se cambia → "teoria da
   rivedere"); `_maps` (30 mappe: features, envKills, tips, attack, defense, goodStyles) e `_researched`. Ricerca di 4 agenti
   (solo riassunti WebSearch). `allyDirected()`: abilità da dare ai compagni (Nano Boost…) → targets = alleati; `on` in
-  theory.json decide a mano (Orb of Discord = nemici). Sombra: kit Danni, da rifare dopo il 6/10. Roadhog: rework S5 incluso.
+  theory.json decide a mano (Orb of Discord = nemici). Sombra: kit Supporto dal 2026-10-07 (vedi "Stagione 5"). Roadhog: rework S5 incluso.
 - `fill()` in app.js al posto di `replaceChildren` per le schede: le parti facoltative assenti non diventano testo "null"
   (e2e "schede senza testi «null»").
 

@@ -1297,6 +1297,43 @@ try {
     lastPage = page;
   }
 
+  // ---------- Stagione 5: ruolo ufficiale sopra counterwatch (Sombra Supporto mentre counterwatch la tiene nei Danni) ----------
+  {
+    const { ctx: cs, page: ps } = await newPage({ serviceWorkers: "block" });
+    lastPage = ps;
+    const fixed = { ...data, heroes: data.heroes.map((h) => (h.name === "Sombra" ? { ...h, role: "Support" } : h)),
+      roleFix: [{ name: "Sombra", from: "Damage", to: "Support" }], officialOnly: ["Doctrine"],
+      checked: new Date().toISOString(), sourceUpdated: new Date().toISOString() };
+    await cs.route((u) => u.href.startsWith(`${BASE}data.json`), (r) => r.fulfill({ json: fixed }));
+    await cs.route((u) => u.href.startsWith(`${BASE}patches.json`), (r) => r.fulfill({ json: { latest: { date: "2026-10-06", heroes: ["Sombra", "Cassidy", "Genji"] } } }));
+    await ps.addInitScript(([prof, m]) => {
+      if (!localStorage.getItem("owc.profile")) { localStorage.setItem("owc.profile", JSON.stringify(prof)); localStorage.setItem("owc.match", JSON.stringify(m)); }
+    }, [{ players: [{ name: "Giulia", rank: "", roles: ["Support"], favorites: [heroId("Sombra"), heroId("Ana")] }], useTheory: true, guideOnly: false },
+      { roles: ["Support"], picked: [null], pickFor: 0, mapSlug: "kings-row", side: "attack", bans: [], enemies: [], allies: [], group: "enemies" }]);
+    await ps.goto(BASE);
+    await ps.locator(CARD).first().waitFor();
+    const blocks = await ps.evaluate(() => Object.fromEntries([...document.querySelectorAll("#grid [data-block]")].map((b) =>
+      [b.dataset.block, [...b.querySelectorAll(".nm")].map((n) => n.textContent)])));
+    check("Stagione 5: Sombra nella griglia dei Supporti, non più tra i Danni", blocks.Support?.includes("Sombra") && !blocks.Damage?.includes("Sombra"),
+      JSON.stringify({ s: blocks.Support, d: blocks.Damage?.length }));
+    check("Stagione 5: sotto la griglia, Doctrine arriverà con i dati di counterwatch",
+      /Doctrine: nuovo, comparirà qui quando counterwatch avrà le statistiche/.test(await text(ps, "#grid-note")), await text(ps, "#grid-note").catch(() => ""));
+    check("Stagione 5: Sombra tra i preferiti di Giulia (Supporto)", (await favRows(ps, 0)).some((r) => r.name === "Sombra"));
+    await ps.locator(".pick").nth(0).locator(".fav-row", { has: ps.locator(".fr-name", { hasText: /^Sombra$/ }) }).click();
+    await toTop(ps);
+    await ps.locator(".pick").nth(0).locator(".pick-cta").click();
+    await ps.locator("#guide-dialog[open]").waitFor();
+    await ps.click("#guide-body .more-btn").catch(() => {});
+    const note = await ps.locator("#guide-body [data-rolefix]").innerText().catch(() => "");
+    const gtxt = await text(ps, "#guide-body");
+    check("Stagione 5: «Come giocarla» avvisa che le statistiche sono del vecchio kit, teoria del kit nuovo (Hotfix)",
+      /ora è Supporto \(prima Danni\)/.test(note) && /vecchio kit/.test(note) && !/Teoria da rivedere/.test(gtxt) && /Hotfix|Cyberspace/.test(gtxt),
+      `${note} | ${gtxt.slice(0, 300)}`);
+    await shot(ps, "18-sombra-supporto");
+    await cs.close();
+    lastPage = page;
+  }
+
   check("nessun errore JavaScript", errors.length === 0, errors.join("\n"));
 } catch (e) {
   if (lastPage) {

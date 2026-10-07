@@ -262,6 +262,38 @@ conn = fd.extract_supabase(js)
 check("chiave e indirizzo dal JS del sito", conn and conn[0] == "https://abcdef.supabase.co"
       and conn[1][0] == "sb_publishable_TEST-key_1" and fd.extract_supabase("niente qui") is None, repr(conn))
 
+# 17. ruoli ufficiali (Blizzard) sopra quelli di counterwatch: Stagione 5, Sombra Supporto mentre counterwatch la
+# tiene nei Danni; eroe ufficiale non ancora su counterwatch (Doctrine) solo annotato
+official = [{"key": h["slug"], "name": h["name"], "role": h["role"].lower()} for h in d["heroes"]]
+official = [{**o, "role": "support"} if o["name"] == "Sombra" else o for o in official]
+official.append({"key": "doctrine", "name": "Doctrine", "role": "support"})
+dof = mutated(tmp, "official", lambda d_: (d_ / "official_heroes.json").write_text(json.dumps(official)))
+code, log = run(dof, tmp / "official.json")
+of = json.loads((tmp / "official.json").read_text()) if (tmp / "official.json").exists() else {}
+check("ruolo ufficiale: Sombra Supporto anche se counterwatch dice Danni", code == 0
+      and next((h["role"] for h in of.get("heroes", []) if h["name"] == "Sombra"), None) == "Support"
+      and of.get("roleFix") == [{"name": "Sombra", "from": "Damage", "to": "Support"}] and "Sombra" in log and "Support" in log, log)
+check("ruolo ufficiale: eroe nuovo non ancora su counterwatch annotato, non aggiunto", of.get("officialOnly") == ["Doctrine"]
+      and not any(h["name"] == "Doctrine" for h in of.get("heroes", [])), str(of.get("officialOnly")))
+# fonte ufficiale muta: si riapplica la correzione precedente finché counterwatch non cambia
+code, log = run(FIX, tmp / "official2.json", prev=tmp / "official.json")
+o2 = json.loads((tmp / "official2.json").read_text()) if (tmp / "official2.json").exists() else {}
+check("ruolo ufficiale: fonte muta → correzione precedente riapplicata", code == 0
+      and next((h["role"] for h in o2.get("heroes", []) if h["name"] == "Sombra"), None) == "Support"
+      and o2.get("roleFix") == of.get("roleFix"), log)
+# counterwatch si aggiorna (Sombra già Supporto): nessuna correzione
+code, log = run(drole, tmp / "official3.json", prev=tmp / "official.json")
+o3 = json.loads((tmp / "official3.json").read_text()) if (tmp / "official3.json").exists() else {}
+check("ruolo ufficiale: counterwatch aggiornato → nessuna correzione", code == 0 and o3.get("roleFix") == []
+      and next((h["role"] for h in o3.get("heroes", []) if h["name"] == "Sombra"), None) == "Support", log)
+# pagina Blizzard (ripiego): ruolo e chiave dalle schede degli eroi; elenco troppo corto = non riconosciuto
+cards = "".join(f'<a class="hero-card" data-role="{o["role"]}" data-subrole="x" href="/heroes/{o["key"]}" id="{o["key"]}"><b>{o["name"]}</b></a>' for o in official)
+po = fd.parse_official("html", cards)
+check("ruoli ufficiali dalla pagina Blizzard (schede eroe)", len(po) == len(official)
+      and any("sombra" in k and r == "Support" for k, _, r in po) and fd.parse_official("html", cards[:400]) == [], str(po[:3]))
+check("ruoli ufficiali: nomi confrontati senza accenti e simboli", fd.name_key("Soldier: 76") == fd.name_key("soldier-76")
+      and fd.name_key("Lúcio") == "lucio" and fd.name_key("D.Va") == fd.name_key("dva") and fd.name_key("Torbjörn") == "torbjorn")
+
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} test superati")
 sys.exit(0 if all(results) else 1)

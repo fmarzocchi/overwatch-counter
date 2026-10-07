@@ -36,8 +36,14 @@ def main():
     ap.add_argument("--out", default="app/names_it.json")
     a = ap.parse_args()
 
-    data_names = {key(h["name"]): h["name"] for h in load(a.data)["heroes"]}
     theory = load(a.theory)
+    data_names = {key(h["name"]): h["name"] for h in load(a.data)["heroes"]}
+    # anche gli eroi della teoria non ancora su counterwatch (es. Doctrine, Stagione 5): nomi pronti per quando arrivano
+    data_names.update({key(n): n for n in theory if not n.startswith("_") and key(n) not in data_names})
+    try:
+        prev_abilities = load(a.out).get("abilities", {})
+    except (OSError, ValueError):
+        prev_abilities = {}
     of = lambda name: os.path.join(a.dir, name)  # noqa: E731
     en_list = load(of("overfast_en-us_heroes.json"))
     it_names = {h["key"]: h["name"] for h in load(of("overfast_it-it_heroes.json"))}
@@ -57,7 +63,10 @@ def main():
             problems.append(f"{ours}: abilità non lette ({e})")
             continue
         if len(en) != len(it) or not en:
-            problems.append(f"{ours}: abilità diverse tra inglese ({len(en)}) e italiano ({len(it)})")
+            # le due lingue non si allineano (es. una aggiornata prima dell'altra): si tengono i nomi precedenti
+            problems.append(f"{ours}: abilità diverse tra inglese ({len(en)}) e italiano ({len(it)}), tengo i nomi precedenti")
+            if prev_abilities.get(ours):
+                abilities[ours] = prev_abilities[ours]
             continue
         abilities[ours] = dict(zip(en, it))
         # "Void Barrier (Omnic Form)" si trova anche come "Void Barrier"

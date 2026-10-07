@@ -41,6 +41,79 @@ DIVISIONS = [("bronze", ["Bronze"]), ("silver", ["Silver"]), ("gold", ["Gold"]),
 DIVISION_MAX_AGE_H = 12
 
 
+# ---------- ruoli ufficiali (Blizzard) ----------
+# counterwatch può restare indietro quando un eroe cambia ruolo (Stagione 5: Sombra da Danni a Supporto).
+# Il ruolo si prende dalla fonte ufficiale (OverFast = dati del sito Blizzard, poi la pagina Blizzard stessa);
+# se nessuna risponde si tengono le correzioni dell'ultima volta. 1 richiesta per aggiornamento completo.
+OFFICIAL_SOURCES = [("json", "https://overfast-api.tekrop.fr/heroes?locale=en-us"),
+                    ("html", "https://overwatch.blizzard.com/en-us/heroes/")]
+OFFICIAL_ROLE = {"tank": "Tank", "damage": "Damage", "support": "Support"}
+
+
+def name_key(s):
+    """'Soldier: 76' / 'soldier-76' → 'soldier76'; 'Lúcio' → 'lucio'; 'D.Va' / 'dva' → 'dva'."""
+    s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]", "", s)
+
+
+def parse_official(kind, text):
+    """[(chiavi, nome, ruolo)] dalla risposta della fonte ufficiale ([] se non si riconosce)."""
+    out = []
+    if kind == "json":
+        try:
+            rows = json.loads(text)
+        except ValueError:
+            return []
+        for r in rows if isinstance(rows, list) else []:
+            role = OFFICIAL_ROLE.get(str(r.get("role", "")).lower())
+            if role and (r.get("key") or r.get("name")):
+                out.append(({name_key(r.get("key")), name_key(r.get("name"))} - {""}, r.get("name") or r["key"], role))
+    else:
+        for tag in re.findall(r'<a[^>]*class="hero-card"[^>]*>', text):
+            role = re.search(r'data-role="([a-z]+)"', tag)
+            slug = re.search(r'href="(?:/[a-z]{2}-[a-z]{2})?/heroes/([a-z0-9-]+)/?"', tag)
+            if role and slug and OFFICIAL_ROLE.get(role.group(1)):
+                out.append(({name_key(slug.group(1))}, slug.group(1), OFFICIAL_ROLE[role.group(1)]))
+    return out if len(out) >= MIN_HEROES else []
+
+
+def official_heroes(from_dir=None):
+    """Elenco ufficiale [(chiavi, nome, ruolo)], o None se nessuna fonte risponde."""
+    if from_dir:
+        f = pathlib.Path(from_dir) / "official_heroes.json"
+        return parse_official("json", f.read_text()) or None if f.exists() else None
+    for kind, url in OFFICIAL_SOURCES:
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            got = parse_official(kind, urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "ignore"))
+            if got:
+                return got
+        except Exception as e:
+            print(f"  ! ruoli ufficiali da {url}: {e}", file=sys.stderr)
+    return None
+
+
+def apply_official_roles(hero_list, official, prev_fix):
+    """Corregge i ruoli di counterwatch con quelli ufficiali. Restituisce (correzioni, eroi solo ufficiali)."""
+    fixes, only = [], []
+    if official is None:  # fonte ufficiale muta: si riapplicano le correzioni precedenti ancora valide
+        for f in prev_fix or []:
+            h = next((h for h in hero_list if h["name"] == f.get("name")), None)
+            if h and h["role"] == f.get("from") and f.get("to") in OFFICIAL_ROLE.values():
+                h["role"] = f["to"]
+                fixes.append(f)
+        return fixes, only
+    for h in hero_list:
+        keys = {name_key(h["name"]), name_key(h.get("slug"))} - {""}
+        o = next((o for o in official if o[0] & keys), None)
+        if o and o[2] != h["role"]:
+            fixes.append({"name": h["name"], "from": h["role"], "to": o[2]})
+            h["role"] = o[2]
+    known = set().union(*({name_key(h["name"]), name_key(h.get("slug"))} for h in hero_list))
+    only = sorted(o[1] for o in official if not (o[0] & known))
+    return fixes, only
+
+
 # ---------- lettura pagine ----------
 
 class Source:
@@ -396,6 +469,9 @@ def main():
     if not hero_list:
         print("ERRORE: nessun elenco eroi valido, data.json non modificato", file=sys.stderr)
         sys.exit(1)
+    # ruolo ufficiale sopra quello di counterwatch (Sombra Supporto dalla Stagione 5, finché counterwatch non si aggiorna)
+    role_fix, official_only = apply_official_roles(hero_list, official_heroes(args.from_dir), prev.get("roleFix"))
+    hero_list.sort(key=lambda h: (h["role"], h["name"]))
     ids = [str(h["id"]) for h in hero_list]
     idset = set(ids)
     trim = lambda mx: {a: {b: v for b, v in row.items() if b in idset and b != a}
@@ -468,6 +544,7 @@ def main():
         "status": status, "problems": problems,
         "heroes": hero_list, "overall": overall, "counters": counters,
         "synergies": synergies or {}, "counterScores": scores, "maps": maps,
+        "roleFix": role_fix, "officialOnly": official_only,
     }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
@@ -477,6 +554,10 @@ def main():
     for role in ("Tank", "Damage", "Support"):
         print(f"  {role}: " + ", ".join(h["name"] for h in hero_list if h["role"] == role))
     print("  mappe: " + ", ".join(m["name"] for m in maps))
+    for f in role_fix:
+        print(f"  ruolo ufficiale: {f['name']} {f['from']} → {f['to']} (counterwatch non ancora aggiornato)")
+    if official_only:
+        print("  eroi ufficiali non ancora su counterwatch: " + ", ".join(official_only))
     if divisions:
         print("  divisioni: " + ", ".join(f"{k}{' (!)' if v.get('error') else ''}" for k, v in divisions.items()))
     for p in problems:
