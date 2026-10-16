@@ -284,7 +284,12 @@ esserci di più. Fonti degli altri eroi spesso vecchie (Icy Veins era OW1, 2022-
 
 L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il resto è a un tocco o due.
 1. **Riquadro del giocatore** (dal 2026-10-06, richiesta dell'utente: "sembra che l'eroe l'abbia già scelto io"), due momenti:
-   - **prima della scelta**: SOLO la lista dei suoi preferiti del ruolo (tutti se il ruolo è libero), dal più adatto
+   - **prima della scelta** (dal 2026-10-16, segnalazione dell'utente): con "Suggerisci solo eroi preferiti" SPENTO (predefinito)
+     la lista è dei più adatti del ruolo tra TUTTI gli eroi disponibili ("I più adatti (Supporto) tra tutti gli eroi", ordine
+     di `lists[i]`, i preferiti segnati "Preferito"; lo stesso per "Scegline un altro" e per il foglio "＋", che poi aggiunge
+     "I tuoi preferiti" e "Preferiti di altri ruoli"); con l'interruttore ACCESO, come prima, SOLO i preferiti del ruolo
+     ("Scegli tra i preferiti"). e2e "interruttore «solo preferiti» spento…", "solo preferiti acceso…".
+     Con l'interruttore acceso: la lista dei suoi preferiti del ruolo (tutti se il ruolo è libero), dal più adatto
      (`favoritesFor()`, ordinati col punteggio di `choiceRows(i)`), al massimo `MAX_ROWS` = 4 righe; in cima il consigliato
      (`lists[i][0]`, che tiene conto della squadra) evidenziato in `.rec-box` con "Consigliato · stima", il motivo
      (`headline()`, senza avversari) e "Come giocarla" (`.rec-cta`, anche prima di scegliere); se il consigliato non è tra i

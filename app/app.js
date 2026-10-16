@@ -649,20 +649,26 @@ function openChooser(i) {
   const cur = match.picked[i] ? sid(match.picked[i]) : null;
   const role = cur ? byId[cur].role : match.roles[i];
   const close = () => $("#choose-dialog").close();
-  const mine = favoritesFor(i, role);
-  const otherRoles = favoritesFor(i, null).filter((id) => !mine.includes(id));
-  const fallback = mine.length || otherRoles.length ? [] : (lastDuo?.lists?.[i] ?? []).map((r) => sid(r.hero.id))
-    .filter((id) => !takenBy(i).has(id)).slice(0, 8);
+  const onlyFav = !!profile.onlyFavorites;
+  const favRole = favoritesFor(i, role);
+  // con "solo preferiti" spento: prima i più adatti del ruolo tra tutti, poi i preferiti che non ci sono
+  const bestRole = (lastDuo?.lists?.[i] ?? []).map((r) => sid(r.hero.id)).filter((id) => !takenBy(i).has(id)).slice(0, 8);
+  const mine = onlyFav ? favRole : bestRole;
+  const favRest = onlyFav ? [] : favRole.filter((id) => !mine.includes(id));
+  const otherRoles = favoritesFor(i, null).filter((id) => !mine.includes(id) && !favRest.includes(id));
+  const fallback = !onlyFav || mine.length || otherRoles.length ? [] : bestRole;
   const row = (id) => (id === cur
     ? favRow(i, id, { rec: "Scelto", after: close })
     : favRow(i, id, { after: close }));
   $("#t-choose").textContent = `Scegli l'eroe di ${p.name}`;
   fill($("#choose-body"),
-    el("p", { class: "muted small choose-sub" }, mine.length || otherRoles.length
-      ? "I tuoi preferiti, dal più adatto a questa partita. Un tocco per sceglierlo."
-      : "Nessun preferito nel Profilo: i più adatti per il ruolo."),
+    el("p", { class: "muted small choose-sub" }, !onlyFav ? "I più adatti a questa partita tra tutti gli eroi. Un tocco per sceglierlo."
+      : mine.length || otherRoles.length ? "I tuoi preferiti, dal più adatto a questa partita. Un tocco per sceglierlo."
+        : "Nessun preferito nel Profilo: i più adatti per il ruolo."),
     mine.length || fallback.length ? el("div", { class: "fav-list" }, [...mine, ...fallback].map(row)) : null,
-    otherRoles.length ? el("h3", { class: "choose-h" }, "Altri ruoli") : null,
+    favRest.length ? el("h3", { class: "choose-h" }, "I tuoi preferiti") : null,
+    favRest.length ? el("div", { class: "fav-list" }, favRest.map(row)) : null,
+    otherRoles.length ? el("h3", { class: "choose-h" }, onlyFav ? "Altri ruoli" : "Preferiti di altri ruoli") : null,
     otherRoles.length ? el("div", { class: "fav-list" }, otherRoles.map(row)) : null,
     el("button", {
       type: "button", class: "btn choose-grid", onclick: () => { close(); choosePicker(i); },
@@ -697,33 +703,40 @@ function pickCard(p, i) {
   if (!top) return el("article", { class: "pick empty", style }, head, el("p", { class: "pick-why" }, "Nessun eroe disponibile"));
   const note = lastDuo.notes?.[i];
   const noteEl = note ? el("div", { class: "pick-note warn-note" }, note) : null;
-  const favs = favoritesFor(i, role);
   const favSet = new Set(p.favorites.map(sid));
+  // "Suggerisci solo eroi preferiti" (Profilo): acceso → la lista è dei preferiti; spento → i migliori del ruolo tra
+  // tutti gli eroi disponibili, con i preferiti segnati (segnalazione dell'utente del 2026-10-16)
+  const favs = profile.onlyFavorites ? favoritesFor(i, role) : [];
+  const best = rows.map((r) => sid(r.hero.id)).filter((id) => !takenBy(i).has(id));
+  const favNote = (id) => (!favs.length && favSet.has(id) ? "Preferito" : null);
 
   if (!took) {
     const recId = sid(top.hero.id);
-    const pool = favs.length ? favs : rows.map((r) => sid(r.hero.id)).filter((id) => !takenBy(i).has(id));
+    const pool = favs.length ? favs : best;
     const list = [recId, ...pool.filter((id) => id !== recId)];
     const shown = list.slice(0, MAX_ROWS);
-    const more = favs.length ? list.length - shown.length : 0; // preferiti che non ci stanno (senza preferiti: "Altri eroi")
+    const more = favs.length ? list.length - shown.length : 0; // preferiti che non ci stanno (tra tutti: "Altri eroi")
     // eroi consigliati a un compagno (non ancora presi): si possono scegliere, ma lo si segnala
     const forMate = new Map((lastDuo.team ?? []).map((h, j) => (h && j !== i && !match.picked[j] ? [sid(h.id), j] : null)).filter(Boolean));
     const why = match.enemies.length ? null : headline(top, partnersOf(i));
     return el("article", { class: "pick glass choosing", style, "aria-label": `${p.name}: da scegliere` },
       head, noteEl,
-      el("p", { class: "pick-ask" }, favs.length ? "Scegli tra i preferiti" : `Nessun preferito${role ? ` ${ROLE_IT[role]}` : ""}: i più adatti`),
+      el("p", { class: "pick-ask" }, favs.length ? "Scegli tra i preferiti"
+        : profile.onlyFavorites ? `Nessun preferito${role ? ` ${ROLE_IT[role]}` : ""}: i più adatti`
+          : `I più adatti${role ? ` (${ROLE_IT[role]})` : ""} tra tutti gli eroi`),
       el("div", { class: "fav-list" }, shown.map((id) => (id === recId
         // il consigliato, evidenziato, con "Come giocarla" (anche prima di sceglierlo)
         ? el("div", { class: "rec-box" },
           favRow(i, id, {
             rec: `Consigliato${top.estimate != null ? ` · ${est(top, i)}` : ""}`,
-            note: [favs.length && !favSet.has(id) ? "Non è tra i preferiti" : null, why].filter(Boolean).join(" · ") || null,
+            note: [favs.length && !favSet.has(id) ? "Non è tra i preferiti" : favNote(id), why].filter(Boolean).join(" · ") || null,
           }),
           el("button", {
             type: "button", class: "pick-cta rec-cta", onclick: () => openGuide(i, top.hero),
             "aria-label": `Come giocare ${top.hero.name} in questa partita`,
           }, icon("target"), "Come giocarla", icon("chevron", "ic chev")))
-        : favRow(i, id, forMate.has(id) ? { tag: { text: `per ${profile.players[forMate.get(id)].name}`, color: `var(--p${forMate.get(id)})` } } : {})))),
+        : favRow(i, id, { note: favNote(id),
+          ...(forMate.has(id) ? { tag: { text: `per ${profile.players[forMate.get(id)].name}`, color: `var(--p${forMate.get(id)})` } } : {}) })))),
       el("button", {
         type: "button", class: "fav-more",
         onclick: () => (more || !favs.length ? openChooser(i) : choosePicker(i)),
@@ -734,7 +747,7 @@ function pickCard(p, i) {
 
   const sw = swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() });
   const chosen = sid(top.hero.id);
-  const others = (favs.length ? favs : rows.slice(1).map((r) => sid(r.hero.id))).filter((id) => id !== chosen && !takenBy(i).has(id));
+  const others = (favs.length ? favs : best).filter((id) => id !== chosen && !takenBy(i).has(id));
   // stelline bianche anche sull'eroe scelto e su "Passa a" (richiesta del 2026-10-06), le stesse della lista
   const nStars = (id) => choiceStars(i).get(id) ?? 3;
   return el("article", { class: "pick glass took", style, "aria-label": `${p.name} ha scelto ${top.hero.name}` },

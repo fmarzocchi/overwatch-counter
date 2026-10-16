@@ -214,9 +214,17 @@ try {
   check("prima della scelta: lista con il consigliato in cima ed evidenziato (al massimo 4 righe), nessun eroe «scelto»",
     lists0.every((l) => l.length >= 1 && l.length <= 4 && l[0].rec && l.slice(1).every((r) => !r.rec))
     && (await page.locator(".pick .pick-main, .pick .chosen-chip").count()) === 0, JSON.stringify(lists0));
-  check("prima della scelta: Giulia vede i suoi preferiti (Mercy, Juno), Fabio senza preferiti i più adatti",
-    ["Mercy", "Juno"].every((n) => lists0[1].some((r) => r.name === n)) && (await text(page, ".pick:nth-child(1) .pick-ask")).includes("Nessun preferito")
-    && (await text(page, ".pick:nth-child(2) .pick-ask")).includes("preferiti"), JSON.stringify(lists0.map((l) => l.map((r) => r.name))));
+  // «Suggerisci solo eroi preferiti» spento (predefinito): i più adatti del ruolo tra TUTTI gli eroi, i preferiti segnati
+  // (segnalazione dell'utente del 2026-10-16: con l'interruttore spento comparivano solo i preferiti)
+  const asks0 = await page.locator(".pick .pick-ask").allInnerTexts();
+  const favs0 = ["Mercy", "Juno"];
+  check("interruttore «solo preferiti» spento: i più adatti tra tutti gli eroi, non solo i preferiti, e niente «Scegli tra i preferiti»",
+    asks0.every((t) => /tra tutti gli eroi/.test(t) && !/preferiti/.test(t)) && lists0[1].some((r) => !favs0.includes(r.name)), JSON.stringify({ asks0, l: lists0.map((l) => l.map((r) => r.name)) }));
+  const giuliaBest = (await favRows(page, 1)).map((r) => r.name);
+  check("interruttore spento: la lista di Giulia è in ordine di adattezza (stelline non crescenti dopo il consigliato)",
+    (await favRows(page, 1)).slice(1).every((r, k, xs) => !k || r.stars.length <= xs[k - 1].stars.length), giuliaBest.join());
+  const favMarks = await page.locator(".pick").nth(1).locator(".fav-row").evaluateAll((rs) => rs.map((r) => [r.querySelector(".fr-name").textContent, r.querySelector(".fr-note")?.textContent ?? ""]));
+  check("interruttore spento: i preferiti nella lista sono segnati «Preferito»", favMarks.every(([n, note]) => !["Mercy", "Juno"].includes(n) || /Preferito/.test(note)), JSON.stringify(favMarks));
   check("lista: stelline bianche da 1 a 5 su ogni riga", (await page.locator(".pick .fr-stars").evaluateAll((xs) => xs.every((x) =>
     /^★{1,5}$/.test(x.textContent) && getComputedStyle(x).color === "rgb(255, 255, 255)"))));
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -481,6 +489,8 @@ try {
   await toTop(page);
   const giulia = (await favRows(page, 1)).map((r) => r.name);
   check("solo preferiti: Giulia vede solo Mercy/Juno (Mercy è alleata → solo Juno)", giulia.join() === "Juno", giulia.join());
+  check("solo preferiti acceso: «Scegli tra i preferiti» nel riquadro di Giulia", /Scegli tra i preferiti/.test(await text(page, ".pick:nth-child(2) .pick-ask")),
+    await text(page, ".pick:nth-child(2) .pick-ask"));
   await toTop(page);
   const fabio = await page.locator(".pick").nth(0).innerText();
   check("solo preferiti: Fabio senza preferiti → i più adatti, con avviso", fabio.includes("nessun preferito disponibile")
@@ -1308,7 +1318,7 @@ try {
     await cs.route((u) => u.href.startsWith(`${BASE}patches.json`), (r) => r.fulfill({ json: { latest: { date: "2026-10-06", heroes: ["Sombra", "Cassidy", "Genji"] } } }));
     await ps.addInitScript(([prof, m]) => {
       if (!localStorage.getItem("owc.profile")) { localStorage.setItem("owc.profile", JSON.stringify(prof)); localStorage.setItem("owc.match", JSON.stringify(m)); }
-    }, [{ players: [{ name: "Giulia", rank: "", roles: ["Support"], favorites: [heroId("Sombra"), heroId("Ana")] }], useTheory: true, guideOnly: false },
+    }, [{ players: [{ name: "Giulia", rank: "", roles: ["Support"], favorites: [heroId("Sombra"), heroId("Ana")] }], useTheory: true, guideOnly: false, onlyFavorites: true },
       { roles: ["Support"], picked: [null], pickFor: 0, mapSlug: "kings-row", side: "attack", bans: [], enemies: [], allies: [], group: "enemies" }]);
     await ps.goto(BASE);
     await ps.locator(CARD).first().waitFor();
