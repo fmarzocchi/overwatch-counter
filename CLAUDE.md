@@ -392,6 +392,37 @@ ogni livello aperto (fogli, Profilo, "Tocca l'eroe preso da…"): `wireBack()`/`
 sull'attributo `open` dei dialog); indietro chiude il livello in cima, un livello chiuso con un pulsante toglie il suo
 passo (`history.go`). e2e "indietro …"; sull'emulatore `KEYCODE_BACK` dal Profilo (l'app deve restare aperta).
 
+## Foto del tabellone (2026-10-24, richiesta dell'utente) — Claude Sonnet 5.5
+
+L'utente ha crediti API Anthropic (piano Max) e vuole compilare la partita da una foto del tabellone della Switch 2.
+- **Pulsante grande al centro della barra in basso** (`#photo-btn`, 72 px, sporge sopra la capsula; due metà uguali
+  `.dock-bar` → resta esattamente al centro). Prima volta (o chiave mancante): foglio `#photo-setup` con chiave API e
+  **nome nel gioco** di ciascun giocatore (`profile.players[i].nick`, anche nel Profilo, `#p<i>-nick`); Invio passa al campo
+  dopo e al pulsante. Chiave in localStorage `owc.claudeKey` (Profilo → "Foto del tabellone"), **mai nel codice né in chat**.
+- `app/photo.js` (puro, `tests/photo.test.js`): `photoRequest()` → `POST api.anthropic.com/v1/messages` con fetch diretto
+  (niente SDK: app senza build e WebView Chrome 83; intestazione `anthropic-dangerous-direct-browser-access`, CORS
+  verificato), modello `claude-sonnet-5-5` (scelto dall'utente: la velocità conta), `thinking: {type: "between_tools"}`
+  (niente pensiero esteso; vale solo per Sonnet 5.5 con effort ≤ high), `effort: "medium"`, uscita vincolata da JSON schema
+  (`photoSchema`: nomi di eroi e mappe = elenchi dei dati), `fallbacks: "default"` + beta `server-side-fallback-2026-07-01`
+  (se rifiutato con 400 si riprova una volta senza: `isFallbackRejection`). Istruzioni fisse e foglio dei ritratti
+  (canvas con `heroes/<slug>.webp` e nomi, saltato se mancano metà delle icone) con `cache_control`.
+  `normalizeResult` (nomi → id, max 5 per squadra, ruolo/doppioni → incerto, max 3 alternative), `matchOwners` (nomi nel
+  gioco quasi uguali, una riga per giocatore), `applyPhoto` (regole di OW2: mirror sì, un eroe una volta per squadra,
+  in campo ≠ bannato; alleati oltre `5 − giocatori` scartati e detti).
+- Foglio `#photo-dialog` (app.js, `renderPhoto`): lettura (miniatura, secondi, Annulla = richiesta annullata) → errore
+  (messaggi in italiano, "Riprova", "Cambia chiave" su 401/403, "Scatta di nuovo", galleria) → risultato: mappa
+  modificabile (apre `#map-dialog` con `mapFor = "photo"`; "Letta dalla foto" / "resta quella scelta prima" / "Mappa non
+  riconosciuta: sceglila tu, oppure conferma senza"), Attacco/Difesa se la mappa li ha, 5 righe "La vostra squadra" (nome
+  letto + chip "Alleato"/giocatore, un tocco cicla) e 5 "Avversari"; incerto = bordo ambra con "?" e "Forse:" accanto
+  (un tocco scambia); tocco sull'eroe → `#photo-hero` (solita griglia per ruolo + ricerca + "Nessun eroe"); "Conferma"
+  fissa in basso, poi messaggio con "Annulla". Foto ridotta a 1600 px di lato lungo; **in memoria al massimo 5**
+  (`MAX_PHOTOS`, `window.owcPhotos()` per i test).
+- APK: `onShowFileChooser` (WebChromeClient) → con `capture` fotocamera (`ACTION_IMAGE_CAPTURE`, niente permesso CAMERA)
+  su `PhotoProvider` (content:// minimo, `cache/photos`, **max 5 file**, i vecchi cancellati), senza → galleria.
+  Emulatore: tocco al centro, chiave finta, Invio → deve aprirsi la fotocamera, indietro → app viva (screenshot 7*).
+- e2e "foto: …" (Claude simulato con `ctx.route`, 47 controlli, screenshot 19*). Costo stimato ~1–4 centesimi a foto
+  (mostrato sotto il foglio da `usage`).
+
 ## L'app (PWA) — come deve essere
 
 Tema scuro, bersagli grandi (min 48 px), pensata per una mano sola.

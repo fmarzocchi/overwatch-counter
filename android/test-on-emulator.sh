@@ -40,6 +40,33 @@ if [ -z "$pid" ]; then echo "ERRORE: l'app non è più in esecuzione"; exit 1; f
 if grep -E "CONSOLE.*Uncaught" "$OUT/logcat.txt"; then echo "ERRORE: errori JavaScript nell'app (vedi sopra)"; exit 1; fi
 echo "app in esecuzione (pid $pid)"
 
+# Foto del tabellone: il pulsante grande al centro della barra apre (la prima volta) chiave e nomi nel gioco; con Invio
+# si arriva a "Salva e scatta", che deve aprire la fotocamera del telefono. Indietro torna all'app (foto annullata):
+# l'app deve restare aperta e senza errori JavaScript. La chiave è finta: qui non si chiama Claude.
+resumed() { adb shell dumpsys activity activities | grep -E "mResumedActivity|topResumedActivity" | head -1 || true; }
+adb shell input tap $((W / 2)) $((H * 90 / 100))
+sleep 3
+shot 7-foto-impostazioni
+adb shell input text "sk-ant-prova-emulatore"
+adb shell input keyevent KEYCODE_ENTER   # → nome nel gioco del primo giocatore
+adb shell input text "Fabio"
+adb shell input keyevent KEYCODE_ENTER   # → secondo giocatore
+adb shell input keyevent KEYCODE_ENTER   # → pulsante "Salva e scatta"
+adb shell input keyevent KEYCODE_ENTER   # lo preme
+sleep 6
+shot 7b-fotocamera
+echo "in primo piano: $(resumed)"
+if resumed | grep -qi camera; then echo "fotocamera aperta: ok"; else echo "AVVISO: la fotocamera non risulta aperta"; fi
+for i in 1 2 3; do
+  if resumed | grep -q "$PKG"; then break; fi
+  adb shell input keyevent KEYCODE_BACK
+  sleep 3
+done
+shot 7c-ritorno
+adb shell run-as "$PKG" ls -la cache/photos 2>/dev/null || true
+if ! resumed | grep -q "$PKG"; then echo "ERRORE: dopo la fotocamera non si torna all'app"; exit 1; fi
+if [ -z "$(adb shell pidof "$PKG" || true)" ]; then echo "ERRORE: l'app si è chiusa dopo la fotocamera"; exit 1; fi
+
 # Schermi dei telefoni dell'utente: stessa risoluzione e densità (≈ fattore 3 → 480 dpi logici).
 # Nothing Phone (3): 1260×2800, 460 ppi. Xiaomi 14T: 1220×2712, 446 ppi. Più una prova con il carattere
 # di sistema ingrandito (130%), che la WebView applica anche all'app.

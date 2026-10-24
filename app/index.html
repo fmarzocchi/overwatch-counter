@@ -83,6 +83,20 @@
     <header class="top"><h1 id="t-profile" class="title">Profilo</h1></header>
     <div id="players"></div>
 
+    <section class="card glass" id="photo-card" aria-labelledby="t-photo-card">
+      <h2 id="t-photo-card">Foto del tabellone</h2>
+      <p class="muted small">Il pulsante con la fotocamera in basso legge dal tabellone mappa, attacco/difesa ed eroi delle
+        due squadre (Claude Sonnet 5.5). Serve una chiave API di Anthropic: console.anthropic.com → API Keys.</p>
+      <label for="claude-key">Chiave API di Claude</label>
+      <input id="claude-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+      <div class="row">
+        <button id="claude-save" type="button" class="btn">Salva chiave</button>
+        <button id="claude-clear" type="button" class="btn ghost">Rimuovi</button>
+      </div>
+      <p class="muted small">La chiave resta solo su questo telefono e va solo ad api.anthropic.com. Ogni foto costa circa
+        2–4 centesimi dei crediti API; il «Nome nel gioco» di ciascuno serve a capire quale riga è la vostra.</p>
+    </section>
+
     <section class="card glass">
       <h2>Aggiornamento dati</h2>
       <p id="data-info" class="muted"></p>
@@ -97,13 +111,25 @@
     </section>
   </main>
 
-  <!-- ============ BARRA IN BASSO (flottante) ============ -->
-  <nav class="tabs dock glass-blur" aria-label="Schede">
-    <button type="button" data-view="match" aria-current="page"><span class="ic-slot" data-ic="game"></span>Partita</button>
-    <!-- sempre a portata di pollice; si può annullare dal messaggio che compare -->
-    <button type="button" id="new-match" class="tab-action" aria-label="Nuova partita"><span class="ic-slot" data-ic="restart"></span></button>
-    <button type="button" data-view="profile"><span class="ic-slot" data-ic="person"></span>Profilo</button>
+  <!-- ============ BARRA IN BASSO (flottante): Partita · Nuova partita · FOTO (al centro) · Profilo ============ -->
+  <nav class="tabs dock" aria-label="Schede">
+    <div class="dock-bar glass-blur">
+      <div class="dock-side">
+        <button type="button" data-view="match" aria-current="page"><span class="ic-slot" data-ic="game"></span>Partita</button>
+        <!-- sempre a portata di pollice; si può annullare dal messaggio che compare -->
+        <button type="button" id="new-match" class="tab-action" aria-label="Nuova partita"><span class="ic-slot" data-ic="restart"></span>Nuova</button>
+      </div>
+      <span class="dock-gap" aria-hidden="true"></span>
+      <div class="dock-side">
+        <button type="button" data-view="profile"><span class="ic-slot" data-ic="person"></span>Profilo</button>
+      </div>
+    </div>
+    <!-- foto del tabellone: Claude riconosce mappa, lato ed eroi (photo.js) -->
+    <button type="button" id="photo-btn" class="photo-btn" aria-label="Foto del tabellone"><span class="ic-slot" data-ic="camera"></span></button>
   </nav>
+  <!-- fotocamera (capture) e galleria; la foto resta solo in memoria (al massimo 5) -->
+  <input id="photo-input" class="file-in" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+  <input id="photo-gallery" class="file-in" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
 
   <!-- ============ SCELTA MAPPA ============ -->
   <dialog id="map-dialog" aria-labelledby="t-map">
@@ -162,6 +188,41 @@
       <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
     </div>
     <div id="choose-body"></div>
+  </dialog>
+
+  <!-- ============ FOTO: prima volta (chiave e nomi nel gioco) ============ -->
+  <dialog id="photo-setup" aria-labelledby="t-photo-setup">
+    <div class="dlg-head">
+      <h2 id="t-photo-setup">Foto del tabellone</h2>
+      <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
+    </div>
+    <div id="photo-setup-body" class="ph-body"></div>
+  </dialog>
+
+  <!-- ============ FOTO: lettura e conferma ============ -->
+  <dialog id="photo-dialog" aria-labelledby="t-photo">
+    <div class="dlg-head">
+      <h2 id="t-photo">Dalla foto</h2>
+      <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
+    </div>
+    <div id="photo-body" class="ph-body"></div>
+  </dialog>
+
+  <!-- ============ FOTO: correggi un eroe ============ -->
+  <dialog id="photo-hero" aria-labelledby="t-photo-hero">
+    <div class="dlg-head">
+      <h2 id="t-photo-hero">Scegli l'eroe</h2>
+      <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
+    </div>
+    <div class="search glass">
+      <span class="ic-slot" data-ic="search"></span>
+      <input id="photo-q" type="search" placeholder="Cerca eroe" autocomplete="off" autocapitalize="off" spellcheck="false"
+        enterkeyhint="go" aria-label="Cerca eroe" aria-controls="photo-grid">
+      <button type="button" class="search-clear" data-clear="photo-q" aria-label="Cancella la ricerca" hidden><span class="ic-slot" data-ic="xmark"></span></button>
+    </div>
+    <div class="ph-none-row"><button type="button" id="photo-none" class="btn ghost">Nessun eroe (non ancora scelto)</button></div>
+    <div id="photo-grid"></div>
+    <p class="none-found" data-none="photo-grid" hidden>Nessun eroe con questo nome.</p>
   </dialog>
 
   <div id="toast" class="toast glass-blur" role="status" aria-live="polite" hidden></div>

@@ -1,11 +1,11 @@
 // Service worker: guscio dell'app network-first (sempre la versione pubblicata; la copia salvata solo offline:
 // prima si aggiornava in sottofondo e un'apertura poteva mescolare file vecchi e nuovi), data.json network-first
 // con ripiego sulla copia salvata se offline, icone degli eroi cache-first.
-const VERSION = "v6";
+const VERSION = "v7";
 const SHELL = `owc-shell-${VERSION}`;
 const DATA = "owc-data";
 const IMG = "owc-img";
-const SHELL_FILES = ["./", "index.html", "style.css", "app.js", "recommend.js", "theory.js", "icons.js",
+const SHELL_FILES = ["./", "index.html", "style.css", "app.js", "recommend.js", "theory.js", "icons.js", "photo.js",
   "fonts/inter.woff2", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {

@@ -18,6 +18,8 @@ const PATHS = {
   swap: '<path d="M4 8.5h13.5l-3.6-3.6M20 15.5H6.5l3.6 3.6"/>',
   chart: '<path d="M4.5 19.5V10M10 19.5V4.5M15.5 19.5v-7M21 19.5H3"/>',
   grid: '<rect x="4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="4" y="13.4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="13.4" width="6.6" height="6.6" rx="1.6"/>',
+  camera: '<path d="M3.5 8.7c0-1.2 1-2.2 2.2-2.2h2.1l1.6-2.3h5.2l1.6 2.3h2.1c1.2 0 2.2 1 2.2 2.2v8.9c0 1.2-1 2.2-2.2 2.2H5.7c-1.2 0-2.2-1-2.2-2.2V8.7Z"/><circle cx="12" cy="12.9" r="3.6"/>',
+  photo: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.4"/><circle cx="9" cy="9.6" r="1.6"/><path d="m4 17.5 4.6-4.6 3.4 3.4 2.6-2.6 5.4 5.4"/>',
   list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="17.5" r="1" fill="currentColor"/>',
 };
 

@@ -18,5 +18,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- foto del tabellone: la fotocamera scrive qui (cache dell'app, al massimo 5 foto) -->
+        <provider
+            android:name=".PhotoProvider"
+            android:authorities="io.github.fmarzocchi.owcounter.photos"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>

@@ -1344,6 +1344,296 @@ try {
     lastPage = page;
   }
 
+  // ---------- foto del tabellone: pulsante, impostazioni, Claude (simulato), foglio da confermare e correggere ----------
+  {
+    const { ctx: cp, page: pp } = await newPage({ serviceWorkers: "block" });
+    lastPage = pp;
+    const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "POST, OPTIONS" };
+    const okResp = (obj) => ({ id: "msg_test", type: "message", role: "assistant", model: "claude-sonnet-5-5", stop_reason: "end_turn",
+      content: [{ type: "text", text: JSON.stringify(obj) }], usage: { input_tokens: 3000, output_tokens: 420, cache_read_input_tokens: 2600, cache_creation_input_tokens: 0 } });
+    const slot = (nickname, role, hero, sure = true, alternatives = []) => ({ nickname, role, hero, sure, alternatives });
+    const readA = { scoreboard: true, map: "King's Row", side: "attack",
+      allies: [slot("FABIO", "Damage", "Cassidy"), slot("Giuly", "Support", "Ana", false, ["Kiriko", "Baptiste"]), slot("xXtank", "Tank", null),
+        slot("Pippo", "Support", "Lúcio"), slot("Zed", "Damage", "Genji")],
+      enemies: [slot("Uno", "Tank", "Winston"), slot("Due", "Damage", "Tracer", false, ["Genji"]), slot("Tre", "Damage", "Cassidy"),
+        slot("Quattro", "Support", "Mercy"), slot("Cinque", "Support", null)] };
+    const calls = [];
+    let reply = () => ({ status: 200, json: okResp(readA) });
+    await cp.route("https://api.anthropic.com/**", async (r) => {
+      const req = r.request();
+      if (req.method() === "OPTIONS") { await r.fulfill({ status: 204, headers: CORS }); return; }
+      calls.push({ headers: req.headers(), body: req.postDataJSON() });
+      const rep = await reply(calls.length);
+      if (rep.delay) await new Promise((res) => setTimeout(res, rep.delay));
+      if (rep.abort) { await r.abort().catch(() => {}); return; }
+      await r.fulfill({ status: rep.status, headers: { ...CORS, "content-type": "application/json" }, body: JSON.stringify(rep.json) }).catch(() => {});
+    });
+    // ritratti ufficiali (copiati dal workflow, qui assenti): un'immagine qualsiasi, così si costruisce il foglio di riferimento
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==", "base64");
+    await cp.route((u) => u.href.startsWith(`${BASE}heroes/`), (r) => r.fulfill({ status: 200, contentType: "image/png", body: png }));
+    await pp.addInitScript((prof) => {
+      if (!localStorage.getItem("owc.profile")) localStorage.setItem("owc.profile", JSON.stringify(prof));
+    }, { players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] });
+    await pp.goto(BASE);
+    await pp.locator(CARD).first().waitFor();
+    const shotBuf = await pp.screenshot(); // la "foto" del tabellone: 780×1688, viene ridotta a 1600 di lato lungo
+
+    // pulsante grande, esattamente al centro della barra in basso
+    const dock = await pp.evaluate(() => {
+      const b = document.querySelector("#photo-btn").getBoundingClientRect();
+      const tabs = [...document.querySelectorAll(".dock-side button")].map((x) => x.getBoundingClientRect());
+      return { w: b.width, h: b.height, cx: b.left + b.width / 2, vw: window.innerWidth, bottom: b.bottom, vh: window.innerHeight,
+        overlap: tabs.some((t) => t.right > b.left && t.left < b.right), maxTab: Math.max(...tabs.map((t) => t.height)) };
+    });
+    check("foto: pulsante grande al centro della barra in basso", dock.w >= 64 && dock.h >= 64 && Math.abs(dock.cx - dock.vw / 2) <= 1
+      && dock.bottom <= dock.vh && dock.bottom > dock.vh - 40 && !dock.overlap && dock.w > dock.maxTab, JSON.stringify(dock));
+    await shot(pp, "19a-foto-pulsante");
+
+    // prima volta: chiave e nomi nel gioco, poi subito la fotocamera
+    await pp.click("#photo-btn");
+    await pp.locator("#photo-setup[open]").waitFor();
+    check("foto: la prima volta chiede la chiave e il nome nel gioco di ciascuno",
+      await pp.locator("#ps-key").isVisible() && await pp.locator("#ps-nick0").isVisible() && await pp.locator("#ps-nick1").isVisible()
+      && /Fabio/.test(await text(pp, "#photo-setup-body")) && /Giulia/.test(await text(pp, "#photo-setup-body")));
+    await pp.fill("#ps-key", "sk-ant-test-123");
+    await pp.fill("#ps-nick0", "Fabio");
+    await pp.fill("#ps-nick1", "Giuly");
+    await shot(pp, "19b-foto-impostazioni");
+    let [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#ps-go")]);
+    check("foto: «Salva e scatta» apre la fotocamera", !!fc && await fc.element().evaluate((i) => i.id === "photo-input" && i.getAttribute("capture") === "environment"));
+    const saved = await pp.evaluate(() => ({ key: JSON.parse(localStorage.getItem("owc.claudeKey")), prof: JSON.parse(localStorage.getItem("owc.profile")) }));
+    check("foto: chiave e nomi salvati solo sul telefono", saved.key === "sk-ant-test-123" && saved.prof.players[1].nick === "Giuly" && saved.prof.photoSetupSeen);
+    reply = () => ({ status: 200, json: okResp(readA), delay: 700 });
+    await fc.setFiles({ name: "tabellone.png", mimeType: "image/png", buffer: shotBuf });
+    await pp.locator("#photo-dialog[open] .ph-spin").waitFor();
+    await shot(pp, "19c-foto-lettura");
+    await pp.locator("#ph-confirm").waitFor();
+
+    const c0 = calls[0];
+    const imgs = c0.body.messages[0].content.filter((b) => b.type === "image");
+    const nickTxt = c0.body.messages[0].content.filter((b) => b.type === "text").map((b) => b.text).join(" ");
+    check("foto: richiesta a Claude Sonnet 5.5 con chiave, versione e accesso dal browser",
+      c0.headers["x-api-key"] === "sk-ant-test-123" && c0.headers["anthropic-version"] === "2026-10-21"
+      && c0.headers["anthropic-dangerous-direct-browser-access"] === "true" && c0.headers["anthropic-beta"] === "server-side-fallback-2026-07-01"
+      && c0.body.model === "claude-sonnet-5-5" && c0.body.fallbacks === "default" && c0.body.output_config.format.type === "json_schema",
+      JSON.stringify({ h: c0.headers, m: c0.body.model }));
+    const photoDims = await pp.evaluate((b64) => new Promise((ok) => { const i = new Image(); i.onload = () => ok([i.naturalWidth, i.naturalHeight]); i.src = `data:image/jpeg;base64,${b64}`; }), imgs[1].source.data);
+    check("foto: foglio dei ritratti + foto ridotta (lato lungo 1600) + vostri nomi", imgs.length === 2 && imgs[0].cache_control
+      && Math.max(...photoDims) === 1600 && /Fabio, Giuly/.test(nickTxt), JSON.stringify({ n: imgs.length, photoDims, nickTxt }));
+    check("foto: mappe nell'elenco dello schema col nome dei dati", c0.body.output_config.format.schema.properties.map.anyOf[0].enum.includes("King's Row"));
+
+    // il foglio: mappa letta, lato, le due squadre con i giocatori dell'app riconosciuti
+    const rowsOf = (key) => pp.locator(`#photo-body .ph-${key} .ph-row`).evaluateAll((rs) => rs.map((r) => ({
+      hero: r.querySelector(".ph-hname").textContent, nick: r.querySelector(".ph-nick").textContent, owner: r.querySelector(".ph-owner")?.textContent ?? null,
+      doubt: !!r.querySelector(".ph-hero.doubt"), alts: [...r.querySelectorAll(".ph-alt")].map((a) => a.textContent) })));
+    let ours = await rowsOf("ours");
+    let foes = await rowsOf("enemies");
+    check("foto: mappa letta (King's Row, «Letta dalla foto») e Attacco segnato",
+      /King's Row/.test(await text(pp, "#ph-map")) && /Letta dalla foto/.test(await text(pp, "#ph-map-note"))
+      && await pp.locator("#photo-body .ph-side [data-side=attack]").getAttribute("aria-pressed") === "true");
+    check("foto: 5 alleati e 5 avversari; Fabio e Giulia riconosciuti dai nomi nel gioco (FABIO, Giuly)",
+      ours.length === 5 && foes.length === 5 && ours[0].owner.includes("Fabio") && ours[1].owner.includes("Giulia") && ours[3].owner === "Alleato", JSON.stringify(ours));
+    check("foto: eroe incerto con «?» e gli altri possibili accanto (Ana → Kiriko, Baptiste)",
+      ours[1].doubt && ours[1].alts.join() === "Kiriko,Baptiste" && !ours[0].doubt && foes[1].doubt && foes[1].alts.join() === "Genji", JSON.stringify([ours[1], foes[1]]));
+    check("foto: chi non ha ancora scelto resta «Non scelto»", ours[2].hero === "Non scelto" && foes[4].hero === "Non scelto");
+    await shot(pp, "19d-foto-risultato");
+
+    // un tocco su un'alternativa la mette al posto dell'incerto (che resta tra le alternative)
+    await pp.locator("#photo-body .ph-ours .ph-row").nth(1).locator(".ph-alt", { hasText: "Kiriko" }).click();
+    ours = await rowsOf("ours");
+    check("foto: tocco su «Kiriko» → Kiriko al posto di Ana, Ana tra le alternative, niente più «?»",
+      ours[1].hero === "Kiriko" && ours[1].alts.includes("Ana") && !ours[1].doubt, JSON.stringify(ours[1]));
+    // correggere un eroe: la solita lista per ruolo + ricerca
+    await pp.locator("#photo-body .ph-enemies .ph-hero").nth(0).click();
+    await pp.locator("#photo-hero[open]").waitFor();
+    const blocks = await pp.locator("#photo-grid [data-block]").evaluateAll((bs) => bs.map((b) => b.dataset.block));
+    check("foto: correzione con la lista divisa per ruolo e la ricerca", blocks.join() === "Tank,Damage,Support"
+      && (await pp.locator("#photo-grid .hero").count()) === data.heroes.length && /Uno/.test(await text(pp, "#t-photo-hero")));
+    check("foto: nella lista l'eroe attuale è premuto e quelli già in squadra segnati",
+      await pp.locator("#photo-grid .hero[aria-pressed=true] .nm").innerText() === "Winston" && (await pp.locator("#photo-grid .hero.in-enemies").count()) === 4);
+    await pp.fill("#photo-q", "rein");
+    check("foto: la ricerca filtra la lista", (await pp.locator("#photo-grid .hero:not([hidden])").count()) === 1);
+    await shot(pp, "19e-foto-scegli-eroe");
+    await pp.press("#photo-q", "Enter");
+    await pp.locator("#photo-hero").waitFor({ state: "hidden" });
+    foes = await rowsOf("enemies");
+    check("foto: Invio sceglie Reinhardt al posto di Winston", foes[0].hero === "Reinhardt", JSON.stringify(foes[0]));
+    // stesso eroe due volte nella stessa squadra: chi lo aveva prende quello di prima
+    await pp.locator("#photo-body .ph-ours .ph-hero").nth(4).click();
+    await pp.locator("#photo-hero[open]").waitFor();
+    await pp.locator("#photo-grid .hero", { has: pp.locator(".nm", { hasText: /^Cassidy$/ }) }).click();
+    ours = await rowsOf("ours");
+    check("foto: un eroe una volta per squadra (Cassidy a Zed, Genji passa a FABIO)", ours[4].hero === "Cassidy" && ours[0].hero === "Genji", JSON.stringify(ours.map((r) => r.hero)));
+    await pp.locator("#photo-body .ph-ours .ph-hero").nth(0).click();
+    await pp.locator("#photo-hero[open]").waitFor();
+    await pp.locator("#photo-grid .hero", { has: pp.locator(".nm", { hasText: /^Cassidy$/ }) }).click();
+    ours = await rowsOf("ours");
+    check("foto: e si torna indietro allo stesso modo", ours[0].hero === "Cassidy" && ours[4].hero === "Genji");
+    // "Nessun eroe": la riga torna «Non scelto»
+    await pp.locator("#photo-body .ph-enemies .ph-hero").nth(2).click();
+    await pp.locator("#photo-hero[open]").waitFor();
+    await pp.click("#photo-none");
+    foes = await rowsOf("enemies");
+    check("foto: «Nessun eroe» svuota la riga", foes[2].hero === "Non scelto");
+    // chi è chi: il tocco sul nome cambia giocatore (uno per riga)
+    await pp.locator("#photo-body .ph-ours .ph-owner").nth(3).click();
+    ours = await rowsOf("ours");
+    check("foto: tocco su «Alleato» → la riga diventa di Fabio (e la sua di prima torna alleato)", ours[3].owner.includes("Fabio") && ours[0].owner === "Alleato", JSON.stringify(ours.map((r) => r.owner)));
+    await pp.locator("#photo-body .ph-ours .ph-owner").nth(3).click();
+    await pp.locator("#photo-body .ph-ours .ph-owner").nth(3).click();
+    ours = await rowsOf("ours");
+    check("foto: un altro tocco passa a Giulia, poi di nuovo Alleato", ours.every((r) => r.owner === "Alleato"), JSON.stringify(ours.map((r) => r.owner)));
+    await pp.locator("#photo-body .ph-ours .ph-owner").nth(1).click();
+    await pp.locator("#photo-body .ph-ours .ph-owner").nth(1).click();
+    await pp.locator("#photo-body .ph-ours .ph-owner").nth(0).click();
+    ours = await rowsOf("ours");
+    check("foto: e indietro (Fabio, Giulia, alleati)", ours[0].owner.includes("Fabio") && ours[1].owner.includes("Giulia") && ours[3].owner === "Alleato", JSON.stringify(ours.map((r) => r.owner)));
+    // la mappa letta si cambia; si può anche togliere
+    await pp.click("#ph-map");
+    await pp.locator("#map-dialog[open]").waitFor();
+    check("foto: la scelta mappa parte da quella letta", await pp.locator("#map-list [data-map=kings-row]").getAttribute("aria-pressed") === "true");
+    await pp.click("#map-list [data-map=lijiang-tower]");
+    check("foto: mappa cambiata (Lijiang, «Scelta da te»), lato nascosto per il Controllo, il foglio resta aperto",
+      /Lijiang/.test(await text(pp, "#ph-map")) && /Scelta da te/.test(await text(pp, "#ph-map-note")) && !(await pp.locator("#photo-body .ph-side").count())
+      && await pp.locator("#photo-dialog").evaluate((d) => d.open) && (await matchState(pp)).mapSlug == null);
+    await pp.click("#ph-map");
+    await pp.click("#map-list [data-map=kings-row]");
+    await pp.locator("#photo-body .ph-side [data-side=defense]").click();
+    check("foto: lato cambiato a mano", await pp.locator("#photo-body .ph-side [data-side=defense]").getAttribute("aria-pressed") === "true"
+      && /scelto da te/.test(await text(pp, "#photo-body .ph-head")));
+    const noScroll = await pp.evaluate(() => document.querySelector("#photo-dialog").scrollWidth <= document.querySelector("#photo-dialog").clientWidth);
+    const confirmVisible = await pp.locator("#ph-confirm").evaluate((b) => { const r = b.getBoundingClientRect(); return r.bottom <= window.innerHeight && r.top >= 0; });
+    check("foto: «Conferma» sempre in vista, niente scorrimento orizzontale", noScroll && confirmVisible);
+    // conferma: la partita si compila
+    await pp.click("#ph-confirm");
+    await pp.locator("#photo-dialog").waitFor({ state: "hidden" });
+    let st = await matchState(pp);
+    check("foto: confermata → mappa, lato, eroi presi da Fabio e Giulia, alleati e avversari",
+      st.mapSlug === "kings-row" && st.side === "defense" && String(st.picked[0]) === heroId("Cassidy") && String(st.picked[1]) === heroId("Kiriko")
+      && st.allies.map(String).join() === [heroId("Lúcio"), heroId("Genji")].join() && st.enemies.map(String).join() === [heroId("Reinhardt"), heroId("Tracer"), heroId("Mercy")].join(),
+      JSON.stringify(st));
+    check("foto: messaggio con «Annulla»", /compilata dalla foto/.test(await text(pp, "#toast")) && await pp.locator("#toast button", { hasText: "Annulla" }).isVisible());
+    check("foto: i riquadri mostrano gli eroi presi (Cassidy, Kiriko)", (await pickNames(pp)).join() === "Cassidy,Kiriko", (await pickNames(pp)).join());
+    await toTop(pp);
+    await shot(pp, "19f-foto-confermata");
+    await pp.locator("#toast button", { hasText: "Annulla" }).click();
+    st = await matchState(pp);
+    check("foto: «Annulla» ripristina la partita di prima", !st.mapSlug && !st.enemies.length && st.picked.every((x) => !x), JSON.stringify(st));
+
+    // mappa non riconosciuta (e nessuna scelta prima): lo dice, e si conferma anche senza
+    reply = () => ({ status: 200, json: okResp({ ...readA, map: null, side: null }) });
+    [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#photo-btn")]);
+    await fc.setFiles({ name: "t2.png", mimeType: "image/png", buffer: shotBuf });
+    await pp.locator("#ph-confirm").waitFor();
+    check("foto: la seconda volta niente impostazioni, subito la fotocamera", calls.length === 2);
+    check("foto: mappa non riconosciuta → lo dice, «Nessuna mappa»", /Mappa non riconosciuta/.test(await text(pp, "#ph-map-note")) && /Nessuna mappa/.test(await text(pp, "#ph-map")));
+    await shot(pp, "19g-foto-senza-mappa");
+    await pp.click("#ph-confirm");
+    st = await matchState(pp);
+    check("foto: confermata senza mappa", st.mapSlug === null && st.enemies.length === 4, JSON.stringify(st));
+    // con la mappa già scelta nella partita: la foto senza mappa la lascia com'è
+    await pp.click("#map-btn");
+    await pp.click("#map-list [data-map=kings-row]");
+    reply = () => ({ status: 200, json: okResp({ ...readA, map: null, side: null }) });
+    [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#photo-btn")]);
+    await fc.setFiles({ name: "t3.png", mimeType: "image/png", buffer: shotBuf });
+    await pp.locator("#ph-confirm").waitFor();
+    check("foto: mappa non letta ma già scelta → resta quella e lo dice", /King's Row/.test(await text(pp, "#ph-map"))
+      && /resta quella scelta prima/.test(await text(pp, "#ph-map-note")));
+    await pp.click("#photo-body .ph-ours .ph-hero >> nth=0");
+    await pp.locator("#photo-hero[open]").waitFor();
+    await pp.press("#photo-hero", "Escape");
+    await pp.locator("#photo-hero").waitFor({ state: "hidden" });
+    check("foto: chiudere la lista non chiude il foglio", await pp.locator("#photo-dialog").evaluate((d) => d.open));
+    await pp.click("#photo-dialog .dlg-head .close");
+    await pp.locator("#photo-dialog").waitFor({ state: "hidden" });
+    st = await matchState(pp);
+    check("foto: chiuso con ×, la partita non cambia", st.mapSlug === "kings-row" && st.enemies.length === 4, JSON.stringify(st));
+
+    // nessun tabellone nella foto
+    reply = () => ({ status: 200, json: okResp({ scoreboard: false, map: null, side: null, allies: [], enemies: [] }) });
+    [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#photo-btn")]);
+    await fc.setFiles({ name: "t4.png", mimeType: "image/png", buffer: shotBuf });
+    await pp.locator("#ph-confirm").waitFor();
+    check("foto senza tabellone: lo dice e lascia compilare a mano", /non vedo il tabellone/.test(await text(pp, "#photo-body"))
+      && (await pp.locator("#photo-body .ph-row").count()) === 10);
+
+    // errori: chiave non valida, rete assente, poi «Riprova»
+    reply = () => ({ status: 401, json: { type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } } });
+    [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#ph-retake")]);
+    await fc.setFiles({ name: "t5.png", mimeType: "image/png", buffer: shotBuf });
+    await pp.locator("#photo-body .ph-warn[role=alert]").waitFor();
+    check("foto: chiave rifiutata → messaggio chiaro e «Cambia chiave»", /chiave API non è valida/.test(await text(pp, "#photo-body"))
+      && await pp.locator("#photo-body button", { hasText: "Cambia chiave" }).isVisible());
+    await shot(pp, "19h-foto-errore");
+    reply = () => ({ abort: true });
+    await pp.locator("#photo-body button", { hasText: "Cambia chiave" }).click();
+    await pp.locator("#photo-setup[open]").waitFor();
+    await pp.fill("#ps-key", "sk-ant-nuova");
+    await pp.click("#ps-go");
+    await pp.locator("#photo-body .ph-warn[role=alert]").waitFor();
+    check("foto: chiave nuova e «Salva e riprova» rimanda la stessa foto; senza rete lo dice",
+      calls[calls.length - 1].headers["x-api-key"] === "sk-ant-nuova" && /Nessuna connessione/.test(await text(pp, "#photo-body")));
+    reply = () => ({ status: 200, json: okResp(readA) });
+    await pp.locator("#photo-body button", { hasText: "Riprova" }).click();
+    await pp.locator("#ph-confirm").waitFor();
+    check("foto: «Riprova» funziona", (await rowsOf("ours"))[0].hero === "Cassidy");
+
+    // ripiego su un altro modello non attivo per la chiave: si riprova una volta senza
+    const before = calls.length;
+    reply = (n) => (n === before + 1 ? { status: 400, json: { type: "error", error: { type: "invalid_request_error", message: "fallbacks: beta not enabled" } } } : { status: 200, json: okResp(readA) });
+    [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#ph-retake")]);
+    await fc.setFiles({ name: "t6.png", mimeType: "image/png", buffer: shotBuf });
+    for (let i = 0; i < 50 && calls.length < before + 2; i++) await pp.waitForTimeout(100);
+    await pp.locator("#ph-confirm").waitFor();
+    const last = calls[calls.length - 1];
+    check("foto: fallback rifiutato → seconda richiesta senza fallback, risultato mostrato", calls.length === before + 2 && !last.body.fallbacks && !last.headers["anthropic-beta"]);
+
+    // chiudere durante la lettura annulla
+    reply = () => ({ status: 200, json: okResp(readA), delay: 1500 });
+    const stBefore = JSON.stringify(await matchState(pp));
+    [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#ph-retake")]);
+    await fc.setFiles({ name: "t7.png", mimeType: "image/png", buffer: shotBuf });
+    await pp.locator("#photo-dialog .ph-spin").waitFor();
+    await pp.locator("#photo-body button", { hasText: "Annulla" }).click();
+    await pp.waitForTimeout(1900);
+    check("foto: «Annulla» durante la lettura chiude e non cambia nulla", !(await pp.locator("#photo-dialog").evaluate((d) => d.open))
+      && JSON.stringify(await matchState(pp)) === stBefore);
+
+    // al massimo 5 foto in memoria
+    check("foto: al massimo 5 foto tenute in memoria (scattate 7)", await pp.evaluate(() => window.owcPhotos()) === 5, String(await pp.evaluate(() => window.owcPhotos())));
+
+    // Profilo: nome nel gioco per ciascuno e la chiave
+    await pp.click(".tabs [data-view=profile]");
+    check("foto: nel Profilo il nome nel gioco di ognuno e la chiave salvata",
+      await pp.inputValue("#p0-nick") === "Fabio" && await pp.inputValue("#p1-nick") === "Giuly"
+      && /salvata/.test(await pp.getAttribute("#claude-key", "placeholder")) && await pp.inputValue("#claude-key") === "");
+    await pp.locator("#photo-card").scrollIntoViewIfNeeded();
+    await shot(pp, "19i-foto-profilo");
+    await pp.click("#claude-clear");
+    check("foto: «Rimuovi» cancella la chiave", await pp.evaluate(() => localStorage.getItem("owc.claudeKey")) === null);
+    await pp.click(".tabs [data-view=match]");
+    await pp.click("#photo-btn");
+    check("foto: senza chiave il pulsante richiede la chiave (cursore già nel campo)", await pp.locator("#photo-setup[open]").isVisible()
+      && await pp.evaluate(() => document.activeElement && document.activeElement.id === "ps-key"));
+    // con la tastiera: Invio passa al campo dopo, dall'ultimo al pulsante, e un altro Invio scatta (come sull'emulatore)
+    await pp.keyboard.type("sk-ant-tastiera");
+    await pp.keyboard.press("Enter");
+    const after1 = await pp.evaluate(() => document.activeElement.id);
+    await pp.keyboard.press("Enter");
+    await pp.keyboard.press("Enter");
+    const after3 = await pp.evaluate(() => document.activeElement.id);
+    // (il selettore file simulato di Playwright non si apre da tastiera dopo il primo uso: qui si controlla che il
+    // pulsante venga premuto; l'apertura della fotocamera dai tocchi è provata sopra, quella da Invio sull'emulatore)
+    [fc] = await Promise.all([pp.waitForEvent("filechooser", { timeout: 3000 }).catch(() => null), pp.keyboard.press("Enter")]);
+    check("foto: con Invio dalla chiave ai nomi, al pulsante e poi «Salva e scatta»", after1 === "ps-nick0" && after3 === "ps-go"
+      && !(await pp.locator("#photo-setup").evaluate((d) => d.open))
+      && await pp.evaluate(() => JSON.parse(localStorage.getItem("owc.claudeKey"))) === "sk-ant-tastiera", `${after1} ${after3}`);
+    if (fc) await fc.setFiles([]);
+    await cp.close();
+    lastPage = page;
+  }
+
   check("nessun errore JavaScript", errors.length === 0, errors.join("\n"));
 } catch (e) {
   if (lastPage) {

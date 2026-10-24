@@ -2,6 +2,7 @@ import { recommend, recommendTeam, breakdown, details, hasSides, withDivision, h
   BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, threatScores, rankStars, STAR_MIN_SD, matchupSign } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
+import { API_URL, MAX_PHOTOS, photoRequest, photoHeaders, isFallbackRejection, photoError, readPhotoResponse, matchOwners, applyPhoto } from "./photo.js";
 
 // WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
 if (!Element.prototype.replaceChildren) {
@@ -927,8 +928,9 @@ function fitBanRecs() {
 
 // ---------- mappa e lato ----------
 
+const currentMapOf = (slug) => data?.maps.find((m) => m.slug === slug) ?? null;
 function currentMap() {
-  return data?.maps.find((m) => m.slug === match.mapSlug) ?? null;
+  return currentMapOf(match.mapSlug);
 }
 
 function renderControls() {
@@ -940,12 +942,12 @@ function renderControls() {
   $$("button", side).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.side === match.side)));
 }
 
-function buildMapDialog() {
+function buildMapDialog(selected = match.mapSlug) {
   const list = $("#map-list");
   list.replaceChildren();
   list.append(el("div", { class: "maps", "data-block": "none" },
     el("button", { type: "button", class: "map-opt none", "data-map": "", "data-q": searchKeys(["nessuna", "dati generali"]),
-      "aria-pressed": String(!match.mapSlug) }, "Nessuna mappa (dati generali)")));
+      "aria-pressed": String(!selected) }, "Nessuna mappa (dati generali)")));
   for (const [mode, label] of MODES) {
     const maps = data.maps.filter((m) => m.mode === mode).sort((a, b) => a.name.localeCompare(b.name));
     if (!maps.length) continue;
@@ -953,7 +955,7 @@ function buildMapDialog() {
       el("h3", { class: "mode-title" }, label + (hasSides({ mode }) ? " · attacco/difesa" : "")),
       el("div", { class: "maps" }, maps.map((m) =>
         el("button", { type: "button", class: "map-opt", "data-map": m.slug, "data-q": searchKeys([m.en, m.name, label]),
-          "aria-pressed": String(m.slug === match.mapSlug) }, m.name)))));
+          "aria-pressed": String(m.slug === selected) }, m.name)))));
   }
 }
 
@@ -1296,6 +1298,9 @@ function renderProfile() {
       el("label", { for: nameId }, "Nome"),
       el("input", { id: nameId, value: p.name, maxlength: "16", autocomplete: "off",
         onchange: (e) => { p.name = e.target.value.trim() || defaultName(i); saveProfile(); render(); } }),
+      el("label", { for: `p${i}-nick` }, "Nome nel gioco (per la foto del tabellone)"),
+      el("input", { id: `p${i}-nick`, value: p.nick || "", maxlength: "32", autocomplete: "off", autocapitalize: "off", spellcheck: "false",
+        placeholder: "come appare nel tabellone", onchange: (e) => { p.nick = e.target.value.trim(); saveProfile(); } }),
       el("label", { for: rankId }, "Rank"),
       (() => {
         const s = el("select", { id: rankId, onchange: async (e) => { p.rank = e.target.value; saveProfile(); await loadDivisions(); render(); } },
@@ -1346,6 +1351,8 @@ function renderProfile() {
   box.append(el("p", { class: "muted small", style: "margin:0 16px" },
     "Il rank sceglie i dati Ranked della vostra divisione (Grandmaster e Campione usano gli stessi, come su counterwatch). " +
     "I preferiti ricevono un piccolo vantaggio (+1%) nei consigli."));
+  $("#claude-key").value = "";
+  $("#claude-key").placeholder = claudeKey() ? "chiave salvata ✓" : "sk-ant-…";
   const tok = store.get("owc.token", "");
   $("#token").value = "";
   $("#token").placeholder = tok ? "token salvato ✓ (inseriscine uno nuovo per sostituirlo)" : "github_pat_…";
@@ -1504,7 +1511,8 @@ function showView(name) {
 
 function wire() {
   fillIcons(document);
-  for (const id of ["hero-q", "fav-q", "map-q"]) wireSearch(id);
+  for (const id of ["hero-q", "fav-q", "map-q", "photo-q"]) wireSearch(id);
+  wirePhoto();
   $$(".tabs [data-view]").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
   $$("#groups button").forEach((b) => b.addEventListener("click", () => { match.group = b.dataset.group; saveMatch(); render(); }));
   $$("#side button").forEach((b) => b.addEventListener("click", () => {
@@ -1515,6 +1523,14 @@ function wire() {
   $("#map-list").addEventListener("click", (e) => {
     const b = e.target.closest("[data-map]");
     if (!b) return;
+    if (mapFor === "photo" && ph) { // dal foglio della foto: cambia la mappa letta, la partita solo alla conferma
+      ph.mapSlug = b.dataset.map || null;
+      ph.mapChosen = true;
+      if (!hasSides(currentMapOf(ph.mapSlug))) ph.side = null;
+      $("#map-dialog").close();
+      renderPhoto();
+      return;
+    }
     match.mapSlug = b.dataset.map || null;
     if (!hasSides(currentMap())) match.side = null;
     saveMatch();
@@ -1545,6 +1561,451 @@ function wire() {
     toast("Token salvato su questo telefono.");
   });
   $("#token-clear").addEventListener("click", () => { store.del("owc.token"); renderProfile(); toast("Token rimosso."); });
+}
+
+// ---------- foto del tabellone (Claude) ----------
+// Pulsante grande al centro della barra: foto del tabellone → Claude Sonnet 5.5 legge mappa, lato ed eroi (photo.js) →
+// foglio da confermare o correggere (ogni eroe, la mappa e il lato si cambiano con un tocco; dove Claude non è sicuro
+// propone accanto altri eroi) → la partita si compila da sola. Le foto restano solo in memoria, al massimo MAX_PHOTOS
+// (servono per "Riprova"), poi si scartano; la chiave API resta in localStorage, mai nel codice.
+const KEY_STORE = "owc.claudeKey";
+const PHOTO_TIMEOUT_MS = 60e3;
+const PHOTO_EDGE = 1600; // lato lungo della foto inviata (px): i nomi dei giocatori restano leggibili
+const photos = []; // [{b64, thumb}], le ultime MAX_PHOTOS
+window.owcPhotos = () => photos.length; // per il collaudo
+let ph = null; // foglio della foto: {photo, state: "loading" | "error" | "result", ...}
+let photoAbort = null;
+let photoTimer = null;
+let sheet = { sig: "", promise: null };
+let phPick = null; // riga che si sta correggendo: {key: "ours" | "enemies", k}
+let mapFor = null; // "photo": la mappa scelta va al foglio della foto, non alla partita
+
+const claudeKey = () => store.get(KEY_STORE, "");
+const nickOf = (i) => String(profile.players[i].nick || "").trim();
+const photoNeedsSetup = () => !claudeKey() || (!profile.photoSetupSeen && profile.players.some((_, i) => !nickOf(i)));
+const takePhoto = () => $("#photo-input").click();
+const galleryLink = () => el("button", { type: "button", class: "link-btn", onclick: () => $("#photo-gallery").click() },
+  icon("photo"), "Scegli una foto dalla galleria");
+// nel foglio le mappe vanno col nome inglese dei dati (quello che Claude conosce), con l'italiano del gioco accanto
+const photoMaps = () => ({
+  maps: data.maps.map((m) => ({ slug: m.slug, name: m.en || m.name, mode: m.mode })),
+  it: Object.fromEntries(data.maps.map((m) => [m.en || m.name, m.name])),
+});
+
+function onPhotoButton() {
+  if (!data) return;
+  if (photoNeedsSetup()) openPhotoSetup();
+  else takePhoto();
+}
+
+// Prima volta (o chiave rifiutata): chiave API e nome nel gioco di ciascuno, poi subito la fotocamera.
+function openPhotoSetup(reason = "", then = takePhoto) {
+  const hasKey = !!claudeKey();
+  fill($("#photo-setup-body"),
+    el("p", { class: "ph-intro" }, "Fotografa il tabellone (durante la partita, o alla scelta degli eroi): Claude legge mappa, " +
+      "attacco/difesa ed eroi delle due squadre, tu confermi o correggi con un tocco."),
+    reason ? el("p", { class: "ph-warn", role: "alert" }, reason) : null,
+    el("label", { for: "ps-key" }, hasKey ? "Chiave API di Claude (salvata ✓)" : "Chiave API di Claude"),
+    el("input", { id: "ps-key", type: "password", autocomplete: "off", spellcheck: "false", enterkeyhint: "next", autofocus: !hasKey,
+      placeholder: hasKey ? "salvata ✓ (incollane una nuova per sostituirla)" : "sk-ant-…" }),
+    el("p", { class: "muted small" }, "Si crea su console.anthropic.com → API Keys. Resta solo su questo telefono."),
+    el("h3", { class: "ph-sub" }, profile.players.length > 1 ? "I vostri nomi nel gioco" : "Il tuo nome nel gioco"),
+    el("p", { class: "muted small" }, "Come appaiono nel tabellone: servono a capire quale riga è di chi."),
+    profile.players.map((p, i) => [
+      el("label", { for: `ps-nick${i}`, style: `--pc: var(--p${i})` }, el("span", { class: "p-dot", "aria-hidden": "true" }), p.name),
+      el("input", { id: `ps-nick${i}`, value: p.nick || "", maxlength: "32", autocomplete: "off", autocapitalize: "off",
+        spellcheck: "false", placeholder: "Nome nel gioco", enterkeyhint: i === profile.players.length - 1 ? "done" : "next" }),
+    ]),
+    el("div", { class: "ph-actions" },
+      el("button", { type: "button", id: "ps-go", class: "btn primary", onclick: () => {
+        const k = $("#ps-key").value.trim();
+        if (k) store.set(KEY_STORE, k);
+        profile.players.forEach((p, i) => { p.nick = $(`#ps-nick${i}`).value.trim(); });
+        profile.photoSetupSeen = true;
+        saveProfile();
+        if (!claudeKey()) { toast("Incolla prima la chiave API di Claude."); $("#ps-key").focus(); return; }
+        $("#photo-setup").close();
+        then(); // ancora dentro il tocco: il telefono apre la fotocamera
+      } }, icon(then === takePhoto ? "camera" : "check"), then === takePhoto ? "Salva e scatta" : "Salva e riprova")),
+  );
+  // Invio sulla tastiera: al campo dopo, e dall'ultimo sul pulsante "Salva e scatta" (un altro Invio lo preme)
+  const fields = $$("#photo-setup-body input");
+  fields.forEach((f, k) => f.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    (k < fields.length - 1 ? fields[k + 1] : $("#ps-go")).focus();
+  }));
+  $("#photo-setup").showModal();
+}
+
+const loadImage = (src) => new Promise((ok, ko) => {
+  const img = new Image();
+  img.onload = () => ok(img);
+  img.onerror = ko;
+  img.src = src;
+});
+
+// foto → JPEG ridotto (base64, per Claude) + miniatura (per il foglio); l'originale non si tiene
+async function preparePhoto(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await loadImage(url);
+    const draw = (w, h, q) => {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      return c.toDataURL("image/jpeg", q);
+    };
+    const s = Math.min(1, PHOTO_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * s), h = Math.round(img.naturalHeight * s);
+    const full = draw(w, h, 0.85);
+    const t = Math.min(1, 480 / Math.max(w, h));
+    return { b64: full.slice(full.indexOf(",") + 1), thumb: draw(Math.round(w * t), Math.round(h * t), 0.7) };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function onPhotoFile(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ""; // la stessa foto si può scegliere di nuovo
+  if (!file || !data) return;
+  let photo;
+  try { photo = await preparePhoto(file); } catch { toast("Non riesco ad aprire questa foto: riprova."); return; }
+  photos.push(photo);
+  while (photos.length > MAX_PHOTOS) photos.shift();
+  recognize(photo);
+}
+
+// Foglio di riferimento: i ritratti ufficiali (heroes/<slug>.webp, stessa origine) con il nome sotto, per gli eroi che
+// Claude conosce meno (i più nuovi). Si costruisce una volta; uguale a ogni foto, resta nella cache dei prompt.
+const SHEET_COLS = 9, SHEET_CELL = 112, SHEET_LABEL = 22;
+function buildSheet() {
+  const sig = data.heroes.map((h) => h.slug).join("|");
+  if (sheet.sig === sig) return sheet.promise;
+  const order = (h) => ROLES.findIndex(([r]) => r === h.role);
+  const heroes = [...data.heroes].sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name));
+  const promise = Promise.all(heroes.map((h) => loadImage(`heroes/${h.slug}.webp`).catch(() => null))).then((imgs) => {
+    if (imgs.filter(Boolean).length < heroes.length / 2) return null; // icone non copiate: meglio niente
+    const c = document.createElement("canvas");
+    c.width = SHEET_COLS * SHEET_CELL;
+    c.height = Math.ceil(heroes.length / SHEET_COLS) * (SHEET_CELL + SHEET_LABEL);
+    const g = c.getContext("2d");
+    g.fillStyle = "#14161f";
+    g.fillRect(0, 0, c.width, c.height);
+    g.font = "600 15px sans-serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillStyle = "#fff";
+    heroes.forEach((h, k) => {
+      const x = (k % SHEET_COLS) * SHEET_CELL, y = Math.floor(k / SHEET_COLS) * (SHEET_CELL + SHEET_LABEL);
+      if (imgs[k]) g.drawImage(imgs[k], x + 4, y + 4, SHEET_CELL - 8, SHEET_CELL - 8);
+      g.fillText(h.name, x + SHEET_CELL / 2, y + SHEET_CELL + SHEET_LABEL / 2 - 2, SHEET_CELL - 6);
+    });
+    const url = c.toDataURL("image/jpeg", 0.85);
+    return url.slice(url.indexOf(",") + 1);
+  }).catch(() => null);
+  sheet = { sig, promise };
+  return promise;
+}
+
+// prezzi di Sonnet 5.5 in $ per milione di token: ingresso 2, scrittura in cache 2,5, lettura dalla cache 0,2, uscita 10
+function photoCost(u) {
+  if (!u) return null;
+  return ((u.input_tokens || 0) * 2 + (u.cache_creation_input_tokens || 0) * 2.5
+    + (u.cache_read_input_tokens || 0) * 0.2 + (u.output_tokens || 0) * 10) / 1e6;
+}
+
+async function recognize(photo) {
+  if (photoAbort) photoAbort.abort();
+  const ctl = new AbortController();
+  photoAbort = ctl;
+  const t0 = Date.now();
+  ph = { photo, state: "loading" };
+  renderPhoto();
+  if (!$("#photo-dialog").open) $("#photo-dialog").showModal();
+  clearInterval(photoTimer);
+  photoTimer = setInterval(() => {
+    const s = $("#ph-secs");
+    if (s) s.textContent = `${Math.round((Date.now() - t0) / 1000)} s`;
+  }, 1000);
+  const timeout = setTimeout(() => ctl.abort(), PHOTO_TIMEOUT_MS);
+  const pm = photoMaps();
+  let res;
+  try {
+    const ref = await buildSheet();
+    const ask = async (fallback) => {
+      const body = photoRequest({ heroes: data.heroes, maps: pm.maps, mapsIt: pm.it, photo: photo.b64, sheet: ref, fallback,
+        nicknames: profile.players.map((_, i) => nickOf(i)) });
+      const r = await fetch(API_URL, { method: "POST", headers: photoHeaders(claudeKey(), { fallback }), body: JSON.stringify(body), signal: ctl.signal });
+      let j = null;
+      try { j = await r.json(); } catch { /* risposta non JSON */ }
+      return { status: r.status, ok: r.ok, body: j };
+    };
+    res = await ask(true);
+    // il ripiego su un altro modello non è attivo per questa chiave: si riprova una volta senza
+    if (isFallbackRejection(res.status, res.body)) res = await ask(false);
+  } catch {
+    res = { status: 0, ok: false, timedOut: ctl.signal.aborted };
+  } finally {
+    clearTimeout(timeout);
+    clearInterval(photoTimer);
+  }
+  if (photoAbort !== ctl) return; // foglio chiuso o un'altra foto nel frattempo
+  photoAbort = null;
+  if (!res.ok) {
+    ph = { photo, state: "error", status: res.status,
+      msg: res.timedOut ? "Claude non ha risposto entro un minuto: riprova." : photoError(res.status, res.body) };
+    renderPhoto();
+    return;
+  }
+  const read = readPhotoResponse(res.body, { heroes: data.heroes, maps: pm.maps });
+  if (read.error) { ph = { photo, state: "error", status: res.status, msg: read.error }; renderPhoto(); return; }
+  ph = resultState(photo, read.result, { secs: (Date.now() - t0) / 1000, cost: photoCost(read.usage) });
+  renderPhoto();
+}
+
+// Risultato di Claude → foglio da modificare: 5 righe per squadra (quelle non lette restano da riempire a mano).
+function resultState(photo, r, meta) {
+  const rows = (list) => {
+    const out = list.slice(0, 5).map((x) => ({ ...x, doubt: !x.sure, fixed: false, empty: false }));
+    while (out.length < 5) out.push({ nickname: "", heroId: null, sure: true, alts: [], doubt: false, fixed: false, empty: true });
+    return out;
+  };
+  const ours = rows(r.ours);
+  const owners = matchOwners(ours, profile.players.map((_, i) => nickOf(i)));
+  ours.forEach((row, k) => { row.owner = owners[k]; });
+  // mappa non letta: resta quella già scelta nella partita (se c'è), altrimenti nessuna
+  const mapSlug = r.mapSlug || match.mapSlug || null;
+  return {
+    photo, state: "result", scoreboard: r.scoreboard, ours, enemies: rows(r.enemies), ...meta,
+    mapSlug, mapRead: !!r.mapSlug, mapKept: !r.mapSlug && !!mapSlug, mapChosen: false,
+    side: r.side || (mapSlug === match.mapSlug ? match.side : null), sideRead: !!r.side,
+  };
+}
+
+function renderPhoto() {
+  const body = $("#photo-body");
+  if (!ph) { body.replaceChildren(); return; }
+  const thumb = el("img", { class: "ph-thumb", alt: "La foto scattata" });
+  thumb.src = ph.photo.thumb; // fuori da el(): il testo base64 non passa dalla traduzione dei nomi
+  if (ph.state === "loading") {
+    $("#t-photo").textContent = "Lettura della foto";
+    fill(body,
+      el("div", { class: "ph-loading" }, thumb, el("div", { class: "ph-spin", "aria-hidden": "true" }),
+        el("p", { role: "status" }, "Claude sta leggendo il tabellone… ", el("b", { id: "ph-secs" }, "0 s")),
+        el("p", { class: "muted small" }, "Di solito bastano pochi secondi.")),
+      el("div", { class: "ph-actions" }, el("button", { type: "button", class: "btn", onclick: () => $("#photo-dialog").close() }, "Annulla")));
+    return;
+  }
+  if (ph.state === "error") {
+    $("#t-photo").textContent = "Foto non letta";
+    const keyIssue = ph.status === 401 || ph.status === 403;
+    fill(body,
+      el("div", { class: "ph-loading" }, thumb, el("p", { class: "ph-warn", role: "alert" }, ph.msg)),
+      el("div", { class: "ph-actions" },
+        keyIssue
+          ? el("button", { type: "button", class: "btn", onclick: () => openPhotoSetup(ph.msg, () => recognize(ph.photo)) }, "Cambia chiave")
+          : el("button", { type: "button", class: "btn", onclick: () => recognize(ph.photo) }, "Riprova"),
+        el("button", { type: "button", class: "btn primary", onclick: takePhoto }, icon("camera"), "Scatta di nuovo")),
+      galleryLink());
+    return;
+  }
+  $("#t-photo").textContent = "Dalla foto";
+  const map = data.maps.find((m) => m.slug === ph.mapSlug) ?? null;
+  const sides = hasSides(map);
+  const mapNote = ph.mapChosen ? (map ? "Scelta da te" : "Senza mappa: consigli sui dati generali")
+    : ph.mapRead ? "Letta dalla foto"
+      : ph.mapKept ? "Non letta nella foto: resta quella scelta prima (tocca per cambiarla)"
+        : "Mappa non riconosciuta: sceglila tu, oppure conferma senza";
+  const head = el("div", { class: "ph-head" },
+    el("button", { type: "button", class: "ph-thumb-btn", "aria-label": "Ingrandisci la foto", onclick: () => head.classList.toggle("big") }, thumb),
+    el("div", { class: "ph-head-main" },
+      el("button", { type: "button", id: "ph-map", class: `map-btn glass ph-map${map ? "" : " empty"}`, "aria-haspopup": "dialog", onclick: openPhotoMap },
+        el("span", { class: "map-label" }, "Mappa: "),
+        el("span", { class: "map-name" }, map ? [map.name, el("span", { class: "map-mode" }, ` · ${MODE_IT[map.mode] ?? map.mode}`)] : "Nessuna mappa"),
+        el("span", { class: "ic-slot chev" }, icon("chevron"))),
+      el("p", { id: "ph-map-note", class: `ph-note ${ph.mapRead || (ph.mapChosen && map) ? "n-ok" : "n-warn"}` }, mapNote),
+      sides ? el("div", { class: "seg side glass ph-side", role: "group", "aria-label": "Lato" },
+        [["attack", "Attacco"], ["defense", "Difesa"]].map(([k, label]) => el("button", {
+          type: "button", "data-side": k, "aria-pressed": String(ph.side === k),
+          onclick: () => { ph.side = ph.side === k ? null : k; ph.sideRead = false; renderPhoto(); },
+        }, label))) : null,
+      sides ? el("p", { class: `ph-note${ph.side ? "" : " n-warn"}` },
+        ph.side ? (ph.sideRead ? "Lato letto dalla foto" : "Lato scelto da te") : "Attacco o difesa non letti: toccalo tu (facoltativo)") : null));
+  const freeAllies = ph.ours.filter((r) => r.owner < 0 && r.heroId).length;
+  const lim = limitOf("allies");
+  fill(body,
+    ph.scoreboard ? null : el("p", { class: "ph-warn" }, "In questa foto non vedo il tabellone: scattane un'altra, oppure compila a mano qui sotto."),
+    head,
+    teamSection("ours"),
+    freeAllies > lim ? el("p", { class: "ph-warn" }, lim
+      ? `Siete in ${profile.players.length} nell'app: al massimo ${lim} alleati, gli altri non verranno segnati. Tocca «Alleato» sulle vostre righe per dire chi è chi.`
+      : `Siete in ${profile.players.length} nell'app: gli alleati non servono, tocca «Alleato» sulle vostre righe per dire chi è chi.`) : null,
+    teamSection("enemies"),
+    el("div", { class: "ph-actions sticky" },
+      el("button", { type: "button", id: "ph-retake", class: "btn", onclick: takePhoto }, icon("camera"), "Scatta di nuovo"),
+      el("button", { type: "button", id: "ph-confirm", class: "btn primary", onclick: confirmPhoto }, icon("check"), "Conferma")),
+    galleryLink(),
+    el("p", { class: "muted small ph-meta" }, `Letta in ${Math.max(1, Math.round(ph.secs))} s da Claude Sonnet 5.5` +
+      (ph.cost != null ? ` · circa ${(ph.cost * 100).toFixed(1).replace(".", ",")} centesimi` : "") +
+      `. La foto resta solo in memoria (le ultime ${MAX_PHOTOS}).`),
+  );
+}
+
+function ownerHint() {
+  const named = profile.players.map((p, i) => ({ p, i })).filter(({ i }) => nickOf(i));
+  if (!named.length) return "Tocca «Alleato» sulla tua riga per dire che sei tu (o scrivi il tuo nome nel gioco nel Profilo).";
+  const missing = profile.players.filter((_, i) => !ph.ours.some((r) => r.owner === i)).map((p) => p.name);
+  if (missing.length) return `Non ho trovato ${missing.join(" e ")}: tocca «Alleato» sulla riga giusta per assegnarla.`;
+  return "Tocca il nome a destra per cambiare chi è chi.";
+}
+
+function teamSection(key) {
+  const ours = key === "ours";
+  const rows = ph[key];
+  return el("section", { class: `ph-team ${ours ? "ph-ours" : "ph-enemies"}`, "aria-label": ours ? "La vostra squadra" : "Avversari" },
+    el("h3", { class: "ph-team-title" }, ours ? "La vostra squadra" : "Avversari",
+      el("span", { class: "ph-count" }, `${rows.filter((r) => r.heroId).length}/5 eroi`)),
+    ours ? el("p", { class: "muted small ph-hint" }, ownerHint()) : null,
+    rows.map((r, k) => photoRow(key, r, k)));
+}
+
+function photoRow(key, r, k) {
+  const h = r.heroId ? byId[r.heroId] : null;
+  const unsure = r.doubt && !r.fixed;
+  const tile = el("button", {
+    type: "button", class: `ph-hero${h ? "" : " none"}${unsure ? " doubt" : ""}`, "data-row": `${key}-${k}`,
+    "aria-label": h ? `${heroName(h)}${unsure ? " (incerto)" : ""}: tocca per cambiarlo` : "Nessun eroe: tocca per sceglierlo",
+    onclick: () => openPhotoHero(key, k),
+  }, h ? face(h) : el("span", { class: "face" }, r.empty ? "+" : "?"),
+  el("span", { class: "ph-hname" }, h ? heroName(h) : r.empty ? "Aggiungi" : "Non scelto"),
+  unsure ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null);
+  const alts = r.doubt && r.alts.length ? el("div", { class: "ph-alts" },
+    el("span", { class: "ph-alts-lab" }, unsure ? "Forse:" : "Oppure:"),
+    r.alts.map((id) => el("button", { type: "button", class: "ph-alt", "data-alt": id, "aria-label": `Metti ${heroName(byId[id])}`,
+      onclick: () => swapAlt(key, k, id) }, face(byId[id]), heroName(byId[id])))) : null;
+  return el("div", { class: `ph-row${key === "ours" && r.owner >= 0 ? " mine" : ""}`, style: key === "ours" && r.owner >= 0 ? `--pc: var(--p${r.owner})` : null },
+    tile,
+    el("div", { class: "ph-mid" },
+      el("div", { class: "ph-who" },
+        el("span", { class: `ph-nick${r.nickname ? "" : " faint"}` }, r.nickname || (r.empty ? "riga non letta" : "nome non letto")),
+        key === "ours" ? ownerChip(r, k) : null),
+      alts));
+}
+
+// di chi è la riga: Alleato → giocatore 1 → … → Alleato; ogni giocatore su una riga sola
+function ownerChip(r, k) {
+  const label = r.owner >= 0 ? profile.players[r.owner].name : "Alleato";
+  return el("button", {
+    type: "button", class: `ph-owner${r.owner >= 0 ? " is-player" : ""}`, style: r.owner >= 0 ? `--pc: var(--p${r.owner})` : null,
+    "aria-label": `Riga di: ${label}. Tocca per cambiare`, onclick: () => {
+      let next = r.owner + 1;
+      if (next >= profile.players.length) next = -1;
+      if (next >= 0) for (const o of ph.ours) if (o !== r && o.owner === next) o.owner = -1;
+      r.owner = next;
+      renderPhoto();
+    },
+  }, r.owner >= 0 ? el("span", { class: "p-dot", "aria-hidden": "true" }) : null, label);
+}
+
+// eroe della riga cambiato a mano; nella stessa squadra un eroe una volta sola: chi lo aveva prende quello di prima
+function setPhotoHero(key, k, id) {
+  const rows = ph[key];
+  const r = rows[k];
+  const prev = r.heroId;
+  if (id) {
+    const other = rows.find((o, j) => j !== k && o.heroId === id);
+    if (other) { other.heroId = prev; other.fixed = true; }
+  }
+  r.heroId = id;
+  r.fixed = true;
+  r.empty = false;
+}
+function swapAlt(key, k, id) {
+  const r = ph[key][k];
+  const prev = r.heroId;
+  setPhotoHero(key, k, id);
+  r.alts = r.alts.map((a) => (a === id ? prev : a)).filter(Boolean); // quello di prima resta tra le alternative
+  renderPhoto();
+}
+
+function openPhotoHero(key, k) {
+  phPick = { key, k };
+  const r = ph[key][k];
+  $("#t-photo-hero").textContent = r.nickname ? `Eroe di ${r.nickname}` : key === "ours" ? "Eroe della vostra squadra" : "Eroe avversario";
+  const grid = $("#photo-grid");
+  buildHeroGrid(grid, (id) => {
+    setPhotoHero(phPick.key, phPick.k, id);
+    $("#photo-hero").close();
+    renderPhoto();
+  });
+  const team = new Set(ph[key].map((o) => o.heroId).filter(Boolean));
+  for (const b of $$(".hero", grid)) {
+    b.setAttribute("aria-pressed", String(b.dataset.id === r.heroId));
+    b.classList.toggle(key === "ours" ? "in-allies" : "in-enemies", team.has(b.dataset.id));
+  }
+  resetSearch("photo-q");
+  $("#photo-hero").showModal();
+  fitNames(grid);
+}
+
+function openPhotoMap() {
+  mapFor = "photo";
+  buildMapDialog(ph.mapSlug);
+  resetSearch("map-q");
+  $("#map-dialog").showModal();
+}
+
+function confirmPhoto() {
+  const before = JSON.stringify(match);
+  const map = data.maps.find((m) => m.slug === ph.mapSlug) ?? null;
+  const { match: next, dropped } = applyPhoto(match, {
+    mapSlug: ph.mapSlug, side: ph.side, sides: hasSides(map),
+    ours: ph.ours.map((r) => ({ heroId: r.heroId, owner: r.owner })),
+    enemies: ph.enemies.map((r) => ({ heroId: r.heroId })),
+  }, { players: profile.players.length, alliesLimit: limitOf("allies") });
+  match = next;
+  if (match.group === "picked") match.group = "enemies";
+  fitMatch();
+  saveMatch();
+  $("#photo-dialog").close();
+  showView("match");
+  render();
+  toast(`Partita compilata dalla foto ✓${dropped.length ? ` (${dropped.length} alleat${dropped.length > 1 ? "i" : "o"} in più non segnat${dropped.length > 1 ? "i" : "o"})` : ""}`, 6000, {
+    label: "Annulla",
+    run: () => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); },
+  });
+}
+
+function wirePhoto() {
+  $("#photo-btn").addEventListener("click", onPhotoButton);
+  $("#photo-input").addEventListener("change", onPhotoFile);
+  $("#photo-gallery").addEventListener("change", onPhotoFile);
+  $("#photo-none").addEventListener("click", () => {
+    setPhotoHero(phPick.key, phPick.k, null);
+    $("#photo-hero").close();
+    renderPhoto();
+  });
+  // chiuso il foglio (anche col tasto indietro): la richiesta in corso si annulla e il risultato si scarta
+  $("#photo-dialog").addEventListener("close", () => {
+    const c = photoAbort;
+    photoAbort = null;
+    if (c) c.abort();
+    clearInterval(photoTimer);
+    ph = null;
+    $("#photo-body").replaceChildren();
+  });
+  $("#map-dialog").addEventListener("close", () => { mapFor = null; });
+  $("#claude-save").addEventListener("click", () => {
+    const v = $("#claude-key").value.trim();
+    if (!v) { toast("Incolla prima la chiave API."); return; }
+    store.set(KEY_STORE, v);
+    renderProfile();
+    toast(v.startsWith("sk-ant-") ? "Chiave salvata su questo telefono." : "Chiave salvata (di solito inizia con sk-ant-: controllala).");
+  });
+  $("#claude-clear").addEventListener("click", () => { store.del(KEY_STORE); renderProfile(); toast("Chiave rimossa."); });
 }
 
 // ---------- tasto/gesto "indietro" di Android ----------
