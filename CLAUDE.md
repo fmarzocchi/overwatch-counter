@@ -420,8 +420,13 @@ L'utente ha crediti API Anthropic (piano Max) e vuole compilare la partita da un
 - APK: `onShowFileChooser` (WebChromeClient) → con `capture` fotocamera (`ACTION_IMAGE_CAPTURE`, niente permesso CAMERA)
   su `PhotoProvider` (content:// minimo, `cache/photos`, **max 5 file**, i vecchi cancellati), senza → galleria.
   Emulatore: tocco al centro, chiave finta, Invio → deve aprirsi la fotocamera, indietro → app viva (screenshot 7*).
-- e2e "foto: …" (Claude simulato con `ctx.route`, 47 controlli, screenshot 19*). Costo stimato ~1–4 centesimi a foto
-  (mostrato sotto il foglio da `usage`).
+- **Ban** (2026-10-24, richiesta dell'utente): nel tabellone delle partite competitive sono in alto a destra, SOTTO il nome
+  della mappa (le partite rapide non ne hanno). Schema `bans [{hero, sure, alternatives}]`, `MAX_BANS` = 4; nel foglio una
+  fila di 4 riquadri (volto spento e barrato, incerti con "?" e "Ban N, forse:"), tocco → lista "Ban N"; un ban in campo è
+  segnalato e non si segna. `applyPhoto`: ban nel foglio = ban della partita; nessun ban letto → restano quelli già segnati
+  (il foglio li mostra, "Non visti nella foto: restano quelli segnati prima").
+- e2e "foto: …" (Claude simulato con `ctx.route`, 54 controlli, screenshot 19*; nomi dei riquadrini mai spezzati anche al
+  130%, `fitText`). Costo stimato ~1–4 centesimi a foto (mostrato sotto il foglio da `usage`).
 
 ## L'app (PWA) — come deve essere
 

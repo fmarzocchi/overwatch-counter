@@ -819,7 +819,7 @@ dialog .search { margin: 0 16px 6px; }
 }
 .ph-hero .face { width: 38px; height: 38px; margin-bottom: 3px; font-size: 13px; }
 .ph-hero.none .face { background: rgba(255, 255, 255, .12); color: var(--muted); font-size: 20px; }
-.ph-hname { max-width: 100%; font-size: 11.5px; font-weight: 700; line-height: 1.1; text-align: center; overflow-wrap: anywhere; }
+.ph-hname { max-width: 100%; font-size: calc(11.5px * var(--fit, 1)); font-weight: 700; line-height: 1.1; text-align: center; overflow-wrap: normal; word-break: normal; }
 .ph-hero.none .ph-hname { color: var(--muted); font-weight: 600; }
 /* incerto: bordo tratteggiato ambra e "?" */
 .ph-hero.doubt { border: 2px dashed var(--amber); background: rgba(255, 179, 64, .1); }
@@ -849,3 +849,14 @@ dialog .search { margin: 0 16px 6px; }
 .ph-none-row { padding: 4px 16px 0; }
 .ph-none-row .btn { width: 100%; }
 #photo-grid { padding: 0 16px 24px; }
+/* ban letti dalla foto: fila di 4 riquadri, volto spento e barrato come nella griglia */
+.ph-bans .ph-team-title::before { background: var(--bans); }
+.ph-bans .ph-note { margin: -2px 2px 8px; }
+.ph-ban-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-gap: 6px; }
+.ph-ban-strip .ph-hero { width: auto; }
+.ph-ban.has .face { filter: grayscale(.85) brightness(.75); }
+.ph-ban.has::after {
+  content: ""; position: absolute; left: 50%; top: 22px; width: 44px; height: 3px; margin-left: -22px; border-radius: 2px;
+  background: var(--bad); transform: rotate(-35deg);
+}
+.ph-ban-alts { margin-top: 8px; }

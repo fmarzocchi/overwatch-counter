@@ -17,6 +17,8 @@ export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 export const MAX_PHOTOS = 5; // foto tenute in memoria (per "Riprova"); le altre si scartano
 export const MAX_ALTS = 3;
 export const TEAM_SIZE = 5;
+export const MAX_BANS = 4; // in Ranked 2 per squadra (le partite rapide non ne hanno)
+export const BAN_LIMIT = 5; // ban che l'app tiene per partita (come nella scheda Partita)
 
 const sid = (x) => String(x);
 // "SEPHYROT", "Sephyrot ", "sephyr0t" → confrontabili; accenti e simboli via
@@ -40,14 +42,21 @@ export function photoSchema(heroNames, mapNames) {
       alternatives: { type: "array", items: hero },
     },
   };
+  const ban = {
+    type: "object",
+    additionalProperties: false,
+    required: ["hero", "sure", "alternatives"],
+    properties: { hero: nullable(hero), sure: { type: "boolean" }, alternatives: { type: "array", items: hero } },
+  };
   return {
     type: "object",
     additionalProperties: false,
-    required: ["scoreboard", "map", "side", "allies", "enemies"],
+    required: ["scoreboard", "map", "side", "bans", "allies", "enemies"],
     properties: {
       scoreboard: { type: "boolean" },
       map: nullable({ type: "string", enum: mapNames }),
       side: nullable({ type: "string", enum: ["attack", "defense"] }),
+      bans: { type: "array", items: ban },
       allies: { type: "array", items: slot },
       enemies: { type: "array", items: slot },
     },
@@ -70,6 +79,7 @@ export function photoSystem(heroes, maps, mapsIt = {}) {
     "A grey silhouette with a \"?\" instead of a portrait means that player has not picked a hero yet: hero null, sure true. Use the row's role icon to narrow the candidates to that role. The panel on the right, when present, names the hero of the highlighted row: use it.",
     "Heroes: compare face, hair, skin, helmet or mask with the reference sheet (official portraits). Players often use skins, so rely on the overall silhouette and the distinctive features, not only on colors. If you are not certain, set sure false and list up to 3 other likely heroes of the same role in alternatives, best first; if you are certain, alternatives may be empty.",
     "Map: read it only from the header at the top right (\"MODE | MAP\", e.g. \"IBRIDA | PARAÍSO\") and return the matching name from the list; if the header is not readable return null. Never guess the map from the background.",
+    "Bans: in competitive matches the banned heroes are shown as small portraits at the top right, right under the map header (usually 4, often greyed out or crossed). List them left to right, at most 4, with the same sure/alternatives rules (alternatives may be of any role). Quick Play has no bans: if no banned portraits are visible, return an empty list. Never take bans from the team rows.",
     "Side: \"attack\" if the objective text says to escort or push the payload or capture the objective (e.g. \"SCORTA IL CARICO\", \"CATTURA L'OBIETTIVO\"), \"defense\" if it says to defend or stop it (\"DIFENDI\", \"FERMA IL CARICO\"); null if no such text is visible.",
     "Player names: copy them as written. If a name is the same as, or almost the same as, one of the app users' names given in the message, write exactly that app user's name.",
     "Rows top to bottom, at most 5 per team. If the photo shows no scoreboard, set scoreboard false and return empty lists.",
@@ -174,12 +184,30 @@ export function normalizeResult(raw, data) {
       return { nickname: String(r && r.nickname || "").trim(), heroId, sure: heroId ? sure : none && !!(r && r.sure), alts };
     });
   };
+  // ban: stessi criteri degli eroi in campo, al massimo MAX_BANS, senza doppioni
+  const bans = [];
+  for (const b of (raw && Array.isArray(raw.bans) ? raw.bans : [])) {
+    if (bans.length >= MAX_BANS) break;
+    const h = b && b.hero != null ? byName.get(nameKey(b.hero)) : null;
+    const heroId = h ? sid(h.id) : null;
+    if (!heroId && !(b && b.alternatives && b.alternatives.length)) continue; // ritratto illeggibile senza ipotesi
+    if (heroId && bans.some((x) => x.heroId === heroId)) continue;
+    const alts = [];
+    for (const a of (b && Array.isArray(b.alternatives) ? b.alternatives : [])) {
+      const ah = byName.get(nameKey(a));
+      const aid = ah ? sid(ah.id) : null;
+      if (aid && aid !== heroId && !alts.includes(aid)) alts.push(aid);
+      if (alts.length >= MAX_ALTS) break;
+    }
+    bans.push({ heroId, sure: !!(heroId && b.sure), alts });
+  }
   const m = raw && raw.map != null ? mapByName.get(nameKey(raw.map)) : null;
   const side = raw && (raw.side === "attack" || raw.side === "defense") ? raw.side : null;
   return {
     scoreboard: !!(raw && raw.scoreboard),
     mapSlug: m ? m.slug : null,
     side,
+    bans,
     ours: team(raw && raw.allies),
     enemies: team(raw && raw.enemies),
   };
@@ -225,8 +253,10 @@ export function matchOwners(rows, nicknames) {
 }
 
 // Il foglio confermato → nuova partita. state: {mapSlug, side, sides (la mappa ha attacco/difesa), ours: [{heroId, owner}],
-// enemies: [{heroId}]}. Regole di Overwatch: nella vostra squadra un eroe una volta; gli avversari possono avere gli
-// stessi eroi (mirror); un eroe in campo non è bannato. Restituisce {match, dropped: [id]} (alleati oltre il limite).
+// enemies: [{heroId}], bans: [{heroId}]}. Regole di Overwatch: nella vostra squadra un eroe una volta; gli avversari possono
+// avere gli stessi eroi (mirror); un eroe in campo non è bannato. Ban nel foglio → sono i ban della partita (il tabellone li
+// mostra tutti); nessun ban nel foglio (partita rapida) → restano quelli segnati prima. Restituisce {match, dropped: [id]}
+// (alleati oltre il limite).
 export function applyPhoto(match, state, { players, alliesLimit }) {
   const next = JSON.parse(JSON.stringify(match));
   next.mapSlug = state.mapSlug || null;
@@ -254,6 +284,8 @@ export function applyPhoto(match, state, { players, alliesLimit }) {
   next.picked = picked;
   next.allies = allies;
   next.enemies = enemies;
-  next.bans = (next.bans || []).filter((b) => !inPlay.has(sid(b)));
+  const read = [];
+  for (const b of state.bans || []) if (b.heroId && !read.includes(b.heroId) && read.length < BAN_LIMIT) read.push(b.heroId);
+  next.bans = (read.length ? read : (next.bans || []).map(sid)).filter((b) => !inPlay.has(b));
   return { match: next, dropped };
 }

@@ -1352,7 +1352,9 @@ try {
     const okResp = (obj) => ({ id: "msg_test", type: "message", role: "assistant", model: "claude-sonnet-5-5", stop_reason: "end_turn",
       content: [{ type: "text", text: JSON.stringify(obj) }], usage: { input_tokens: 3000, output_tokens: 420, cache_read_input_tokens: 2600, cache_creation_input_tokens: 0 } });
     const slot = (nickname, role, hero, sure = true, alternatives = []) => ({ nickname, role, hero, sure, alternatives });
+    const ban = (hero, sure = true, alternatives = []) => ({ hero, sure, alternatives });
     const readA = { scoreboard: true, map: "King's Row", side: "attack",
+      bans: [ban("Widowmaker"), ban("Zarya"), ban("Brigitte", false, ["Lifeweaver", "Baptiste"]), ban("Hanzo")],
       allies: [slot("FABIO", "Damage", "Cassidy"), slot("Giuly", "Support", "Ana", false, ["Kiriko", "Baptiste"]), slot("xXtank", "Tank", null),
         slot("Pippo", "Support", "Lúcio"), slot("Zed", "Damage", "Genji")],
       enemies: [slot("Uno", "Tank", "Winston"), slot("Due", "Damage", "Tracer", false, ["Genji"]), slot("Tre", "Damage", "Cassidy"),
@@ -1436,7 +1438,45 @@ try {
     check("foto: eroe incerto con «?» e gli altri possibili accanto (Ana → Kiriko, Baptiste)",
       ours[1].doubt && ours[1].alts.join() === "Kiriko,Baptiste" && !ours[0].doubt && foes[1].doubt && foes[1].alts.join() === "Genji", JSON.stringify([ours[1], foes[1]]));
     check("foto: chi non ha ancora scelto resta «Non scelto»", ours[2].hero === "Non scelto" && foes[4].hero === "Non scelto");
+    // ban: in alto a destra sotto la mappa → fila di 4 nel foglio, l'incerto con le alternative
+    const bansOf = () => pp.locator("#photo-body .ph-ban").evaluateAll((bs) => bs.map((b) => ({
+      hero: b.querySelector(".ph-hname").textContent, doubt: b.classList.contains("doubt") })));
+    let bans = await bansOf();
+    check("foto: ban letti dalla foto (Widowmaker, Zarya, Brigitte incerta, Hanzo)",
+      bans.map((b) => b.hero).join() === "Widowmaker,Zarya,Brigitte,Hanzo" && bans[2].doubt && !bans[0].doubt
+      && /Letti dalla foto/.test(await text(pp, "#ph-ban-note")) && /Lifeweaver/.test(await text(pp, "#photo-body .ph-ban-alts")), JSON.stringify(bans));
     await shot(pp, "19d-foto-risultato");
+    // nomi nei riquadrini mai spezzati a metà parola, anche col carattere di sistema al 130% (WebView)
+    const broken = await pp.evaluate(() => {
+      document.documentElement.style.fontSize = "130%";
+      const out = [];
+      for (const t of document.querySelectorAll("#photo-body .ph-hname")) {
+        t.style.fontSize = "calc(15px * var(--fit, 1))"; // 11.5 px × 130%
+        window.owcFitText(t);
+        const words = t.textContent.split(/\s+/).length;
+        const lines = Math.round(t.getBoundingClientRect().height / parseFloat(getComputedStyle(t).lineHeight));
+        if (lines > words || t.scrollWidth > t.clientWidth + 1) out.push(t.textContent);
+        t.style.fontSize = "";
+        window.owcFitText(t);
+      }
+      document.documentElement.style.fontSize = "";
+      return out;
+    });
+    check("foto: nomi dei riquadrini mai spezzati (anche al 130%)", broken.length === 0, broken.join(", "));
+    await pp.locator("#photo-body .ph-ban-alts .ph-alt", { hasText: "Lifeweaver" }).click();
+    bans = await bansOf();
+    check("foto: tocco sull'alternativa del ban → Lifeweaver al posto di Brigitte", bans[2].hero === "Lifeweaver" && !bans[2].doubt, JSON.stringify(bans));
+    await pp.locator("#photo-body .ph-ban").nth(0).click();
+    await pp.locator("#photo-hero[open]").waitFor();
+    check("foto: ban da correggere con la solita lista (titolo «Ban 1», i ban segnati)", await text(pp, "#t-photo-hero") === "Ban 1"
+      && (await pp.locator("#photo-grid .hero.in-bans").count()) === 4);
+    await pp.locator("#photo-grid .hero", { has: pp.locator(".nm", { hasText: /^Cassidy$/ }) }).click();
+    check("foto: un ban che è in campo viene segnalato", /Cassidy è in campo: non lo segno tra i ban/.test(await text(pp, "#photo-body .ph-bans")));
+    await pp.locator("#photo-body .ph-ban").nth(0).click();
+    await pp.fill("#photo-q", "widow");
+    await pp.press("#photo-q", "Enter");
+    await pp.locator("#photo-hero").waitFor({ state: "hidden" });
+    check("foto: e si rimette Widowmaker", (await bansOf())[0].hero === "Widowmaker" && !/in campo/.test(await text(pp, "#photo-body .ph-bans")));
 
     // un tocco su un'alternativa la mette al posto dell'incerto (che resta tra le alternative)
     await pp.locator("#photo-body .ph-ours .ph-row").nth(1).locator(".ph-alt", { hasText: "Kiriko" }).click();
@@ -1510,7 +1550,8 @@ try {
     let st = await matchState(pp);
     check("foto: confermata → mappa, lato, eroi presi da Fabio e Giulia, alleati e avversari",
       st.mapSlug === "kings-row" && st.side === "defense" && String(st.picked[0]) === heroId("Cassidy") && String(st.picked[1]) === heroId("Kiriko")
-      && st.allies.map(String).join() === [heroId("Lúcio"), heroId("Genji")].join() && st.enemies.map(String).join() === [heroId("Reinhardt"), heroId("Tracer"), heroId("Mercy")].join(),
+      && st.allies.map(String).join() === [heroId("Lúcio"), heroId("Genji")].join() && st.enemies.map(String).join() === [heroId("Reinhardt"), heroId("Tracer"), heroId("Mercy")].join()
+      && st.bans.map(String).join() === ["Widowmaker", "Zarya", "Lifeweaver", "Hanzo"].map(heroId).join(),
       JSON.stringify(st));
     check("foto: messaggio con «Annulla»", /compilata dalla foto/.test(await text(pp, "#toast")) && await pp.locator("#toast button", { hasText: "Annulla" }).isVisible());
     check("foto: i riquadri mostrano gli eroi presi (Cassidy, Kiriko)", (await pickNames(pp)).join() === "Cassidy,Kiriko", (await pickNames(pp)).join());
@@ -1557,6 +1598,9 @@ try {
     await pp.locator("#ph-confirm").waitFor();
     check("foto senza tabellone: lo dice e lascia compilare a mano", /non vedo il tabellone/.test(await text(pp, "#photo-body"))
       && (await pp.locator("#photo-body .ph-row").count()) === 10);
+    check("foto senza ban (partita rapida): restano i ban già segnati e lo dice",
+      /restano quelli segnati prima/.test(await text(pp, "#ph-ban-note")) && (await bansOf()).map((b) => b.hero).join() === "Widowmaker,Zarya,Brigitte,Hanzo",
+      JSON.stringify(await bansOf()));
 
     // errori: chiave non valida, rete assente, poi «Riprova»
     reply = () => ({ status: 401, json: { type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } } });

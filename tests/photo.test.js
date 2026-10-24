@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   photoRequest, photoHeaders, photoSchema, readPhotoResponse, normalizeResult, matchOwners, applyPhoto, photoError,
-  isFallbackRejection, nameKey, PHOTO_MODEL, API_VERSION, FALLBACK_BETA, MAX_ALTS,
+  isFallbackRejection, nameKey, PHOTO_MODEL, API_VERSION, FALLBACK_BETA, MAX_ALTS, MAX_BANS,
 } from "../app/photo.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -38,6 +38,9 @@ test("richiesta: Sonnet 5.5 senza pensiero esteso, JSON vincolato agli eroi e al
   assert.ok(!/Sephyrot/.test(body.system[0].text), "i nomi non stanno nelle istruzioni fisse (cache)");
   assert.match(body.system[0].text, /Ilios \(Control; in Italian: Ilio\)/);
   assert.match(body.system[0].text, /Mizuki \(Support\)/);
+  assert.match(body.system[0].text, /Bans: .*top right, right under the map header/, "dove sono i ban nel tabellone");
+  assert.deepEqual(schema.properties.bans.items.properties.hero.anyOf[0].enum, heroEnum, "ban vincolati agli eroi dei dati");
+  assert.ok(schema.required.includes("bans"));
   // senza foglio: solo la foto
   assert.equal(photoRequest({ heroes: data.heroes, maps: data.maps, photo: "P" }).messages[0].content.filter((b) => b.type === "image").length, 1);
   // senza fallback: niente parametro né beta
@@ -82,6 +85,21 @@ test("risposta: eroi e mappa dei dati, al massimo 5 per squadra, alternative val
   assert.equal(result.enemies[3].heroId, null, "«?» = non ancora scelto");
   assert.equal(result.enemies[4].sure, false);
   assert.deepEqual(result.enemies[4].alts, [id("Kiriko")]);
+});
+
+test("ban: dal tabellone in alto a destra, al massimo 4, doppioni via, incerti con alternative; partita rapida = nessuno", () => {
+  const ban = (h, sure = true, alternatives = []) => ({ hero: h, sure, alternatives });
+  const raw = { scoreboard: true, map: null, side: null, allies: [], enemies: [],
+    bans: [ban("Sombra"), ban("Widowmaker"), ban("Widowmaker"), ban("Brigitte", false, ["Baptiste", "Inventato", "Brigitte"]), ban(null, false, ["Hanzo"]), ban("Tracer")] };
+  const r = normalizeResult(raw, data);
+  assert.equal(r.bans.length, MAX_BANS);
+  assert.deepEqual(r.bans.map((b) => b.heroId), [id("Sombra"), id("Widowmaker"), id("Brigitte"), null]);
+  assert.equal(r.bans[2].sure, false);
+  assert.deepEqual(r.bans[2].alts, [id("Baptiste")]);
+  assert.deepEqual(r.bans[3].alts, [id("Hanzo")], "ritratto illeggibile ma con un'ipotesi: si propone");
+  assert.equal(r.bans[3].sure, false);
+  assert.deepEqual(normalizeResult({ ...raw, bans: [ban(null, true)] }, data).bans, [], "illeggibile senza ipotesi: niente");
+  assert.deepEqual(normalizeResult({ ...raw, bans: undefined }, data).bans, [], "risposta senza ban: nessuno");
 });
 
 test("risposta: ruolo che non torna, eroe doppio o nome sconosciuto → da controllare; mappa assente → nessuna", () => {
@@ -133,6 +151,11 @@ test("conferma: mappa e lato, eroi presi dai giocatori, alleati fino al limite, 
   assert.deepEqual(dropped, []);
   assert.deepEqual(m.enemies, [id("D.Va"), id("Widowmaker"), id("Junkrat"), id("Cassidy")], "Cassidy anche avversaria (mirror)");
   assert.deepEqual(m.bans, [id("Tracer")], "Orisa e Junkrat sono in campo: non più bannati");
+  // ban letti dal tabellone: diventano i ban della partita (mai un eroe in campo); nessuno letto → restano quelli di prima
+  const rb = applyPhoto(match, { ...state, bans: [{ heroId: id("Sombra") }, { heroId: null }, { heroId: id("Widowmaker") }, { heroId: id("Sombra") }, { heroId: id("Hanzo") }] },
+    { players: 2, alliesLimit: 3 }).match;
+  assert.deepEqual(rb.bans, [id("Sombra"), id("Hanzo")], "Widowmaker è avversaria nella foto: non bannata; Sombra una volta");
+  assert.deepEqual(applyPhoto(match, { ...state, bans: [] }, { players: 2, alliesLimit: 3 }).match.bans, [id("Tracer")]);
   assert.equal(match.mapSlug, "kings-row", "la partita di partenza non cambia (si può annullare)");
   // senza mappa riconosciuta né scelta: si conferma lo stesso; mappa senza lati → niente lato
   const r2 = applyPhoto(match, { ...state, mapSlug: null, side: "attack", sides: false }, { players: 2, alliesLimit: 3 }).match;

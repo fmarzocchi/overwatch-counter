@@ -2,7 +2,7 @@ import { recommend, recommendTeam, breakdown, details, hasSides, withDivision, h
   BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, threatScores, rankStars, STAR_MIN_SD, matchupSign } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
-import { API_URL, MAX_PHOTOS, photoRequest, photoHeaders, isFallbackRejection, photoError, readPhotoResponse, matchOwners, applyPhoto } from "./photo.js";
+import { API_URL, MAX_PHOTOS, MAX_BANS, photoRequest, photoHeaders, isFallbackRejection, photoError, readPhotoResponse, matchOwners, applyPhoto } from "./photo.js";
 
 // WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
 if (!Element.prototype.replaceChildren) {
@@ -1778,8 +1778,14 @@ function resultState(photo, r, meta) {
   ours.forEach((row, k) => { row.owner = owners[k]; });
   // mappa non letta: resta quella già scelta nella partita (se c'è), altrimenti nessuna
   const mapSlug = r.mapSlug || match.mapSlug || null;
+  // ban: quelli letti (in alto a destra, sotto la mappa); se la foto non ne ha (partita rapida) quelli già segnati
+  const kept = r.bans.length ? [] : match.bans.map(sid);
+  const bans = (r.bans.length ? r.bans.map((b) => ({ ...b, doubt: !b.sure })) : kept.map((id) => ({ heroId: id, sure: true, alts: [], doubt: false })))
+    .map((b) => ({ ...b, fixed: false, empty: false }));
+  while (bans.length < MAX_BANS) bans.push({ heroId: null, sure: true, alts: [], doubt: false, fixed: false, empty: true });
   return {
     photo, state: "result", scoreboard: r.scoreboard, ours, enemies: rows(r.enemies), ...meta,
+    bans, bansRead: r.bans.length, bansKept: kept.length,
     mapSlug, mapRead: !!r.mapSlug, mapKept: !r.mapSlug && !!mapSlug, mapChosen: false,
     side: r.side || (mapSlug === match.mapSlug ? match.side : null), sideRead: !!r.side,
   };
@@ -1839,6 +1845,7 @@ function renderPhoto() {
   fill(body,
     ph.scoreboard ? null : el("p", { class: "ph-warn" }, "In questa foto non vedo il tabellone: scattane un'altra, oppure compila a mano qui sotto."),
     head,
+    banSection(),
     teamSection("ours"),
     freeAllies > lim ? el("p", { class: "ph-warn" }, lim
       ? `Siete in ${profile.players.length} nell'app: al massimo ${lim} alleati, gli altri non verranno segnati. Tocca «Alleato» sulle vostre righe per dire chi è chi.`
@@ -1852,6 +1859,34 @@ function renderPhoto() {
       (ph.cost != null ? ` · circa ${(ph.cost * 100).toFixed(1).replace(".", ",")} centesimi` : "") +
       `. La foto resta solo in memoria (le ultime ${MAX_PHOTOS}).`),
   );
+  for (const t of $$(".ph-hname", body)) fitText(t); // nomi mai spezzati a metà parola (come nella griglia)
+}
+
+// Ban: una fila di riquadri (4 in Ranked); incerti con "?" e le alternative sotto; un tocco apre la lista per cambiarlo
+function banSection() {
+  const inPlay = new Set([...ph.ours, ...ph.enemies].map((r) => r.heroId).filter(Boolean));
+  const clash = ph.bans.filter((b) => b.heroId && inPlay.has(b.heroId)).map((b) => heroName(byId[b.heroId]));
+  const note = ph.bansRead ? ["n-ok", "Letti dalla foto"]
+    : ph.bansKept ? ["n-warn", "Non visti nella foto: restano quelli segnati prima"]
+      : ["", "Nessun ban nella foto (partita rapida?): tocca + per aggiungerne"];
+  return el("section", { class: "ph-team ph-bans", "aria-label": "Ban" },
+    el("h3", { class: "ph-team-title" }, "Ban", el("span", { class: "ph-count" }, `${ph.bans.filter((b) => b.heroId).length}/${MAX_BANS}`)),
+    el("p", { id: "ph-ban-note", class: `ph-note ${note[0]}` }, note[1]),
+    el("div", { class: "ph-ban-strip" }, ph.bans.map((b, k) => {
+      const h = b.heroId ? byId[b.heroId] : null;
+      const unsure = b.doubt && !b.fixed;
+      return el("button", {
+        type: "button", class: `ph-hero ph-ban${h ? " has" : " none"}${unsure ? " doubt" : ""}`, "data-row": `bans-${k}`,
+        "aria-label": h ? `Ban: ${heroName(h)}${unsure ? " (incerto)" : ""}, tocca per cambiarlo` : "Aggiungi un ban",
+        onclick: () => openPhotoHero("bans", k),
+      }, h ? face(h) : el("span", { class: "face" }, "+"), el("span", { class: "ph-hname" }, h ? heroName(h) : "Aggiungi"),
+      unsure ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null);
+    })),
+    ph.bans.map((b, k) => (b.doubt && b.alts.length ? el("div", { class: "ph-alts ph-ban-alts" },
+      el("span", { class: "ph-alts-lab" }, `Ban ${k + 1}, ${b.fixed ? "oppure" : "forse"}:`),
+      b.alts.map((id) => el("button", { type: "button", class: "ph-alt", "data-alt": id, "aria-label": `Ban ${k + 1}: metti ${heroName(byId[id])}`,
+        onclick: () => swapAlt("bans", k, id) }, face(byId[id]), heroName(byId[id])))) : null)),
+    clash.length ? el("p", { class: "ph-warn" }, `${clash.join(" e ")} ${clash.length > 1 ? "sono" : "è"} in campo: non ${clash.length > 1 ? "li" : "lo"} segno tra i ban.`) : null);
 }
 
 function ownerHint() {
@@ -1934,7 +1969,7 @@ function swapAlt(key, k, id) {
 function openPhotoHero(key, k) {
   phPick = { key, k };
   const r = ph[key][k];
-  $("#t-photo-hero").textContent = r.nickname ? `Eroe di ${r.nickname}` : key === "ours" ? "Eroe della vostra squadra" : "Eroe avversario";
+  $("#t-photo-hero").textContent = key === "bans" ? `Ban ${k + 1}` : r.nickname ? `Eroe di ${r.nickname}` : key === "ours" ? "Eroe della vostra squadra" : "Eroe avversario";
   const grid = $("#photo-grid");
   buildHeroGrid(grid, (id) => {
     setPhotoHero(phPick.key, phPick.k, id);
@@ -1944,7 +1979,7 @@ function openPhotoHero(key, k) {
   const team = new Set(ph[key].map((o) => o.heroId).filter(Boolean));
   for (const b of $$(".hero", grid)) {
     b.setAttribute("aria-pressed", String(b.dataset.id === r.heroId));
-    b.classList.toggle(key === "ours" ? "in-allies" : "in-enemies", team.has(b.dataset.id));
+    b.classList.toggle(key === "ours" ? "in-allies" : key === "bans" ? "in-bans" : "in-enemies", team.has(b.dataset.id));
   }
   resetSearch("photo-q");
   $("#photo-hero").showModal();
@@ -1965,6 +2000,7 @@ function confirmPhoto() {
     mapSlug: ph.mapSlug, side: ph.side, sides: hasSides(map),
     ours: ph.ours.map((r) => ({ heroId: r.heroId, owner: r.owner })),
     enemies: ph.enemies.map((r) => ({ heroId: r.heroId })),
+    bans: ph.bans.map((r) => ({ heroId: r.heroId })),
   }, { players: profile.players.length, alliesLimit: limitOf("allies") });
   match = next;
   if (match.group === "picked") match.group = "enemies";
