@@ -143,7 +143,7 @@ test("conferma: mappa e lato, eroi presi dai giocatori, alleati fino al limite, 
       { heroId: id("Mizuki"), owner: 1 }, { heroId: id("Illari"), owner: -1 }],
     enemies: [{ heroId: id("D.Va") }, { heroId: id("Widowmaker") }, { heroId: id("Junkrat") }, { heroId: null }, { heroId: id("Cassidy") }],
   };
-  const { match: m, dropped } = applyPhoto(match, state, { players: 2, alliesLimit: 3 });
+  const { match: m, dropped } = applyPhoto(match, state, { players: 2 });
   assert.equal(m.mapSlug, "paraiso");
   assert.equal(m.side, "attack");
   assert.deepEqual(m.picked, [id("Cassidy"), id("Mizuki")]);
@@ -153,19 +153,46 @@ test("conferma: mappa e lato, eroi presi dai giocatori, alleati fino al limite, 
   assert.deepEqual(m.bans, [id("Tracer")], "Orisa e Junkrat sono in campo: non più bannati");
   // ban letti dal tabellone: diventano i ban della partita (mai un eroe in campo); nessuno letto → restano quelli di prima
   const rb = applyPhoto(match, { ...state, bans: [{ heroId: id("Sombra") }, { heroId: null }, { heroId: id("Widowmaker") }, { heroId: id("Sombra") }, { heroId: id("Hanzo") }] },
-    { players: 2, alliesLimit: 3 }).match;
+    { players: 2 }).match;
   assert.deepEqual(rb.bans, [id("Sombra"), id("Hanzo")], "Widowmaker è avversaria nella foto: non bannata; Sombra una volta");
-  assert.deepEqual(applyPhoto(match, { ...state, bans: [] }, { players: 2, alliesLimit: 3 }).match.bans, [id("Tracer")]);
+  assert.deepEqual(applyPhoto(match, { ...state, bans: [] }, { players: 2 }).match.bans, [id("Tracer")]);
   assert.equal(match.mapSlug, "kings-row", "la partita di partenza non cambia (si può annullare)");
   // senza mappa riconosciuta né scelta: si conferma lo stesso; mappa senza lati → niente lato
-  const r2 = applyPhoto(match, { ...state, mapSlug: null, side: "attack", sides: false }, { players: 2, alliesLimit: 3 }).match;
+  const r2 = applyPhoto(match, { ...state, mapSlug: null, side: "attack", sides: false }, { players: 2 }).match;
   assert.equal(r2.mapSlug, null);
   assert.equal(r2.side, null);
   // alleati oltre il limite (5 − giocatori): scartati e segnalati
-  const r3 = applyPhoto(match, { ...state, ours: state.ours.map((r) => ({ ...r, owner: -1 })) }, { players: 2, alliesLimit: 3 });
+  const r3 = applyPhoto(match, { ...state, ours: state.ours.map((r) => ({ ...r, owner: -1 })) }, { players: 2 });
   assert.equal(r3.match.allies.length, 3);
   assert.equal(r3.dropped.length, 2);
   assert.deepEqual(r3.match.picked, [null, id("Ana")], "giocatori non riconosciuti: scelta di prima");
+  assert.deepEqual(r3.match.away, [false, false], "nessuno di voi nella foto: chi gioca resta com'era");
+});
+
+test("chi gioca lo dice la foto: chi non c'è esce (niente riquadro), le altre righe sono alleati; chi ricompare rientra", () => {
+  const match = { roles: ["Damage", "Support"], picked: [null, id("Ana")], pickFor: 1, mapSlug: null, side: null,
+    bans: [], enemies: [], allies: [], group: "enemies" };
+  const ours = [{ heroId: id("Orisa"), owner: -1 }, { heroId: id("Cassidy"), owner: 0 }, { heroId: id("Ana"), owner: -1 },
+    { heroId: id("Mizuki"), owner: -1 }, { heroId: id("Illari"), owner: -1 }];
+  const state = { mapSlug: null, side: null, sides: false, ours, enemies: [], bans: [] };
+  const r = applyPhoto(match, state, { players: 2 });
+  assert.deepEqual(r.match.away, [false, true], "Misaki (giocatore 2) non è nella foto");
+  assert.deepEqual(r.match.picked, [id("Cassidy"), null], "chi non gioca non ha un eroe preso");
+  assert.deepEqual(r.match.allies, [id("Orisa"), id("Ana"), id("Mizuki"), id("Illari")], "4 alleati: siete in 1");
+  assert.deepEqual(r.dropped, []);
+  assert.deepEqual(r.gone, [1]);
+  assert.equal(r.match.pickFor, 0, "chi segna la scelta passa a chi gioca");
+  // foto dopo: c'è di nuovo → rientra
+  const r2 = applyPhoto(r.match, { ...state, ours: ours.map((x, k) => (k === 2 ? { ...x, owner: 1 } : x)) }, { players: 2 });
+  assert.deepEqual(r2.match.away, [false, false]);
+  assert.deepEqual(r2.back, [1]);
+  assert.deepEqual(r2.match.picked, [id("Cassidy"), id("Ana")]);
+  assert.equal(r2.match.allies.length, 3);
+  // nessuno di voi trovato: chi gioca resta com'era (qui: solo il giocatore 1)
+  const r3 = applyPhoto(r.match, { ...state, ours: ours.map((x) => ({ ...x, owner: -1 })) }, { players: 2 });
+  assert.deepEqual(r3.match.away, [false, true]);
+  assert.equal(r3.match.allies.length, 4);
+  assert.equal(r3.dropped.length, 1);
 });
 
 test("errori dell'API → frasi chiare; fallback rifiutato riconosciuto", () => {

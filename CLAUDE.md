@@ -425,8 +425,21 @@ L'utente ha crediti API Anthropic (piano Max) e vuole compilare la partita da un
   fila di 4 riquadri (volto spento e barrato, incerti con "?" e "Ban N, forse:"), tocco → lista "Ban N"; un ban in campo è
   segnalato e non si segna. `applyPhoto`: ban nel foglio = ban della partita; nessun ban letto → restano quelli già segnati
   (il foglio li mostra, "Non visti nella foto: restano quelli segnati prima").
-- e2e "foto: …" (Claude simulato con `ctx.route`, 54 controlli, screenshot 19*; nomi dei riquadrini mai spezzati anche al
-  130%, `fitText`). Costo stimato ~1–4 centesimi a foto (mostrato sotto il foglio da `usage`).
+- **Riepilogo** (2026-10-24, richiesta dell'utente: "il 90% delle volte azzecca, voglio solo controllare a colpo d'occhio"):
+  il foglio si apre su `renderSummary()` (`ph.view = "summary"`), tutto in vista SENZA scorrere (e2e su 390×844, 407×833,
+  420×860): in alto mappa (modalità + nome, tocco = cambia) con Attacco/Difesa accanto e la fila dei ban; sotto le due
+  squadre come il tabellone di Overwatch (righe blu/rosse, NELLO STESSO ORDINE DELLA FOTO: icona del ruolo `tank/damage/
+  support` in icons.js, volto quadrato, eroe, nome nel gioco, pillola del giocatore dell'app), "VS" in mezzo, incerti con
+  "?"; note in giallo (non nella foto, incerti); un tocco su una riga o un ban apre la solita lista; pulsanti 📷 / "Modifica"
+  (→ foglio completo, che ha "‹ Riepilogo") / "Conferma". `normalizeResult` tiene anche il ruolo letto (`role`).
+- **Chi gioca lo dice la foto** (2026-10-24, richiesta dell'utente): `match.away[i]` = giocatore dell'app non trovato nella
+  foto → fuori da QUESTA partita: niente riquadro né barra minima, niente consigli, alleati possibili = 5 − giocatori in
+  partita (`present()`, `presentSets()`, `compute()` rimappa le liste agli indici del profilo). Le righe senza giocatore
+  sono alleati. Chi ricompare in una foto rientra (anche "il contrario"); se la foto non trova nessuno di voi non cambia
+  nulla. Sotto i riquadri `#away` "Non in questa partita: X ＋" (un tocco lo rimette). "Nuova partita" NON lo rimette
+  (lo decide la prossima foto). `applyPhoto` restituisce anche `gone`/`back` (detti nel messaggio).
+- e2e "foto: …", "riepilogo: …", "presenza: …" (Claude simulato con `ctx.route`, screenshot 19*; nomi dei riquadrini mai
+  spezzati anche al 130%, `fitText`). Costo stimato ~1–4 centesimi a foto (mostrato sotto il foglio completo da `usage`).
 
 ## L'app (PWA) — come deve essere
 

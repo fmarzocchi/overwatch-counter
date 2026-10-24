@@ -181,7 +181,8 @@ export function normalizeResult(raw, data) {
       }
       // senza eroe: "?" (non ancora scelto) è certo; un nome che non esiste nei dati no
       const none = !r || r.hero == null;
-      return { nickname: String(r && r.nickname || "").trim(), heroId, sure: heroId ? sure : none && !!(r && r.sure), alts };
+      const role = r && ["Tank", "Damage", "Support"].includes(r.role) ? r.role : null; // icona del ruolo (anche per "?")
+      return { nickname: String(r && r.nickname || "").trim(), heroId, role, sure: heroId ? sure : none && !!(r && r.sure), alts };
     });
   };
   // ban: stessi criteri degli eroi in campo, al massimo MAX_BANS, senza doppioni
@@ -253,14 +254,21 @@ export function matchOwners(rows, nicknames) {
 }
 
 // Il foglio confermato → nuova partita. state: {mapSlug, side, sides (la mappa ha attacco/difesa), ours: [{heroId, owner}],
-// enemies: [{heroId}], bans: [{heroId}]}. Regole di Overwatch: nella vostra squadra un eroe una volta; gli avversari possono
-// avere gli stessi eroi (mirror); un eroe in campo non è bannato. Ban nel foglio → sono i ban della partita (il tabellone li
-// mostra tutti); nessun ban nel foglio (partita rapida) → restano quelli segnati prima. Restituisce {match, dropped: [id]}
-// (alleati oltre il limite).
-export function applyPhoto(match, state, { players, alliesLimit }) {
+// enemies: [{heroId}], bans: [{heroId}]}. players: quanti giocatori ha l'app.
+// Chi gioca lo dice la foto (richiesta del 2026-10-24): un giocatore dell'app con una riga nella vostra squadra è in partita,
+// uno senza riga no (match.away[i] = true: niente riquadro); le altre righe sono alleati, fino a 5 − giocatori in partita.
+// Se la foto non trova nessuno di voi, chi gioca resta com'era. Regole di Overwatch: nella vostra squadra un eroe una
+// volta; gli avversari possono avere gli stessi eroi (mirror); un eroe in campo non è bannato. Ban nel foglio → sono i ban
+// della partita; nessun ban nel foglio (partita rapida) → restano quelli segnati prima.
+// Restituisce {match, dropped: [id] (alleati oltre il limite), gone: [i] (usciti), back: [i] (rientrati)}.
+export function applyPhoto(match, state, { players }) {
   const next = JSON.parse(JSON.stringify(match));
   next.mapSlug = state.mapSlug || null;
   next.side = state.sides ? (state.side || null) : null;
+  const before = Array.from({ length: players }, (_, i) => !!(match.away && match.away[i]));
+  const owned = new Set(state.ours.filter((r) => r.owner >= 0 && r.owner < players).map((r) => r.owner));
+  let away = owned.size ? before.map((_, i) => !owned.has(i)) : before;
+  if (away.every(Boolean)) away = away.map(() => false); // mai una partita senza nessuno di voi
   const picked = next.picked.slice(0, players);
   while (picked.length < players) picked.push(null);
   const ours = new Set();
@@ -270,6 +278,8 @@ export function applyPhoto(match, state, { players, alliesLimit }) {
       if (picked[r.owner]) ours.add(picked[r.owner]);
     }
   }
+  away.forEach((a, i) => { if (a) picked[i] = null; });
+  const alliesLimit = TEAM_SIZE - away.filter((a) => !a).length;
   const allies = [];
   const dropped = [];
   for (const r of state.ours) {
@@ -282,10 +292,14 @@ export function applyPhoto(match, state, { players, alliesLimit }) {
   for (const r of state.enemies) if (r.heroId && !enemies.includes(r.heroId) && enemies.length < TEAM_SIZE) enemies.push(r.heroId);
   const inPlay = new Set([...ours, ...enemies]);
   next.picked = picked;
+  next.away = away;
   next.allies = allies;
   next.enemies = enemies;
   const read = [];
   for (const b of state.bans || []) if (b.heroId && !read.includes(b.heroId) && read.length < BAN_LIMIT) read.push(b.heroId);
   next.bans = (read.length ? read : (next.bans || []).map(sid)).filter((b) => !inPlay.has(b));
-  return { match: next, dropped };
+  if (next.pickFor >= 0 && away[next.pickFor]) next.pickFor = Math.max(0, away.indexOf(false));
+  const gone = away.map((a, i) => (a && !before[i] ? i : -1)).filter((i) => i >= 0);
+  const back = away.map((a, i) => (!a && before[i] ? i : -1)).filter((i) => i >= 0);
+  return { match: next, dropped, gone, back };
 }

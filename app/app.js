@@ -17,7 +17,9 @@ const WORKFLOW = "update-data.yml";
 const LIMITS = { bans: 5, enemies: 5, allies: 5 };
 const MAX_PLAYERS = 5;
 // gli alleati sono gli ALTRI della squadra: in 5 con i giocatori del profilo
-const limitOf = (g) => (g === "allies" ? Math.max(0, MAX_PLAYERS - profile.players.length) : LIMITS[g]);
+const limitOf = (g) => (g === "allies" ? Math.max(0, MAX_PLAYERS - present().length) : LIMITS[g]);
+// giocatori dell'app IN QUESTA PARTITA: chi non è nella foto del tabellone resta fuori (match.away, richiesta del 2026-10-24)
+const present = () => profile.players.map((_, i) => i).filter((i) => !match.away?.[i]);
 const ROLE_QUOTA = { Tank: 1, Damage: 2, Support: 2 }; // coda a ruoli 5v5
 const GROUP_WORD = { bans: "ban", enemies: "avversari", allies: "alleati" };
 const GROUP_ONE = { bans: "bannato", enemies: "avversario", allies: "alleato" };
@@ -74,7 +76,10 @@ function fitMatch() {
   const fit = (arr, fill) => Array.from({ length: n }, (_, i) => (arr && i < arr.length ? arr[i] : fill(i)));
   match.roles = fit(match.roles, (i) => profile.players[i].roles[0] ?? null);
   match.picked = fit(match.picked, () => null);
-  if (!(match.pickFor >= 0 && match.pickFor < n)) match.pickFor = 0;
+  match.away = fit(match.away, () => false).map(Boolean);
+  if (match.away.every(Boolean)) match.away = match.away.map(() => false);
+  match.picked = match.picked.map((x, i) => (match.away[i] ? null : x)); // chi non gioca non ha un eroe preso
+  if (!(match.pickFor >= 0 && match.pickFor < n) || match.away[match.pickFor]) match.pickFor = Math.max(0, match.away.indexOf(false));
   if (!["bans", "enemies", "allies", "picked"].includes(match.group)) match.group = "enemies";
   if (match.allies.length > limitOf("allies")) match.allies = match.allies.slice(0, limitOf("allies"));
   if (match.group === "allies" && !limitOf("allies")) match.group = "enemies";
@@ -330,15 +335,21 @@ function renderFresh() {
 // ---------- consigli ----------
 
 function compute() {
-  const players = profile.players.map((p, i) => ({
-    role: match.roles[i], favorites: p.favorites, onlyFavorites: !!profile.onlyFavorites, data: playerData(i),
+  const act = present();
+  const players = act.map((i) => ({
+    role: match.roles[i], favorites: profile.players[i].favorites, onlyFavorites: !!profile.onlyFavorites, data: playerData(i),
     picked: match.picked[i],
   }));
-  return recommendTeam(data, {
+  const res = recommendTeam(data, {
     players, mapSlug: match.mapSlug, side: match.side, bans: match.bans, enemies: match.enemies, allies: match.allies,
     theory: T, useTheory: !!profile.useTheory, guideOnly: guideMode(),
   });
+  // di nuovo agli indici del profilo (chi non gioca: niente consigli)
+  const back = (arr, none) => profile.players.map((_, i) => (act.includes(i) ? arr[act.indexOf(i)] : none));
+  return { ...res, lists: back(res.lists, []), team: back(res.team ?? [], null), notes: back(res.notes ?? [], null), picked: back(res.picked ?? [], false) };
 }
+// dati delle divisioni dei giocatori in partita (ban, minacce, stelline)
+const presentSets = () => [...new Set(present().map((i) => playerData(i)))];
 
 function nextRole(i) {
   const own = profile.players[i].roles;
@@ -539,10 +550,11 @@ function renderMini() {
   const box = $("#mini");
   box.replaceChildren();
   if (!lastDuo) return;
-  box.className = `mini n${Math.min(profile.players.length, 5)}`;
+  box.className = `mini n${Math.min(present().length, 5)}`;
   const tops = profile.players.map((p, i) => lastDuo.lists[i]?.[0]?.hero?.id ?? null);
   profile.players.forEach((p, i) => {
     const r = lastDuo.lists[i]?.[0];
+    if (match.away[i]) return;
     if (!r) return;
     const changed = miniTops[i] !== undefined && miniTops[i] !== tops[i];
     box.append(el("button", { type: "button", class: `mini-pick${r.picked ? " took" : ""}${changed ? " pulse" : ""}`, style: `--pc: var(--p${i})`,
@@ -805,8 +817,20 @@ function renderPicks() {
   if (!data) return;
   lastDuo = compute();
   starCache = new Map();
-  box.className = `picks n${profile.players.length}`;
-  profile.players.forEach((p, i) => box.append(pickCard(p, i)));
+  const act = present();
+  box.className = `picks n${act.length}`;
+  act.forEach((i) => box.append(pickCard(profile.players[i], i)));
+  // chi la foto ha lasciato fuori: si rimette in partita con un tocco
+  const out = profile.players.map((p, i) => (match.away[i] ? i : -1)).filter((i) => i >= 0);
+  const away = $("#away");
+  away.hidden = !out.length;
+  fill(away, out.length ? [el("span", { class: "away-lab" }, "Non in questa partita:"),
+    out.map((i) => el("button", { type: "button", class: "away-chip", style: `--pc: var(--p${i})`, "aria-label": `Rimetti ${profile.players[i].name} in partita`,
+      onclick: () => {
+        match.away[i] = false;
+        fitMatch(); saveMatch(); render();
+        toast(`${profile.players[i].name} di nuovo in partita.`, 2000);
+      } }, el("span", { class: "p-dot", "aria-hidden": "true" }), profile.players[i].name, icon("plus")))] : null);
   for (const t of $$(".pick-name, .fr-name", box)) fitText(t);
   fitAlts(box);
   renderMini();
@@ -829,7 +853,7 @@ function banScores(perRole) {
     // si possono proporre anche i preferiti (richiesta del 2026-10-06): niente ban solo per eroi già scelti e alleati
     keep: [...match.picked.filter(Boolean), ...match.allies],
   };
-  const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
+  const sets = presentSets();
   return guide ? guideBanSuggestions(data, T, opts)
     : profile.useTheory && T ? blendedBanSuggestions(sets, T, opts) : banSuggestions(sets, opts);
 }
@@ -841,7 +865,7 @@ function banScores(perRole) {
 const THREATS_PER_ROLE = 3;
 // vostra squadra per "Chi soffrite di più": solo eroi presi e alleati segnati, mai i consigliati
 function ourComp() {
-  const heroes = profile.players.map((p, i) => {
+  const heroes = present().map((i) => {
     const id = match.picked[i];
     return id != null && byId[sid(id)] ? { hero: byId[sid(id)], i } : null;
   }).filter(Boolean);
@@ -855,7 +879,7 @@ function renderThreats() {
   box.hidden = !comp.length;
   if (box.hidden) return;
   const map = currentMap();
-  const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
+  const sets = presentSets();
   const banned = new Set(match.bans.map(sid));
   const rows = threatScores(sets, T, {
     mapSlug: match.mapSlug, side: match.side, ours: match.picked.filter(Boolean), mates: match.allies, mode: starMode(),
@@ -1165,7 +1189,7 @@ function gridStars() {
   const g = match.group;
   if (g === "bans") return banStars();
   if (g === "enemies") {
-    const sets = [...new Set(profile.players.map((p, i) => playerData(i)))];
+    const sets = presentSets();
     return rankStars(threatScores(sets, T, {
       mapSlug: match.mapSlug, side: match.side, ours: match.picked.filter(Boolean), mates: match.allies, mode: starMode(),
     }), starOpts());
@@ -1199,7 +1223,7 @@ function renderGrid() {
   $("#grid-note").textContent = soon.length ? `${soon.join(", ")}: ${soon.length > 1 ? "nuovi, compariranno" : "nuovo, comparirà"} `
     + "qui quando counterwatch avrà le statistiche." : "";
   const recs = (lastDuo?.lists ?? []).map((rows) => (rows[0] && !rows[0].picked ? sid(rows[0].hero.id) : null));
-  const favs = new Set(profile.players.flatMap((p) => p.favorites.map(sid)));
+  const favs = new Set(present().flatMap((i) => profile.players[i].favorites.map(sid)));
   const stars = gridStars();
   const grid = $("#grid");
   grid.dataset.stars = match.group;
@@ -1378,6 +1402,7 @@ function removePlayer(i) {
   const [gone] = profile.players.splice(i, 1);
   match.roles.splice(i, 1);
   match.picked.splice(i, 1);
+  match.away.splice(i, 1);
   if (match.pickFor >= profile.players.length || match.pickFor === i) match.pickFor = 0;
   else if (match.pickFor > i) match.pickFor--;
   fitMatch();
@@ -1542,7 +1567,8 @@ function wire() {
   // Nuova partita: un tocco, sempre a portata di pollice; per un tocco sbagliato c'è "Annulla"
   $("#new-match").addEventListener("click", () => {
     const before = JSON.stringify(match);
-    match = emptyMatch();
+    match = { ...emptyMatch(), away: match.away.slice() }; // chi gioca non cambia (lo decide la prossima foto)
+    fitMatch();
     saveMatch();
     showView("match");
     render();
@@ -1784,7 +1810,7 @@ function resultState(photo, r, meta) {
     .map((b) => ({ ...b, fixed: false, empty: false }));
   while (bans.length < MAX_BANS) bans.push({ heroId: null, sure: true, alts: [], doubt: false, fixed: false, empty: true });
   return {
-    photo, state: "result", scoreboard: r.scoreboard, ours, enemies: rows(r.enemies), ...meta,
+    photo, state: "result", view: "summary", scoreboard: r.scoreboard, ours, enemies: rows(r.enemies), ...meta,
     bans, bansRead: r.bans.length, bansKept: kept.length,
     mapSlug, mapRead: !!r.mapSlug, mapKept: !r.mapSlug && !!mapSlug, mapChosen: false,
     side: r.side || (mapSlug === match.mapSlug ? match.side : null), sideRead: !!r.side,
@@ -1825,6 +1851,13 @@ function renderPhoto() {
     : ph.mapRead ? "Letta dalla foto"
       : ph.mapKept ? "Non letta nella foto: resta quella scelta prima (tocca per cambiarla)"
         : "Mappa non riconosciuta: sceglila tu, oppure conferma senza";
+  const noteEl = () => el("p", { id: "ph-map-note", class: `ph-note ${ph.mapRead || (ph.mapChosen && map) ? "n-ok" : "n-warn"}` }, mapNote);
+  const sideSeg = (cls) => el("div", { class: `seg side glass ph-side ${cls}`, role: "group", "aria-label": "Lato" },
+    [["attack", "Attacco"], ["defense", "Difesa"]].map(([k, label]) => el("button", {
+      type: "button", "data-side": k, "aria-pressed": String(ph.side === k),
+      onclick: () => { ph.side = ph.side === k ? null : k; ph.sideRead = false; renderPhoto(); },
+    }, label)));
+  if (ph.view !== "edit") { renderSummary(body, map, sides, noteEl, sideSeg); return; }
   const head = el("div", { class: "ph-head" },
     el("button", { type: "button", class: "ph-thumb-btn", "aria-label": "Ingrandisci la foto", onclick: () => head.classList.toggle("big") }, thumb),
     el("div", { class: "ph-head-main" },
@@ -1832,34 +1865,97 @@ function renderPhoto() {
         el("span", { class: "map-label" }, "Mappa: "),
         el("span", { class: "map-name" }, map ? [map.name, el("span", { class: "map-mode" }, ` · ${MODE_IT[map.mode] ?? map.mode}`)] : "Nessuna mappa"),
         el("span", { class: "ic-slot chev" }, icon("chevron"))),
-      el("p", { id: "ph-map-note", class: `ph-note ${ph.mapRead || (ph.mapChosen && map) ? "n-ok" : "n-warn"}` }, mapNote),
-      sides ? el("div", { class: "seg side glass ph-side", role: "group", "aria-label": "Lato" },
-        [["attack", "Attacco"], ["defense", "Difesa"]].map(([k, label]) => el("button", {
-          type: "button", "data-side": k, "aria-pressed": String(ph.side === k),
-          onclick: () => { ph.side = ph.side === k ? null : k; ph.sideRead = false; renderPhoto(); },
-        }, label))) : null,
+      noteEl(),
+      sides ? sideSeg("") : null,
       sides ? el("p", { class: `ph-note${ph.side ? "" : " n-warn"}` },
         ph.side ? (ph.sideRead ? "Lato letto dalla foto" : "Lato scelto da te") : "Attacco o difesa non letti: toccalo tu (facoltativo)") : null));
+  // alleati possibili: 5 − giocatori in partita (quelli trovati nella foto, o chi gioca già se la foto non ne trova)
+  const owned = new Set(ph.ours.map((r) => r.owner).filter((o) => o >= 0));
   const freeAllies = ph.ours.filter((r) => r.owner < 0 && r.heroId).length;
-  const lim = limitOf("allies");
+  const lim = MAX_PLAYERS - (owned.size || present().length);
   fill(body,
     ph.scoreboard ? null : el("p", { class: "ph-warn" }, "In questa foto non vedo il tabellone: scattane un'altra, oppure compila a mano qui sotto."),
     head,
     banSection(),
     teamSection("ours"),
-    freeAllies > lim ? el("p", { class: "ph-warn" }, lim
-      ? `Siete in ${profile.players.length} nell'app: al massimo ${lim} alleati, gli altri non verranno segnati. Tocca «Alleato» sulle vostre righe per dire chi è chi.`
-      : `Siete in ${profile.players.length} nell'app: gli alleati non servono, tocca «Alleato» sulle vostre righe per dire chi è chi.`) : null,
+    freeAllies > lim ? el("p", { class: "ph-warn" }, `Al massimo ${lim} alleati: gli altri non verranno segnati. Tocca «Alleato» sulle vostre righe per dire chi è chi.`) : null,
     teamSection("enemies"),
     el("div", { class: "ph-actions sticky" },
-      el("button", { type: "button", id: "ph-retake", class: "btn", onclick: takePhoto }, icon("camera"), "Scatta di nuovo"),
+      el("button", { type: "button", id: "ph-back", class: "btn", onclick: () => { ph.view = "summary"; renderPhoto(); $("#photo-dialog").scrollTop = 0; } }, "‹ Riepilogo"),
       el("button", { type: "button", id: "ph-confirm", class: "btn primary", onclick: confirmPhoto }, icon("check"), "Conferma")),
+    el("button", { type: "button", id: "ph-retake-edit", class: "link-btn", onclick: takePhoto }, icon("camera"), "Scatta di nuovo"),
     galleryLink(),
     el("p", { class: "muted small ph-meta" }, `Letta in ${Math.max(1, Math.round(ph.secs))} s da Claude Sonnet 5.5` +
       (ph.cost != null ? ` · circa ${(ph.cost * 100).toFixed(1).replace(".", ",")} centesimi` : "") +
       `. La foto resta solo in memoria (le ultime ${MAX_PHOTOS}).`),
   );
   for (const t of $$(".ph-hname", body)) fitText(t); // nomi mai spezzati a metà parola (come nella griglia)
+}
+
+// Riepilogo (il foglio che si apre dopo la foto; richiesta del 2026-10-24): tutto a colpo d'occhio, senza scorrere, per
+// confrontarlo con lo schermo mentre si gioca. In alto mappa (+ Attacco/Difesa) e ban; sotto le due squadre come nel
+// tabellone di Overwatch: righe blu (voi) e rosse (avversari) nello stesso ordine della foto, ruolo, volto, eroe, nome.
+// Un tocco su una riga o un ban lo cambia (solita lista); "Modifica" apre il foglio completo; "Conferma" e via.
+const ROLE_ICON = { Tank: "tank", Damage: "damage", Support: "support" };
+function renderSummary(body, map, sides, noteEl, sideSeg) {
+  const owned = new Set(ph.ours.map((r) => r.owner).filter((o) => o >= 0));
+  const missing = owned.size ? profile.players.map((_, i) => i).filter((i) => !owned.has(i)) : [];
+  const named = profile.players.some((_, i) => nickOf(i));
+  const doubts = [...ph.bans, ...ph.ours, ...ph.enemies].filter((r) => r.doubt && !r.fixed).length;
+  const bans = ph.bans.map((b, k) => ({ b, k })).filter(({ b }) => b.heroId);
+  const notes = [
+    ph.scoreboard ? null : "In questa foto non vedo il tabellone: scattane un'altra, oppure tocca Modifica.",
+    missing.length ? `Non nella foto: ${missing.map((i) => profile.players[i].name).join(" e ")} → fuori da questa partita (niente riquadro).` : null,
+    !owned.size && named && ph.scoreboard ? "Non vi ho trovato nella foto (nome nel gioco?): tocca Modifica e poi «Alleato» sulla vostra riga." : null,
+    doubts ? `${doubts} ${doubts > 1 ? "eroi incerti" : "eroe incerto"} (?): toccal${doubts > 1 ? "i" : "o"} per cambiarl${doubts > 1 ? "i" : "o"}.` : null,
+  ].filter(Boolean);
+  fill(body,
+    el("div", { class: "sb-top" },
+      el("div", { class: "sb-top-row" },
+        el("button", { type: "button", id: "ph-map", class: `sb-map${map ? "" : " empty"}`, "aria-haspopup": "dialog", onclick: openPhotoMap },
+          el("span", { class: "sb-mode" }, map ? (MODE_IT[map.mode] ?? map.mode) : "Mappa"),
+          el("span", { class: "sb-mapname" }, map ? map.name : "Nessuna"),
+          el("span", { class: "ic-slot chev" }, icon("chevron"))),
+        sides ? sideSeg("sb-side") : null),
+      noteEl(),
+      el("div", { class: "sb-bans" }, el("span", { class: "sb-lab" }, "Ban"),
+        bans.length ? bans.map(({ b, k }) => el("button", {
+          type: "button", class: `sb-ban${b.doubt && !b.fixed ? " doubt" : ""}`, "data-row": `bans-${k}`,
+          "aria-label": `Ban: ${heroName(byId[b.heroId])}${b.doubt && !b.fixed ? " (incerto)" : ""}, tocca per cambiarlo`,
+          onclick: () => openPhotoHero("bans", k),
+        }, face(byId[b.heroId]), b.doubt && !b.fixed ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null))
+          : el("span", { class: "sb-none" }, "nessuno (partita rapida?)"),
+        bans.length && !ph.bansRead && ph.bansKept ? el("span", { class: "sb-none sb-kept" }, "già segnati (non nella foto)") : null)),
+    sbTeam("ours"),
+    el("div", { class: "sb-vs", "aria-hidden": "true" }, el("span", {}, "VS")),
+    sbTeam("enemies"),
+    notes.map((n) => el("p", { class: "sb-note" }, n)),
+    el("div", { class: "ph-actions sticky sb-actions" },
+      el("button", { type: "button", id: "ph-retake", class: "btn sb-icon", "aria-label": "Scatta di nuovo", onclick: takePhoto }, icon("camera")),
+      el("button", { type: "button", id: "ph-edit", class: "btn", onclick: () => { ph.view = "edit"; renderPhoto(); $("#photo-dialog").scrollTop = 0; } }, "Modifica"),
+      el("button", { type: "button", id: "ph-confirm", class: "btn primary", onclick: confirmPhoto }, icon("check"), "Conferma")));
+  for (const t of $$(".sb-hero", body)) fitText(t);
+}
+function sbTeam(key) {
+  const ours = key === "ours";
+  return el("section", { class: `sb-team ${ours ? "sb-ours" : "sb-enemies"}`, "aria-label": ours ? "La vostra squadra" : "Avversari" },
+    ph[key].map((r, k) => {
+      const h = r.heroId ? byId[r.heroId] : null;
+      const role = h ? h.role : r.role;
+      const unsure = r.doubt && !r.fixed;
+      const mine = ours && r.owner >= 0;
+      return el("button", {
+        type: "button", class: `sb-row${mine ? " mine" : ""}${h ? "" : " empty"}`, "data-row": `${key}-${k}`, style: mine ? `--pc: var(--p${r.owner})` : null,
+        "aria-label": `${h ? heroName(h) : "nessun eroe"}${r.nickname ? `, ${r.nickname}` : ""}${mine ? ` (${profile.players[r.owner].name})` : ""}${unsure ? ", incerto" : ""}: tocca per cambiarlo`,
+        onclick: () => openPhotoHero(key, k),
+      },
+      el("span", { class: `sb-role${role ? ` r-${role}` : ""}`, "aria-hidden": "true" }, role ? icon(ROLE_ICON[role]) : null),
+      el("span", { class: "sb-face" }, h ? face(h) : el("span", { class: "face" }, r.empty ? "" : "?"),
+        unsure ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null),
+      el("span", { class: "sb-hero" }, h ? heroName(h) : r.empty ? "—" : "Non scelto"),
+      el("span", { class: "sb-nick" }, r.nickname || ""),
+      mine ? el("span", { class: "sb-who" }, profile.players[r.owner].name) : null);
+    }));
 }
 
 // Ban: una fila di riquadri (4 in Ranked); incerti con "?" e le alternative sotto; un tocco apre la lista per cambiarlo
@@ -1893,7 +1989,10 @@ function ownerHint() {
   const named = profile.players.map((p, i) => ({ p, i })).filter(({ i }) => nickOf(i));
   if (!named.length) return "Tocca «Alleato» sulla tua riga per dire che sei tu (o scrivi il tuo nome nel gioco nel Profilo).";
   const missing = profile.players.filter((_, i) => !ph.ours.some((r) => r.owner === i)).map((p) => p.name);
-  if (missing.length) return `Non ho trovato ${missing.join(" e ")}: tocca «Alleato» sulla riga giusta per assegnarla.`;
+  if (missing.length && ph.ours.some((r) => r.owner >= 0)) {
+    return `Non nella foto: ${missing.join(" e ")} → fuori da questa partita. Se c'è, tocca «Alleato» sulla sua riga.`;
+  }
+  if (missing.length) return "Non vi ho trovato: tocca «Alleato» sulla vostra riga per dire chi siete.";
   return "Tocca il nome a destra per cambiare chi è chi.";
 }
 
@@ -1996,12 +2095,12 @@ function openPhotoMap() {
 function confirmPhoto() {
   const before = JSON.stringify(match);
   const map = data.maps.find((m) => m.slug === ph.mapSlug) ?? null;
-  const { match: next, dropped } = applyPhoto(match, {
+  const { match: next, dropped, gone, back } = applyPhoto(match, {
     mapSlug: ph.mapSlug, side: ph.side, sides: hasSides(map),
     ours: ph.ours.map((r) => ({ heroId: r.heroId, owner: r.owner })),
     enemies: ph.enemies.map((r) => ({ heroId: r.heroId })),
     bans: ph.bans.map((r) => ({ heroId: r.heroId })),
-  }, { players: profile.players.length, alliesLimit: limitOf("allies") });
+  }, { players: profile.players.length });
   match = next;
   if (match.group === "picked") match.group = "enemies";
   fitMatch();
@@ -2009,7 +2108,9 @@ function confirmPhoto() {
   $("#photo-dialog").close();
   showView("match");
   render();
-  toast(`Partita compilata dalla foto ✓${dropped.length ? ` (${dropped.length} alleat${dropped.length > 1 ? "i" : "o"} in più non segnat${dropped.length > 1 ? "i" : "o"})` : ""}`, 6000, {
+  const names = (ix) => ix.map((i) => profile.players[i].name).join(" e ");
+  toast(`Partita compilata dalla foto ✓${dropped.length ? ` (${dropped.length} alleat${dropped.length > 1 ? "i" : "o"} in più non segnat${dropped.length > 1 ? "i" : "o"})` : ""}`
+    + `${gone.length ? ` · ${names(gone)} non in partita` : ""}${back.length ? ` · ${names(back)} di nuovo in partita` : ""}`, 6000, {
     label: "Annulla",
     run: () => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); },
   });
