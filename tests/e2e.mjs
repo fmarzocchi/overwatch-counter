@@ -722,7 +722,13 @@ try {
         check(`${label}: un colore diverso per giocatore (riquadri e griglia)`,
           new Set(st.colors).size === n && st.recs.length === n && new Set(st.recs.map((r) => r[1])).size === n, JSON.stringify(st.recs));
         check(`${label}: «Alleati» solo se c'è posto in squadra (5 − giocatori)`, st.alliesHidden === (n === 5));
-        if (n === 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-consigli`);
+        // il riquadro del consigliato è largo quanto le altre righe della lista (prima, da soli, restava a metà)
+        const widths = await p9.evaluate(() => [...document.querySelectorAll("#picks .pick")].map((c) => {
+          const list = c.querySelector(".fav-list");
+          return [list, ...list.children].map((x) => Math.round(x.getBoundingClientRect().width));
+        }));
+        check(`${label}: consigliato e righe della lista tutti della stessa larghezza`, widths.every((w) => w.every((x) => Math.abs(x - w[0]) <= 1)), JSON.stringify(widths));
+        if (n <= 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-consigli`);
 
         // ognuno segna l'eroe che ha preso (diverso dal consigliato): «Altro» nel suo riquadro, poi l'eroe nella griglia
         const used = { Damage: 0, Support: 0, Tank: 0 };

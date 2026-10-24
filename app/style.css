@@ -271,6 +271,24 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .rec-box .fav-row.is-rec { border: 0; background: transparent; box-shadow: none; }
 .rec-cta { width: 100%; min-height: 32px; margin: -6px 0 0; padding: 0 8px 2px; border: 0; background: transparent; }
 .fav-row.is-rec > .face { width: 42px; height: 42px; font-size: 13px; box-shadow: 0 0 0 2px var(--pc); }
+/* la lista dei riquadri è una colonna: il consigliato largo quanto le altre righe (non la fila di chip del Profilo) */
+.pick .fav-list, #choose-body .fav-list { display: block; }
+.rec-box { width: 100%; }
+/* da soli (un riquadro largo tutta la pagina): righe, volti e testi più grandi, in proporzione */
+.picks.n1 .pick { padding: 14px 14px; }
+.picks.n1 .pick-ask { font-size: 14px; }
+.picks.n1 .fav-list > * + * { margin-top: 8px; }
+.picks.n1 .fav-row { min-height: 60px; padding: 9px 12px; }
+.picks.n1 .fav-row > .face { width: 42px; height: 42px; font-size: 13px; margin-right: 12px; }
+.picks.n1 .fav-row.is-rec > .face { width: 60px; height: 60px; font-size: 18px; margin-right: 14px; }
+.picks.n1 .fr-tag { font-size: 12px; }
+.picks.n1 .fr-name { font-size: calc(17px * var(--fit, 1)); }
+.picks.n1 .fav-row.is-rec .fr-name { font-size: calc(21px * var(--fit, 1)); }
+.picks.n1 .fr-stars { margin-top: 2px; font-size: 13.5px; }
+.picks.n1 .fr-note { font-size: 13px; }
+.picks.n1 .fr-mu .alt-mu .face { width: 20px; height: 20px; }
+.picks.n1 .rec-cta { min-height: 40px; font-size: 14px; }
+.picks.n1 .fav-more { min-height: 46px; font-size: 14.5px; }
 .fav-more {
   display: flex; align-items: center; justify-content: center; width: 100%; min-height: 40px; padding: 0 10px;
   border-radius: 999px; border: 1px dashed var(--edge); background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 650;

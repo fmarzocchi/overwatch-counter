@@ -298,6 +298,9 @@ L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il rest
      (`choose()`, messaggio con "Annulla"). Senza preferiti: i più adatti del ruolo. Sotto: "＋ N altri" (preferiti che non
      ci stanno → foglio), "Un altro eroe" (griglia) o, senza preferiti, "Altri eroi" (foglio). Banditi, alleati segnati ed
      eroi già presi dagli altri non compaiono (`takenBy()`).
+     Il riquadro del consigliato (`.rec-box`) è largo quanto le righe (2026-10-24, segnalazione dell'utente: da solo restava
+     a metà, perché `.fav-list` del Profilo è una fila di chip: `.pick .fav-list { display: block }`); da soli (`.picks.n1`)
+     righe, volti e testi più grandi. e2e "consigliato e righe della lista tutti della stessa larghezza" (1–5 giocatori).
    - **dopo la scelta**: riquadro dedicato (volto grande, stelline BIANCHE sotto il nome — le stesse della lista, richiesta
      del 2026-10-06 —, una sola cifra (in "solo guide" niente pillola: bastano le stelline), "Come giocarla", Batte/Teme
      `matchups()`, "Passa a" `swapAdvice()` anche lui con le stelline), in alto "✓ Scelto ×" (tocco = annulla) e sotto **"Scegline un altro"**: gli altri preferiti
