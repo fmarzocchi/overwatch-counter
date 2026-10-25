@@ -449,7 +449,7 @@ L'utente ha crediti API Anthropic (piano Max) e vuole compilare la partita da un
   scambiarlo per i ban. Eroe non riconosciuto ma con ipotesi (morto, incerto, nome sconosciuto; anche i ban) → al suo
   posto l'ipotesi PIÙ PROBABILE, incerta col "?", le altre restano alternative (2026-10-25, l'utente: niente "Chi è?");
   se è già nella squadra si prende la successiva; il "?" di chi non ha ancora scelto resta vuoto ("Non riconosciuto" solo
-  se Claude non dà nessuna ipotesi). Righe dei morti col volto spento come sullo schermo. Le note del riepilogo stanno in un solo paragrafo (e2e: tutto in vista anche con più note).
+  se Claude non dà nessuna ipotesi). Righe dei morti col volto GRIGIO (solo `grayscale`, non scurito: richiesta dell'utente). Le note del riepilogo stanno in un solo paragrafo (e2e: tutto in vista anche con più note).
 - e2e "foto: …", "riepilogo: …", "presenza: …" (Claude simulato con `ctx.route`, screenshot 19*; nomi dei riquadrini mai
   spezzati anche al 130%, `fitText`). Costo stimato ~1–4 centesimi a foto (mostrato sotto il foglio completo da `usage`).
 

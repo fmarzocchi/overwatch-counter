@@ -1443,8 +1443,8 @@ try {
     check("riepilogo: incerti con «?» (Ana, Tracer, un ban)", sbo[1].doubt && sbe[1].doubt && !sbo[0].doubt
       && (await pp.locator("#photo-body .sb-ban .ph-badge").count()) === 1 && /3 incerti \(\?\)/.test(await text(pp, "#photo-body")));
     check("riepilogo: icona del ruolo anche per chi non ha scelto (Tank)", /r-Tank/.test(sbo[2].role) && /r-Damage/.test(sbo[0].role));
-    check("riepilogo: chi è morto (ritratto grigio nella foto) ha il volto spento, come sullo schermo",
-      await pp.locator("#photo-body .sb-enemies .sb-row").nth(2).evaluate((r) => r.classList.contains("dead") && /grayscale/.test(getComputedStyle(r.querySelector(".face")).filter))
+    check("riepilogo: chi è morto (ritratto grigio nella foto) ha il volto grigio, non scurito, come sullo schermo",
+      await pp.locator("#photo-body .sb-enemies .sb-row").nth(2).evaluate((r) => r.classList.contains("dead") && getComputedStyle(r.querySelector(".face")).filter === "grayscale(1)")
       && (await pp.locator("#photo-body .sb-row.dead").count()) === 1);
     check("riepilogo: in alto mappa, Attacco/Difesa e i 4 ban", /king's row/i.test(await text(pp, "#ph-map")) && /Letta dalla foto/.test(await text(pp, "#ph-map-note"))
       && await pp.locator("#photo-body .sb-side [data-side=attack]").getAttribute("aria-pressed") === "true"

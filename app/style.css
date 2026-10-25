@@ -952,5 +952,5 @@ dialog .search { margin: 0 16px 6px; }
 }
 .away-chip .p-dot { width: 9px; height: 9px; margin-right: 6px; }
 .away-chip .ic { margin-left: 6px; color: var(--muted); }
-/* morto nel tabellone (ritratto grigio): è in partita; il volto spento come sullo schermo, per confrontarli a colpo d'occhio */
-.sb-row.dead .sb-face .face, .ph-row.dead .ph-hero .face { filter: grayscale(1) brightness(.75); }
+/* morto nel tabellone (ritratto grigio): è in partita; il volto in grigio come sullo schermo (non scurito), per confrontarli */
+.sb-row.dead .sb-face .face, .ph-row.dead .ph-hero .face { filter: grayscale(1); }
