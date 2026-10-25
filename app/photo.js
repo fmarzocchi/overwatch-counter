@@ -77,7 +77,7 @@ export function photoSystem(heroes, maps, mapsIt = {}) {
   return [
     "You read phone photos of the Overwatch in-game scoreboard (Nintendo Switch 2, game in Italian) and report what it shows.",
     "Layout: the photographer's team is on top (blue rows), the enemy team below (red rows), separated by \"VS\". Each row has a role icon on the left (shield = Tank, three bars = Damage, plus sign = Support), the hero portrait, the player name (sometimes with a title underneath) and stats.",
-    "Every row of a match in progress is a player who is playing a hero. A DEAD player's portrait is shown greyed out, desaturated or dimmed (sometimes darker, sometimes washed out to white/grey): that player is still in the match, set dead true and identify the hero anyway from the shape of the portrait (helmet, hair, mask, hat, silhouette), comparing it with the reference sheet without relying on colors. Never return null for a greyed portrait: give your best guess with sure false and up to 3 alternatives of the same role.",
+    "Every row of a match in progress is a player who is playing a hero. A DEAD player's portrait is shown greyed out, desaturated or dimmed (sometimes darker, sometimes washed out to white/grey): that player is still in the match, set dead true and identify the hero anyway from the shape of the portrait (helmet, hair, mask, hat, silhouette), comparing it with the reference sheet without relying on colors. Never return null for a greyed portrait: put your most likely hero in hero (sure false) and up to 3 other candidates of the same role in alternatives.",
     "Return hero null ONLY when the portrait slot shows the generic placeholder silhouette with a \"?\" (a player who has not picked a hero yet, e.g. during hero selection); then sure true.",
     "Use the row's role icon to narrow the candidates to that role. The panel on the right, when present, names the hero of the highlighted row: use it. The kill feed at the top right (lines like \"PLAYER [portrait] > [portrait] PLAYER\") shows the heroes in color next to the player names: use it to identify dead players' heroes by matching the name.",
     "Heroes: compare face, hair, skin, helmet or mask with the reference sheet (official portraits). Players often use skins, so rely on the overall silhouette and the distinctive features, not only on colors. If you are not certain, set sure false and list up to 3 other likely heroes of the same role in alternatives, best first; if you are certain, alternatives may be empty.",
@@ -173,20 +173,28 @@ export function normalizeResult(raw, data) {
       let heroId = h ? sid(h.id) : null;
       if (r && r.hero != null && !h) sure = false; // nome sconosciuto: da scegliere
       if (h && r.role && r.role !== h.role) sure = false; // icona del ruolo e ritratto non tornano
-      if (heroId && seen.has(heroId)) sure = false; // stesso eroe due volte nella stessa squadra: impossibile
-      if (heroId) seen.add(heroId);
-      const alts = [];
+      let alts = [];
       for (const a of (r && Array.isArray(r.alternatives) ? r.alternatives : [])) {
         const ah = byName.get(nameKey(a));
         const id = ah ? sid(ah.id) : null;
         if (id && id !== heroId && !alts.includes(id)) alts.push(id);
-        if (alts.length >= MAX_ALTS) break;
+        if (alts.length >= MAX_ALTS + 1) break;
       }
       // senza eroe: "?" (non ancora scelto) è certo; un nome che non esiste nei dati no
       const none = !r || r.hero == null;
       const role = r && ["Tank", "Damage", "Support"].includes(r.role) ? r.role : null; // icona del ruolo (anche per "?")
-      // morto (ritratto grigio): è in partita; senza eroe riconosciuto va controllato, mai "non ancora scelto"
+      // morto (ritratto grigio): è in partita, mai "non ancora scelto"
       const dead = !!(r && r.dead);
+      // eroe non riconosciuto (morto, nome sconosciuto, incerto) ma con delle ipotesi: si mette la più probabile, incerta,
+      // e le altre restano alternative (richiesta del 2026-10-25). Il "?" di chi non ha ancora scelto resta vuoto.
+      if (!heroId && alts.length && !(none && !dead && r && r.sure)) {
+        heroId = alts.find((a) => !seen.has(a)) ?? alts[0];
+        alts = alts.filter((a) => a !== heroId);
+        sure = false;
+      }
+      alts = alts.slice(0, MAX_ALTS);
+      if (heroId && seen.has(heroId)) sure = false; // stesso eroe due volte nella stessa squadra: impossibile
+      if (heroId) seen.add(heroId);
       return { nickname: String(r && r.nickname || "").trim(), heroId, role, dead, sure: heroId ? sure : none && !dead && !!(r && r.sure), alts };
     });
   };
@@ -195,17 +203,23 @@ export function normalizeResult(raw, data) {
   for (const b of (raw && Array.isArray(raw.bans) ? raw.bans : [])) {
     if (bans.length >= MAX_BANS) break;
     const h = b && b.hero != null ? byName.get(nameKey(b.hero)) : null;
-    const heroId = h ? sid(h.id) : null;
-    if (!heroId && !(b && b.alternatives && b.alternatives.length)) continue; // ritratto illeggibile senza ipotesi
-    if (heroId && bans.some((x) => x.heroId === heroId)) continue;
-    const alts = [];
+    let heroId = h ? sid(h.id) : null;
+    let sure = !!(heroId && b.sure);
+    let alts = [];
     for (const a of (b && Array.isArray(b.alternatives) ? b.alternatives : [])) {
       const ah = byName.get(nameKey(a));
       const aid = ah ? sid(ah.id) : null;
       if (aid && aid !== heroId && !alts.includes(aid)) alts.push(aid);
-      if (alts.length >= MAX_ALTS) break;
+      if (alts.length >= MAX_ALTS + 1) break;
     }
-    bans.push({ heroId, sure: !!(heroId && b.sure), alts });
+    // ritratto non riconosciuto: l'ipotesi più probabile (incerta), le altre alternative; senza ipotesi niente
+    if (!heroId) {
+      heroId = alts.find((a) => !bans.some((x) => x.heroId === a)) ?? null;
+      alts = alts.filter((a) => a !== heroId);
+      sure = false;
+    }
+    if (!heroId || bans.some((x) => x.heroId === heroId)) continue;
+    bans.push({ heroId, sure, alts: alts.slice(0, MAX_ALTS) });
   }
   const m = raw && raw.map != null ? mapByName.get(nameKey(raw.map)) : null;
   const side = raw && (raw.side === "attack" || raw.side === "defense") ? raw.side : null;

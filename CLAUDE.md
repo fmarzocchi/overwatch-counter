@@ -446,8 +446,10 @@ L'utente ha crediti API Anthropic (piano Max) e vuole compilare la partita da un
   eroe; ritratto grigio = `dead: true` (campo nuovo dello schema), riconoscerlo dalla forma confrontando il foglio dei
   ritratti senza badare ai colori, mai null (miglior ipotesi + alternative del ruolo); null SOLO col segnaposto "?"; il
   kill feed in alto a destra ("NOME [ritratto] > [ritratto] NOME") mostra gli eroi a colori: usarlo per i morti e non
-  scambiarlo per i ban. App: morto senza eroe → incerto ("Chi è?" + alternative), mai "Non scelto"; righe dei morti col
-  volto spento come sullo schermo. Le note del riepilogo stanno in un solo paragrafo (e2e: tutto in vista anche con più note).
+  scambiarlo per i ban. Eroe non riconosciuto ma con ipotesi (morto, incerto, nome sconosciuto; anche i ban) → al suo
+  posto l'ipotesi PIÙ PROBABILE, incerta col "?", le altre restano alternative (2026-10-25, l'utente: niente "Chi è?");
+  se è già nella squadra si prende la successiva; il "?" di chi non ha ancora scelto resta vuoto ("Non riconosciuto" solo
+  se Claude non dà nessuna ipotesi). Righe dei morti col volto spento come sullo schermo. Le note del riepilogo stanno in un solo paragrafo (e2e: tutto in vista anche con più note).
 - e2e "foto: …", "riepilogo: …", "presenza: …" (Claude simulato con `ctx.route`, screenshot 19*; nomi dei riquadrini mai
   spezzati anche al 130%, `fitText`). Costo stimato ~1–4 centesimi a foto (mostrato sotto il foglio completo da `usage`).
 

@@ -1623,7 +1623,7 @@ try {
     check("foto: confermata senza mappa", st.mapSlug === null && st.enemies.length === 4, JSON.stringify(st));
     // chi gioca lo dice la foto: Giulia (Giuly) non c'è → fuori da questa partita, le altre righe sono alleati
     const readNoG = { ...readA, allies: readA.allies.map((r, k) => (k === 1 ? { ...r, nickname: "Pluto", sure: true, alternatives: [] } : r)),
-      // un avversario morto che Claude non riesce a riconoscere: «Chi è?» con le alternative, mai «Non scelto»
+      // un avversario morto che Claude non riesce a riconoscere: al suo posto la sua ipotesi più probabile, mai «Non scelto»
       enemies: readA.enemies.map((r, k) => (k === 4 ? { ...r, hero: null, dead: true, sure: true, alternatives: ["Zenyatta", "Mercy"] } : r)) };
     const snap = async (read, name) => {
       reply = () => ({ status: 200, json: okResp(read) });
@@ -1637,10 +1637,11 @@ try {
     const fits2 = await pp.evaluate(() => { const d = document.querySelector("#photo-dialog"); return [d.scrollHeight, d.clientHeight]; });
     check("riepilogo con più avvisi: sempre tutto in vista (390×844)", fits2[0] <= fits2[1] + 1, JSON.stringify(fits2));
     const deadRow = (await sbRows("enemies"))[4];
-    check("morto non riconosciuto: «Chi è?» con il «?», non «Non scelto»", deadRow.hero === "Chi è?" && deadRow.doubt, JSON.stringify(deadRow));
+    check("morto non riconosciuto: al suo posto l'ipotesi più probabile (Zenyatta) col «?»", deadRow.hero === "Zenyatta" && deadRow.doubt
+      && !/Chi è|Non riconosciuto/.test(await text(pp, "#photo-body")), JSON.stringify(deadRow));
     await pp.click("#ph-edit");
-    check("…e nel foglio completo le alternative (Zenyatta, Mercy)", /Zenyatta/.test(await text(pp, "#photo-body .ph-enemies .ph-row:nth-child(6) .ph-alts"))
-      || /Zenyatta[\s\S]*Mercy/.test(await pp.locator("#photo-body .ph-enemies .ph-row").nth(4).innerText()));
+    const deadAlts = await pp.locator("#photo-body .ph-enemies .ph-row").nth(4).locator(".ph-alt").allInnerTexts();
+    check("…e nel foglio completo le altre ipotesi come alternative (Mercy)", deadAlts.join() === "Mercy", deadAlts.join());
     await pp.click("#ph-back");
     await shot(pp, "19j-foto-senza-giulia");
     await pp.click("#ph-confirm");

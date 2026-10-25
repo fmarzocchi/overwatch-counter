@@ -99,11 +99,12 @@ test("ban: dal tabellone in alto a destra, al massimo 4, doppioni via, incerti c
     bans: [ban("Sombra"), ban("Widowmaker"), ban("Widowmaker"), ban("Brigitte", false, ["Baptiste", "Inventato", "Brigitte"]), ban(null, false, ["Hanzo"]), ban("Tracer")] };
   const r = normalizeResult(raw, data);
   assert.equal(r.bans.length, MAX_BANS);
-  assert.deepEqual(r.bans.map((b) => b.heroId), [id("Sombra"), id("Widowmaker"), id("Brigitte"), null]);
+  assert.deepEqual(r.bans.map((b) => b.heroId), [id("Sombra"), id("Widowmaker"), id("Brigitte"), id("Hanzo")],
+    "ritratto illeggibile ma con un'ipotesi: si mette la più probabile");
   assert.equal(r.bans[2].sure, false);
   assert.deepEqual(r.bans[2].alts, [id("Baptiste")]);
-  assert.deepEqual(r.bans[3].alts, [id("Hanzo")], "ritratto illeggibile ma con un'ipotesi: si propone");
   assert.equal(r.bans[3].sure, false);
+  assert.deepEqual(r.bans[3].alts, []);
   assert.deepEqual(normalizeResult({ ...raw, bans: [ban(null, true)] }, data).bans, [], "illeggibile senza ipotesi: niente");
   assert.deepEqual(normalizeResult({ ...raw, bans: undefined }, data).bans, [], "risposta senza ban: nessuno");
 });
@@ -114,13 +115,21 @@ test("morti: ritratto grigio → in partita; senza eroe riconosciuto è da contr
       { ...slot("DONI", "Ana", false, ["Kiriko"], "Support"), dead: true }, { ...slot("CHUU", null, true), dead: false }] };
   const r = normalizeResult(raw, data);
   assert.equal(r.enemies[0].dead, true);
-  assert.equal(r.enemies[0].heroId, null);
-  assert.equal(r.enemies[0].sure, false, "morto senza eroe: da controllare (con le alternative)");
-  assert.deepEqual(r.enemies[0].alts, [id("Zenyatta"), id("Mercy")]);
+  assert.equal(r.enemies[0].heroId, id("Zenyatta"), "morto non riconosciuto: l'ipotesi più probabile al suo posto");
+  assert.equal(r.enemies[0].sure, false, "…segnata come incerta");
+  assert.deepEqual(r.enemies[0].alts, [id("Mercy")], "le altre restano alternative");
   assert.equal(r.enemies[1].heroId, id("Ana"));
   assert.equal(r.enemies[1].dead, true);
   assert.equal(r.enemies[2].sure, true, "il «?» di chi non ha scelto resta certo");
   assert.equal(r.enemies[2].dead, false);
+  // la più probabile è già nella squadra: si prende la successiva
+  const r2 = normalizeResult({ ...raw, enemies: [slot("A", "Mercy"), { ...slot("B", null, false, ["Mercy", "Lúcio"], "Support"), dead: true }] }, data);
+  assert.equal(r2.enemies[1].heroId, id("Lúcio"));
+  assert.deepEqual(r2.enemies[1].alts, [id("Mercy")]);
+  // il «?» di chi non ha ancora scelto resta vuoto anche se arrivano ipotesi
+  const r3 = normalizeResult({ ...raw, enemies: [slot("C", null, true, ["Ana"], "Support")] }, data);
+  assert.equal(r3.enemies[0].heroId, null);
+  assert.equal(r3.enemies[0].sure, true);
 });
 
 test("risposta: ruolo che non torna, eroe doppio o nome sconosciuto → da controllare; mappa assente → nessuna", () => {

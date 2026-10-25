@@ -1952,7 +1952,7 @@ function sbTeam(key) {
       el("span", { class: `sb-role${role ? ` r-${role}` : ""}`, "aria-hidden": "true" }, role ? icon(ROLE_ICON[role]) : null),
       el("span", { class: "sb-face" }, h ? face(h) : el("span", { class: "face" }, r.empty ? "" : "?"),
         unsure ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null),
-      el("span", { class: "sb-hero" }, h ? heroName(h) : r.empty ? "—" : unsure ? "Chi è?" : "Non scelto"),
+      el("span", { class: "sb-hero" }, h ? heroName(h) : r.empty ? "—" : unsure ? "Non riconosciuto" : "Non scelto"),
       el("span", { class: "sb-nick" }, r.nickname || ""),
       mine ? el("span", { class: "sb-who" }, profile.players[r.owner].name) : null);
     }));
@@ -2014,7 +2014,7 @@ function photoRow(key, r, k) {
     "aria-label": h ? `${heroName(h)}${unsure ? " (incerto)" : ""}: tocca per cambiarlo` : "Nessun eroe: tocca per sceglierlo",
     onclick: () => openPhotoHero(key, k),
   }, h ? face(h) : el("span", { class: "face" }, r.empty ? "+" : "?"),
-  el("span", { class: "ph-hname" }, h ? heroName(h) : r.empty ? "Aggiungi" : unsure ? "Chi è?" : "Non scelto"),
+  el("span", { class: "ph-hname" }, h ? heroName(h) : r.empty ? "Aggiungi" : unsure ? "Non riconosciuto" : "Non scelto"),
   unsure ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null);
   const alts = r.doubt && r.alts.length ? el("div", { class: "ph-alts" },
     el("span", { class: "ph-alts-lab" }, unsure ? "Forse:" : "Oppure:"),
