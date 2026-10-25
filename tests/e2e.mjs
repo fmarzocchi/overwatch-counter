@@ -1363,7 +1363,7 @@ try {
       bans: [ban("Widowmaker"), ban("Zarya"), ban("Brigitte", false, ["Lifeweaver", "Baptiste"]), ban("Hanzo")],
       allies: [slot("FABIO", "Damage", "Cassidy"), slot("Giuly", "Support", "Ana", false, ["Kiriko", "Baptiste"]), slot("xXtank", "Tank", null),
         slot("Pippo", "Support", "Lúcio"), slot("Zed", "Damage", "Genji")],
-      enemies: [slot("Uno", "Tank", "Winston"), slot("Due", "Damage", "Tracer", false, ["Genji"]), slot("Tre", "Damage", "Cassidy"),
+      enemies: [slot("Uno", "Tank", "Winston"), slot("Due", "Damage", "Tracer", false, ["Genji"]), { ...slot("Tre", "Damage", "Cassidy"), dead: true },
         slot("Quattro", "Support", "Mercy"), slot("Cinque", "Support", null)] };
     const calls = [];
     let reply = () => ({ status: 200, json: okResp(readA) });
@@ -1441,8 +1441,11 @@ try {
       && sbe.map((r) => r.hero).join() === "Winston,Tracer,Cassidy,Mercy,Non scelto"
       && sbo[0].who === "Fabio" && sbo[1].who === "Giulia" && sbo[3].who === null, JSON.stringify(sbo));
     check("riepilogo: incerti con «?» (Ana, Tracer, un ban)", sbo[1].doubt && sbe[1].doubt && !sbo[0].doubt
-      && (await pp.locator("#photo-body .sb-ban .ph-badge").count()) === 1 && /3 eroi incerti/.test(await text(pp, "#photo-body")));
+      && (await pp.locator("#photo-body .sb-ban .ph-badge").count()) === 1 && /3 incerti \(\?\)/.test(await text(pp, "#photo-body")));
     check("riepilogo: icona del ruolo anche per chi non ha scelto (Tank)", /r-Tank/.test(sbo[2].role) && /r-Damage/.test(sbo[0].role));
+    check("riepilogo: chi è morto (ritratto grigio nella foto) ha il volto spento, come sullo schermo",
+      await pp.locator("#photo-body .sb-enemies .sb-row").nth(2).evaluate((r) => r.classList.contains("dead") && /grayscale/.test(getComputedStyle(r.querySelector(".face")).filter))
+      && (await pp.locator("#photo-body .sb-row.dead").count()) === 1);
     check("riepilogo: in alto mappa, Attacco/Difesa e i 4 ban", /king's row/i.test(await text(pp, "#ph-map")) && /Letta dalla foto/.test(await text(pp, "#ph-map-note"))
       && await pp.locator("#photo-body .sb-side [data-side=attack]").getAttribute("aria-pressed") === "true"
       && (await pp.locator("#photo-body .sb-ban").count()) === 4);
@@ -1619,7 +1622,9 @@ try {
     st = await matchState(pp);
     check("foto: confermata senza mappa", st.mapSlug === null && st.enemies.length === 4, JSON.stringify(st));
     // chi gioca lo dice la foto: Giulia (Giuly) non c'è → fuori da questa partita, le altre righe sono alleati
-    const readNoG = { ...readA, allies: readA.allies.map((r, k) => (k === 1 ? { ...r, nickname: "Pluto", sure: true, alternatives: [] } : r)) };
+    const readNoG = { ...readA, allies: readA.allies.map((r, k) => (k === 1 ? { ...r, nickname: "Pluto", sure: true, alternatives: [] } : r)),
+      // un avversario morto che Claude non riesce a riconoscere: «Chi è?» con le alternative, mai «Non scelto»
+      enemies: readA.enemies.map((r, k) => (k === 4 ? { ...r, hero: null, dead: true, sure: true, alternatives: ["Zenyatta", "Mercy"] } : r)) };
     const snap = async (read, name) => {
       reply = () => ({ status: 200, json: okResp(read) });
       [fc] = await Promise.all([pp.waitForEvent("filechooser"), pp.click("#photo-btn")]);
@@ -1627,8 +1632,16 @@ try {
       await pp.locator("#ph-confirm").waitFor();
     };
     await snap(readNoG, "g1.png");
-    check("presenza: Giulia non è nella foto → lo dice il riepilogo", /Non nella foto: Giulia → fuori da questa partita/.test(await text(pp, "#photo-body"))
+    check("presenza: Giulia non è nella foto → lo dice il riepilogo", /Giulia non è nella foto: fuori da questa partita/.test(await text(pp, "#photo-body"))
       && (await sbRows("ours"))[1].who === null);
+    const fits2 = await pp.evaluate(() => { const d = document.querySelector("#photo-dialog"); return [d.scrollHeight, d.clientHeight]; });
+    check("riepilogo con più avvisi: sempre tutto in vista (390×844)", fits2[0] <= fits2[1] + 1, JSON.stringify(fits2));
+    const deadRow = (await sbRows("enemies"))[4];
+    check("morto non riconosciuto: «Chi è?» con il «?», non «Non scelto»", deadRow.hero === "Chi è?" && deadRow.doubt, JSON.stringify(deadRow));
+    await pp.click("#ph-edit");
+    check("…e nel foglio completo le alternative (Zenyatta, Mercy)", /Zenyatta/.test(await text(pp, "#photo-body .ph-enemies .ph-row:nth-child(6) .ph-alts"))
+      || /Zenyatta[\s\S]*Mercy/.test(await pp.locator("#photo-body .ph-enemies .ph-row").nth(4).innerText()));
+    await pp.click("#ph-back");
     await shot(pp, "19j-foto-senza-giulia");
     await pp.click("#ph-confirm");
     st = await matchState(pp);

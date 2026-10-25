@@ -1905,9 +1905,9 @@ function renderSummary(body, map, sides, noteEl, sideSeg) {
   const bans = ph.bans.map((b, k) => ({ b, k })).filter(({ b }) => b.heroId);
   const notes = [
     ph.scoreboard ? null : "In questa foto non vedo il tabellone: scattane un'altra, oppure tocca Modifica.",
-    missing.length ? `Non nella foto: ${missing.map((i) => profile.players[i].name).join(" e ")} → fuori da questa partita (niente riquadro).` : null,
-    !owned.size && named && ph.scoreboard ? "Non vi ho trovato nella foto (nome nel gioco?): tocca Modifica e poi «Alleato» sulla vostra riga." : null,
-    doubts ? `${doubts} ${doubts > 1 ? "eroi incerti" : "eroe incerto"} (?): toccal${doubts > 1 ? "i" : "o"} per cambiarl${doubts > 1 ? "i" : "o"}.` : null,
+    missing.length ? `${missing.map((i) => profile.players[i].name).join(" e ")} non ${missing.length > 1 ? "sono" : "è"} nella foto: fuori da questa partita.` : null,
+    !owned.size && named && ph.scoreboard ? "Non vi ho trovato nella foto: tocca Modifica e poi «Alleato» sulla vostra riga." : null,
+    doubts ? `${doubts} ${doubts > 1 ? "incerti" : "incerto"} (?): toccal${doubts > 1 ? "i" : "o"} per cambiarl${doubts > 1 ? "i" : "o"}.` : null,
   ].filter(Boolean);
   fill(body,
     el("div", { class: "sb-top" },
@@ -1929,7 +1929,7 @@ function renderSummary(body, map, sides, noteEl, sideSeg) {
     sbTeam("ours"),
     el("div", { class: "sb-vs", "aria-hidden": "true" }, el("span", {}, "VS")),
     sbTeam("enemies"),
-    notes.map((n) => el("p", { class: "sb-note" }, n)),
+    notes.length ? el("p", { class: "sb-note" }, notes.join(" ")) : null, // un solo paragrafo: tutto resta in vista
     el("div", { class: "ph-actions sticky sb-actions" },
       el("button", { type: "button", id: "ph-retake", class: "btn sb-icon", "aria-label": "Scatta di nuovo", onclick: takePhoto }, icon("camera")),
       el("button", { type: "button", id: "ph-edit", class: "btn", onclick: () => { ph.view = "edit"; renderPhoto(); $("#photo-dialog").scrollTop = 0; } }, "Modifica"),
@@ -1945,14 +1945,14 @@ function sbTeam(key) {
       const unsure = r.doubt && !r.fixed;
       const mine = ours && r.owner >= 0;
       return el("button", {
-        type: "button", class: `sb-row${mine ? " mine" : ""}${h ? "" : " empty"}`, "data-row": `${key}-${k}`, style: mine ? `--pc: var(--p${r.owner})` : null,
-        "aria-label": `${h ? heroName(h) : "nessun eroe"}${r.nickname ? `, ${r.nickname}` : ""}${mine ? ` (${profile.players[r.owner].name})` : ""}${unsure ? ", incerto" : ""}: tocca per cambiarlo`,
+        type: "button", class: `sb-row${mine ? " mine" : ""}${h || unsure ? "" : " empty"}${r.dead ? " dead" : ""}`, "data-row": `${key}-${k}`, style: mine ? `--pc: var(--p${r.owner})` : null,
+        "aria-label": `${h ? heroName(h) : "nessun eroe"}${r.nickname ? `, ${r.nickname}` : ""}${mine ? ` (${profile.players[r.owner].name})` : ""}${r.dead ? ", morto" : ""}${unsure ? ", incerto" : ""}: tocca per cambiarlo`,
         onclick: () => openPhotoHero(key, k),
       },
       el("span", { class: `sb-role${role ? ` r-${role}` : ""}`, "aria-hidden": "true" }, role ? icon(ROLE_ICON[role]) : null),
       el("span", { class: "sb-face" }, h ? face(h) : el("span", { class: "face" }, r.empty ? "" : "?"),
         unsure ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null),
-      el("span", { class: "sb-hero" }, h ? heroName(h) : r.empty ? "—" : "Non scelto"),
+      el("span", { class: "sb-hero" }, h ? heroName(h) : r.empty ? "—" : unsure ? "Chi è?" : "Non scelto"),
       el("span", { class: "sb-nick" }, r.nickname || ""),
       mine ? el("span", { class: "sb-who" }, profile.players[r.owner].name) : null);
     }));
@@ -2014,13 +2014,13 @@ function photoRow(key, r, k) {
     "aria-label": h ? `${heroName(h)}${unsure ? " (incerto)" : ""}: tocca per cambiarlo` : "Nessun eroe: tocca per sceglierlo",
     onclick: () => openPhotoHero(key, k),
   }, h ? face(h) : el("span", { class: "face" }, r.empty ? "+" : "?"),
-  el("span", { class: "ph-hname" }, h ? heroName(h) : r.empty ? "Aggiungi" : "Non scelto"),
+  el("span", { class: "ph-hname" }, h ? heroName(h) : r.empty ? "Aggiungi" : unsure ? "Chi è?" : "Non scelto"),
   unsure ? el("span", { class: "ph-badge", "aria-hidden": "true" }, "?") : null);
   const alts = r.doubt && r.alts.length ? el("div", { class: "ph-alts" },
     el("span", { class: "ph-alts-lab" }, unsure ? "Forse:" : "Oppure:"),
     r.alts.map((id) => el("button", { type: "button", class: "ph-alt", "data-alt": id, "aria-label": `Metti ${heroName(byId[id])}`,
       onclick: () => swapAlt(key, k, id) }, face(byId[id]), heroName(byId[id])))) : null;
-  return el("div", { class: `ph-row${key === "ours" && r.owner >= 0 ? " mine" : ""}`, style: key === "ours" && r.owner >= 0 ? `--pc: var(--p${r.owner})` : null },
+  return el("div", { class: `ph-row${key === "ours" && r.owner >= 0 ? " mine" : ""}${r.dead ? " dead" : ""}`, style: key === "ours" && r.owner >= 0 ? `--pc: var(--p${r.owner})` : null },
     tile,
     el("div", { class: "ph-mid" },
       el("div", { class: "ph-who" },

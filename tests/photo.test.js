@@ -39,6 +39,12 @@ test("richiesta: Sonnet 5.5 senza pensiero esteso, JSON vincolato agli eroi e al
   assert.match(body.system[0].text, /Ilios \(Control; in Italian: Ilio\)/);
   assert.match(body.system[0].text, /Mizuki \(Support\)/);
   assert.match(body.system[0].text, /Bans: .*top right, right under the map header/, "dove sono i ban nel tabellone");
+  // eroi morti (ritratto grigio): sono in partita, vanno riconosciuti; null solo per il "?" di chi non ha scelto
+  assert.match(body.system[0].text, /DEAD player's portrait is shown greyed out/);
+  assert.match(body.system[0].text, /Never return null for a greyed portrait/);
+  assert.match(body.system[0].text, /hero null ONLY when the portrait slot shows the generic placeholder silhouette/);
+  assert.match(body.system[0].text, /kill feed/, "il kill feed aiuta a riconoscere i morti e non è un ban");
+  assert.ok(schema.properties.allies.items.required.includes("dead"));
   assert.deepEqual(schema.properties.bans.items.properties.hero.anyOf[0].enum, heroEnum, "ban vincolati agli eroi dei dati");
   assert.ok(schema.required.includes("bans"));
   // senza foglio: solo la foto
@@ -100,6 +106,21 @@ test("ban: dal tabellone in alto a destra, al massimo 4, doppioni via, incerti c
   assert.equal(r.bans[3].sure, false);
   assert.deepEqual(normalizeResult({ ...raw, bans: [ban(null, true)] }, data).bans, [], "illeggibile senza ipotesi: niente");
   assert.deepEqual(normalizeResult({ ...raw, bans: undefined }, data).bans, [], "risposta senza ban: nessuno");
+});
+
+test("morti: ritratto grigio → in partita; senza eroe riconosciuto è da controllare, mai «non ancora scelto»", () => {
+  const raw = { scoreboard: true, map: null, side: null, bans: [], allies: [],
+    enemies: [{ ...slot("FLOOPY", null, true, ["Zenyatta", "Mercy"], "Support"), dead: true },
+      { ...slot("DONI", "Ana", false, ["Kiriko"], "Support"), dead: true }, { ...slot("CHUU", null, true), dead: false }] };
+  const r = normalizeResult(raw, data);
+  assert.equal(r.enemies[0].dead, true);
+  assert.equal(r.enemies[0].heroId, null);
+  assert.equal(r.enemies[0].sure, false, "morto senza eroe: da controllare (con le alternative)");
+  assert.deepEqual(r.enemies[0].alts, [id("Zenyatta"), id("Mercy")]);
+  assert.equal(r.enemies[1].heroId, id("Ana"));
+  assert.equal(r.enemies[1].dead, true);
+  assert.equal(r.enemies[2].sure, true, "il «?» di chi non ha scelto resta certo");
+  assert.equal(r.enemies[2].dead, false);
 });
 
 test("risposta: ruolo che non torna, eroe doppio o nome sconosciuto → da controllare; mappa assente → nessuna", () => {

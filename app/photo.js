@@ -33,10 +33,11 @@ export function photoSchema(heroNames, mapNames) {
   const slot = {
     type: "object",
     additionalProperties: false,
-    required: ["nickname", "role", "hero", "sure", "alternatives"],
+    required: ["nickname", "role", "dead", "hero", "sure", "alternatives"],
     properties: {
       nickname: { type: "string", description: "Player name as written in the row" },
       role: nullable({ type: "string", enum: ["Tank", "Damage", "Support"] }),
+      dead: { type: "boolean", description: "The portrait is greyed out / dimmed: the player is dead right now" },
       hero: nullable(hero),
       sure: { type: "boolean" },
       alternatives: { type: "array", items: hero },
@@ -76,10 +77,12 @@ export function photoSystem(heroes, maps, mapsIt = {}) {
   return [
     "You read phone photos of the Overwatch in-game scoreboard (Nintendo Switch 2, game in Italian) and report what it shows.",
     "Layout: the photographer's team is on top (blue rows), the enemy team below (red rows), separated by \"VS\". Each row has a role icon on the left (shield = Tank, three bars = Damage, plus sign = Support), the hero portrait, the player name (sometimes with a title underneath) and stats.",
-    "A grey silhouette with a \"?\" instead of a portrait means that player has not picked a hero yet: hero null, sure true. Use the row's role icon to narrow the candidates to that role. The panel on the right, when present, names the hero of the highlighted row: use it.",
+    "Every row of a match in progress is a player who is playing a hero. A DEAD player's portrait is shown greyed out, desaturated or dimmed (sometimes darker, sometimes washed out to white/grey): that player is still in the match, set dead true and identify the hero anyway from the shape of the portrait (helmet, hair, mask, hat, silhouette), comparing it with the reference sheet without relying on colors. Never return null for a greyed portrait: give your best guess with sure false and up to 3 alternatives of the same role.",
+    "Return hero null ONLY when the portrait slot shows the generic placeholder silhouette with a \"?\" (a player who has not picked a hero yet, e.g. during hero selection); then sure true.",
+    "Use the row's role icon to narrow the candidates to that role. The panel on the right, when present, names the hero of the highlighted row: use it. The kill feed at the top right (lines like \"PLAYER [portrait] > [portrait] PLAYER\") shows the heroes in color next to the player names: use it to identify dead players' heroes by matching the name.",
     "Heroes: compare face, hair, skin, helmet or mask with the reference sheet (official portraits). Players often use skins, so rely on the overall silhouette and the distinctive features, not only on colors. If you are not certain, set sure false and list up to 3 other likely heroes of the same role in alternatives, best first; if you are certain, alternatives may be empty.",
     "Map: read it only from the header at the top right (\"MODE | MAP\", e.g. \"IBRIDA | PARAÍSO\") and return the matching name from the list; if the header is not readable return null. Never guess the map from the background.",
-    "Bans: in competitive matches the banned heroes are shown as small portraits at the top right, right under the map header (usually 4, often greyed out or crossed). List them left to right, at most 4, with the same sure/alternatives rules (alternatives may be of any role). Quick Play has no bans: if no banned portraits are visible, return an empty list. Never take bans from the team rows.",
+    "Bans: in competitive matches the banned heroes are shown as small portraits at the top right, right under the map header (usually 4, often greyed out or crossed). List them left to right, at most 4, with the same sure/alternatives rules (alternatives may be of any role). Quick Play has no bans: if no banned portraits are visible, return an empty list. Never take bans from the team rows, and never from kill-feed lines (those show player names next to the portraits).",
     "Side: \"attack\" if the objective text says to escort or push the payload or capture the objective (e.g. \"SCORTA IL CARICO\", \"CATTURA L'OBIETTIVO\"), \"defense\" if it says to defend or stop it (\"DIFENDI\", \"FERMA IL CARICO\"); null if no such text is visible.",
     "Player names: copy them as written. If a name is the same as, or almost the same as, one of the app users' names given in the message, write exactly that app user's name.",
     "Rows top to bottom, at most 5 per team. If the photo shows no scoreboard, set scoreboard false and return empty lists.",
@@ -182,7 +185,9 @@ export function normalizeResult(raw, data) {
       // senza eroe: "?" (non ancora scelto) è certo; un nome che non esiste nei dati no
       const none = !r || r.hero == null;
       const role = r && ["Tank", "Damage", "Support"].includes(r.role) ? r.role : null; // icona del ruolo (anche per "?")
-      return { nickname: String(r && r.nickname || "").trim(), heroId, role, sure: heroId ? sure : none && !!(r && r.sure), alts };
+      // morto (ritratto grigio): è in partita; senza eroe riconosciuto va controllato, mai "non ancora scelto"
+      const dead = !!(r && r.dead);
+      return { nickname: String(r && r.nickname || "").trim(), heroId, role, dead, sure: heroId ? sure : none && !dead && !!(r && r.sure), alts };
     });
   };
   // ban: stessi criteri degli eroi in campo, al massimo MAX_BANS, senza doppioni

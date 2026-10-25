@@ -441,6 +441,13 @@ L'utente ha crediti API Anthropic (piano Max) e vuole compilare la partita da un
   sono alleati. Chi ricompare in una foto rientra (anche "il contrario"); se la foto non trova nessuno di voi non cambia
   nulla. Sotto i riquadri `#away` "Non in questa partita: X ＋" (un tocco lo rimette). "Nuova partita" NON lo rimette
   (lo decide la prossima foto). `applyPhoto` restituisce anche `gone`/`back` (detti nel messaggio).
+- **Eroi morti** (2026-10-25, segnalazione dell'utente: un avversario morto veniva preso per "non ancora scelto"): nel
+  tabellone il ritratto di chi è morto è grigio/spento. Istruzioni: ogni riga di una partita in corso è un giocatore con un
+  eroe; ritratto grigio = `dead: true` (campo nuovo dello schema), riconoscerlo dalla forma confrontando il foglio dei
+  ritratti senza badare ai colori, mai null (miglior ipotesi + alternative del ruolo); null SOLO col segnaposto "?"; il
+  kill feed in alto a destra ("NOME [ritratto] > [ritratto] NOME") mostra gli eroi a colori: usarlo per i morti e non
+  scambiarlo per i ban. App: morto senza eroe → incerto ("Chi è?" + alternative), mai "Non scelto"; righe dei morti col
+  volto spento come sullo schermo. Le note del riepilogo stanno in un solo paragrafo (e2e: tutto in vista anche con più note).
 - e2e "foto: …", "riepilogo: …", "presenza: …" (Claude simulato con `ctx.route`, screenshot 19*; nomi dei riquadrini mai
   spezzati anche al 130%, `fitText`). Costo stimato ~1–4 centesimi a foto (mostrato sotto il foglio completo da `usage`).
 
