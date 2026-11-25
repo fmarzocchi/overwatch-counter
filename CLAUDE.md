@@ -280,6 +280,45 @@ esserci di più. Fonti degli altri eroi spesso vecchie (Icy Veins era OW1, 2022-
   carattere di sistema al 130% (visto sull'emulatore). e2e "carattere al 130%" lo imita;
   l'e2e ora fallisce se un nome va a capo a metà parola (prima "Symmetra"/"Widowmaker" si spezzavano).
 
+## Partita in due schermate (v4, 2026-11-25, richieste dell'utente dopo la prova sul telefono) — ha la precedenza su «Ridisegno Tabellone» qui sotto
+
+L'utente ha provato il «Tabellone» e ha chiesto, in ordine: più aria, meno elementi «disturbanti», mappa che si capisca
+toccabile, volti verde/rosso al posto delle frasi, niente barra dei messaggi che copre; poi un cambio di struttura («i ban ci
+sono solo all'inizio»), volti NON tondi («scollati dal resto»), «un minimo di scritte ci devono essere». Tavole T12–T18 e
+specifiche `HANDOFF-v3.md`/`HANDOFF-v4.md` in scratchpad `ux/` (non versionate). Restano caratteri, colori e regole di OW2.
+- **Inizio partita** (`#start-view`, `openStart("first"|"new"|"edit")`): «Riempi tutto dalla foto», mappa + ATT/DIF, «La vostra
+  squadra» (facoltativa), **ban consigliati: 4 per ruolo col livello** (tacche 1–5, `BANS_SHOWN`; un tocco = bannato, max 5;
+  «altri» = ban non consigliati; «Banna un altro eroe» = lista con la ricerca), «Avanti» grande in basso. Si apre con «Nuova»
+  (la partita di prima resta in `prevMatch`: «Annulla» la rimette), al primo avvio (`match.started === false`; una partita
+  salvata vecchia senza il campo = già cominciata, `sanitizeMatch`) e toccando la mappa o i ban in testata (modo «modifica»,
+  «Fatto»). Tutto facoltativo: si salva solo ciò che è stato messo. «Indietro» di Android = «Avanti». Foto confermata → Partita.
+- **Partita**: testata (mappa = pulsante con «cambia ⌄», invito arancione «SCEGLI MAPPA» se manca; riga di stato `#hstatus`:
+  modalità · ban come volti spenti · freschezza), card dei giocatori, **due strisce di posti** T D D S S: `#us-strip` «La vostra
+  squadra» (giocatori + posti degli alleati; assente con 5 giocatori) e `#them-strip` «Avversari», poi **«Come giocarla» in
+  vista** (`#tips`, scelta dell'utente tra tre proposte): per giocatore al massimo 2 righe «attento [volti] …» / «punta [volti]
+  …» con poche parole (≤ 30 caratteri, mai «…», se non ci sta la riga sparisce), ■/▨ dati/teoria, tocco = guida completa.
+  NON ci sono più: selettore Ban/Avversari/Alleati, griglia in pagina, `#pick-banner`/`choosePicker`, `#choose-dialog`, legenda.
+- **Lista eroi** = foglio `#hero-sheet` (`openSheet({kind: enemies|allies|bans|player, role, …})`): si apre SOLO toccando un
+  posto (sulla scheda del ruolo di quel posto) o quando un giocatore sceglie (tocco sul suo ritratto/posto). Ricerca in cima
+  (requisito rigido: tutti i ruoli, risultati sopra la tastiera), schede di ruolo, tessere con tacche e punto (rosso = 3 più
+  pericolosi, arancione = consigliato), eroi non disponibili spenti col motivo. **Si chiude dopo ogni tocco** (scelta
+  dell'utente); posto pieno → «Togli» o sostituzione. Nel foglio del giocatore: «Come giocare X», «Non l'ho preso», preferiti
+  segnati (con «solo preferiti» acceso stanno per primi). Il ruolo del posto apre la scheda giusta ma non vincola.
+- **Card** (variante «riga», scelta dall'utente): [eroe che HA o posto vuoto col ruolo] › [proposta con bordo arancione] NOME
+  +x% [✓ CAMBIO/PRESO], oppure «✓ resta»; prima della scelta «oppure» + 2 alternative. Parole minime: nome del giocatore,
+  PASSA A / PRENDI, «CASSIDY 46%», «teme», «batte». **Volti sempre quadrati** (raggio 4) col bordo interno: verde = batte,
+  rosso = teme (solo avversari segnati, `matchups()`), arancione = proposta, colore del giocatore = il suo. La proposta di
+  cambio non è mai l'eroe proposto a un compagno. 3–5 giocatori: righe compatte, una aperta alla volta.
+- **Messaggi con «Annulla»**: mai sopra qualcosa di toccabile; stanno nella riga di stato (`placeToast()`: `#hstatus`, `#mini`
+  a pagina scorsa, `#pstatus` nel Profilo, `#sstatus` nell'Inizio partita), 6 s, il nuovo sostituisce il vecchio.
+- **Spazi**: token `--s1…--s5` (4/8/12/16/24), 12–16 tra le sezioni, 8 dentro; raggio 6; niente corsivo, filetti, tratteggi.
+- **Icona**: emblema originale del designer (anello arancione con due punte), NON il logo di Overwatch (l'utente l'aveva
+  chiesto, poi ha scelto questo: il logo è un marchio di Blizzard e repo e sito sono pubblici). `tools/make_icons.py` la
+  rigenera (app/icons e launcher Android). Serve l'APK nuova (icona + `adjustResize`). Service worker **v12**.
+- Collaudo: e2e riscritto per la v4 (556 controlli), unità 79 (`started` in state.test.js). Preferiti = stellina del colore
+  del giocatore sulla tessera; un eroe che ha anche l'avversario resta selezionabile (mirror) con il segno piccolo «avv.». `test-on-emulator.sh`: «Avanti», Profilo + indietro,
+  «Nuova» + indietro, «✓ PRESO», FOTO. Lavoro fatto sul ramo `wip-tabellone` e unito a `main` solo a collaudo verde.
+
 ## Ridisegno «Tabellone» (2026-11-25, scelto dall'utente) — ha la precedenza su «Design: tre livelli», «Stile Vetro» e su ogni descrizione dei riquadri più sotto
 
 Studio di un agente designer (tavole T1–T11 e specifica in scratchpad `ux/`, non versionate) e scelte dell'utente: aspetto

@@ -7,8 +7,8 @@ const RANKS = ["", "Oro", "Diamante"];
 const defaultProfile = () => ({ players: [
   { name: "Io", rank: "", roles: ["Damage"], favorites: [] }, { name: "Lei", rank: "", roles: ["Support"], favorites: [] }] });
 const opts = { fallback: defaultProfile, ranks: RANKS, defaultName: (i) => (i ? "Lei" : "Io"), maxPlayers: 5 };
-const emptyMatch = () => ({ roles: ["Damage", "Support"], picked: [null, null], pickFor: 0, mapSlug: null, side: null,
-  bans: [], enemies: [], allies: [], group: "enemies" });
+const emptyMatch = () => ({ roles: ["Damage", "Support"], picked: [null, null], mapSlug: null, side: null,
+  bans: [], enemies: [], allies: [], started: false });
 
 test("profilo: valori inutilizzabili → profilo predefinito", () => {
   for (const raw of [null, 5, "x", [], {}, { players: [] }, { players: "a" }]) assert.deepEqual(sanitizeProfile(raw, opts), defaultProfile());
@@ -40,12 +40,18 @@ test("partita: valori inutilizzabili → partita nuova; campi mancanti o sbaglia
   assert.equal(m.side, null);
   assert.deepEqual(m.roles, ["Damage", "Support"]);
   assert.deepEqual(m.picked, [null, null]);
-  assert.equal(m.group, "enemies");
-  const k = sanitizeMatch({ ...emptyMatch(), roles: ["Tank", 4], picked: [9, {}], pickFor: "1", away: [1, 0] }, emptyMatch);
+  const k = sanitizeMatch({ ...emptyMatch(), roles: ["Tank", 4], picked: [9, {}], away: [1, 0] }, emptyMatch);
   assert.deepEqual(k.roles, ["Tank", null]);
   assert.deepEqual(k.picked, ["9", null]);
-  assert.equal(k.pickFor, 0);
   assert.deepEqual(k.away, [true, false]);
+});
+
+test("partita: «started» (Inizio partita fatto) — una partita salvata vecchia senza il campo è già iniziata", () => {
+  assert.equal(sanitizeMatch(null, emptyMatch).started, false, "partita nuova: si apre l'Inizio partita");
+  assert.equal(sanitizeMatch({ mapSlug: "kings-row", enemies: ["7"] }, emptyMatch).started, true, "salvata da una versione vecchia");
+  assert.equal(sanitizeMatch({ ...emptyMatch(), started: false }, emptyMatch).started, false);
+  assert.equal(sanitizeMatch({ ...emptyMatch(), started: true }, emptyMatch).started, true);
+  assert.equal(sanitizeMatch({ ...emptyMatch(), started: "sì" }, emptyMatch).started, true, "valore rovinato: come una partita vecchia");
 });
 
 test("eroe sparito per un momento dai dati: esce dalla partita, non si perde, torna quando ricompare", () => {

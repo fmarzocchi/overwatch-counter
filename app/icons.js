@@ -22,13 +22,14 @@ const PATHS = {
   photo: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.4"/><circle cx="9" cy="9.6" r="1.6"/><path d="m4 17.5 4.6-4.6 3.4 3.4 2.6-2.6 5.4 5.4"/>',
   tank: '<path d="M12 3.2 5 5.8v5.4c0 4.4 2.9 8 7 9.6 4.1-1.6 7-5.2 7-9.6V5.8L12 3.2Z"/>',
   damage: '<path d="M6.5 20.5v-10l1.5-3.2 1.5 3.2v10M10.5 20.5V8.5L12 5l1.5 3.5v12M14.5 20.5v-10l1.5-3.2 1.5 3.2v10"/>',
+  star: '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
   support: '<path d="M12 4.5v15M4.5 12h15" stroke-width="3.2"/>',
   list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="17.5" r="1" fill="currentColor"/>',
 };
 
 export function icon(name, cls = "ic") {
   const t = document.createElement("template");
-  t.innerHTML = `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" `
+  t.innerHTML = `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" `
     + `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${PATHS[name] ?? ""}</svg>`;
   return t.content.firstChild;
 }

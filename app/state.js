@@ -42,8 +42,8 @@ export function sanitizeMatch(raw, empty) {
   m.roles = Array.isArray(raw.roles) ? raw.roles.map((r) => (ROLE_KEYS.includes(r) ? r : null)) : e.roles;
   m.picked = Array.isArray(raw.picked) ? raw.picked.map((x) => (isId(x) ? String(x) : null)) : e.picked;
   m.away = Array.isArray(raw.away) ? raw.away.map(Boolean) : e.picked.map(() => false);
-  m.pickFor = Number.isInteger(raw.pickFor) ? raw.pickFor : 0;
-  m.group = typeof raw.group === "string" ? raw.group : e.group;
+  // partita salvata prima dell'Inizio partita (senza il campo): è già iniziata, non si riapre la schermata d'inizio
+  m.started = typeof raw.started === "boolean" ? raw.started : true;
   const ms = isObj(raw.missing) ? raw.missing : {};
   m.missing = {
     ...Object.fromEntries(GROUPS.map((g) => [g, ids(ms[g])])),

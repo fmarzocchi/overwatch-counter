@@ -22,16 +22,32 @@ sleep 10                                    # icone degli eroi
 shot 1-avvio
 size=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1); W=${size%x*}; H=${size#*x}
 echo "schermo ${W}x${H}"
-adb shell input tap $((W * 89 / 100)) $((H * 92 / 100))   # scheda "Profilo" (barra piena in basso, a destra di FOTO)
+alive() { if [ -z "$(adb shell pidof "$PKG" || true)" ]; then echo "ERRORE: $1"; exit 1; fi; }
+# Coordinate in % dello schermo intero (barra di stato e di navigazione comprese), ricavate dagli screenshot della v4 a
+# 390×844 CSS e riportate a 1080×1920 (411×731 dp: 24 dp di stato + 48 di navigazione). Al primo avvio c'è l'Inizio
+# partita: «Avanti» è la fascia arancione larga in fondo (56 px, 12 px dal bordo → 84–92% dell'altezza).
+adb shell input tap $((W / 2)) $((H * 90 / 100))   # «Avanti» → Partita
+sleep 3
+shot 1b-partita
+alive "dopo «Avanti» l'app si è chiusa"
+adb shell input tap $((W * 89 / 100)) $((H * 92 / 100))   # scheda "Profilo" (barra in basso, a destra di FOTO)
 sleep 4
 shot 2-profilo
 adb shell input keyevent KEYCODE_BACK                  # tasto indietro: dal Profilo torna alla Partita, l'app resta aperta
 sleep 3
 shot 2b-indietro
-if [ -z "$(adb shell pidof "$PKG" || true)" ]; then echo "ERRORE: il tasto indietro ha chiuso l'app"; exit 1; fi
-# «✓ PRESO» sulla striscia arancione della prima fascia (a destra, in alto): un tocco = eroe scelto. Non si tocca la
-# griglia a coordinate fisse: a seconda dello schermo lì potrebbe esserci il campo «Cerca» (tastiera aperta).
-adb shell input tap $((W * 90 / 100)) $((H * 20 / 100))
+alive "il tasto indietro ha chiuso l'app"
+# «Nuova» (seconda voce della barra) apre l'Inizio partita; il tasto indietro lì vale «Avanti»: torna alla Partita
+adb shell input tap $((W * 33 / 100)) $((H * 92 / 100))
+sleep 3
+shot 2c-nuova
+adb shell input keyevent KEYCODE_BACK
+sleep 3
+shot 2d-nuova-indietro
+alive "il tasto indietro nell'Inizio partita ha chiuso l'app"
+# «✓ PRESO» della prima card (a destra, in alto: 79–93% della larghezza, 23–31% dell'altezza): un tocco = eroe scelto.
+# Nessuna lista di eroi nella pagina: si apre solo toccando un posto o un ritratto.
+adb shell input tap $((W * 86 / 100)) $((H * 27 / 100))
 sleep 3
 shot 3-tocco-eroe
 adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 40 / 100)) 300   # scorre (se la pagina è più alta dello schermo)

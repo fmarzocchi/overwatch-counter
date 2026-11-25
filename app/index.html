@@ -14,67 +14,67 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip" href="#grid">Vai alla griglia eroi</a>
+  <a class="skip" href="#picks">Vai ai consigli</a>
 
-  <!-- ============ PARTITA (aspetto «Tabellone») ============ -->
+  <!-- ============ PARTITA ============ -->
   <main id="view-match" class="view" aria-label="Partita">
-    <!-- barra minima: per ciascuno l'eroe che HA → la mossa proposta (fuori vista le fasce, o durante la ricerca) -->
-    <div id="mini" class="mini" hidden></div>
+    <!-- barra minima: per ciascuno l'eroe che HA → la proposta (quando la testata è fuori vista) -->
+    <div id="mini" class="mini" hidden><div id="mini-row" class="mini-row"></div></div>
 
     <header class="head">
-      <button id="map-btn" class="map" type="button" aria-haspopup="dialog">
-        <b id="map-name" class="map-name">Scegli mappa</b>
-        <small class="map-sub"><span id="map-sub"></span><span class="sep" aria-hidden="true"> · </span><span id="fresh-short" class="fresh-short"></span><span id="warn" class="warn" role="status" hidden></span></small>
-      </button>
-      <div id="side" class="side" role="group" aria-label="Lato" hidden>
-        <button type="button" data-side="attack" aria-pressed="false" aria-label="Attacco">ATT</button>
-        <button type="button" data-side="defense" aria-pressed="false" aria-label="Difesa">DIF</button>
+      <div class="head-row">
+        <button id="map-btn" class="map" type="button">
+          <b id="map-name" class="map-name">Scegli mappa</b>
+          <span class="map-chg" aria-hidden="true"><span class="map-chg-t">cambia</span><span class="ic-slot" data-ic="chevron"></span></span>
+        </button>
+        <div id="side" class="side" role="group" aria-label="Lato" hidden>
+          <button type="button" data-side="attack" aria-pressed="false" aria-label="Attacco">ATT</button>
+          <button type="button" data-side="defense" aria-pressed="false" aria-label="Difesa">DIF</button>
+        </div>
+      </div>
+      <!-- riga di stato, alta 48 e sempre presente: modalità, ban, freschezza; oppure il messaggio dell'ultima azione -->
+      <div id="hstatus" class="hstatus">
+        <div class="map-sub"><span id="map-sub"></span><button type="button" id="bans-btn" class="bans-btn"></button><span id="fresh-short" class="fresh-short"></span><span id="warn" class="warn" role="status" hidden></span></div>
+        <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
       </div>
     </header>
 
     <section id="picks" class="picks" aria-live="polite" aria-label="Giocatori e consigli"></section>
     <div id="away" class="away-row" hidden></div>
-
-    <section class="groups" aria-label="Cosa stai segnando">
-      <div id="groups" class="mode" role="group" aria-label="Tocca un eroe per aggiungerlo a">
-        <button type="button" data-group="bans" class="g-bans" aria-pressed="false"><span class="lab">Ban <em data-count="bans">0</em></span></button>
-        <button type="button" data-group="enemies" class="g-enemies" aria-pressed="true"><span class="lab">Avversari <em data-count="enemies">0</em></span></button>
-        <button type="button" data-group="allies" class="g-allies" aria-pressed="false"><span class="lab">Alleati <em data-count="allies">0</em></span></button>
-      </div>
-      <!-- al posto del selettore, mentre si segna l'eroe preso da un giocatore -->
-      <div id="pick-banner" class="pickbar" role="status" hidden>
-        <span id="pick-banner-txt"></span>
-        <button type="button" id="pick-cancel">Annulla</button>
-      </div>
-    </section>
-    <!-- posti per ruolo (T D D S S), o i 5 ban: pieno = un tocco lo toglie, vuoto = apre la scheda di quel ruolo -->
-    <div id="slots" class="slots" aria-label="Segnati"></div>
-
-    <!-- riga: ricerca (sempre a portata) + schede di ruolo -->
-    <div class="roles" id="roles">
-      <div class="q search">
-        <span class="ic-slot" data-ic="search"></span>
-        <input id="hero-q" type="search" placeholder="Cerca" autocomplete="off" autocapitalize="off" spellcheck="false"
-          enterkeyhint="go" aria-label="Cerca eroe in tutti i ruoli" aria-controls="results">
-        <button type="button" class="search-clear" data-clear="hero-q" aria-label="Cancella la ricerca" hidden><span class="ic-slot" data-ic="xmark"></span></button>
-      </div>
-      <div id="role-tabs" class="tabs-r" role="group" aria-label="Ruolo"></div>
-    </div>
-    <p id="legend" class="legend" hidden></p>
-    <p id="search-hint" class="hint">Cerca in tutti i ruoli: nome inglese o italiano, iniziali («jq» = Junker Queen). Invio = il primo.</p>
-    <section id="grid" class="grid-wrap" aria-label="Eroi" tabindex="-1"></section>
+    <!-- due strisce di posti (T D D S S): un tocco apre la lista degli eroi, già sul ruolo del posto -->
+    <section id="us-strip" class="strip us" aria-label="La vostra squadra"></section>
+    <section id="them-strip" class="strip them" aria-label="Avversari"></section>
+    <!-- «Come giocarla», due righe per giocatore (attento / punta), con gli avversari segnati -->
+    <section id="tips" class="tips" aria-label="Come giocarla" hidden></section>
     <p id="grid-note" class="muted small grid-note" hidden></p>
-    <!-- risultati della ricerca (tutti i ruoli), ancorati sopra la tastiera -->
-    <section id="results" class="res" aria-label="Risultati della ricerca">
-      <p id="results-hd" class="res-hd"></p>
-      <div id="results-list" class="res-list"></div>
-      <p class="none-found" data-none="results" hidden>Nessun eroe con questo nome.</p>
+  </main>
+
+  <!-- ============ INIZIO PARTITA (dopo «Nuova», al primo avvio, o dalla mappa/ban in modo «modifica») ============ -->
+  <main id="start-view" class="view start" aria-labelledby="t-start" hidden>
+    <header class="top start-top"><h1 id="t-start" class="title">Nuova partita</h1>
+      <button type="button" id="start-cancel" class="btn">Annulla</button></header>
+    <div id="sstatus" class="hstatus pstatus"></div>
+    <section class="sec"><button type="button" id="start-photo" class="photo-row"><span class="ic-slot" data-ic="camera"></span>Riempi tutto dalla foto<small>mappa, ban, squadre</small></button></section>
+    <section class="sec" aria-labelledby="t-smap"><h2 id="t-smap">Mappa</h2>
+      <div class="head-row">
+        <button id="start-map" class="map" type="button" aria-haspopup="dialog">
+          <b class="map-name">Scegli mappa</b>
+          <span class="map-chg" aria-hidden="true"><span class="map-chg-t">cambia</span><span class="ic-slot" data-ic="chevron"></span></span>
+        </button>
+        <div id="start-side" class="side" role="group" aria-label="Lato" hidden>
+          <button type="button" data-side="attack" aria-pressed="false" aria-label="Attacco">ATT</button>
+          <button type="button" data-side="defense" aria-pressed="false" aria-label="Difesa">DIF</button>
+        </div>
+      </div>
     </section>
+    <section id="start-team" class="strip us sec" aria-label="La vostra squadra"></section>
+    <section id="start-bans" class="sec bans-sec" aria-labelledby="t-sbans"></section>
+    <div class="cta"><button type="button" id="start-next" class="cta-btn">Avanti<span class="ic-slot" data-ic="chevron"></span></button></div>
   </main>
 
   <!-- ============ PROFILO ============ -->
   <main id="view-profile" class="view" aria-labelledby="t-profile" hidden>
-    <header class="top"><h1 id="t-profile" class="title">Profilo</h1></header>
+    <header class="top"><h1 id="t-profile" class="title">Profilo</h1><div id="pstatus" class="hstatus pstatus"></div></header>
     <div id="players"></div>
 
     <section class="card" id="photo-card" aria-labelledby="t-photo-card">
@@ -172,13 +172,29 @@
     <div id="guide-body"></div>
   </dialog>
 
-  <!-- ============ SCEGLI L'EROE (tutti i preferiti) ============ -->
-  <dialog id="choose-dialog" aria-labelledby="t-choose">
+  <!-- ============ LISTA EROI (posto di una striscia, scelta di un giocatore, ban) ============ -->
+  <dialog id="hero-sheet" class="hsheet" aria-labelledby="t-hs">
     <div class="dlg-head">
-      <h2 id="t-choose">Scegli l'eroe</h2>
+      <h2 id="t-hs">Eroe</h2>
       <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
     </div>
-    <div id="choose-body"></div>
+    <div class="search q">
+      <span class="ic-slot" data-ic="search"></span>
+      <input id="hero-q" type="search" placeholder="Cerca in tutti i ruoli" autocomplete="off" autocapitalize="off" spellcheck="false"
+        enterkeyhint="go" aria-label="Cerca eroe in tutti i ruoli" aria-controls="hs-results">
+      <button type="button" class="search-clear" data-clear="hero-q" aria-label="Cancella la ricerca" hidden><span class="ic-slot" data-ic="xmark"></span></button>
+    </div>
+    <p id="hs-hint" class="hs-hint">Cerca in tutti i ruoli: nome inglese o italiano, iniziali («jq» = Junker Queen). Invio = il primo.</p>
+    <div id="hs-menu" class="menu"></div>
+    <div id="hs-tabs" class="tabs-r" role="group" aria-label="Ruolo"></div>
+    <p id="hs-legend" class="hs-legend"></p>
+    <div id="hs-grid" class="hs-grid"></div>
+    <section id="hs-results" class="res" aria-label="Risultati della ricerca">
+      <p id="results-hd" class="res-hd"></p>
+      <div id="results-list" class="res-list"></div>
+      <p class="none-found" data-none="hs-results" hidden>Nessun eroe con questo nome.</p>
+    </section>
+    <div id="hs-foot" class="hs-foot"></div>
   </dialog>
 
   <!-- ============ FOTO: prima volta (chiave e nomi nel gioco) ============ -->
@@ -215,8 +231,6 @@
     <div id="photo-grid"></div>
     <p class="none-found" data-none="photo-grid" hidden>Nessun eroe con questo nome.</p>
   </dialog>
-
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script type="module" src="app.js"></script>
 </body>
