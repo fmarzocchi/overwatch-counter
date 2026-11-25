@@ -2657,7 +2657,7 @@ function watchWorker(w) {
   const seen = () => {
     if (w.state !== "installed" || !navigator.serviceWorker.controller) return;
     waitingSW = w;
-    [0, 1500, 5000, 12000].forEach((ms) => setTimeout(nudgeWaiting, ms));
+    [0, 500, 1500, 3000, 5000, 8000, 12000, 20000].forEach((ms) => setTimeout(nudgeWaiting, ms));
   };
   w.addEventListener("statechange", seen);
   seen();

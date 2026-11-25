@@ -367,7 +367,8 @@ La logica (recommend/theory/photo/state) non è cambiata: cambia la resa. Collau
 - **Service worker «in attesa»**: su GitHub il controllo «la versione nuova prende il posto (ricarica)» falliva ogni tanto
   con il worker nuovo fermo in `waiting` (diagnosi stampata dal controllo: `wanted:false`, `waiting:true`): Chromium
   rimanda l'attivazione finché il vecchio ha richieste in corso. Ora la pagina glielo richiede (`watchWorker`/
-  `nudgeWaiting` → messaggio `owc-skip` → `skipWaiting()` in sw.js) subito, dopo 1,5/5/12 s e a ogni momento libero.
+  `nudgeWaiting` → messaggio `owc-skip` → `skipWaiting()` in sw.js) subito, più volte nei primi 20 s e a ogni momento libero
+  (su GitHub l'attivazione arriva anche dopo 5–10 s: i due controlli e2e aspettano fino a 25 s e stampano la diagnosi).
 - Ganci per i test: `window.owcBands()`, `owcSearching()`, `owcPhotoPlan()`, `owcFitText(el, {whole})`.
 - Tolti per progetto: riga del motivo senza avversari (resta in «Perché»), volti piccoli batte/teme (ora a parole),
   «Scegline un altro» in riga (ora nel foglio), sottotitolo «Forti su questa mappa» dei ban, titolo «Partita».
