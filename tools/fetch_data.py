@@ -20,17 +20,22 @@ Uso: python3 tools/fetch_data.py [--out PATH] [--prev PATH] [--from-dir DIR]
   --from-dir legge le pagine da file locali (per i test) invece che dalla rete;
   i dati Ranked sono i file rest_ranked_{counters,synergies,current}.json.
 """
-import argparse, datetime, json, pathlib, re, sys, time, unicodedata, urllib.request
+import argparse, datetime, hashlib, json, pathlib, re, sys, time, unicodedata, urllib.request
 
 BASES = ["https://counterwatch.gg/stats/overwatch", "https://www.counterwatch.gg/stats/overwatch"]
 UA = {"User-Agent": "Mozilla/5.0 (personal counterpick helper)"}
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MIN_HEROES, MIN_MAPS = 35, 15
 SHRINK_PRIOR = 200  # formula del sito: (win_rate*partite + 200) / (partite + 400), cioè 400 partite al 50%
+# Ordine fisso (order=): senza, le pagine da 1000 righe (offset) possono ripetere o saltare righe.
+# Le colonne dell'ordine sono quelle selezionate e insieme identificano una riga (verificato su tests/fixtures_rest).
 RANKED_TABLES = {  # tabella e colonne del database del sito (vedi il JS di counterwatch)
-    "counters": "community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches",
-    "synergies": "community_stats_synergies_current?select=hero_id,ally_hero_id,win_rate,total_matches",
-    "current": "community_stats_current?select=hero_id,map_name,game_mode_name,win_rate,total_matches",
+    "counters": "community_stats_counters_current?select=hero_id,opponent_hero_id,win_rate,total_matches"
+                "&order=hero_id.asc,opponent_hero_id.asc",
+    "synergies": "community_stats_synergies_current?select=hero_id,ally_hero_id,win_rate,total_matches"
+                 "&order=hero_id.asc,ally_hero_id.asc",
+    "current": "community_stats_current?select=hero_id,map_name,game_mode_name,win_rate,total_matches"
+               "&order=hero_id.asc,map_name.asc,game_mode_name.asc",
 }
 RANKED_FILTER = "game=eq.Overwatch&stat_category=eq.5V5&game_type=eq.Ranked&division=eq.{division}"
 # Dati per divisione (rank dei giocatori): file app/divisions/<chiave>.json, rinnovati ogni 12 ore.
@@ -39,6 +44,10 @@ DIVISIONS = [("bronze", ["Bronze"]), ("silver", ["Silver"]), ("gold", ["Gold"]),
              ("emerald", ["Emerald"]), ("diamond", ["Diamond"]), ("master", ["Master"]),
              ("gm", ["Grandmaster", "Champion"])]
 DIVISION_MAX_AGE_H = 12
+DIVISION_WARN_AGE_H = 48        # file di divisione riusato più vecchio di così → "problems"
+DIVISION_DROP_AGE_H = 7 * 24    # più vecchio di così → tolto dall'indice (l'app usa i dati generali e lo dice)
+MAX_DROP = 3                    # eroi o mappe in meno rispetto all'ultima volta oltre cui la sezione è sospetta
+DROP_ACCEPT_H = 24              # lo stesso elenco ridotto visto di fila per tanto così è la nuova realtà (es. mappe di stagione)
 
 
 # ---------- ruoli ufficiali (Blizzard) ----------
@@ -93,14 +102,16 @@ def official_heroes(from_dir=None):
     return None
 
 
-def apply_official_roles(hero_list, official, prev_fix):
-    """Corregge i ruoli di counterwatch con quelli ufficiali. Restituisce (correzioni, eroi solo ufficiali)."""
+def apply_official_roles(hero_list, official, prev_fix, from_prev=False):
+    """Corregge i ruoli di counterwatch con quelli ufficiali. Restituisce (correzioni, eroi solo ufficiali).
+    from_prev: hero_list è l'elenco dell'ultima volta (già corretto)."""
     fixes, only = [], []
     if official is None:  # fonte ufficiale muta: si riapplicano le correzioni precedenti ancora valide
         for f in prev_fix or []:
             h = next((h for h in hero_list if h["name"] == f.get("name")), None)
-            if h and h["role"] == f.get("from") and f.get("to") in OFFICIAL_ROLE.values():
-                h["role"] = f["to"]
+            if h and (h["role"] == f.get("from") or (from_prev and h["role"] == f.get("to"))) \
+                    and f.get("to") in OFFICIAL_ROLE.values():
+                h["role"] = f["to"]  # nell'elenco precedente è già corretto: la correzione resta valida
                 fixes.append(f)
         return fixes, only
     for h in hero_list:
@@ -190,8 +201,10 @@ class Source:
             if not isinstance(page, list):
                 raise ValueError("risposta inattesa dal database")
             rows += page
-            if len(page) < 1000 or off > 20000 or len(rows) >= pages * 1000:
+            if len(page) < 1000 or len(rows) >= pages * 1000:
                 return rows
+            if off >= 20000:  # mai visto: meglio un errore chiaro che dati troncati in silenzio
+                raise ValueError("troppe righe dal database (più di 21 pagine)")
             off += 1000
 
 
@@ -374,23 +387,44 @@ def plausible(matrix):
     return bool(vals) and all(0.2 <= v <= 0.8 for v in vals)
 
 
-def update_divisions(src, tb_html, out_dir, prev_dir, ids, idset, trim, map_meta, overall, now, force=False):
+def list_sig(keys):
+    """Firma breve di un elenco (id eroi o slug mappe), indipendente dall'ordine."""
+    return hashlib.sha1(",".join(sorted(map(str, keys))).encode()).hexdigest()[:12]
+
+
+def parse_time(s):
+    """ISO con fuso orario → datetime, altrimenti None."""
+    try:
+        t = datetime.datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t if t.tzinfo else None
+
+
+def update_divisions(src, tb_html, out_dir, prev_dir, ids, idset, trim, map_meta, overall, now, force=False, download=True):
     """Scrive out_dir/<chiave>.json per ogni divisione; riusa i file precedenti se hanno meno di 12 ore
-    (o se la divisione non si scarica). Restituisce l'indice {chiave: {checked, file} | {error}}."""
+    (o se la divisione non si scarica; download=False: database non raggiungibile, solo riuso).
+    Un file riusato con più di 48 ore va in "problems", con più di 7 giorni si toglie.
+    Restituisce (indice {chiave: {checked, file} | {error}}, problemi)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     now_dt = datetime.datetime.fromisoformat(now)
-    index = {}
+    index, problems = {}, []
     for key, names in DIVISIONS:
         prev = None
-        if prev_dir:
+        if prev_dir and (pathlib.Path(prev_dir) / f"{key}.json").exists():
             try:
                 prev = json.loads((pathlib.Path(prev_dir) / f"{key}.json").read_text())
             except (OSError, ValueError):
                 prev = None
-        fresh = prev and not force and (now_dt - datetime.datetime.fromisoformat(prev.get("checked", "2000-01-01T00:00:00+00:00"))
-                          < datetime.timedelta(hours=DIVISION_MAX_AGE_H))
+            if not (isinstance(prev, dict) and parse_time(prev.get("checked"))):
+                print(f"  ! divisione {key}: file precedente illeggibile, ignorato", file=sys.stderr)
+                prev = None
+        age = now_dt - parse_time(prev["checked"]) if prev else None
+        fresh = prev and not force and age < datetime.timedelta(hours=DIVISION_MAX_AGE_H)
         body, why = (prev if fresh else None), ""
-        if not body:
+        if not body and not download:
+            why, body = "database non raggiungibile", prev
+        elif not body:
             try:
                 rows = src.ranked(tb_html, names)
                 c, sy = trim(ranked_matrix(rows["counters"], "opponent_hero_id")), trim(ranked_matrix(rows["synergies"], "ally_hero_id"))
@@ -411,13 +445,18 @@ def update_divisions(src, tb_html, out_dir, prev_dir, ids, idset, trim, map_meta
             except Exception as e:
                 why = str(e)[:120]
                 body = prev  # meglio dati di qualche ora fa che niente
+        if body is prev and prev and age > datetime.timedelta(hours=DIVISION_DROP_AGE_H):
+            why, body = f"dati del {prev['checked'][:10]}, troppo vecchi ({why or 'non aggiornati'})", None
+            problems.append(f"divisione {key}: {why}, tolta")
+        elif body is prev and prev and age > datetime.timedelta(hours=DIVISION_WARN_AGE_H):
+            problems.append(f"divisione {key}: dati del {prev['checked'][:10]} non aggiornati ({why or 'riusati'})")
         if body:
             (out_dir / f"{key}.json").write_text(json.dumps(body, ensure_ascii=False, separators=(",", ":")))
             index[key] = {"checked": body["checked"], "file": f"divisions/{key}.json", **({"error": why} if why else {})}
         else:
             index[key] = {"error": why or "non disponibile"}
             print(f"  ! divisione {key}: {why}", file=sys.stderr)
-    return index
+    return index, problems
 
 
 def main():
@@ -434,14 +473,18 @@ def main():
         prev = json.loads(prev_path.read_text())
     except (OSError, ValueError):
         prev = {}
+    if not isinstance(prev, dict):
+        print(f"  ! {prev_path}: non è un data.json, ignorato", file=sys.stderr)
+        prev = {}
     src = Source(args.from_dir)
-    status, problems = {}, []
+    status, problems, fresh = {}, [], set()  # fresh: sezioni lette davvero in questo giro
     now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
     pause = (lambda: None) if args.from_dir else (lambda: time.sleep(1.0))
 
     def keep(section, ok, new, why):
         if ok:
             status[section] = now
+            fresh.add(section)
             return new
         problems.append(f"{section}: {why}, tengo i dati precedenti")
         status[section] = (prev.get("status") or {}).get(section, "mai")
@@ -461,16 +504,44 @@ def main():
     except Exception as e:  # rete, chiave cambiata, formato diverso…
         ranked_why = str(e)[:160]
     m = re.search(r'"dateModified":"([^"]+)"', tb_html)
-    source_updated = m.group(1)[:19] + "Z" if m else prev.get("sourceUpdated")
+    seen_updated = m.group(1)[:19] + "Z" if m else None
+    source_updated = seen_updated or prev.get("sourceUpdated")
 
-    ok_heroes = len(heroes) >= MIN_HEROES and {"Tank", "Damage", "Support"} <= {h["role"] for h in heroes.values()}
+    # Calo sospetto: molti meno elementi dell'ultima volta (pagina incompleta?) → si tengono i precedenti.
+    # Se però lo STESSO elenco ridotto torna di fila per 24 ore è un cambio vero (mappe tolte dalla stagione,
+    # eroi ritirati): si accetta. "drops" in data.json ricorda da quando si vede {sezione: {since, sig, count}}.
+    prev_drops = prev.get("drops") if isinstance(prev.get("drops"), dict) else {}
+    drops, observed = {}, set()
+    now_dt = datetime.datetime.fromisoformat(now)
+
+    def dropped(section, keys, before):
+        observed.add(section)
+        n = len(keys)
+        if not (before and (before - n > MAX_DROP or n < 0.9 * before)):
+            return False
+        sig, mark = list_sig(keys), prev_drops.get(section)
+        since = mark.get("since") if isinstance(mark, dict) and mark.get("sig") == sig and parse_time(mark.get("since")) else now
+        if now_dt - parse_time(since) >= datetime.timedelta(hours=DROP_ACCEPT_H):
+            print(f"  {section}: {n} invece di {before} di fila dal {since[:16]}: accettato come nuovo elenco")
+            return False
+        drops[section] = {"since": since, "sig": sig, "count": n}
+        return True
+
+    def drop_note(section):
+        d_ = drops.get(section)
+        return f", calo visto dal {d_['since'][:16]} (accettato se resta uguale per {DROP_ACCEPT_H} h)" if d_ else ""
+
+    n_prev_heroes = len(prev.get("heroes") or [])
+    ok_heroes = (len(heroes) >= MIN_HEROES and {"Tank", "Damage", "Support"} <= {h["role"] for h in heroes.values()}
+                 and not dropped("heroes", list(heroes), n_prev_heroes))
     hero_list = keep("heroes", ok_heroes, sorted(heroes.values(), key=lambda h: (h["role"], h["name"])),
-                     f"trovati {len(heroes)} eroi")
+                     f"trovati {len(heroes)} eroi" + (f" (prima {n_prev_heroes})" if n_prev_heroes else "") + drop_note("heroes"))
     if not hero_list:
         print("ERRORE: nessun elenco eroi valido, data.json non modificato", file=sys.stderr)
         sys.exit(1)
     # ruolo ufficiale sopra quello di counterwatch (Sombra Supporto dalla Stagione 5, finché counterwatch non si aggiorna)
-    role_fix, official_only = apply_official_roles(hero_list, official_heroes(args.from_dir), prev.get("roleFix"))
+    role_fix, official_only = apply_official_roles(hero_list, official_heroes(args.from_dir), prev.get("roleFix"),
+                                                   from_prev=not ok_heroes)
     hero_list.sort(key=lambda h: (h["role"], h["name"]))
     ids = [str(h["id"]) for h in hero_list]
     idset = set(ids)
@@ -486,21 +557,24 @@ def main():
             data_filter = {"gameType": "Ranked"}
         else:
             ranked_why = f"dati Ranked incompleti (counter {coverage(rc, ids):.0%}, sinergie {coverage(rs, ids):.0%})"
+    prev_ranked = (prev.get("filter") or {}).get("gameType") == "Ranked"
     if data_filter["gameType"] != "Ranked":
         data_filter["why"] = ranked_why
-        if (prev.get("filter") or {}).get("gameType") == "Ranked":
-            problems.append(f"dati Ranked non disponibili ({ranked_why}): uso tutte le partite")
 
     cc = coverage(counters, ids)
-    counters = keep("counters", cc >= 0.9 and plausible(counters), counters, f"copertura {cc:.0%}")
+    counters_fresh = cc >= 0.9 and plausible(counters)
+    counters = keep("counters", counters_fresh, counters, f"copertura {cc:.0%}")
     sc = coverage(synergies, ids)
     synergies = keep("synergies", sc >= 0.45 and plausible(synergies), synergies, f"copertura {sc:.0%}")
+    if data_filter["gameType"] != "Ranked" and prev_ranked:
+        problems.append(f"dati Ranked non disponibili ({ranked_why}): " +
+                        ("uso tutte le partite" if counters_fresh else "tengo i dati Ranked precedenti"))
     if coverage(scores, ids) < 0.9:
         scores = prev.get("counterScores", {})
 
     map_meta = extract_map_list(payload(src.html("/maps")))
     prev_maps = {mp["slug"]: mp for mp in prev.get("maps") or []}
-    maps = []
+    maps, fresh_maps = [], 0
     ranked_maps_ok = data_filter["gameType"] == "Ranked"
     pages_used = []
     for slug, meta in sorted(map_meta.items()):
@@ -515,14 +589,28 @@ def main():
             wr = {k: v for k, v in extract_map_winrates(payload(src.html(f"/maps/{slug}"))).items() if k in idset}
         if len(wr) >= len(ids) * 0.8 and plausible({"x": wr}):
             maps.append({**meta, "winRates": wr})
+            fresh_maps += 1
         elif slug in prev_maps:
             maps.append(prev_maps[slug])
             problems.append(f"mappa {slug}: {len(wr)} eroi letti, tengo i dati precedenti")
         else:
             problems.append(f"mappa {slug}: {len(wr)} eroi letti, scartata")
-    maps = keep("maps", len(maps) >= MIN_MAPS, maps, f"solo {len(maps)} mappe valide")
+    # sezione accettata se ci sono abbastanza mappe (anche riprese una per una dall'ultima volta) e non ne mancano
+    # molte; "status" dice "adesso" solo se abbastanza mappe sono state lette davvero questa volta
+    n_prev_maps = len(prev_maps)
+    if len(maps) >= MIN_MAPS and not dropped("maps", [mp["slug"] for mp in maps], n_prev_maps):
+        if fresh_maps >= MIN_MAPS:
+            status["maps"] = now
+            fresh.add("maps")
+        else:
+            status["maps"] = (prev.get("status") or {}).get("maps", "mai")
+    else:
+        maps = keep("maps", False, None, f"solo {len(maps)} mappe valide" + (f" (prima {n_prev_maps})" if n_prev_maps else "")
+                    + drop_note("maps"))
     if pages_used:
         data_filter["mapsAll"] = pages_used
+    if not counters_fresh and prev.get("filter"):
+        data_filter = dict(prev["filter"])  # counter e sinergie sono quelli dell'ultima volta: stessa etichetta
 
     if not (counters and maps):
         print("ERRORE: dati insufficienti, data.json non modificato\n  " + "\n  ".join(problems), file=sys.stderr)
@@ -534,13 +622,22 @@ def main():
         overall[hid] = round(sum(vals) / len(vals), 4) if vals else 0.5
 
     divisions = {}
-    if data_filter["gameType"] == "Ranked":
-        divisions = update_divisions(src, tb_html, out.parent / "divisions", args.prev_divisions,
-                                     ids, idset, trim, map_meta, overall, now, force=args.force_divisions)
+    if data_filter["gameType"] == "Ranked":  # Ranked di oggi, oppure quelli dell'ultima volta (sito o database giù)
+        divisions, div_problems = update_divisions(src, tb_html, out.parent / "divisions", args.prev_divisions,
+                                                   ids, idset, trim, map_meta, overall, now,
+                                                   force=args.force_divisions, download=counters_fresh)
+        problems += div_problems
+    # "checked" = ultimo controllo riuscito: se nessuna sezione è stata letta adesso resta quello di prima;
+    # "attempt" = ultimo tentativo (anche fallito), così il controllo leggero non riprova a ogni giro
+    checked = now if fresh or not prev.get("checked") else prev["checked"]
+    # sezione non letta in questo giro (sito giù, elenco illeggibile): il conteggio del calo non si azzera
+    drops.update({s: m for s, m in prev_drops.items() if s not in observed and isinstance(m, dict)})
 
     data = {
         "divisions": divisions,
-        "source": "counterwatch.gg", "checked": now, "sourceUpdated": source_updated, "filter": data_filter,
+        "source": "counterwatch.gg", "checked": checked, "sourceUpdated": source_updated, "filter": data_filter,
+        "attempt": {"at": now, "sourceUpdated": seen_updated},
+        **({"drops": drops} if drops else {}),
         "status": status, "problems": problems,
         "heroes": hero_list, "overall": overall, "counters": counters,
         "synergies": synergies or {}, "counterScores": scores, "maps": maps,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Diagnosi: formula di shrinkage di counterwatch + copia dei dati Ranked per i test offline.
-Sola lettura. Le chiavi non vengono mai stampate né salvate."""
+Sola lettura. Indirizzo e chiave del database non vengono mai stampati né salvati (il log è pubblico),
+e nemmeno il JavaScript del sito."""
 import json, pathlib, re, statistics, sys, time, urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
@@ -21,12 +22,11 @@ html = get(BASE + "/stats/overwatch/team-builder")
 key = url = None
 for c in sorted(set(re.findall(r'/_next/static/chunks/[^"\\ ]+?\.js', html))):
     js = get(BASE + c)
-    if "shrinkWinRate" in js and '"shrinkWinRate",0,r' in js:
-        i = js.index('"shrinkWinRate",0,r')
-        print("DEFINIZIONE shrinkWinRate (prima del nome):\n", js[max(0, i - 900):i + 40], "\n")
+    if '"shrinkWinRate",0,r' in js:
+        print("definizione di shrinkWinRate trovata in un file JS del sito (la formula si ricava dai dati, sotto)")
     key = key or (re.search(r'sb_publishable_[\w-]+', js) or [None])[0]
     url = url or (re.search(r'https://[a-z0-9]+\.supabase\.co', js) or [None])[0]
-print("url:", url, "chiave:", bool(key))
+print("indirizzo del database trovato:", bool(url), "chiave:", bool(key))
 H = {"apikey": key, "Authorization": f"Bearer {key}"}
 
 

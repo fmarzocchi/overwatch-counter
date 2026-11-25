@@ -60,7 +60,9 @@ def main():
             en = [x["name"] for x in load(of(f"overfast_en-us_hero_{h['key']}.json")).get("abilities", [])]
             it = [x["name"] for x in load(of(f"overfast_it-it_hero_{h['key']}.json")).get("abilities", [])]
         except (OSError, ValueError) as e:
-            problems.append(f"{ours}: abilità non lette ({e})")
+            problems.append(f"{ours}: abilità non lette ({e}), tengo i nomi precedenti")
+            if prev_abilities.get(ours):
+                abilities[ours] = prev_abilities[ours]
             continue
         if len(en) != len(it) or not en:
             # le due lingue non si allineano (es. una aggiornata prima dell'altra): si tengono i nomi precedenti
@@ -130,6 +132,11 @@ def main():
     except (OSError, ValueError, KeyError) as e:
         problems.append(f"wiki italiana non letta ({e})")
 
+    if not abilities:  # niente di letto (copia vuota o rotta): il file precedente resta com'è
+        print(f"{a.out}: nessuna abilità letta, file non modificato")
+        for p in problems:
+            print("  -", p)
+        return 1
     out = {
         "source": "OverFast API (overfast-api.tekrop.fr), dal sito ufficiale overwatch.blizzard.com (en-us / it-it)",
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -143,7 +150,7 @@ def main():
     print(f"{a.out}: {len(heroes)} eroi, {len(maps)} mappe, {sum(len(v) for v in abilities.values())} abilità")
     for p in problems:
         print("  -", p)
-    return 0 if abilities else 1
+    return 0
 
 
 if __name__ == "__main__":

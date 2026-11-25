@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
     static final String HOME = "https://fmarzocchi.github.io/overwatch-counter/";
     static final int MAX_PHOTOS = 5; // foto del tabellone tenute nella cache, le più vecchie si cancellano
     static final int REQ_PHOTO = 7;
+    static final String KEY_CAMERA = "cameraFile"; // foto in corso se Android ricrea l'attività con la fotocamera aperta
     private WebView web;
     private ValueCallback<Uri[]> photoCallback;
     private Uri cameraUri;
@@ -91,16 +92,24 @@ public class MainActivity extends Activity {
         });
 
         if (state != null) {
-            web.restoreState(state);
-        } else {
-            web.loadUrl(HOME);
+            // attività ricreata mentre la fotocamera era aperta: la pagina che aspettava la foto non c'è più
+            String pending = state.getString(KEY_CAMERA);
+            if (pending != null) cameraUri = PhotoProvider.uriFor(new File(PhotoProvider.dir(this), pending));
+        }
+        if (state == null || web.restoreState(state) == null) {
+            web.loadUrl(HOME); // stato non ripristinabile: meglio ricaricare l'app che uno schermo vuoto
         }
     }
 
     @Override
     protected void onActivityResult(int req, int result, Intent data) {
         super.onActivityResult(req, result, data);
-        if (req != REQ_PHOTO || photoCallback == null) return;
+        if (req != REQ_PHOTO) return;
+        if (photoCallback == null) { // nessuno aspetta più la foto (attività ricreata): niente file orfani
+            if (cameraUri != null) new File(PhotoProvider.dir(this), cameraUri.getLastPathSegment()).delete();
+            cameraUri = null;
+            return;
+        }
         Uri[] got = null;
         if (cameraUri != null) {
             File f = new File(PhotoProvider.dir(this), cameraUri.getLastPathSegment());
@@ -126,6 +135,17 @@ public class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
         web.saveState(out);
+        if (cameraUri != null) out.putString(KEY_CAMERA, cameraUri.getLastPathSegment());
+    }
+
+    @Override
+    protected void onDestroy() {
+        // la WebView se ne va con l'attività: chi aspettava un file riceve "annullato" invece di restare appeso
+        if (photoCallback != null) {
+            photoCallback.onReceiveValue(null);
+            photoCallback = null;
+        }
+        super.onDestroy();
     }
 
     @Override

@@ -484,6 +484,35 @@ Formula: scarto dal 50% su mappa (o generale) + somma scarti contro ogni avversa
 + metà degli scarti di sinergia con ogni alleato. Esclude gli eroi già presi dagli alleati.
 Sentiti libero di migliorarla (es. usare anche `counterScores`), ma con test.
 
+## Audit del 2026-11-25: scraper, workflow e guscio Android (richiesta dell'utente) — ha la precedenza su ciò che segue
+
+Audit con prove riprodotte (script in scratchpad `audit-backend/`), correzioni con test (`test_fetch.py`: 67 controlli).
+- **Calo improvviso di eroi o mappe** (più di 3, o sotto il 90% del giro prima): la sezione è fallita → restano i
+  precedenti, `problems`, uscita 2. Si sblocca da sola: `data.json → drops {heroes|maps: {since, sig, count}}`; lo STESSO
+  elenco ridotto visto per 24 h di fila (`DROP_ACCEPT_H`) viene accettato (rotazione delle mappe di stagione).
+- **Counterwatch del tutto giù**: restano `filter` e divisioni precedenti (prima i dati Ranked vecchi venivano
+  rietichettati "tutte le partite" e l'indice delle divisioni svuotato). Uscita 1 nel workflow: si ripubblicano anche i
+  file delle divisioni (passo "Ultimi dati buoni").
+- **Niente tentativi a raffica**: dopo un giro fallito `data.json → attempt {at, sourceUpdated}`
+  (`needs_update.py --mark-attempt`); `decide()` aspetta le ~3 ore anche se counterwatch ha dati nuovi.
+  `checked` e `status.<sezione>` cambiano solo se la sezione è stata letta davvero in quel giro.
+- **Divisioni vecchie riusate**: oltre 48 h → `problems`; oltre 7 giorni → tolte dall'indice.
+- **roleFix** (Sombra Supporto): non si perde più dopo un giro in cui l'elenco eroi viene dal giro precedente.
+- **Database**: richieste con `order=` (colonne già nel `select`), errore se si arriva al tetto di pagine.
+- **Push la cui pubblicazione viene scartata dalla coda `pages`**: il sito pubblica `build.json {sha}`; il giro dal cron
+  che trova un'altra versione ripubblica gli ultimi dati col codice attuale SENZA scaricare da counterwatch
+  (`decide()` → `scrape=false`), salvo che una run per quella versione sia già fallita.
+- Workflow: permessi minimi per job, uscite dei passi passate via `env:`, keepalive a ogni giro completo dal cron
+  (prima solo nell'ora 03 UTC: scattava ~1 volta ogni 10 giorni), `android.yml` riprova l'APK anche dopo una run
+  "fallita" per dati parziali. `discover_ranked.py` non scrive più l'indirizzo del database nel log; `fetch_icons.py`
+  pausa di 1 s; `names_it.py` non perde i nomi italiani di un eroe se mancano i suoi file; `--prev` rovinato = assente.
+- Android: `allowBackup="false"` (nel localStorage ci sono chiave Claude e token GitHub); `loadUrl` se lo stato della
+  WebView non si ripristina; niente file orfani né callback appese se l'attività viene ricreata con la fotocamera
+  aperta. `test-on-emulator.sh` ora FALLISCE se la fotocamera non si apre o se in cache restano più di 5 foto.
+- **Noto e non risolto**: GitHub esegue il cron molto meno di ogni 30 minuti (2–4 giri al giorno, buchi di 8–12 h,
+  misurato sulle run del 16–25/11): i dati sono spesso più vecchi delle 3 ore. Deciderà l'utente come rimediare.
+  Il build resta "debug" (serve `run-as` per il collaudo): la chiave si può leggere via USB con il debug attivo.
+
 ## Aggiornamento automatico (GitHub Actions + Pages)
 
 **Dal 2026-10-05 (richiesta dell'utente): ogni 30 minuti** (`cron "7,37 * * * *"`), ma leggero:

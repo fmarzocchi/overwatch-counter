@@ -3,6 +3,8 @@ name: Aggiorna dati e pubblica
 # Ogni 30 minuti un controllo leggero (1 richiesta): se counterwatch ha dati nuovi, o se l'ultimo
 # aggiornamento completo ha più di ~3 ore, scarica i dati, li collauda e pubblica app/ su GitHub Pages.
 # Dal pulsante "Aggiorna dati" dell'app e a ogni push su main: sempre aggiornamento completo.
+# Se il sito pubblicato viene da un'altra versione del repository (push annullato dalla coda "pages"),
+# il controllo leggero ripubblica la versione attuale con gli ultimi dati, senza scaricare da counterwatch.
 # (Il telefono non fa niente di tutto questo: legge solo il data.json pubblicato, quando l'app è aperta.)
 on:
   schedule:
@@ -11,12 +13,7 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-  issues: write # segnalazione automatica quando una patch cambia eroi
-  pages: write
-  id-token: write
-  actions: write # solo per tenere acceso il cron (vedi ultimo passo)
+permissions: {} # ogni job chiede solo quello che gli serve
 
 concurrency:
   group: pages
@@ -26,6 +23,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read # elenco delle run (versione già fallita?)
+      issues: write # segnalazione automatica quando una patch cambia eroi
+      pages: read # configure-pages legge l'indirizzo del sito
     outputs:
       fetch_code: ${{ steps.fetch.outputs.code }}
       run: ${{ steps.check.outputs.run }}
@@ -51,32 +53,62 @@ jobs:
             curl -fsSL "$site/divisions/$k.json?t=$(date +%s)" -o "prev_divisions/$k.json" || rm -f "prev_divisions/$k.json"
           done
           echo "divisioni precedenti: $(ls prev_divisions | wc -l)"
+          # versione del repository da cui viene il sito pubblicato (scritta a ogni pubblicazione)
+          curl -fsSL "$site/build.json?t=$(date +%s)" -o prev_build.json || echo '{}' > prev_build.json
 
       - name: Serve un aggiornamento completo?
         id: check
-        run: python3 tools/needs_update.py --prev prev.json --event "${{ github.event_name }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          deployed=$(python3 -c "import json; d=json.load(open('prev_build.json')); print(d.get('sha', '') if isinstance(d, dict) else '')" 2>/dev/null || true)
+          failed=""
+          if [ "$EVENT" = "schedule" ] && [ -n "$deployed" ] && [ "$deployed" != "$GITHUB_SHA" ]; then
+            # una run per questa versione è già fallita: non si riprova a ogni giro (arriverebbe una mail ogni 30 minuti)
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow update-data.yml --commit "$GITHUB_SHA" --status failure \
+                  --json databaseId --jq length 2>/dev/null || echo "?")
+            echo "run fallite per $GITHUB_SHA: $n"
+            [ "$n" = "0" ] || failed="--sha-failed"
+          fi
+          python3 tools/needs_update.py --prev prev.json --event "$EVENT" --deployed-sha "$deployed" --sha "$GITHUB_SHA" $failed
 
       - name: Collaudo dello scraper (pagine salvate)
-        if: steps.check.outputs.run == 'true'
+        if: steps.check.outputs.scrape == 'true'
         run: python3 tests/test_fetch.py
 
       - name: Scarica da counterwatch
-        if: steps.check.outputs.run == 'true'
+        if: steps.check.outputs.scrape == 'true'
         id: fetch
+        env:
+          FORCE: ${{ steps.check.outputs.force_divisions }}
         run: |
           set +e
           force=""
-          [ "${{ steps.check.outputs.force_divisions }}" = "true" ] && force="--force-divisions"
+          [ "$FORCE" = "true" ] && force="--force-divisions"
           python3 tools/fetch_data.py --prev prev.json --prev-divisions prev_divisions $force
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           if [ "$code" = "1" ]; then
             echo "::error::Counterwatch non ha dato dati validi: pubblico gli ultimi dati buoni."
-            cp prev.json app/data.json
           elif [ "$code" = "2" ]; then
             echo "::warning::Dati parziali: alcune sezioni usano i dati precedenti (vedi 'problems')."
           fi
           exit 0
+
+      # scraper fallito (uscita 1) o solo ripubblicazione: gli ultimi dati pubblicati, divisioni comprese
+      - name: Ultimi dati buoni
+        if: steps.check.outputs.run == 'true' && (steps.check.outputs.scrape != 'true' || steps.fetch.outputs.code == '1')
+        env:
+          FAILED: ${{ steps.fetch.outputs.code == '1' }}
+          SEEN: ${{ steps.check.outputs.site }}
+        run: |
+          cp prev.json app/data.json
+          mkdir -p app/divisions
+          cp prev_divisions/*.json app/divisions/ 2>/dev/null || true
+          echo "divisioni ripubblicate: $(ls app/divisions | wc -l)"
+          # tentativo fallito annotato nel data.json: il controllo leggero aspetta le ~3 ore prima di riprovare
+          if [ "$FAILED" = "true" ]; then python3 tools/needs_update.py --mark-attempt app/data.json --seen "$SEEN"; fi
 
       - name: Collaudo della logica sui dati nuovi
         if: steps.check.outputs.run == 'true'
@@ -100,12 +132,18 @@ jobs:
         if: steps.patch.outputs.new == 'true' && steps.patch.outputs.heroes != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          PATCH_DATE: ${{ steps.patch.outputs.date }}
+          PATCH_HEROES: ${{ steps.patch.outputs.heroes }}
         run: |
-          title="Patch Overwatch del ${{ steps.patch.outputs.date }}: rivedere la teoria"
-          if ! gh issue list --repo "${{ github.repository }}" --state all --search "$title in:title" --json title -q '.[].title' | grep -qF "$title"; then
-            gh issue create --repo "${{ github.repository }}" --title "$title" \
-              --body "Eroi citati nelle note della patch: ${{ steps.patch.outputs.heroes }}. L'app mostra «Teoria da rivedere» per loro. Chiedi a Claude di aggiornare app/theory.json per questi eroi." || true
+          title="Patch Overwatch del $PATCH_DATE: rivedere la teoria"
+          if ! gh issue list --repo "$GITHUB_REPOSITORY" --state all --search "$title in:title" --json title -q '.[].title' | grep -qF "$title"; then
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" \
+              --body "Eroi citati nelle note della patch: $PATCH_HEROES. L'app mostra «Teoria da rivedere» per loro. Chiedi a Claude di aggiornare app/theory.json per questi eroi." || true
           fi
+
+      - name: Versione pubblicata
+        if: steps.check.outputs.run == 'true'
+        run: echo "{\"sha\":\"$GITHUB_SHA\"}" > app/build.json
 
       - uses: actions/configure-pages@v5
         if: steps.check.outputs.run == 'true'
@@ -116,23 +154,26 @@ jobs:
           path: app
 
   # GitHub spegne i cron dopo 60 giorni senza attività nel repository:
-  # riattivare il workflow via API azzera il conteggio (una volta al giorno basta).
+  # riattivare il workflow via API azzera il conteggio (una chiamata a ogni giro completo dal cron).
   keepalive:
-    if: github.event_name == 'schedule'
+    needs: build
+    if: github.event_name == 'schedule' && needs.build.outputs.run == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Tieni acceso l'aggiornamento automatico
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "$(date -u +%H)" = "03" ]; then
-            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/update-data.yml/enable" || true
-          fi
+        run: gh api -X PUT "repos/$GITHUB_REPOSITORY/actions/workflows/update-data.yml/enable" || true
 
   deploy:
     needs: build
     if: needs.build.outputs.run == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -141,8 +182,11 @@ jobs:
         uses: actions/deploy-pages@v4
 
       # Dati parziali o scraper rotto: pubblicato comunque, ma il job fallisce così arriva la mail.
+      # (Solo ripubblicazione: lo scraper non è girato, fetch_code è vuoto.)
       - name: Esito dello scraper
-        if: needs.build.outputs.fetch_code != '0'
+        if: needs.build.outputs.fetch_code != '' && needs.build.outputs.fetch_code != '0'
+        env:
+          CODE: ${{ needs.build.outputs.fetch_code }}
         run: |
-          echo "::error::fetch_data.py è uscito con ${{ needs.build.outputs.fetch_code }}: controlla i log del passo 'Scarica da counterwatch'."
+          echo "::error::fetch_data.py è uscito con $CODE: controlla i log del passo 'Scarica da counterwatch'."
           exit 1

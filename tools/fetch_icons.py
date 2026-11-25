@@ -35,7 +35,7 @@ def main():
         except Exception as e:
             print(f"  ! {h.get('name')}: {e}", file=sys.stderr)
             bad += 1
-        time.sleep(0.2)
+        time.sleep(1.0)  # stessa pausa delle altre richieste ai server di counterwatch
     print(f"icone: {ok} scaricate, {bad} mancanti → {out}")
 
 

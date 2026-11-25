@@ -44,6 +44,10 @@ echo "app in esecuzione (pid $pid)"
 # si arriva a "Salva e scatta", che deve aprire la fotocamera del telefono. Indietro torna all'app (foto annullata):
 # l'app deve restare aperta e senza errori JavaScript. La chiave è finta: qui non si chiama Claude.
 resumed() { adb shell dumpsys activity activities | grep -E "mResumedActivity|topResumedActivity" | head -1 || true; }
+# foto vecchie finte nella cache dell'app: al prossimo scatto ne devono restare al massimo 5 (MAX_PHOTOS)
+adb shell run-as "$PKG" mkdir -p cache/photos || echo "AVVISO: run-as non disponibile"
+adb shell run-as "$PKG" touch cache/photos/vecchia-1.jpg cache/photos/vecchia-2.jpg cache/photos/vecchia-3.jpg \
+  cache/photos/vecchia-4.jpg cache/photos/vecchia-5.jpg cache/photos/vecchia-6.jpg cache/photos/vecchia-7.jpg || true
 adb shell input tap $((W / 2)) $((H * 90 / 100))
 sleep 3
 shot 7-foto-impostazioni
@@ -53,10 +57,15 @@ adb shell input text "Fabio"
 adb shell input keyevent KEYCODE_ENTER   # → secondo giocatore
 adb shell input keyevent KEYCODE_ENTER   # → pulsante "Salva e scatta"
 adb shell input keyevent KEYCODE_ENTER   # lo preme
-sleep 6
+camera=""
+for i in $(seq 1 10); do   # l'app della fotocamera (API 30: com.android.camera2/...CaptureActivity) ci mette qualche secondo
+  sleep 2
+  if resumed | grep -qi camera; then camera=1; break; fi
+done
 shot 7b-fotocamera
 echo "in primo piano: $(resumed)"
-if resumed | grep -qi camera; then echo "fotocamera aperta: ok"; else echo "AVVISO: la fotocamera non risulta aperta"; fi
+if [ -z "$camera" ]; then echo "ERRORE: dopo «Salva e scatta» la fotocamera non si è aperta"; exit 1; fi
+echo "fotocamera aperta: ok"
 for i in 1 2 3; do
   if resumed | grep -q "$PKG"; then break; fi
   adb shell input keyevent KEYCODE_BACK
@@ -64,6 +73,9 @@ for i in 1 2 3; do
 done
 shot 7c-ritorno
 adb shell run-as "$PKG" ls -la cache/photos 2>/dev/null || true
+photos=$(adb shell run-as "$PKG" ls -1 cache/photos 2>/dev/null | grep -c "\.jpg" || true)
+echo "foto nella cache: $photos"
+if [ "${photos:-0}" -gt 5 ]; then echo "ERRORE: nella cache ci sono più di 5 foto"; exit 1; fi
 if ! resumed | grep -q "$PKG"; then echo "ERRORE: dopo la fotocamera non si torna all'app"; exit 1; fi
 if [ -z "$(adb shell pidof "$PKG" || true)" ]; then echo "ERRORE: l'app si è chiusa dopo la fotocamera"; exit 1; fi
 
