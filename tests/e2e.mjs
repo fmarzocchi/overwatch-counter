@@ -2168,19 +2168,22 @@ try {
         during && sheet && withUndo, `${during} ${sheet} ${withUndo}`);
       await pg.waitForFunction(() => window.__owcMark !== 1, null, { timeout: 25000 }).catch(() => {});
       // in caso di errore: perché non ha ricaricato (versione nuova vista? cosa lo impedisce? stato del service worker)
-      const why = (await alive()) ? await pg.evaluate(async () => {
+      const whyAlive = async () => ((await alive()) ? pg.evaluate(async () => {
         const r = await navigator.serviceWorker.getRegistration();
         return JSON.stringify({ ...window.owcReloadState(), toast: document.querySelector("#toast").hidden ? "nascosto" : document.querySelector("#toast").innerText,
           dialogs: [...document.querySelectorAll("dialog[open]")].map((d) => d.id), focus: document.activeElement && document.activeElement.id,
           sw: { installing: !!(r && r.installing), waiting: !!(r && r.waiting), active: r && r.active && r.active.state } });
-      }).catch((e) => String(e)) : "";
+      }).catch((e) => String(e)) : "");
+      const why = await whyAlive();
       check("… e appena tutto è chiuso la versione nuova prende il posto (ricarica)", !(await alive()), why);
       await ready(pg);
       await mark();
       bump("collaudo-2");
       await pg.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
-      await pg.waitForFunction(() => window.__owcMark !== 1, null, { timeout: 8000 }).catch(() => {});
-      check("versione nuova con l'app ferma sulla partita: ricarica subito", !(await alive()));
+      // su GitHub il service worker nuovo si attiva anche dopo vari secondi (quello vecchio ha richieste in corso):
+      // la pagina lo sollecita più volte (nudgeWaiting), quindi si aspetta fino a 25 s e in caso di errore si stampa perché
+      await pg.waitForFunction(() => window.__owcMark !== 1, null, { timeout: 25000 }).catch(() => {});
+      check("versione nuova con l'app ferma sulla partita: ricarica da sola, senza tocchi", !(await alive()), await whyAlive());
       writeFileSync(swPath, swOrig);
       await cx.close();
     }
