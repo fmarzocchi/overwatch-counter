@@ -2247,14 +2247,21 @@ function wireBack() {
 // Un aggiornamento in sottofondo non ridisegna mai sotto il dito: parte da un tocco (pointerdown) e, se i dati arrivano
 // prima che il dito si alzi, ricostruire i pulsanti farebbe perdere proprio quel tocco. Si ridisegna solo se i dati sono
 // cambiati, a tocco finito; il Profilo non si ricostruisce mentre si scrive in un suo campo (si perderebbe il testo).
-const pointers = new Set(); // dita (o mouse) appoggiate adesso
+// dita (o mouse) appoggiate adesso: id → quando. Un dito "perso" (il sistema non manda mai pointerup: gesto di sistema,
+// notifica sopra l'app) dopo 10 s non conta più, così non blocca per sempre ridisegno e ricarica.
+const pointers = new Map();
+const fingersDown = () => {
+  const now = Date.now();
+  for (const [id, t] of pointers) if (now - t > 10e3) pointers.delete(id);
+  return pointers.size;
+};
 let refreshRender = null; // {before}: ridisegno in attesa che il tocco finisca
 let refreshTimer = null;
 const profileBusy = () => !$("#view-profile").hidden && $$("#view-profile input, #view-profile select")
   .some((e) => e === document.activeElement || (e.tagName === "INPUT" && e.value !== e.defaultValue));
 function applyRefresh() {
   clearTimeout(refreshTimer);
-  if (!refreshRender || pointers.size) return; // con un dito giù si riprova quando si alza
+  if (!refreshRender || fingersDown()) return; // con un dito giù si riprova quando si alza
   const { before } = refreshRender;
   refreshRender = null;
   render({ keepProfile: profileBusy() });
@@ -2262,12 +2269,12 @@ function applyRefresh() {
   if (data.checked !== before && !toastAction()) toast("Dati aggiornati ✓", 2500);
 }
 function wirePointers() {
-  document.addEventListener("pointerdown", (e) => { pointers.add(e.pointerId); }, { capture: true, passive: true });
+  document.addEventListener("pointerdown", (e) => { pointers.set(e.pointerId, Date.now()); }, { capture: true, passive: true });
   const up = (e) => {
     pointers.delete(e.pointerId);
     // dopo il "click" che segue il dito alzato
-    if (refreshRender && !pointers.size) { clearTimeout(refreshTimer); refreshTimer = setTimeout(applyRefresh, 350); }
-    if (reloadWanted && !pointers.size) setTimeout(maybeReload, 350);
+    if (refreshRender && !fingersDown()) { clearTimeout(refreshTimer); refreshTimer = setTimeout(applyRefresh, 350); }
+    if (reloadWanted && !fingersDown()) setTimeout(maybeReload, 350);
   };
   document.addEventListener("pointerup", up, { capture: true, passive: true });
   document.addEventListener("pointercancel", up, { capture: true, passive: true });
@@ -2291,14 +2298,16 @@ const typing = () => {
 const photoPending = () => !!photoAbort || $("#photo-dialog").open;
 function reloadSafe() {
   if (document.visibilityState === "hidden") return !photoPending();
-  return !$$("dialog").some((d) => d.open) && !photoAbort && !toastAction() && !typing() && !pointers.size && !refreshing;
+  return !$$("dialog").some((d) => d.open) && !photoAbort && !toastAction() && !typing() && !fingersDown() && !refreshing;
 }
 function maybeReload() {
   if (!reloadWanted || reloading || !reloadSafe()) return;
   reloading = true;
   location.reload();
 }
-window.owcReloadState = () => ({ wanted: reloadWanted, safe: reloadSafe() }); // per il collaudo
+// per il collaudo: se non ricarica, cosa lo impedisce
+window.owcReloadState = () => ({ wanted: reloadWanted, safe: reloadSafe(), photo: !!photoAbort, toast: toastAction(), typing: typing(),
+  fingers: fingersDown(), refreshing });
 
 async function autoRefresh() {
   if (document.visibilityState === "hidden" || refreshing || !lastLoad) return;

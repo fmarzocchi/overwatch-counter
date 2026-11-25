@@ -1871,8 +1871,15 @@ try {
       const withUndo = await alive();
       check("versione nuova durante la foto: niente ricarica né con la lettura in corso, né col foglio, né con «Annulla» in vista",
         during && sheet && withUndo, `${during} ${sheet} ${withUndo}`);
-      await pg.waitForFunction(() => window.__owcMark !== 1, null, { timeout: 12000 }).catch(() => {});
-      check("… e appena tutto è chiuso la versione nuova prende il posto (ricarica)", !(await alive()));
+      await pg.waitForFunction(() => window.__owcMark !== 1, null, { timeout: 25000 }).catch(() => {});
+      // in caso di errore: perché non ha ricaricato (versione nuova vista? cosa lo impedisce? stato del service worker)
+      const why = (await alive()) ? await pg.evaluate(async () => {
+        const r = await navigator.serviceWorker.getRegistration();
+        return JSON.stringify({ ...window.owcReloadState(), toast: document.querySelector("#toast").hidden ? "nascosto" : document.querySelector("#toast").innerText,
+          dialogs: [...document.querySelectorAll("dialog[open]")].map((d) => d.id), focus: document.activeElement && document.activeElement.id,
+          sw: { installing: !!(r && r.installing), waiting: !!(r && r.waiting), active: r && r.active && r.active.state } });
+      }).catch((e) => String(e)) : "";
+      check("… e appena tutto è chiuso la versione nuova prende il posto (ricarica)", !(await alive()), why);
       await pg.locator(CARD).first().waitFor();
       await mark();
       bump("collaudo-2");
