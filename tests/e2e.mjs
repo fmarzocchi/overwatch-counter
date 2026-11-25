@@ -61,38 +61,106 @@ async function newPage(ctxOpts = {}) {
   return { ctx, page };
 }
 const shot = (page, name) => page.screenshot({ path: path.join(SHOTS, `${name}.png`) });
-const text = (page, sel) => page.locator(sel).innerText();
-// stelline della griglia: {nome mostrato: {n, cls, color, stroke}}
+// testo come lo si legge, ma senza il MAIUSCOLO del CSS (titoli e nomi nell'aspetto «Tabellone» sono in maiuscolo)
+const text = async (page, sel) => {
+  await page.locator(sel).first().waitFor({ state: "attached" });
+  return page.evaluate((s) => {
+    const st = document.createElement("style");
+    st.textContent = "* { text-transform: none !important }";
+    document.head.append(st);
+    const t = document.querySelector(s).innerText;
+    st.remove();
+    return t;
+  }, sel);
+};
+// tacche della griglia (1–5, al posto delle stelline): {nome mostrato: {n, shown, cls, color, role}}
 const starsOf = (page) => page.evaluate(() => Object.fromEntries([...document.querySelectorAll("#grid .hero")].map((b) => {
   const st = b.querySelector(".stars");
   const cs = st && getComputedStyle(st);
-  return [b.querySelector(".nm").textContent, { n: Number(b.dataset.stars), shown: !!st && !st.hidden && st.textContent.length,
-    cls: st?.className ?? "", color: cs?.color, stroke: cs?.webkitTextStrokeColor, role: b.closest("[data-block]")?.dataset.block }];
+  return [b.querySelector(".nm").textContent, { n: Number(b.dataset.stars), shown: st ? st.querySelectorAll("i.on").length : 0,
+    cls: st?.className ?? "", color: cs?.color, role: b.closest("[data-block]")?.dataset.block }];
 })));
-const heroBtn = (page, name) => page.locator("#grid .hero", { has: page.locator(".nm", { hasText: new RegExp(`^${name}$`) }) });
-// in cima alla pagina il riquadro dei consigli è completo (scorrendo si compatta)
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// tessera di un eroe nella griglia: una scheda di ruolo alla volta, quindi prima si apre la scheda del suo ruolo
+const heroBtn = (page, name) => {
+  const loc = page.locator("#grid .hero", { has: page.locator(".nm", { hasText: new RegExp(`^${esc(name)}$`) }) });
+  const tab = async () => {
+    const r = await loc.evaluate((b) => b.closest("[data-block]").dataset.block);
+    const t = page.locator(`#role-tabs [data-tab="${r}"]`);
+    if ((await t.getAttribute("aria-pressed")) !== "true") await t.click();
+  };
+  return { locator: loc, tab, click: async () => { await tab(); await loc.click(); },
+    getAttribute: (a) => loc.getAttribute(a), evaluate: (f, a) => loc.evaluate(f, a), count: () => loc.count() };
+};
+// in cima alla pagina le fasce sono in vista
 const toTop = async (page) => { await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(50); };
-// eroe in evidenza in ogni riquadro: il consigliato (lista dei preferiti, prima della scelta) o quello scelto
-const pickNames = (page) => page.locator(".pick").evaluateAll((cs) => cs.map((c) =>
-  (c.querySelector(".pick-name") ?? c.querySelector(".fav-row.is-rec .fr-name"))?.textContent.trim() ?? ""));
-const CARD = ".pick .fav-row, .pick .pick-main"; // riquadri pronti
-// righe della lista dei preferiti di un riquadro: nome, stelline, evidenziato
-const favRows = (page, k) => page.locator(".pick").nth(k).locator(".fav-row").evaluateAll((rs) => rs.map((r) => ({
-  name: r.querySelector(".fr-name").textContent, stars: r.querySelector(".fr-stars").textContent, rec: r.classList.contains("is-rec"),
-  label: r.getAttribute("aria-label") })));
+const nameOfId = (x) => (x ? itn(data.heroes.find((h) => String(h.id) === String(x))?.name ?? "") : null);
+// eroe in evidenza in ogni fascia: quello preso (ritratto grande) o, se non ha scelto, quello proposto («PRENDI»)
+const pickNames = async (page) => (await page.evaluate(() => window.owcBands())).map((b) => nameOfId(b.has ?? b.move) ?? "");
+const CARD = "#picks .band"; // fasce pronte
+const band = (page, k) => page.locator("#picks .band").nth(k);
+// scelte proposte in una fascia prima della scelta: la mossa («PRENDI», evidenziata) e le 2 alternative
+const favRows = (page, k) => band(page, k).evaluate((b) => {
+  const rows = [];
+  const stars = (x) => "★".repeat(Number(x.querySelector(".tac").dataset.stars));
+  const go = b.querySelector(".move:not(.stay) .go");
+  if (go) rows.push({ name: go.querySelector(".nm").textContent, stars: stars(go), rec: true, id: b.dataset.move, label: go.getAttribute("aria-label") });
+  for (const a of b.querySelectorAll(".alts .alt")) rows.push({ name: a.querySelector(".nm").textContent, stars: stars(a), rec: false, id: a.dataset.id, label: a.getAttribute("aria-label") });
+  return rows;
+});
 const heroId = (name) => String(data.heroes.find((h) => h.name === toEn(name)).id);
 const matchState = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("owc.match")));
-// «l'eroe preso da X lo tocco nella griglia»: «＋» del riquadro (lista o «Scegline un altro»), poi, se si apre il foglio,
-// «Un altro eroe: toccalo nella griglia»
-async function pickFromGrid(page, i) {
+// foglio del giocatore (tocco sul ritratto grande o sul posto vuoto della sua fascia; le compatte prima si aprono)
+async function openPlayer(page, i) {
   await page.evaluate(() => window.scrollTo(0, 0));
-  const card = page.locator(".pick").nth(i);
-  await card.locator(".fav-more, .others .alt-other").first().click();
-  await page.waitForTimeout(80);
-  if (await page.locator("#choose-dialog").evaluate((d) => d.open)) await page.click("#choose-body .choose-grid");
+  const b = page.locator(`#picks .band[data-player="${i}"]`);
+  if (await b.locator(".cmp").count()) await b.locator(".cmp").click();
+  await page.locator(`#picks .band[data-player="${i}"] .has`).click();
+  await page.locator("#choose-dialog[open]").waitFor();
+}
+// «l'eroe preso da X lo tocco nella griglia»: foglio del giocatore → «Un altro eroe: toccalo nella griglia»
+async function pickFromGrid(page, i) {
+  await openPlayer(page, i);
+  await page.click("#choose-body .choose-grid");
   await page.locator("#pick-banner").waitFor();
 }
-
+// la scelta di un giocatore si annulla dal suo foglio: «Non l'ho preso»
+async function unpick(page, i) {
+  await openPlayer(page, i);
+  await page.click("#menu-unpick");
+}
+// «Come giocarla» dell'eroe in evidenza nella fascia: quello preso (dal foglio) o quello proposto (striscia della mossa)
+async function openGuideOf(page, k) {
+  await toTop(page);
+  const b = band(page, k);
+  if (await b.getAttribute("data-has")) {
+    await openPlayer(page, Number(await b.getAttribute("data-player")));
+    await page.click("#menu-guide");
+  } else await b.locator(".move .go").click();
+  await page.locator("#guide-dialog[open]").waitFor();
+}
+// bersagli visibili della Partita sotto i 48 px di altezza (testata, fasce, selettore, posti, schede, griglia, barra)
+const smallTargets = (page) => page.evaluate(() => [...document.querySelectorAll("#view-match button, #view-match input, .dock button")]
+  .filter((e) => { const r = e.getBoundingClientRect(); return e.offsetParent && r.width > 0 && r.bottom > 0 && r.top < innerHeight; })
+  .map((e) => [e.id || e.className, (e.getAttribute("aria-label") || e.textContent || "").trim().slice(0, 24), Math.round(e.getBoundingClientRect().height)])
+  .filter(([, , h]) => h < 48));
+// ritratto grande di ogni fascia aperta: l'eroe preso (match.picked) o il posto vuoto, mai il consigliato
+const portraitsOk = (page) => page.evaluate(() => {
+  const m = JSON.parse(localStorage.getItem("owc.match"));
+  const out = [];
+  for (const b of document.querySelectorAll("#picks .band")) {
+    const i = Number(b.dataset.player);
+    const want = m.picked[i] ? String(m.picked[i]) : "";
+    const f = b.querySelector(".has .hface, .cmp > .hface");
+    const empty = f?.classList.contains("none");
+    const ok = b.dataset.has === want && !!f && (want ? !empty && !!f.querySelector(".face") : empty)
+      && (!want || b.dataset.move !== want);
+    if (!ok) out.push({ i, want, has: b.dataset.has, move: b.dataset.move, empty });
+  }
+  return out;
+});
+// la Partita sta nello schermo senza scorrere?
+const overflowY = (page) => page.evaluate(() => document.scrollingElement.scrollHeight - innerHeight);
 try {
   for (let i = 0; i < 50; i++) { try { await fetch(BASE); break; } catch { await new Promise((r) => setTimeout(r, 100)); } }
 
@@ -102,21 +170,26 @@ try {
   await page.goto(BASE);
   await page.locator(CARD).first().waitFor();
   await toTop(page);
-  check("primo avvio: due consigli (Io e Lei)", (await page.locator(".pick").count()) === 2
-    && (await text(page, ".picks")).includes("Io") && (await text(page, ".picks")).includes("Lei"));
-  check("primo avvio: 53 eroi in griglia", (await page.locator("#grid .hero").count()) === data.heroes.length);
+  check("primo avvio: due fasce (Io e Lei)", (await page.locator(CARD).count()) === 2
+    && (await text(page, "#picks")).includes("Io") && (await text(page, "#picks")).includes("Lei"));
+  check("primo avvio: 53 eroi in griglia (una scheda di ruolo alla volta)", (await page.locator("#grid .hero").count()) === data.heroes.length
+    && (await page.locator("#grid [data-block]:not([hidden])").count()) === 1);
   if (Object.keys(shownIt).length) {
-    const gridNames = await page.locator("#grid .hero .nm").allInnerTexts();
+    const gridNames = await page.locator("#grid .hero .nm").evaluateAll((xs) => xs.map((x) => x.textContent));
     check("nomi degli eroi come nel gioco in italiano (es. Soldato-76)", Object.values(shownIt).every((n) => gridNames.includes(n))
       && Object.keys(shownIt).every((n) => !gridNames.includes(n)), JSON.stringify(shownIt));
   }
   const initialsOk = await page.waitForFunction(() => [...document.querySelectorAll("#grid .face")].every((f) => f.querySelector("img") || f.textContent.trim()), null, { timeout: 10000 }).then(() => true, () => false);
   check("icone non raggiungibili: iniziali al loro posto", initialsOk);
-  check("freschezza visibile", /Dati counterwatch del .*controllati/.test(await text(page, "#fresh")), await text(page, "#fresh"));
-  const smallTargets = await page.$$eval("button", (bs) => bs.filter((b) => b.offsetParent).map((b) => [b.innerText.trim().slice(0, 20), b.getBoundingClientRect().height]).filter(([, h]) => h < 32));
-  check("bersagli tattili abbastanza grandi", smallTargets.length === 0, JSON.stringify(smallTargets));
+  const fresh0 = await text(page, "#fresh-short");
+  check("freschezza visibile in testata, in forma corta (accanto alla modalità)", await page.locator("#fresh-short").isVisible()
+    && /^dati (di .+ fa|del \d+ \w+|controllati adesso)$/.test(fresh0) || (await page.locator("#warn").isVisible() && /dati/.test(await text(page, "#warn"))), fresh0);
+  check("freschezza completa nel Profilo", /Dati counterwatch del .*controllati/.test(await page.locator("#fresh").textContent()), await page.locator("#fresh").textContent());
+  const small0 = await smallTargets(page);
+  check("bersagli tattili della Partita: tutti almeno 48 px di altezza", small0.length === 0, JSON.stringify(small0));
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   check("niente scorrimento orizzontale", overflow <= 0, `overflow ${overflow}px`);
+  check("prima della scelta: il ritratto grande è il posto vuoto (mai il consigliato)", (await portraitsOk(page)).length === 0, JSON.stringify(await portraitsOk(page)));
   await shot(page, "01-avvio");
 
   // ---------- profilo ----------
@@ -134,12 +207,12 @@ try {
   await page.locator("#fav-grid .hero", { has: page.locator(".nm", { hasText: /^Juno$/ }) }).click();
   await shot(page, "02-preferiti");
   await page.click("#fav-dialog [data-close]");
-  const favOk = await page.waitForFunction(() => document.querySelectorAll("section.card")[1].innerText.includes("Eroi preferiti (2)"), null, { timeout: 5000 }).then(() => true, () => false);
-  check("profilo: preferiti salvati", favOk, await page.locator("section.card").nth(1).innerText());
+  const favOk = await page.waitForFunction(() => document.querySelectorAll("section.card")[1].textContent.includes("Eroi preferiti (2)"), null, { timeout: 5000 }).then(() => true, () => false);
+  check("profilo: preferiti salvati", favOk, await page.locator("section.card").nth(1).textContent());
   await shot(page, "03-profilo");
   await page.click(".tabs [data-view=match]");
   await toTop(page);
-  check("profilo: nomi nei consigli", (await text(page, ".picks")).includes("Fabio") && (await text(page, ".picks")).includes("Giulia"));
+  check("profilo: nomi nelle fasce", (await text(page, "#picks")).includes("Fabio") && (await text(page, "#picks")).includes("Giulia"));
 
   // ---------- inizio partita: mappa, lato, ban ----------
   await page.click("#map-btn");
@@ -147,86 +220,89 @@ try {
   await page.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
   check("mappa scelta e finestra chiusa", (await text(page, "#map-name")).includes("King's Row")
     && !(await page.locator("#map-dialog").evaluate((d) => d.open)));
+  check("testata: modalità e freschezza dei dati (niente elenco dei ban)", /^Ibrida$/.test(await text(page, "#map-sub"))
+    && !/ban/.test(await text(page, ".map-sub")), await text(page, ".map-sub"));
   check("Hybrid: attacco/difesa visibile", await page.locator("#side").isVisible());
   await page.click("#side [data-side=defense]");
   check("difesa selezionata", (await page.getAttribute("#side [data-side=defense]", "aria-pressed")) === "true");
-  // ban consigliati per la mappa: solo nella sezione «Ban», sotto il selettore; 3 per ruolo (anche i preferiti, mai gli eroi già scelti)
-  check("ban consigliati: nascosti fuori dalla sezione «Ban»", (await matchState(page)).group !== "bans" && await page.locator("#ban-recs").isHidden());
+  // ban consigliati per la mappa: «BAN?» nella griglia, solo con il selettore su «Ban»; 3 per ruolo (anche i preferiti, mai gli eroi già scelti)
+  const suggNames = () => page.locator("#grid .hero.sugg .nm").evaluateAll((xs) => xs.map((x) => x.textContent));
+  check("ban consigliati: nascosti fuori dalla sezione «Ban»", (await matchState(page)).group !== "bans" && (await page.locator("#grid .hero.sugg").count()) === 0);
   await page.click("#groups [data-group=bans]");
-  check("ban consigliati: subito sotto il selettore Ban/Avversari/Alleati", await page.evaluate(() =>
-    document.querySelector("#groups").closest("section, .groups").nextElementSibling === document.querySelector("#ban-recs")));
-  await toTop(page);
-  const br = await page.evaluate(() => ({ visible: !document.querySelector("#ban-recs").hidden, title: document.querySelector("#t-ban-recs").textContent,
-    heroes: [...document.querySelectorAll("#ban-recs .hero")].map((b) => b.querySelector(".nm").textContent) }));
+  const brNames = await suggNames();
+  const br = { heroes: brNames, legend: await text(page, "#legend").catch(() => "") };
   const roleOf = (n) => data.heroes.find((h) => h.name === toEn(n))?.role;
-  check("mappa scelta: «Ban consigliati per King's Row», 3 per ruolo", br.visible && br.title === "Ban consigliati per King's Row"
+  check("mappa scelta, sezione «Ban»: «BAN?» su 3 eroi per ruolo, con la legenda", await page.locator("#legend").isVisible()
+    && /quanto conviene bannarlo/.test(br.legend) && /BAN\? = consigliato/.test(br.legend)
     && br.heroes.length === 9 && ["Tank", "Damage", "Support"].every((r) => br.heroes.filter((n) => roleOf(n) === r).length === 3), JSON.stringify(br));
+  check("ban consigliati: si vedono nella scheda aperta (Tank), con la bandierina «BAN?»", await page.locator("#grid .hero.sugg").first().isVisible()
+    && await page.locator("#grid .hero.sugg").first().evaluate((b) => getComputedStyle(b, "::after").content.includes("BAN?")));
   // i preferiti si possono proporre: con «solo statistiche» su King's Row i ban sono i più forti del ruolo, preferiti o no
   const strongest = (role) => data.heroes.filter((h) => h.role === role).map((h) => [itn(h.name), (data.maps.find((m) => m.slug === "kings-row").winRates[String(h.id)] ?? data.overall[String(h.id)])])
     .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n]) => n);
   check("ban consigliati: nessuno ha scelto → solo la mappa (anche i preferiti, se sono tra i più forti)",
-    ["Tank", "Damage", "Support"].every((r) => strongest(r).every((n) => br.heroes.includes(n))) && (await text(page, "#ban-recs .br-sub")) === "Forti su questa mappa",
-    `${br.heroes.join()} / ${await text(page, "#ban-recs .br-sub")}`);
+    ["Tank", "Damage", "Support"].every((r) => strongest(r).every((n) => br.heroes.includes(n))), br.heroes.join());
   // cambia il consiglio di Fabio (altro ruolo): i ban non cambiano, perché non ha ancora scelto
-  await page.locator(".pick").nth(0).locator(".role-btn").click();
-  const brTank = await page.locator("#ban-recs .hero .nm").allInnerTexts();
-  while ((await page.locator(".pick").nth(0).locator(".role-btn").innerText()) !== "Danni") await page.locator(".pick").nth(0).locator(".role-btn").click();
+  await band(page, 0).locator(".role-btn").click();
+  const brTank = await suggNames();
+  while ((await band(page, 0).locator(".role-btn").textContent()) !== "Danni") await band(page, 0).locator(".role-btn").click();
   check("ban consigliati: non dipendono dai consigli di chi non ha scelto", brTank.join() === br.heroes.join(), `${br.heroes.join()} → ${brTank.join()}`);
   await shot(page, "04b-ban-consigliati");
-  await page.locator("#ban-recs .hero").first().click();
+  await heroBtn(page, br.heroes[0]).click();
   await toTop(page);
-  check("ban consigliato: un tocco lo segna (contato, barrato, fuori dai consigli)", (await text(page, "[data-count=bans]")) === "1"
-    && (await page.locator("#ban-recs .hero").first().getAttribute("aria-pressed")) === "true"
-    && (await page.locator("#ban-recs .hero").first().evaluate((b) => b.classList.contains("in-bans")))
+  check("ban consigliato: un tocco lo segna (contato, barrato, nei posti, fuori dai consigli)", (await text(page, "[data-count=bans]")) === "1/5"
+    && (await heroBtn(page, br.heroes[0]).getAttribute("aria-pressed")) === "true"
+    && (await heroBtn(page, br.heroes[0]).evaluate((b) => b.classList.contains("in-bans")))
+    && (await page.locator(`#slots .slot.full[data-id="${heroId(br.heroes[0])}"]`).count()) === 1
     && !(await pickNames(page)).includes(br.heroes[0]));
-  check("ban consigliati: l'elenco resta lo stesso mentre si segnano",
-    (await page.locator("#ban-recs .hero .nm").allInnerTexts()).join() === br.heroes.join());
-  await page.locator("#ban-recs .hero").first().click();
-  check("ban consigliato ritoccato: tolto", (await text(page, "[data-count=bans]")) === "0");
-  await page.click("#groups [data-group=bans]");
+  check("ban consigliati: l'elenco resta lo stesso mentre si segnano", (await suggNames()).join() === br.heroes.join());
+  await heroBtn(page, br.heroes[0]).click();
+  check("ban consigliato ritoccato: tolto", (await text(page, "[data-count=bans]")) === "0/5");
   await heroBtn(page, "Ana").click();
   await heroBtn(page, "Kiriko").click();
-  check("2 ban contati", (await text(page, "[data-count=bans]")) === "2");
+  check("2 ban contati (2/5) e nei posti «Ban»", (await text(page, "[data-count=bans]")) === "2/5" && (await page.locator("#slots .slot.full").count()) === 2
+    && (await page.locator("#slots .slot.empty").count()) === 3);
+  await page.locator(`#slots .slot.full[data-id="${heroId("Kiriko")}"]`).click();
+  check("posto pieno: un tocco lo toglie", (await text(page, "[data-count=bans]")) === "1/5");
+  await heroBtn(page, "Kiriko").click();
   const sb = await starsOf(page);
   const sbv = Object.values(sb);
-  check("stelline Ban: bianche su fondo scuro, da 1 a 5 su tutta la griglia", sbv.every((x) => x.n >= 1 && x.n <= 5
+  check("tacche Ban: bianche, da 1 a 5 su tutta la griglia", sbv.every((x) => x.n >= 1 && x.n <= 5
     && x.cls.includes("st-bans") && x.color === "rgb(255, 255, 255)") && sbv.some((x) => x.n === 5), JSON.stringify(sbv.find((x) => x.n !== 5)));
-  const brStars = await page.locator("#ban-recs .hero").evaluateAll((bs) => bs.map((b) => [b.querySelector(".nm").textContent,
-    b.querySelector(".stars")?.textContent ?? "", getComputedStyle(b.querySelector(".stars") ?? b).color]));
-  check("ban consigliati: con le stelline bianche (1–5), le stesse della griglia", brStars.every(([n, st, c]) => /^★{1,5}$/.test(st)
-    && c === "rgb(255, 255, 255)" && sb[n]?.n === st.length), JSON.stringify(brStars));
   const roleTop = (role) => Math.max(...Object.entries(sb).filter(([n]) => roleOf(n) === role && !br.heroes.includes(n)).map(([, x]) => x.n));
-  check("stelline Ban: i ban consigliati hanno almeno tante stelle quanto gli altri del ruolo",
+  check("tacche Ban: i ban consigliati hanno almeno tante tacche quanto gli altri del ruolo",
     br.heroes.every((n) => sb[n].n >= roleTop(roleOf(n))), br.heroes.map((n) => `${n}:${sb[n]?.n}`).join());
-  await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
   await shot(page, "04c-stelline-ban");
-  check("stelline: mai un eroe senza stelle, numero e stelle disegnate coincidono (1–5)", sbv.every((x) => x.n >= 1 && x.n <= 5 && x.shown === x.n));
+  check("tacche: mai un eroe senza tacche, numero e tacche accese coincidono (1–5)", sbv.every((x) => x.n >= 1 && x.n <= 5 && x.shown === x.n));
   await toTop(page);
   const afterBans = await pickNames(page);
   check("consigli senza eroi bannati", !afterBans.includes("Ana") && !afterBans.includes("Kiriko"), afterBans.join());
   check("consigli: Fabio e Giulia hanno eroi diversi", afterBans[0] !== afterBans[1], afterBans.join());
-  await toTop(page);
-  const cardNums = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => (c.innerText.match(/\d+[.,]\d%/g) ?? []).length));
-  check("prima degli avversari: un motivo in parole («Forte su King's Row») e un solo numero per riquadro (la stima del consigliato)",
-    (await page.locator(".pick .fr-note", { hasText: "King's Row" }).count()) >= 1 && cardNums.every((k) => k === 1), JSON.stringify(cardNums));
-  // prima della scelta: SOLO la lista (preferiti, o i più adatti se non ce ne sono), il consigliato in cima ed evidenziato
+  const cardNums = await page.locator(CARD).evaluateAll((cs) => cs.map((c) => (c.textContent.match(/\d+%/g) ?? []).length));
+  check("prima degli avversari: un solo numero per fascia (la stima del proposto)", cardNums.every((k) => k === 1), JSON.stringify(cardNums));
+  // prima della scelta: la mossa «PRENDI» (evidenziata) e 2 alternative; nessun eroe «scelto»
   const lists0 = [await favRows(page, 0), await favRows(page, 1)];
-  check("prima della scelta: lista con il consigliato in cima ed evidenziato (al massimo 4 righe), nessun eroe «scelto»",
-    lists0.every((l) => l.length >= 1 && l.length <= 4 && l[0].rec && l.slice(1).every((r) => !r.rec))
-    && (await page.locator(".pick .pick-main, .pick .chosen-chip").count()) === 0, JSON.stringify(lists0));
-  // «Suggerisci solo eroi preferiti» spento (predefinito): i più adatti del ruolo tra TUTTI gli eroi, i preferiti segnati
-  // (segnalazione dell'utente del 2026-10-16: con l'interruttore spento comparivano solo i preferiti)
-  const asks0 = await page.locator(".pick .pick-ask").allInnerTexts();
+  check("prima della scelta: «PRENDI» con il consigliato e al massimo 2 alternative, nessun eroe «scelto»",
+    lists0.every((l) => l.length >= 1 && l.length <= 3 && l[0].rec && l.slice(1).every((r) => !r.rec))
+    && (await page.evaluate(() => window.owcBands().every((b) => !b.has))) && (await page.locator("#picks .move .verb").allTextContents()).every((t) => t === "Prendi"),
+    JSON.stringify(lists0));
+  // «Suggerisci solo eroi preferiti» spento (predefinito): i più adatti del ruolo tra TUTTI gli eroi, i preferiti segnati nel foglio
   const favs0 = ["Mercy", "Juno"];
-  check("interruttore «solo preferiti» spento: i più adatti tra tutti gli eroi, non solo i preferiti, e niente «Scegli tra i preferiti»",
-    asks0.every((t) => /tra tutti gli eroi/.test(t) && !/preferiti/.test(t)) && lists0[1].some((r) => !favs0.includes(r.name)), JSON.stringify({ asks0, l: lists0.map((l) => l.map((r) => r.name)) }));
-  const giuliaBest = (await favRows(page, 1)).map((r) => r.name);
-  check("interruttore spento: la lista di Giulia è in ordine di adattezza (stelline non crescenti dopo il consigliato)",
-    (await favRows(page, 1)).slice(1).every((r, k, xs) => !k || r.stars.length <= xs[k - 1].stars.length), giuliaBest.join());
-  const favMarks = await page.locator(".pick").nth(1).locator(".fav-row").evaluateAll((rs) => rs.map((r) => [r.querySelector(".fr-name").textContent, r.querySelector(".fr-note")?.textContent ?? ""]));
-  check("interruttore spento: i preferiti nella lista sono segnati «Preferito»", favMarks.every(([n, note]) => !["Mercy", "Juno"].includes(n) || /Preferito/.test(note)), JSON.stringify(favMarks));
-  check("lista: stelline bianche da 1 a 5 su ogni riga", (await page.locator(".pick .fr-stars").evaluateAll((xs) => xs.every((x) =>
-    /^★{1,5}$/.test(x.textContent) && getComputedStyle(x).color === "rgb(255, 255, 255)"))));
+  await openPlayer(page, 1);
+  const sheet0 = await page.locator("#choose-body .fav-row").evaluateAll((rs) => rs.map((r) => [r.querySelector(".fr-name").textContent, r.querySelector(".fr-note")?.textContent ?? ""]));
+  const sub0 = await text(page, "#choose-body .choose-sub");
+  await page.click("#choose-dialog [data-close]");
+  check("interruttore «solo preferiti» spento: i più adatti tra tutti gli eroi, non solo i preferiti",
+    /tra tutti gli eroi/.test(sub0) && sheet0.some(([n]) => !favs0.includes(n)) && lists0[1].some((r) => !favs0.includes(r.name)), JSON.stringify({ sub0, sheet0 }));
+  check("interruttore spento: i preferiti nel foglio sono segnati «Preferito»", sheet0.every(([n, note]) => !favs0.includes(n) || /Preferito/.test(note))
+    && sheet0.some(([n]) => favs0.includes(n)), JSON.stringify(sheet0));
+  const giuliaBest = await favRows(page, 1);
+  check("interruttore spento: le alternative di Giulia in ordine di adattezza (tacche non crescenti)",
+    giuliaBest.slice(1).every((r, k, xs) => !k || r.stars.length <= xs[k - 1].stars.length), giuliaBest.map((r) => r.name).join());
+  check("fasce: tacche da 1 a 5, accese quante dice il valore", await page.locator("#picks .tac").evaluateAll((xs) => xs.length > 0 && xs.every((x) => {
+    const n = Number(x.dataset.stars);
+    return n >= 1 && n <= 5 && x.querySelectorAll("i.on").length === n && x.querySelectorAll("i").length === 5;
+  })));
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "05-inizio-partita");
 
@@ -234,136 +310,130 @@ try {
   await page.click("#groups [data-group=enemies]");
   const se = await starsOf(page);
   const sev = Object.values(se);
-  check("stelline Avversari: rosse, da 1 a 5 su ogni eroe (anche i bannati)", sev.every((x) => x.n >= 1 && x.n <= 5
-    && x.cls.includes("st-enemies") && x.color === "rgb(255, 69, 58)") && se.Ana.n >= 1 && se.Kiriko.n >= 1, JSON.stringify(sev.find((x) => !x.n)));
-  check("stelline Avversari: almeno 4 stelle in ogni ruolo e qualcuno a 1",
+  check("tacche Avversari: rosse, da 1 a 5 su ogni eroe (anche i bannati)", sev.every((x) => x.n >= 1 && x.n <= 5
+    && x.cls.includes("st-enemies") && x.color === "rgb(236, 74, 80)") && se.Ana.n >= 1 && se.Kiriko.n >= 1, JSON.stringify(sev.find((x) => !x.n)));
+  check("tacche Avversari: almeno 4 in ogni ruolo e qualcuno a 1",
     ["tank", "damage", "support"].every((r) => sev.some((x) => x.n >= 4 && (x.role ?? "").toLowerCase().startsWith(r))) && sev.some((x) => x.n <= 2),
     JSON.stringify(sev.map((x) => `${x.role}:${x.n}`)));
   await page.click("#side [data-side=attack]");
   const se2 = await starsOf(page);
   await page.click("#side [data-side=defense]");
-  check("stelline Avversari: cambiano col lato (il loro è l'opposto del vostro)", Object.keys(se).some((n) => se[n].n !== se2[n].n));
+  check("tacche Avversari: cambiano col lato (il loro è l'opposto del vostro)", Object.keys(se).some((n) => se[n].n !== se2[n].n));
   await page.click("#map-btn");
   await page.locator("#map-list .map-opt", { hasText: ILIOS }).click();
   const se3 = await starsOf(page);
   await page.click("#map-btn");
   await page.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
   await page.click("#side [data-side=defense]");
-  check("stelline Avversari: cambiano con la mappa", Object.keys(se).filter((n) => se[n].n !== se3[n].n).length >= 5);
-  await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
+  check("tacche Avversari: cambiano con la mappa", Object.keys(se).filter((n) => se[n].n !== se3[n].n).length >= 5);
   await shot(page, "05d-stelline-avversari");
+  // posti per ruolo: T D D S S; la scheda iniziale è quella del primo posto vuoto
+  check("Avversari: 5 posti T D D S S, il primo vuoto evidenziato, scheda Tank aperta",
+    (await page.locator("#slots .slot.empty").evaluateAll((s) => s.map((x) => x.dataset.role).join())) === "Tank,Damage,Damage,Support,Support"
+    && (await page.locator("#slots .slot.target").getAttribute("data-role")) === "Tank"
+    && (await page.locator("#role-tabs .tab[aria-pressed=true]").getAttribute("data-tab")) === "Tank");
+  await page.locator("#slots .slot.empty[data-role=Support]").first().click();
+  check("posto vuoto: un tocco apre la scheda di quel ruolo", (await page.locator("#role-tabs .tab[aria-pressed=true]").getAttribute("data-tab")) === "Support"
+    && await page.locator("#grid [data-block=Support]").isVisible() && await page.locator("#grid [data-block=Tank]").isHidden());
   for (const n of ["Pharah", "Winston", "Reinhardt"]) await heroBtn(page, n).click();
-  check("3 avversari contati", (await text(page, "[data-count=enemies]")) === "3");
-  check("sezione «Avversari»: niente ban consigliati", await page.locator("#ban-recs").isHidden());
-  check("«Chi soffrite di più»: nascosto finché nessuno ha scelto e non ci sono alleati", await page.locator("#threats").isHidden());
+  check("3 avversari contati (3/5), nei posti del loro ruolo", (await text(page, "[data-count=enemies]")) === "3/5"
+    && (await page.locator("#slots .slot.full").count()) === 3 && (await text(page, "#role-tabs [data-tab=Tank]")).includes("2/1"));
+  check("sezione «Avversari»: niente «BAN?»", (await page.locator("#grid .hero.sugg").count()) === 0);
+  check("«Chi soffrite di più» (nomi rossi): nascosto finché nessuno ha scelto e non ci sono alleati",
+    (await page.locator("#grid .hero.top3").count()) === 0 && await page.locator("#legend").isHidden());
   await page.click("#groups [data-group=bans]");
-  check("…i ban consigliati tornano toccando «Ban»", await page.locator("#ban-recs").isVisible() && await page.locator("#threats").isHidden());
+  check("…i «BAN?» tornano toccando «Ban»", (await page.locator("#grid .hero.sugg").count()) === 9 && (await page.locator("#grid .hero.top3").count()) === 0);
   await page.click("#groups [data-group=enemies]");
   await toTop(page);
   const ENEMIES = ["Pharah", "Winston", "Reinhardt"];
-  const onlyEnemies = (label) => [...label.matchAll(/(?:batte|teme) (.+?)(?=, (?:batte|teme) |, per |\. )/g)].every((g) => g[1].split(", ").every((n) => ENEMIES.includes(n)));
-  const rowsInfo = await page.locator(".pick .fav-row").evaluateAll((rs) => rs.map((r) => ({
-    label: r.getAttribute("aria-label"),
-    good: [...r.querySelectorAll(".alt-mu.good .face")].map((f) => getComputedStyle(f).boxShadow),
-    bad: [...r.querySelectorAll(".alt-mu.bad .face")].map((f) => getComputedStyle(f).boxShadow) })));
-  check("lista con avversari: chi batte (bordo verde) e chi teme (bordo rosso), solo tra gli avversari segnati",
-    rowsInfo.some((r) => r.good.length + r.bad.length) && rowsInfo.every((r) => r.good.every((x) => x.includes("rgb(50, 215, 75)"))
-      && r.bad.every((x) => x.includes("rgb(255, 105, 97)")) && onlyEnemies(r.label)), JSON.stringify(rowsInfo));
-  const nums2 = await page.locator(".pick").evaluateAll((cs) => cs.map((c) => (c.innerText.match(/\d+[.,]\d%/g) ?? []).length));
-  check("con avversari: sempre un solo numero per riquadro (i dettagli sono a un tocco)", nums2.every((k) => k === 1), JSON.stringify(nums2));
-  check("il consigliato ha «Come giocarla» anche prima di sceglierlo", (await page.locator(".pick .rec-cta").count()) === 2
-    && (await page.locator(".pick .rec-cta").first().innerText()).includes("Come giocarla"));
+  // nomi dopo «batte»/«teme» nelle frasi a parole (al massimo 2, «A e B»)
+  const vsNames = (t) => [...t.matchAll(/(?:batte|teme) (.+?)(?=;|·|,|$)/g)].flatMap((g) => g[1].split(/ e /).map((x) => x.trim()));
+  const whys = await page.locator("#picks .why:not(.warn-note)").allTextContents();
+  const heads = await pickNames(page);
+  check("con avversari: la riga del motivo dice a parole chi batte e chi teme, solo tra gli avversari segnati",
+    whys.length >= 1 && whys.every((t) => vsNames(t).length && vsNames(t).every((n) => ENEMIES.includes(n))), JSON.stringify(whys));
+  const subj = await page.locator("#picks .band").evaluateAll((bs) => bs.map((b) => {
+    const w = (b.querySelector(".why:not(.warn-note)")?.textContent ?? "").replace(/^(Dati|Teoria): /, "");
+    const names = [b.querySelector(".cur"), b.querySelector(".move .nm")].filter(Boolean).map((x) => x.textContent);
+    return { w, names, ok: !w || names.some((n) => w.startsWith(`${n} `)) };
+  }));
+  check("riga del motivo: mai senza soggetto (comincia col nome dell'eroe di cui parla)", subj.every((x) => x.ok), JSON.stringify(subj));
+  check("riga del motivo: dati ■ o teoria ▨ distinti per forma", await page.locator("#picks .why .mk").evaluateAll((ms) => ms.length > 0
+    && ms.every((m) => m.classList.contains("data") || m.classList.contains("theory"))));
+  const nums2 = await page.locator(CARD).evaluateAll((cs) => cs.map((c) => (c.textContent.match(/\d+%/g) ?? []).length));
+  check("con avversari: sempre un solo numero per fascia (i dettagli sono a un tocco)", nums2.every((k) => k === 1), JSON.stringify(nums2));
+  check("il proposto ha «Come giocarla» anche prima di sceglierlo (tocco sulla striscia)", (await page.locator("#picks .move .go").count()) === 2
+    && (await page.locator("#picks .move .go").first().getAttribute("aria-label")).includes("come giocarla"));
   const order = await favRows(page, 1);
-  const nStars = (r) => r.stars.length;
-  check("lista ordinata dal più adatto (stelline non crescenti dopo il consigliato)", order.slice(1).every((r, k, xs) => !k || nStars(r) <= nStars(xs[k - 1])),
+  check("alternative ordinate dalla più adatta (tacche non crescenti)", order.slice(1).every((r, k, xs) => !k || r.stars.length <= xs[k - 1].stars.length),
     JSON.stringify(order.map((r) => `${r.name}:${r.stars}`)));
   await shot(page, "05e-lista-preferiti");
 
-  // un tocco sulla riga consigliata = scelto → riquadro dedicato a quell'eroe
+  // «✓ PRESO» sulla striscia = scelto → la fascia mostra quell'eroe nel ritratto grande
   const recF = (await favRows(page, 0))[0].name;
   const recStars = (await favRows(page, 0))[0].stars;
-  await page.locator(".pick").nth(0).locator(".fav-row.is-rec").click();
+  await band(page, 0).locator(".move .done").click();
   await toTop(page);
-  const chosenSt = await page.locator(".pick").nth(0).locator(".pick-main .pick-stars").evaluate((x) => [x.textContent, getComputedStyle(x).color]).catch(() => null);
-  check("eroe scelto: stelline bianche (1–5) sotto il nome, le stesse della lista", chosenSt && /^★{1,5}$/.test(chosenSt[0])
-    && chosenSt[0] === recStars && chosenSt[1] === "rgb(255, 255, 255)", `${JSON.stringify(chosenSt)} / lista ${recStars}`);
-  const swapSt = await page.locator(".pick .swap .swap-stars").allInnerTexts();
-  check("«Passa a»: con le stelline (1–5) come ogni altro eroe", (await page.locator(".pick .swap").count()) === swapSt.length
-    && swapSt.every((t) => /^★{1,5}$/.test(t)), JSON.stringify(swapSt));
-  check("un tocco sul consigliato: scelto, riquadro dedicato («✓ Scelto», volto grande, Come giocarla)",
-    (await page.locator(".pick").nth(0).locator(".pick-name").innerText()) === recF
-    && (await page.locator(".pick").nth(0).locator(".chosen-chip").isVisible())
-    && (await page.locator(".pick").nth(0).locator(".pick-cta").innerText()).includes("Come giocarla")
+  const chosenSt = await band(page, 0).locator(".curmeta .tac").getAttribute("data-stars").catch(() => null);
+  check("eroe scelto: tacche (1–5) sotto il nome, le stesse della striscia", chosenSt && "★".repeat(Number(chosenSt)) === recStars, `${chosenSt} / ${recStars}`);
+  const swapSt = await page.locator("#picks .band.took .move .tac").evaluateAll((xs) => xs.map((x) => x.dataset.stars));
+  check("«Passa a» / «Resta su»: con le tacche (1–5) come ogni altro eroe", swapSt.length === (await page.locator("#picks .band.took .move").count())
+    && swapSt.every((t) => /^[1-5]$/.test(t)), JSON.stringify(swapSt));
+  check("un tocco su «✓ PRESO»: scelto, ritratto grande e nome dell'eroe preso («ha scelto»)",
+    (await band(page, 0).locator(".cur").textContent()) === recF && (await band(page, 0).getAttribute("data-has")) === heroId(recF)
+    && /ha scelto/.test(await band(page, 0).locator(".who").textContent())
     && String((await matchState(page)).picked[0]) === heroId(recF) && (await text(page, "#toast")).includes("ha scelto"), recF);
-  const mus = await page.locator(".pick .mu-grp").evaluateAll((gs) => gs.map((g) => g.getAttribute("aria-label")));
-  check("riquadro dedicato: «Batte»/«Teme» con i volti dei soli avversari segnati", mus.length >= 1 && mus.every((l) =>
-    /^(Batte|Teme) /.test(l) && l.replace(/^(Batte|Teme) /, "").split(", ").every((n) => ENEMIES.includes(n))), JSON.stringify(mus));
-  // «Chi soffrite di più»: con un eroe scelto compare (solo su «Avversari»), 3 per ruolo, mai i bannati;
-  // accanto solo i volti dei vostri eroi (qui l'eroe scelto), bordo verde = lo batte, rosso = lo teme
-  const th = await page.locator("#threats .hero").evaluateAll((bs) => bs.map((b) => ({
-    name: b.querySelector(".nm").textContent, stars: b.querySelector(".stars").textContent, label: b.getAttribute("aria-label"),
-    rings: [...b.querySelectorAll(".th-o")].map((o) => [o.className, getComputedStyle(o.querySelector(".face")).boxShadow]) })));
+  check("dopo la scelta: ritratto grande = eroe preso; il consigliato solo nella striscia", (await portraitsOk(page)).length === 0, JSON.stringify(await portraitsOk(page)));
+  const mv0 = await band(page, 0).evaluate((b) => ({ verb: b.querySelector(".move .verb")?.textContent, move: b.dataset.move, has: b.dataset.has,
+    big: b.querySelector(".has .hface img")?.src ?? "", stay: !!b.querySelector(".move.stay") }));
+  check("dopo la scelta: striscia «Passa a» (con ✓ CAMBIATO) o «Resta su» (senza pulsante)",
+    (mv0.stay && mv0.verb === "Resta su" && !mv0.move && !(await band(page, 0).locator(".move .done").count()))
+    || (mv0.verb === "Passa a" && mv0.move && mv0.move !== mv0.has && (await band(page, 0).locator(".move .done").textContent()).includes("Cambiato")), JSON.stringify(mv0));
+  // «Chi soffrite di più» (nomi rossi + legenda): con un eroe scelto compare (solo su «Avversari»), 3 per ruolo, mai i bannati
+  const th = await page.locator("#grid .hero.top3").evaluateAll((bs) => bs.map((b) => ({
+    name: b.querySelector(".nm").textContent, n: Number(b.dataset.stars), color: getComputedStyle(b.querySelector(".nm")).color })));
   const gridSt = await starsOf(page);
-  check("«Chi soffrite di più»: compare con un eroe scelto, 3 per ruolo, stelline rosse come nella griglia, senza bannati",
-    await page.locator("#threats").isVisible() && (await text(page, "#t-threats")) === "Chi soffrite di più" && th.length === 9
+  check("«Chi soffrite di più»: con un eroe scelto i 3 per ruolo hanno il nome rosso, tacche rosse come la griglia, senza bannati",
+    await page.locator("#legend").isVisible() && /quanto è pericoloso/.test(await text(page, "#legend")) && th.length === 9
     && ["Tank", "Damage", "Support"].every((r) => th.filter((t) => roleOf(t.name) === r).length === 3)
-    && th.every((t) => /^★{1,5}$/.test(t.stars) && gridSt[t.name]?.n === t.stars.length && !["Ana", "Kiriko"].includes(t.name)), JSON.stringify(th));
-  check("«Chi soffrite di più»: i più pericolosi del ruolo (nessuno fuori elenco ha più stelle)", th.every((t) =>
-    Object.entries(gridSt).every(([n, x]) => roleOf(n) !== roleOf(t.name) || ["Ana", "Kiriko"].includes(n) || th.some((u) => u.name === n) || x.n <= t.stars.length)));
-  check("«Chi soffrite di più»: accanto solo l'eroe scelto, verde se lo batte e rosso se lo teme", th.some((t) => t.rings.length)
-    && th.every((t) => t.rings.length <= 1 && t.rings.every(([c, sh]) => (c.includes("good") && sh.includes("rgb(50, 215, 75)")) || (c.includes("bad") && sh.includes("rgb(255, 105, 97)")))
-      && [...t.label.matchAll(/lo (?:battono|temono) ([^;.]+)/g)].every((g) => g[1] === recF)), JSON.stringify(th));
-  await page.evaluate(() => window.scrollTo(0, document.querySelector("#groups").getBoundingClientRect().top + window.scrollY - 60));
+    && th.every((t) => t.color === "rgb(236, 74, 80)" && gridSt[t.name]?.n === t.n && !["Ana", "Kiriko"].includes(t.name)), JSON.stringify(th));
+  check("«Chi soffrite di più»: i più pericolosi del ruolo (nessuno fuori elenco ha più tacche)", th.every((t) =>
+    Object.entries(gridSt).every(([n, x]) => roleOf(n) !== roleOf(t.name) || ["Ana", "Kiriko"].includes(n) || th.some((u) => u.name === n) || x.n <= t.n)));
   await shot(page, "05h-chi-soffrite");
   await page.click("#groups [data-group=bans]");
-  check("«Chi soffrite di più»: solo nella sezione «Avversari»", await page.locator("#threats").isHidden() && await page.locator("#ban-recs").isVisible());
+  check("«Chi soffrite di più»: solo nella sezione «Avversari»", (await page.locator("#grid .hero.top3").count()) === 0 && (await page.locator("#grid .hero.sugg").count()) === 9);
   await page.click("#groups [data-group=enemies]");
-  const altInfo = await page.locator(".pick .others .alt:not(.alt-other)").evaluateAll((bs) => bs.filter((b) => !b.hidden).map((b) => {
-    const card = b.closest(".pick").getBoundingClientRect();
-    const r = b.getBoundingClientRect();
-    const ring = (cls) => [...b.querySelectorAll(`.alt-mu.${cls} .face`)].map((f) => getComputedStyle(f).boxShadow);
-    return { label: b.getAttribute("aria-label"), stars: b.querySelector(".alt-stars")?.textContent ?? "", text: (() => { const c = b.cloneNode(true); c.querySelectorAll(".face, .alt-stars").forEach((f) => f.remove()); return c.textContent.trim(); })(),
-      good: ring("good"), bad: ring("bad"), inside: r.left >= card.left - 0.5 && r.right <= card.right + 0.5, color: b.querySelector(".alt-stars") ? getComputedStyle(b.querySelector(".alt-stars")).color : null };
-  }));
-  check("«Scegline un altro»: volti con stelline BIANCHE da 1 a 5", altInfo.length >= 1 && altInfo.every((a) => /^★{1,5}$/.test(a.stars) && a.color === "rgb(255, 255, 255)"),
-    JSON.stringify(altInfo));
-  check("«Scegline un altro»: chi batte (bordo verde) e chi teme (bordo rosso) solo coi volti, senza scritte",
-    altInfo.some((a) => a.good.length + a.bad.length) && altInfo.every((a) => !a.text && a.good.length <= 3 && a.bad.length <= 3
-      && a.good.every((x) => x.includes("rgb(50, 215, 75)")) && a.bad.every((x) => x.includes("rgb(255, 105, 97)")) && onlyEnemies(a.label)),
-    JSON.stringify(altInfo));
-  check("«Scegline un altro»: tutto dentro il riquadro, «＋» sempre presente", altInfo.every((a) => a.inside)
-    && (await page.locator(".pick").nth(0).locator(".others .alt-other").isVisible()), JSON.stringify(altInfo.map((a) => a.inside)));
-  await shot(page, "05f-scelto");
-  const other = (await page.locator(".pick").nth(0).locator(".others .alt:not(.alt-other)").first().getAttribute("aria-label")).match(/^Scegli invece (.+?), \d/)[1];
-  await page.locator(".pick").nth(0).locator(".others .alt:not(.alt-other)").first().click();
-  await toTop(page);
-  check("«Scegline un altro»: un tocco sceglie quell'eroe", (await page.locator(".pick").nth(0).locator(".pick-name").innerText()) === other
-    && String((await matchState(page)).picked[0]) === heroId(other), other);
-  await page.locator(".pick").nth(0).locator(".others .alt-other").click();
-  await page.locator("#choose-dialog[open]").waitFor();
-  const sheet = await page.locator("#choose-body .fav-row").evaluateAll((rs) => rs.map((r) => [r.querySelector(".fr-name").textContent, r.querySelector(".fr-stars").textContent]));
-  check("«＋»: foglio con gli eroi tra cui scegliere (stelline 1–5) e «Un altro eroe» dalla griglia", sheet.length >= 3
-    && sheet.every(([, st]) => /^★{1,5}$/.test(st)) && (await page.locator("#choose-body .choose-grid").isVisible()), JSON.stringify(sheet));
+  // foglio del giocatore (tocco sul ritratto grande): Come giocarla, Non l'ho preso, «Scegline un altro»
+  await openPlayer(page, 0);
+  const sheet = await page.locator("#choose-body .fav-row").evaluateAll((rs) => rs.map((r) => ({ name: r.querySelector(".fr-name").textContent,
+    n: Number(r.querySelector(".fr-stars").dataset.stars), tag: r.querySelector(".fr-tag")?.textContent ?? "", mu: r.querySelector(".fr-mu")?.textContent ?? "" })));
+  check("foglio del giocatore: «Come giocarla», «Non l'ho preso» e «Scegline un altro» con l'eroe preso segnato «Scelto»",
+    await page.locator("#menu-guide").isVisible() && await page.locator("#menu-unpick").isVisible() && /Scegline un altro/.test(await text(page, "#choose-body"))
+    && sheet.filter((r) => r.tag === "Scelto").map((r) => r.name).join() === recF, JSON.stringify(sheet));
+  check("foglio: ogni eroe con le tacche (1–5) e chi batte/teme a parole, solo tra gli avversari segnati", sheet.length >= 3
+    && sheet.every((r) => r.n >= 1 && r.n <= 5 && vsNames(r.mu).every((n) => ENEMIES.includes(n))) && sheet.some((r) => r.mu)
+    && (await page.locator("#choose-body .choose-grid").isVisible()), JSON.stringify(sheet));
   await shot(page, "05g-foglio-preferiti");
-  const pickSheet = sheet.find(([n]) => n !== other)[0];
-  await page.locator("#choose-body .fav-row", { has: page.locator(".fr-name", { hasText: new RegExp(`^${pickSheet}$`) }) }).click();
+  const other = sheet.find((r) => r.name !== recF).name;
+  await page.locator("#choose-body .fav-row", { has: page.locator(".fr-name", { hasText: new RegExp(`^${esc(other)}$`) }) }).click();
   await toTop(page);
-  check("foglio: un tocco sceglie e chiude", !(await page.locator("#choose-dialog").evaluate((d) => d.open))
-    && (await page.locator(".pick").nth(0).locator(".pick-name").innerText()) === pickSheet, pickSheet);
-  await page.locator(".pick").nth(0).locator(".chosen-chip").click();
+  check("«Scegline un altro»: un tocco sceglie quell'eroe e chiude il foglio", !(await page.locator("#choose-dialog").evaluate((d) => d.open))
+    && (await band(page, 0).locator(".cur").textContent()) === other && String((await matchState(page)).picked[0]) === heroId(other), other);
+  await shot(page, "05f-scelto");
+  await unpick(page, 0);
   await toTop(page);
-  check("«✓ Scelto» ritoccato: torna la lista, niente scelto", (await matchState(page)).picked[0] === null
-    && (await page.locator(".pick").nth(0).locator(".fav-row.is-rec").count()) === 1);
-  check("«Chi soffrite di più»: sparisce di nuovo senza eroi scelti né alleati", await page.locator("#threats").isHidden());
-  // «Come giocarla» del consigliato, poi «Perché»
+  check("«Non l'ho preso»: torna «PRENDI» e il posto vuoto, niente scelto", (await matchState(page)).picked[0] === null
+    && !(await band(page, 0).getAttribute("data-has")) && (await band(page, 0).locator(".move .verb").textContent()) === "Prendi" && (await portraitsOk(page)).length === 0);
+  check("«Chi soffrite di più»: sparisce di nuovo senza eroi scelti né alleati", (await page.locator("#grid .hero.top3").count()) === 0);
+  // «Come giocarla» del proposto, poi «Perché»
   const altName = (await favRows(page, 0))[0].name;
-  await page.locator(".pick").nth(0).locator(".rec-cta").click();
+  await band(page, 0).locator(".move .go").click();
   await page.locator("#guide-dialog[open]").waitFor();
-  check("«Come giocarla» del consigliato (prima della scelta)", (await text(page, "#t-guide")).includes(altName), await text(page, "#t-guide"));
+  check("«Come giocarla» del proposto (prima della scelta)", (await text(page, "#t-guide")).includes(altName), await text(page, "#t-guide"));
   await page.click("#guide-body .why-btn");
   await page.locator("#why-dialog[open]").waitFor();
   const det = await text(page, "#why-body");
-  check("«Perché»: riepilogo mappa e comp avversaria (i numeri tolti dal riquadro)", /Mappa [+−]\d/.test(det) && /Avversari [+−]\d/.test(det), det.slice(0, 300));
+  check("«Perché»: riepilogo mappa e comp avversaria (i numeri tolti dalla fascia)", /Mappa [+−]\d/.test(det) && /Avversari [+−]\d/.test(det), det.slice(0, 300));
   check("tocco su un consiglio: dettaglio per ogni avversario", ["contro Pharah", "contro Winston", "contro Reinhardt", "King's Row"].every((t) => det.includes(t)), det);
   await shot(page, "05b-perche");
   check("scheda eroe di Fabio (senza rank): dati Ranked di tutte le divisioni", det.includes("Ranked, tutte le divisioni"), det);
@@ -379,10 +449,11 @@ try {
     && (await page.locator("#why-body .theory-sec").count()) >= 3
     && (await page.locator("#why-body .theory-sec .theory-badge").count()) === (await page.locator("#why-body .theory-sec").count())
     && (await page.locator("#why-body .theory-sec", { hasText: "Sinergizza con" }).count()) === 1);
-  check("riquadri teoria in viola, diversi dalle statistiche", await page.evaluate(() => {
-    const a = getComputedStyle(document.querySelector("#why-body .theory-sec")).backgroundColor;
-    const b = getComputedStyle(document.querySelector("#why-body .prof-sec:not(.theory-sec)")).backgroundColor;
-    return a !== b;
+  check("riquadri teoria a righe (▨), distinti dalle statistiche (■) per forma", await page.evaluate(() => {
+    const a = getComputedStyle(document.querySelector("#why-body .theory-sec")).borderImageSource;
+    const b = getComputedStyle(document.querySelector("#why-body .prof-sec:not(.theory-sec)")).borderImageSource;
+    const badge = getComputedStyle(document.querySelector("#why-body .theory-badge"), "::before").backgroundImage;
+    return /repeating-linear-gradient/.test(a) && !/gradient/.test(b) && /repeating-linear-gradient/.test(badge);
   }));
   await page.locator("#why-body .theory-sec").first().scrollIntoViewIfNeeded();
   await shot(page, "05d-teoria");
@@ -394,11 +465,12 @@ try {
     && (await page.locator("#guide-body .guide-more").evaluate((d) => d.hidden)) && !guideShort.includes("Come muoverti")
     && !(await page.locator("#why-dialog").evaluate((d) => d.open)), `${briefRows} righe`);
   check("come giocarla: i bersagli con i volti", (await page.locator("#guide-body .brief-row.k-target .hchip").count()) >= 1);
-  const threatTxt = await page.locator("#guide-body .brief-row.k-threat").allInnerTexts();
+  const threatTxt = await page.locator("#guide-body .brief-row.k-threat").allTextContents();
   check("in breve: «Attento» dice anche cosa fare (a chi lasciarlo o evitare l'1 contro 1)",
     threatTxt.length === 0 || threatTxt.every((t) => /lascia .+ a |evita l'1 contro 1/.test(t)), threatTxt.join(" | "));
   await shot(page, "05e-come-giocarla");
-  check("come giocarla: legenda teoria/dati accanto a «In breve»", (await text(page, "#guide-body .guide-summary h3")).includes("teoria"));
+  check("come giocarla: legenda teoria/dati a parole accanto a «In breve»", /teoria/.test(await text(page, "#guide-body .guide-summary h3"))
+    && /dati/.test(await text(page, "#guide-body .guide-summary h3")));
   await page.click("#guide-body .more-btn");
   const guide = await text(page, "#guide-body");
   const guideHero = toEn((await text(page, "#t-guide")).replace(/^Come giocare /, ""));
@@ -411,11 +483,9 @@ try {
   check("schede senza testi «null»/«undefined»", !/\b(null|undefined|NaN)\b/.test(guide + det), (guide + det).match(/.{0,40}\b(null|undefined|NaN)\b.{0,20}/)?.[0]);
   await page.click("#guide-dialog [data-close]");
   await toTop(page);
-  // dettaglio di un eroe: riquadro → Come giocarla → Perché
+  // dettaglio di un eroe: fascia → Come giocarla → Perché
   const openWhy = async (k) => {
-    await toTop(page);
-    await page.locator(".pick").nth(k).locator(".pick-cta").click();
-    await page.locator("#guide-dialog[open]").waitFor();
+    await openGuideOf(page, k);
     await page.click("#guide-body .why-btn");
     await page.locator("#why-dialog[open]").waitFor();
     return text(page, "#why-body");
@@ -430,22 +500,24 @@ try {
   await closeAll();
   const sumF = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
   await closeAll();
-  const cardsTxt0 = await page.locator(".pick").allInnerTexts();
+  const cardsTxt0 = await page.locator(CARD).allTextContents();
   check("nessuno ha scelto: i consigli non dipendono dal compagno (niente «Con Giulia», niente «Bene con …»)",
     !/Alleati [+−]/.test(sumF) && !/Con Giulia/.test(sumF) && cardsTxt0.every((t) => !/Bene con (Fabio|Giulia)/.test(t)), sumF);
   // Giulia sceglie: da lì il suo eroe conta per Fabio («Con Giulia» nei perché)
   await toTop(page);
   const recG = (await favRows(page, 1))[0].name;
-  await page.locator(".pick").nth(1).locator(".fav-row.is-rec").click();
+  await band(page, 1).locator(".move .done").click();
   const sumF2 = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
   await closeAll();
   check("dopo la scelta di Giulia: la sinergia con il suo eroe è «Con Giulia»", /Con Giulia [+−]/.test(sumF2), `${recG}: ${sumF2}`);
-  await toTop(page);
-  await page.locator(".pick").nth(1).locator(".chosen-chip").click();
+  await unpick(page, 1);
   await page.click("#groups [data-group=allies]");
   const sa = Object.values(await starsOf(page));
-  check("stelline Alleati: dorate da 1 a 5 (buona scelta per voi)", sa.some((x) => x.n === 5)
-    && sa.every((x) => x.n >= 1 && x.n <= 5 && x.cls.includes("st-allies") && x.color === "rgb(255, 179, 64)"), JSON.stringify(sa.find((x) => !x.n)));
+  check("tacche Alleati: azzurre da 1 a 5 (buona scelta per voi)", sa.some((x) => x.n === 5)
+    && sa.every((x) => x.n >= 1 && x.n <= 5 && x.cls.includes("st-allies") && x.color === "rgb(79, 193, 233)"), JSON.stringify(sa.find((x) => !x.n)));
+  check("Alleati: posti che restano dopo i due giocatori (Tank, Danni, Supporto)",
+    (await page.locator("#slots .slot.empty").evaluateAll((s) => s.map((x) => x.dataset.role).join())) === "Tank,Damage,Support"
+    && (await text(page, "[data-count=allies]")) === "0/3");
   await heroBtn(page, "Lúcio").click();
   await toTop(page);
   const sumA = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
@@ -456,31 +528,27 @@ try {
   check("alleato non consigliato", !picks.includes("Lúcio"), picks.join());
   await page.click("#groups [data-group=enemies]");
   for (const n of ["Genji", "Mercy", "Tracer"]) await heroBtn(page, n).click();
-  check("max 5 avversari, avviso chiaro", (await text(page, "[data-count=enemies]")) === "5"
+  check("max 5 avversari, avviso chiaro", (await text(page, "[data-count=enemies]")) === "5/5"
     && (await text(page, "#toast")).includes("Al massimo 5"));
   // un avversario toccato tra gli Alleati: lo hanno tutte e due le squadre (mirror, regola di Overwatch 2)
   await page.click("#groups [data-group=allies]");
   await heroBtn(page, "Mercy").click();
-  check("avversario toccato tra gli Alleati: in tutte e due le squadre (mirror)", (await text(page, "[data-count=enemies]")) === "5"
-    && (await text(page, "[data-count=allies]")) === "2");
+  check("avversario toccato tra gli Alleati: in tutte e due le squadre (mirror)", (await text(page, "[data-count=enemies]")) === "5/5"
+    && (await text(page, "[data-count=allies]")) === "2/3");
   // ruolo cambiato al volo
   await toTop(page);
   const fabioBefore = (await pickNames(page))[0];
-  await page.locator(".pick").nth(1).locator(".role-btn").click();
+  await band(page, 1).locator(".role-btn").click();
   await toTop(page);
-  check("ruolo di Giulia cambiato al volo (Supporto → Danni)", (await page.locator(".pick").nth(1).locator(".role-btn").innerText()) === "Danni");
-  await toTop(page);
+  check("ruolo di Giulia cambiato al volo (Supporto → Danni)", (await band(page, 1).locator(".role-btn").textContent()) === "Danni");
   const duo = await pickNames(page);
   const role = (n) => data.heroes.find((h) => h.name === toEn(n))?.role;
   check("con lo stesso ruolo eroi diversi", duo[0] !== duo[1] && role(duo[0]) === "Damage" && role(duo[1]) === "Damage", duo.join());
   check("il consiglio di Fabio non cambia per il ruolo di Giulia (salvo che serva un eroe diverso)", duo[0] === fabioBefore || duo[1] === fabioBefore,
     `${fabioBefore} → ${duo.join()}`);
-  await toTop(page);
-  await page.locator(".pick").nth(1).locator(".role-btn").click();
+  await band(page, 1).locator(".role-btn").click();
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "06-durante-partita");
-  await page.evaluate(() => window.scrollTo(0, 600));
-  await shot(page, "07-griglia");
 
   // ---------- solo preferiti ----------
   await page.click(".tabs [data-view=profile]");
@@ -489,34 +557,36 @@ try {
   await toTop(page);
   const giulia = (await favRows(page, 1)).map((r) => r.name);
   check("solo preferiti: Giulia vede solo Mercy/Juno (Mercy è alleata → solo Juno)", giulia.join() === "Juno", giulia.join());
-  check("solo preferiti acceso: «Scegli tra i preferiti» nel riquadro di Giulia", /Scegli tra i preferiti/.test(await text(page, ".pick:nth-child(2) .pick-ask")),
-    await text(page, ".pick:nth-child(2) .pick-ask"));
+  await openPlayer(page, 1);
+  const subFav = await text(page, "#choose-body .choose-sub");
+  await page.click("#choose-dialog [data-close]");
+  check("solo preferiti acceso: nel foglio di Giulia «I tuoi preferiti, dal più adatto»", /I tuoi preferiti, dal più adatto/.test(subFav), subFav);
   await toTop(page);
-  const fabio = await page.locator(".pick").nth(0).innerText();
+  const fabio = await text(page, "#picks .band:nth-child(1)");
   check("solo preferiti: Fabio senza preferiti → i più adatti, con avviso", fabio.includes("nessun preferito disponibile")
-    && (await page.locator(".pick").nth(0).locator(".fav-row").count()) >= 2, fabio);
+    && (await favRows(page, 0)).length >= 2, fabio);
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "06b-solo-preferiti");
-  // Giulia ha preso un eroe non preferito: «Passa a» (riquadro e guida) propone solo preferiti
-  await toTop(page);
-  await page.locator(".pick").nth(1).locator(".fav-more").click(); // tutti i preferiti già in lista: «Un altro eroe» → griglia
+  // Giulia ha preso un eroe non preferito: «Passa a» (fascia e guida) propone solo preferiti
+  await pickFromGrid(page, 1);
   const sp = Object.values(await starsOf(page));
-  check("stelline durante la scelta dell'eroe di Giulia: col suo colore, da 1 a 5", sp.some((x) => x.n === 5)
-    && sp.every((x) => x.n >= 1 && x.n <= 5 && x.cls.includes("st-picked") && x.color === "rgb(255, 111, 174)"), JSON.stringify(sp.find((x) => !x.n)));
-  await page.evaluate(() => window.scrollTo(0, document.querySelector("#grid").getBoundingClientRect().top + window.scrollY - 200));
+  check("tacche durante la scelta dell'eroe di Giulia: col suo colore, da 1 a 5", sp.some((x) => x.n === 5)
+    && sp.every((x) => x.n >= 1 && x.n <= 5 && x.cls.includes("st-picked") && x.color === "rgb(255, 111, 207)"), JSON.stringify(sp.find((x) => !x.n)));
+  check("«Tocca l'eroe preso da Giulia»: la scheda aperta è quella del suo ruolo (Supporto)",
+    (await page.locator("#role-tabs .tab[aria-pressed=true]").getAttribute("data-tab")) === "Support");
   await shot(page, "06c-stelline-scelta");
   await heroBtn(page, "Brigitte").click();
   await toTop(page);
-  const swapCard = await page.locator(".pick").nth(1).locator(".swap b").allInnerTexts();
-  await page.locator(".pick").nth(1).locator(".pick-main").click();
-  await page.locator("#guide-dialog[open]").waitFor();
+  const swapCard = await band(page, 1).evaluate((b) => (b.dataset.move ? [b.querySelector(".move .nm").textContent] : []));
+  await openGuideOf(page, 1);
   const swapGuide = await page.locator("#guide-body .brief-row.k-swap .hchip").evaluateAll((cs) => cs.map((c) => c.lastChild.textContent));
   await page.click("#guide-dialog [data-close]");
   check("solo preferiti: dopo la scelta «Passa a» propone solo preferiti (Juno)", [...swapCard, ...swapGuide].every((n) => n.trim() === "Juno")
     && swapCard.length === 1 && swapGuide.length === 1,
-    `riquadro ${swapCard.join()} · guida ${swapGuide.join()}`);
-  await toTop(page);
-  await page.locator(".pick").nth(1).locator(".chosen-chip").click(); // scelta tolta: il resto del collaudo come prima
+    `fascia ${swapCard.join()} · guida ${swapGuide.join()}`);
+  check("con «Passa a»: il ritratto grande resta Brigitte (l'eroe preso), Juno solo nella striscia",
+    (await band(page, 1).getAttribute("data-has")) === heroId("Brigitte") && (await portraitsOk(page)).length === 0);
+  await unpick(page, 1); // scelta tolta: il resto del collaudo come prima
   await page.click(".tabs [data-view=profile]");
   await page.getByRole("button", { name: /Suggerisci solo eroi preferiti/ }).click();
   await page.click(".tabs [data-view=match]");
@@ -529,24 +599,51 @@ try {
   // ---------- memoria e nuova partita ----------
   await page.reload();
   await page.locator(CARD).first().waitFor();
-  check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "5"
-    && (await text(page, ".picks")).includes("Giulia") && (await text(page, "#map-name")).includes(ILIOS));
+  check("dopo ricarica: partita e profilo ricordati", (await text(page, "[data-count=enemies]")) === "5/5"
+    && (await text(page, "#picks")).includes("Giulia") && (await text(page, "#map-name")).includes(ILIOS));
   await page.click("#new-match");
-  check("nuova partita: azzera tutto tranne il profilo", (await text(page, "[data-count=enemies]")) === "0"
-    && (await text(page, "[data-count=bans]")) === "0" && (await text(page, "#map-name")).includes("Scegli mappa")
-    && (await text(page, ".picks")).includes("Giulia"));
+  check("nuova partita: azzera tutto tranne il profilo", (await text(page, "[data-count=enemies]")) === "0/5"
+    && (await text(page, "[data-count=bans]")) === "0/5" && (await text(page, "#map-name")).includes("Scegli mappa")
+    && (await text(page, "#picks")).includes("Giulia"));
+  check("messaggi in alto, sotto la testata (mai sopra il selettore)", await page.evaluate(() => {
+    const t = document.querySelector("#toast").getBoundingClientRect();
+    return t.top >= document.querySelector(".head").getBoundingClientRect().bottom - 1 && t.bottom < document.querySelector("#groups").getBoundingClientRect().top;
+  }));
   await page.click("#toast .toast-btn");
-  check("nuova partita: «Annulla» nel messaggio ripristina la partita", (await text(page, "[data-count=enemies]")) === "5"
+  check("nuova partita: «Annulla» nel messaggio ripristina la partita", (await text(page, "[data-count=enemies]")) === "5/5"
     && (await text(page, "#map-name")).includes(ILIOS));
   await page.click("#new-match");
 
-  // ---------- aggiorna senza token ----------
+  // ---------- aggiorna senza token (Profilo) ----------
+  await page.click(".tabs [data-view=profile]");
   await page.click("#refresh");
   await page.waitForFunction(() => !document.querySelector("#refresh").disabled);
   check("aggiorna senza token: spiega come attivarlo", (await text(page, "#toast")).includes("token"));
+  await page.click(".tabs [data-view=match]");
 
   // ---------- tutte le selezioni fatte: ogni eroe resta toccabile (schermo piccolo e normale) ----------
   // schermi: piccolo di riferimento, Xiaomi 14T (407×905 meno barre di sistema), Nothing Phone (3) (≈420×933 meno barre)
+  // nomi in un posto su una riga (fitText «whole»): mai tagliati, mai a capo
+  const fitAll = (pg, sel) => pg.evaluate((s) => {
+    const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
+    const broken = [];
+    const orig = document.querySelector(s);
+    if (!orig) return [`${s} assente`];
+    const clone = orig.cloneNode(false);
+    orig.after(clone);
+    orig.style.display = "none";
+    for (const n of names) {
+      clone.textContent = n;
+      window.owcFitText(clone, { whole: true });
+      const r = document.createRange();
+      r.selectNodeContents(clone);
+      const lines = new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size;
+      if (lines > 1 || clone.scrollWidth > clone.clientWidth + 1) broken.push(n);
+    }
+    clone.remove();
+    orig.style.display = "";
+    return broken;
+  }, sel);
   for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 407, height: 833, name: "Xiaomi 14T" },
     { width: 420, height: 860, name: "Nothing Phone (3)" }]) {
     const { ctx: c7, page: p7 } = await newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 3, serviceWorkers: "block" });
@@ -555,133 +652,163 @@ try {
       players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] })));
     await p7.goto(BASE);
     await p7.locator(CARD).first().waitFor();
-    const hb = (n) => p7.locator("#grid .hero", { has: p7.locator(".nm", { hasText: new RegExp(`^${n}$`) }) });
-    // ogni nome dei 53 eroi, nel posto del consiglio: mai spezzato a metà parola (le alternative sono solo volti)
-    const slots = await p7.evaluate(() => {
-      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
-      const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
-      const broken = [];
-      for (const sel of [".pick .fav-row.is-rec .fr-name", ".pick .fav-row:not(.is-rec) .fr-name"]) {
-        const orig = document.querySelector(sel);
-        if (!orig) { broken.push(`${sel} assente`); continue; }
-        const clone = orig.cloneNode(false);
-        orig.after(clone);
-        orig.style.display = "none";
-        for (const n of names) {
-          clone.textContent = n;
-          window.owcFitText(clone);
-          if (lines(clone) > n.split(/\s+/).length || clone.scrollWidth > clone.parentElement.clientWidth + 1) broken.push(n);
-        }
-        clone.remove();
-        orig.style.display = "";
-      }
-      return broken;
-    });
-    if (vp.name || vp.width >= 390) check(`${label}: nei riquadri nessun nome spezzato (53 eroi)`, slots.length === 0, slots.join(", "));
+    await p7.evaluate(() => document.fonts.ready);
+    const hb = (n) => heroBtn(p7, n);
+    // ogni nome dei 53 eroi, nel posto del consiglio («PRENDI») e delle alternative: mai spezzato né tagliato
+    const slots = [...await fitAll(p7, "#picks .move .nm"), ...(await fitAll(p7, "#picks .alt .nm")).map((n) => `${n} (alternativa)`)];
+    if (vp.name || vp.width >= 390) check(`${label}: nelle fasce nessun nome spezzato né tagliato (53 eroi)`, slots.length === 0, slots.join(", "));
     await p7.click("#map-btn");
     await p7.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await p7.click("#side [data-side=attack]");
     if (vp.width === 390) {
       await p7.click("#groups [data-group=bans]");
-      check("statistiche + teoria: ban consigliati da entrambe", (await text(p7, "#ban-recs .br-sub")).includes("statistiche e guide")
-        && (await p7.locator("#ban-recs .hero").count()) === 9);
+      check("statistiche + teoria: «BAN?» su 3 eroi per ruolo", (await p7.locator("#grid .hero.sugg").count()) === 9);
     }
     for (const [g, names] of [["bans", ["Ana", "Kiriko", "Widowmaker", "Tracer"]], ["enemies", ["Reinhardt", "Genji", "Pharah", "Mercy", "Lúcio"]], ["allies", ["Winston", "Sojourn", "Baptiste"]]]) {
       await toTop(p7);
       await p7.click(`#groups [data-group=${g}]`);
       for (const n of names) await hb(n).click();
     }
-    // e gli eroi presi da Fabio e Giulia (in 5: 3 alleati + i due giocatori), con «Altro» nei loro riquadri
-    await toTop(p7);
+    // e gli eroi presi da Fabio e Giulia (in 5: 3 alleati + i due giocatori), dal foglio di ciascuno → griglia
     await pickFromGrid(p7, 0);
     await hb("Cassidy").click();
-    await toTop(p7);
     await pickFromGrid(p7, 1);
     await hb("Moira").click();
-    // dopo la scelta, il nome nel riquadro dedicato: mai spezzato a metà parola
-    const slots2 = await p7.evaluate(() => {
-      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
-      const names = [...document.querySelectorAll("#grid .hero .nm")].map((x) => x.textContent);
-      const orig = document.querySelector(".pick .pick-name");
-      if (!orig) return ["riquadro dedicato assente"];
-      const broken = [];
-      const clone = orig.cloneNode(false);
-      orig.after(clone);
-      orig.style.display = "none";
-      for (const n of names) {
-        clone.textContent = n;
-        window.owcFitText(clone);
-        if (lines(clone) > n.split(/\s+/).length || clone.scrollWidth > clone.parentElement.clientWidth + 1) broken.push(n);
-      }
-      clone.remove();
-      orig.style.display = "";
-      return broken;
-    });
-    if (vp.name || vp.width >= 390) check(`${label}: riquadro dedicato, nessun nome spezzato (53 eroi)`, slots2.length === 0, slots2.join(", "));
-    await p7.waitForTimeout(2600); // il messaggio in basso sparisce
+    // dopo la scelta, il nome dell'eroe preso: mai spezzato né tagliato
+    const slots2 = await fitAll(p7, "#picks .cur");
+    if (vp.name || vp.width >= 390) check(`${label}: nome dell'eroe preso nella fascia, mai spezzato né tagliato (53 eroi)`, slots2.length === 0, slots2.join(", "));
+    check(`${label}: dopo le scelte il ritratto grande è l'eroe preso`, (await portraitsOk(p7)).length === 0, JSON.stringify(await portraitsOk(p7)));
+    await p7.waitForTimeout(2600); // il messaggio sparisce
     const res = await p7.evaluate(async () => {
       const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const bad = [];
-      let maxStack = 0;
-      const tabs = document.querySelector(".tabs").getBoundingClientRect().top;
-      for (const btn of document.querySelectorAll("#grid .hero")) {
-        // l'eroe appena sotto la barra fissa in alto: è lì che di solito lo si tocca dopo aver scorso
-        btn.scrollIntoView({ block: "start" });
+      let maxMini = 0;
+      for (const tab of document.querySelectorAll("#role-tabs .tab")) {
+        tab.click();
         await frame();
-        const stack = Math.max(document.querySelector("#mini").hidden ? 0 : document.querySelector("#mini").getBoundingClientRect().bottom,
-          document.querySelector(".groups").getBoundingClientRect().bottom);
-        maxStack = Math.max(maxStack, stack);
-        window.scrollBy(0, -(stack + 4));
-        await frame();
-        const r = btn.getBoundingClientRect();
-        const y = Math.min(r.top + r.height / 2, tabs - 4);
-        const el = document.elementFromPoint(r.left + r.width / 2, y);
-        if (!btn.contains(el)) bad.push(btn.querySelector(".nm").textContent);
+        for (const btn of document.querySelectorAll("#grid [data-block]:not([hidden]) .hero")) {
+          btn.scrollIntoView({ block: "center" });
+          await frame();
+          const mini = document.querySelector("#mini");
+          if (!mini.hidden) maxMini = Math.max(maxMini, mini.getBoundingClientRect().bottom);
+          const r = btn.getBoundingClientRect();
+          const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          if (!btn.contains(el)) bad.push(btn.querySelector(".nm").textContent);
+        }
       }
-      return { bad, maxStack: Math.round(maxStack), tabs: Math.round(tabs) };
+      return { bad, maxMini: Math.round(maxMini) };
     });
-    check(`${label}, tutte le selezioni: ogni eroe toccabile`, res.bad.length === 0, res.bad.join(", "));
-    check(`${label}: barra fissa in alto bassa (≤ 140 px)`, res.maxStack <= 140, `${res.maxStack}px`);
-    // nessun nome di eroe troncato nei consigli (tutti i 53, anche i più lunghi) e niente scorrimento orizzontale
+    check(`${label}, tutte le selezioni: ogni eroe toccabile (in ogni scheda di ruolo)`, res.bad.length === 0, res.bad.join(", "));
+    check(`${label}: barra minima in alto bassa (≤ 140 px)`, res.maxMini <= 140, `${res.maxMini}px`);
+    // nessun nome di eroe troncato nella griglia (tutte le schede) e niente scorrimento orizzontale
     const fit = await p7.evaluate(async () => {
+      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       window.scrollTo(0, 0);
-      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const gridCut = [...document.querySelectorAll("#grid .hero .nm")].filter((x) => x.scrollHeight > x.clientHeight + 1 || x.scrollWidth > x.clientWidth + 1).map((x) => x.textContent);
-      // nome spezzato a metà parola (es. "Widowmake/r"): più righe che parole
-      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
-      for (const x of document.querySelectorAll("#grid .hero .nm")) if (lines(x) > x.textContent.split(/\s+/).length) gridCut.push(`${x.textContent} (spezzato)`);
-      return { gridCut, overflow: document.documentElement.scrollWidth - window.innerWidth };
+      const cut = [];
+      for (const tab of document.querySelectorAll("#role-tabs .tab")) {
+        tab.click();
+        await frame();
+        for (const x of document.querySelectorAll("#grid [data-block]:not([hidden]) .hero .nm")) {
+          const r = document.createRange();
+          r.selectNodeContents(x);
+          const lines = new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size;
+          if (x.scrollWidth > x.clientWidth + 1 || lines > 1) cut.push(x.textContent);
+        }
+      }
+      return { cut, overflow: document.documentElement.scrollWidth - window.innerWidth };
     });
-    if (vp.name || vp.width >= 390) {
-      check(`${label}: nomi nella griglia interi`, fit.gridCut.length === 0, fit.gridCut.join(", "));
-    }
+    check(`${label}: nomi nella griglia interi, su una riga (tutte le schede)`, fit.cut.length === 0, fit.cut.join(", "));
     check(`${label}: niente scorrimento orizzontale`, fit.overflow <= 0, `${fit.overflow}px`);
+    const smallV = await smallTargets(p7);
+    check(`${label}: bersagli visibili della Partita ≥ 48 px`, smallV.length === 0, JSON.stringify(smallV));
     if (vp.name) await shot(p7, `12-${vp.name.replace(/\W+/g, "-")}`);
     await p7.evaluate(() => window.scrollTo(0, 900));
-    await p7.waitForTimeout(100);
-    if (vp.height === 640) await shot(p7, "11-tutte-le-selezioni-scorso");
+    await p7.waitForTimeout(150);
+    if (vp.height === 640) {
+      check("360×640 scorsa: compare la barra minima (quello che hanno → la mossa)", await p7.locator("#mini").isVisible()
+        && (await p7.locator("#mini .mini-pick").count()) === 2, await p7.evaluate(() => JSON.stringify({ y: scrollY, h: document.scrollingElement.scrollHeight,
+        r: document.querySelector("#picks").getBoundingClientRect().top, mini: document.querySelector("#mini").hidden, n: document.querySelectorAll("#mini .mini-pick").length })));
+      await shot(p7, "11-tutte-le-selezioni-scorso");
+    }
     await toTop(p7);
     if (vp.height === 640) await shot(p7, "11-tutte-le-selezioni-in-cima");
     await c7.close();
   }
 
-  // ---------- carattere di sistema ingrandito (Xiaomi al 130%): nomi interi, mai spezzati a metà parola ----------
+  // ---------- con 2 giocatori la Partita sta nello schermo, senza scorrere (390×844 e i telefoni dell'utente) ----------
+  {
+    const P = { players: [{ name: "Fabio", rank: "", roles: ["Damage"], favorites: [] }, { name: "Giulia", rank: "", roles: ["Support"], favorites: [] }] };
+    const fresh = { ...data, checked: new Date().toISOString(), problems: [] };
+    const M = (o) => ({ roles: ["Damage", "Support"], picked: [null, null], pickFor: 0, mapSlug: "kings-row", side: "attack", bans: [], enemies: [], allies: [], group: "enemies", ...o });
+    const W = [heroId("Widowmaker"), heroId("Sombra")];
+    const STATES = [
+      ["prima della scelta", M({ bans: W }), null],
+      ["dopo la scelta (Passa a)", M({ bans: W, enemies: ["Winston", "Tracer", "Ana"].map(heroId), picked: [heroId("Cassidy"), null] }), null],
+      ["Ban, scheda Danni", M({ bans: [heroId("Reinhardt")], group: "bans" }), "Damage"],
+      ["Avversari, nessuno ha scelto, scheda Danni (4 righe)", M({ bans: W, enemies: ["Winston", "Tracer", "Ana"].map(heroId) }), "Damage"],
+      ["Avversari con un eroe scelto (nomi rossi), scheda Danni", M({ enemies: [heroId("Winston")], picked: [heroId("Cassidy"), heroId("Ana")] }), "Damage"],
+      ["Alleati", M({ enemies: ["Winston", "Tracer"].map(heroId), picked: [heroId("Cassidy"), null], allies: [heroId("Zarya")], group: "allies" }), null],
+      ["«Tocca l'eroe preso da Giulia»", M({ enemies: ["Winston", "Tracer", "Ana"].map(heroId), picked: [heroId("Cassidy"), null], group: "picked", pickFor: 1 }), null],
+    ];
+    for (const [w, h] of [[390, 844], [407, 833], [420, 860]]) {
+      for (const [name, m, tab] of STATES) {
+        const { ctx: cn, page: pn } = await newPage({ viewport: { width: w, height: h }, serviceWorkers: "block" });
+        await cn.route("**/data.json*", (r) => r.fulfill({ json: fresh }));
+        await pn.addInitScript(([p, mm]) => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", "1"); localStorage.setItem("owc.profile", JSON.stringify(p)); localStorage.setItem("owc.match", JSON.stringify(mm)); } }, [P, m]);
+        await pn.goto(BASE);
+        await pn.locator(CARD).first().waitFor();
+        await pn.evaluate(() => document.fonts.ready);
+        if (tab) await pn.click(`#role-tabs [data-tab=${tab}]`);
+        await pn.waitForTimeout(100);
+        const over = await overflowY(pn);
+        const small = await smallTargets(pn);
+        const portraits = await portraitsOk(pn);
+        check(`${w}×${h}, 2 giocatori, ${name}: tutto in vista senza scorrere, bersagli ≥ 48 px, ritratti = eroi presi`,
+          over <= 0 && !small.length && !portraits.length, JSON.stringify({ over, small, portraits }));
+        if (w === 390) await shot(pn, `21-senza-scorrere-${name.replace(/\W+/g, "-").slice(0, 30)}`);
+        await cn.close();
+      }
+    }
+  }
+
+  // ---------- carattere di sistema ingrandito (Xiaomi al 130%): nomi interi, mai spezzati né tagliati ----------
   {
     const { ctx: c11, page: p11 } = await newPage({ viewport: { width: 407, height: 833 }, deviceScaleFactor: 3, serviceWorkers: "block" });
     lastPage = p11;
+    await p11.addInitScript((m) => localStorage.setItem("owc.match", JSON.stringify(m)),
+      { roles: ["Damage", "Support"], picked: [heroId("Cassidy"), null], pickFor: 0, mapSlug: "kings-row", side: "attack", bans: [], enemies: ["Winston", "Tracer"].map(heroId), allies: [], group: "enemies" });
     await p11.goto(BASE);
-    await p11.locator("#grid .hero").first().waitFor();
-    // la WebView ingrandisce tutto il testo del 30%: qui lo si imita sui nomi della griglia
-    await p11.addStyleTag({ content: ".hero .nm { font-size: calc(13px * var(--fit, 1)) !important } .hero .nm.long { font-size: calc(11.7px * var(--fit, 1)) !important }" });
-    await p11.evaluate(() => { document.querySelector("#grid").dataset.fitW = ""; window.dispatchEvent(new Event("resize")); });
-    await p11.waitForTimeout(100);
-    const broken = await p11.evaluate(() => {
-      const lines = (x) => { const r = document.createRange(); r.selectNodeContents(x); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; };
-      return [...document.querySelectorAll("#grid .hero .nm")].filter((x) => lines(x) > x.textContent.split(/\s+/).length
-        || x.scrollHeight > x.clientHeight + 1).map((x) => x.textContent);
+    await p11.locator(CARD).first().waitFor();
+    // la WebView ingrandisce tutto il testo del 30%: qui lo si imita moltiplicando ogni dimensione dei caratteri
+    await p11.evaluate(() => {
+      const up = (v) => v.replace(/(\d+(?:\.\d+)?)px/g, (m, n) => `${(Number(n) * 1.3).toFixed(2)}px`);
+      for (const sh of document.styleSheets) for (const r of sh.cssRules) {
+        if (!r.style) continue;
+        if (r.style.fontSize) r.style.fontSize = up(r.style.fontSize);
+        else if (r.style.font) r.style.setProperty("font", r.style.getPropertyValue("font").replace(/^(.*?)(\d+(?:\.\d+)?px|calc\([^)]*\))/, (m, a, sz) => a + up(sz)));
+      }
+      document.querySelector("#grid").dataset.fitW = "";
+      window.dispatchEvent(new Event("resize"));
     });
-    check("carattere al 130%: nomi della griglia interi, mai spezzati a metà parola", broken.length === 0, broken.join(", "));
-    await p11.locator("#grid .hero", { has: p11.locator(".nm", { hasText: /^Vendetta$/ }) }).scrollIntoViewIfNeeded();
+    await p11.waitForTimeout(200);
+    const broken = await p11.evaluate(async () => {
+      const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const out = [];
+      const test = (x) => {
+        const r = document.createRange();
+        r.selectNodeContents(x);
+        const lines = new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size;
+        if (lines > 1 || x.scrollWidth > x.clientWidth + 1) out.push(x.textContent);
+      };
+      for (const tab of document.querySelectorAll("#role-tabs .tab")) {
+        tab.click();
+        await frame();
+        document.querySelectorAll("#grid [data-block]:not([hidden]) .hero .nm").forEach(test);
+      }
+      document.querySelectorAll("#picks .cur, #picks .move .nm, #picks .alt .nm, #slots .nm, #map-name").forEach(test);
+      return { out, overflow: document.documentElement.scrollWidth - innerWidth };
+    });
+    check("carattere al 130%: nomi di griglia, fasce, posti e mappa interi, mai spezzati né tagliati", broken.out.length === 0 && broken.overflow <= 0, JSON.stringify(broken));
     await shot(p11, "15-carattere-130");
     await c11.close();
   }
@@ -701,7 +828,7 @@ try {
         await p9.addInitScript((pl) => localStorage.setItem("owc.profile", JSON.stringify({ players: pl })), players);
         await p9.goto(BASE);
         await p9.locator(CARD).first().waitFor();
-        const hb = (name) => p9.locator("#grid .hero", { has: p9.locator(".nm", { hasText: new RegExp(`^${name.replace(/[.:]/g, "\\$&")}$`) }) });
+        const hb = (name) => heroBtn(p9, name);
         await p9.click("#map-btn");
         await p9.locator("#map-list .map-opt", { hasText: ILIOS }).click();
         await p9.click("#groups [data-group=enemies]");
@@ -709,28 +836,42 @@ try {
         await toTop(p9);
 
         const st = await p9.evaluate(() => ({
-          cards: document.querySelectorAll("#picks .pick").length,
-          mains: document.querySelectorAll("#picks .fav-row.is-rec").length,
-          firsts: [...document.querySelectorAll(".pick .fav-row.is-rec .fr-name")].map((x) => x.textContent),
-          colors: [...document.querySelectorAll("#picks .pick")].map((x) => getComputedStyle(x).borderTopColor),
-          recs: [...document.querySelectorAll("#grid .hero.rec")].map((b) => [b.querySelector(".nm").textContent, getComputedStyle(b).outlineColor]),
+          cards: document.querySelectorAll("#picks .band").length,
+          compact: document.querySelectorAll("#picks .band.compact").length,
+          moves: window.owcBands().map((b) => b.move),
+          firsts: [...document.querySelectorAll("#picks .band")].map((b) => (b.querySelector(".move .nm") ?? b.querySelector(".cmp .nm"))?.textContent ?? ""),
+          colors: [...document.querySelectorAll("#picks .band")].map((x) => getComputedStyle(x, "::before").backgroundColor),
+          recs: [...document.querySelectorAll("#grid .hero.rec")].map((b) => [b.querySelector(".nm").textContent, getComputedStyle(b, "::before").borderTopColor]),
           alliesHidden: document.querySelector("#groups [data-group=allies]").hidden,
         }));
-        check(`${label}: un riquadro per giocatore, ognuno con il consigliato evidenziato`, st.cards === n && st.mains === n, JSON.stringify(st));
+        check(`${label}: una fascia per giocatore, ognuna con «PRENDI» e il consigliato`, st.cards === n && st.moves.every(Boolean), JSON.stringify(st));
         check(`${label}: consigli tutti diversi, del ruolo di ciascuno`,
           new Set(st.firsts).size === n && st.firsts.every((h, i) => data.heroes.find((x) => x.name === toEn(h))?.role === QUEUE[i][1]), st.firsts.join(", "));
-        check(`${label}: un colore diverso per giocatore (riquadri e griglia)`,
+        check(`${label}: un colore diverso per giocatore (fasce e griglia)`,
           new Set(st.colors).size === n && st.recs.length === n && new Set(st.recs.map((r) => r[1])).size === n, JSON.stringify(st.recs));
         check(`${label}: «Alleati» solo se c'è posto in squadra (5 − giocatori)`, st.alliesHidden === (n === 5));
-        // il riquadro del consigliato è largo quanto le altre righe della lista (prima, da soli, restava a metà)
-        const widths = await p9.evaluate(() => [...document.querySelectorAll("#picks .pick")].map((c) => {
-          const list = c.querySelector(".fav-list");
-          return [list, ...list.children].map((x) => Math.round(x.getBoundingClientRect().width));
-        }));
-        check(`${label}: consigliato e righe della lista tutti della stessa larghezza`, widths.every((w) => w.every((x) => Math.abs(x - w[0]) <= 1)), JSON.stringify(widths));
+        check(`${label}: prima della scelta il ritratto grande è il posto vuoto`, (await portraitsOk(p9)).length === 0, JSON.stringify(await portraitsOk(p9)));
+        if (n <= 2) {
+          // la striscia della mossa e le alternative larghe quanto la fascia
+          const widths = await p9.evaluate(() => [...document.querySelectorAll("#picks .band")].map((b) =>
+            [b.querySelector(".has-row"), b.querySelector(".move"), b.querySelector(".alts")].filter(Boolean).map((x) => Math.round(x.getBoundingClientRect().width))));
+          check(`${label}: riga del giocatore, striscia e alternative della stessa larghezza`, widths.every((w) => w.every((x) => Math.abs(x - w[0]) <= 1)), JSON.stringify(widths));
+          check(`${label}: niente fasce compatte`, st.compact === 0);
+        } else {
+          // da 3 giocatori: fasce compatte di una riga, se ne apre una alla volta
+          check(`${label}: tutte le fasce compatte (una riga)`, st.compact === n
+            && (await p9.locator("#picks .band.compact").evaluateAll((bs) => bs.every((b) => b.getBoundingClientRect().height <= 60))));
+          await p9.locator("#picks .band").nth(1).locator(".cmp").click();
+          const open1 = await p9.evaluate(() => [...document.querySelectorAll("#picks .band:not(.compact)")].map((b) => b.dataset.player));
+          await p9.locator("#picks .band").nth(2).locator(".cmp").click();
+          const open2 = await p9.evaluate(() => [...document.querySelectorAll("#picks .band:not(.compact)")].map((b) => b.dataset.player));
+          check(`${label}: un tocco apre una fascia, aprirne un'altra chiude la prima`, open1.join() === "1" && open2.join() === "2", JSON.stringify([open1, open2]));
+          await p9.locator("#picks .band:not(.compact) .fold").click();
+          check(`${label}: la freccia richiude la fascia aperta`, (await p9.locator("#picks .band.compact").count()) === n);
+        }
         if (n <= 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-consigli`);
 
-        // ognuno segna l'eroe che ha preso (diverso dal consigliato): «Altro» nel suo riquadro, poi l'eroe nella griglia
+        // ognuno segna l'eroe che ha preso (diverso dal consigliato): dal suo foglio «Un altro eroe», poi l'eroe nella griglia
         const used = { Damage: 0, Support: 0, Tank: 0 };
         const taken = [];
         for (let i = 0; i < n; i++) {
@@ -745,46 +886,45 @@ try {
         await p9.waitForTimeout(150);
         await toTop(p9);
         const after = await p9.evaluate(() => ({
-          firsts: [...document.querySelectorAll(".pick .pick-name")].map((x) => x.textContent),
-          pressed: document.querySelectorAll(".pick .chosen-chip").length,
+          bands: window.owcBands(),
           took: [...document.querySelectorAll("#grid .hero.took")].map((b) => [b.querySelector(".nm").textContent, b.querySelector(".tag")?.textContent]),
           rec: document.querySelectorAll("#grid .hero.rec").length,
           group: JSON.parse(localStorage.getItem("owc.match")).group,
-          alts: [...document.querySelectorAll(".pick .others .alt:not(.alt-other)")].map((b) => b.getAttribute("aria-label").match(/^Scegli invece (.+?), \d/)[1]),
-          swaps: [...document.querySelectorAll(".pick .swap b")].map((x) => x.textContent),
         }));
-        check(`${label}: ogni riquadro mostra l'eroe preso, segnato «✓ Scelto»`, after.firsts.join() === taken.join() && after.pressed === n, JSON.stringify(after.firsts));
+        const hasNames = after.bands.map((b) => nameOfId(b.has));
+        check(`${label}: ogni fascia ha nel ritratto grande l'eroe preso`, hasNames.join() === taken.join() && (await portraitsOk(p9)).length === 0, JSON.stringify(after.bands));
         check(`${label}: griglia: eroi presi segnati col ✓ e l'iniziale di chi li ha presi`,
           after.took.length === n && taken.every((h, i) => after.took.some(([nm, tag]) => nm === h && tag === `${QUEUE[i][0][0]}✓`)) && after.rec === 0,
           JSON.stringify(after.took));
-        check(`${label}: dopo la scelta «Scegline un altro» e un eventuale cambio non propongono eroi presi dagli altri`,
-          after.alts.every((x) => !taken.includes(x)) && after.swaps.every((x) => !taken.includes(x)), JSON.stringify(after));
+        check(`${label}: dopo la scelta un eventuale cambio («Passa a») non propone eroi presi dagli altri`,
+          after.bands.every((b) => !b.move || !taken.includes(nameOfId(b.move))), JSON.stringify(after.bands));
         check(`${label}: dopo ogni scelta si torna agli avversari`, after.group === "enemies", after.group);
-        // barra minima e barra fissa: tutti visibili, non troppo alte
-        const bar = await p9.evaluate(async () => {
-          window.scrollTo(0, document.querySelector("#grid").offsetTop);
-          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        // barra minima (con la ricerca aperta c'è sempre): tutti visibili, ognuno col suo eroe preso, non troppo alta
+        await p9.click("#hero-q");
+        const bar = await p9.evaluate(() => {
           const mini = document.querySelector("#mini");
-          const names = [...mini.querySelectorAll(".mini-txt b")];
+          const m = JSON.parse(localStorage.getItem("owc.match"));
           return { shown: !mini.hidden, count: mini.querySelectorAll(".mini-pick").length,
-            stack: Math.round(Math.max(mini.getBoundingClientRect().bottom, document.querySelector(".groups").getBoundingClientRect().bottom)),
+            has: [...mini.querySelectorAll(".mini-pick")].every((b) => b.dataset.has === String(m.picked[Number(b.dataset.player)])),
+            bottom: Math.round(mini.getBoundingClientRect().bottom),
             overflow: document.documentElement.scrollWidth - window.innerWidth,
-            cut: names.filter((b) => b.scrollWidth > b.clientWidth + 1).map((b) => b.textContent) };
+            cut: [...mini.querySelectorAll(".nm")].filter((b) => b.offsetParent && b.scrollWidth > b.clientWidth + 1).map((b) => b.textContent) };
         });
-        check(`${label}: barra in alto con tutti i ${n} eroi, bassa (≤ 140 px)`, bar.shown && bar.count === n && bar.stack <= 140, JSON.stringify(bar));
+        check(`${label}: barra minima con tutti i ${n}, l'eroe che hanno al posto del ritratto, bassa (≤ 140 px)`,
+          bar.shown && bar.count === n && bar.has && bar.bottom <= 140 && !bar.cut.length, JSON.stringify(bar));
         check(`${label}: niente scorrimento orizzontale`, bar.overflow <= 0, `${bar.overflow}px`);
-        if (n === 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-scorso`);
+        if (n === 2 || n === 5) await shot(p9, `13-squadra-${n}-${(vp.name ?? `${vp.width}`).replace(/\W+/g, "-")}-ricerca`);
+        await p9.evaluate(() => document.activeElement.blur());
+        await p9.waitForTimeout(100);
         // «Come giocarla» del primo giocatore: parla del suo eroe preso
-        await toTop(p9);
-        await p9.locator(".pick .pick-main").first().click();
-        await p9.locator("#guide-dialog[open] .guide-sec").first().waitFor();
+        await openGuideOf(p9, 0);
         check(`${label}: «Come giocarla» sull'eroe preso`, (await text(p9, "#t-guide")).includes(taken[0]), await text(p9, "#t-guide"));
         await p9.locator("#guide-dialog [data-close]").click();
         await c9.close();
       }
     }
 
-    // segnare un eroe preso: resta tra gli avversari (mirror); ritoccarlo lo toglie; un tocco su un altro giocatore cambia chi sceglie
+    // segnare un eroe preso: resta tra gli avversari (mirror); toglierlo dal foglio; scegliere dalla striscia; annullare
     const { ctx: c10, page: p10 } = await newPage({ serviceWorkers: "block" });
     lastPage = p10;
     await p10.goto(BASE);
@@ -794,22 +934,21 @@ try {
     await pickFromGrid(p10, 1);
     await heroBtn(p10, "Mercy").click();
     const m1 = await matchState(p10);
-    check("«Altro»: eroe preso assegnato al giocatore, resta avversario (mirror)", m1.enemies.map(String).includes(heroId("Mercy")) && String(m1.picked[1]) === heroId("Mercy") && m1.picked[0] === null, JSON.stringify(m1));
+    check("«Un altro eroe»: eroe preso assegnato al giocatore, resta avversario (mirror)", m1.enemies.map(String).includes(heroId("Mercy")) && String(m1.picked[1]) === heroId("Mercy") && m1.picked[0] === null, JSON.stringify(m1));
+    await unpick(p10, 1);
+    check("«Non l'ho preso»: l'eroe non è più segnato", (await matchState(p10)).picked[1] === null);
     await toTop(p10);
-    await p10.locator(".pick").nth(1).locator(".chosen-chip").click();
-    check("«✓ Scelto» ritoccato: l'eroe non è più segnato", (await matchState(p10)).picked[1] === null);
+    const rec0 = (await favRows(p10, 0))[0].name;
+    await band(p10, 0).locator(".move .done").click();
     await toTop(p10);
-    const rec0 = await p10.locator(".pick").nth(0).locator(".fav-row.is-rec .fr-name").innerText();
-    await p10.locator(".pick").nth(0).locator(".fav-row.is-rec").click();
-    await toTop(p10);
-    check("un tocco sul consigliato e l'eroe è segnato come scelto", String((await matchState(p10)).picked[0]) === heroId(rec0)
-      && (await p10.locator(".pick").nth(0).locator(".chosen-chip").isVisible()), rec0);
+    check("un tocco su «✓ PRESO» e l'eroe è segnato come scelto", String((await matchState(p10)).picked[0]) === heroId(rec0)
+      && (await band(p10, 0).getAttribute("data-has")) === heroId(rec0), rec0);
     await pickFromGrid(p10, 1);
     await p10.click("#pick-cancel");
     check("«Annulla» nel banner: torna il selettore, niente segnato", (await p10.locator("#groups").isVisible())
       && !(await p10.locator("#pick-banner").isVisible()) && (await matchState(p10)).picked[1] === null);
     await toTop(p10);
-    await p10.locator(".pick").nth(1).locator(".pick-cta").click();
+    await band(p10, 1).locator(".move .go").click();
     await p10.locator("#guide-body .took-btn").click();
     check("dalla guida: «Segna: Lei l'ha preso»", (await matchState(p10)).picked[1] !== null
       && (await p10.locator("#guide-body .took-btn").getAttribute("aria-pressed")) === "true");
@@ -827,16 +966,16 @@ try {
     await p10.locator("#players [aria-label^='Rimuovi']").nth(1).click();
     check("profilo: «Rimuovi» chiede conferma (dopo un tocco sono ancora 5)",
       (await p10.locator("#players section.card [id$=-title]").count()) === 5
-      && (await p10.locator("#players [aria-label^='Rimuovi']").nth(1).innerText()).includes("conferma"));
+      && /conferma/i.test(await p10.locator("#players [aria-label^='Rimuovi']").nth(1).textContent()));
     await p10.locator("#players [aria-label^='Rimuovi']").nth(1).click();
     await p10.click(".tabs [data-view=match]");
-    const four = await p10.evaluate(() => ({ cards: document.querySelectorAll("#picks .pick").length,
+    const four = await p10.evaluate(() => ({ cards: document.querySelectorAll("#picks .band").length,
       m: JSON.parse(localStorage.getItem("owc.match")) }));
-    check("rimosso un giocatore: 4 riquadri, partita adeguata", four.cards === 4 && four.m.roles.length === 4 && four.m.picked.length === 4, JSON.stringify(four));
+    check("rimosso un giocatore: 4 fasce, partita adeguata", four.cards === 4 && four.m.roles.length === 4 && four.m.picked.length === 4, JSON.stringify(four));
     await c10.close();
   }
 
-  // ---------- ricerca: eroi (griglia e preferiti) e mappe; nomi italiani ufficiali (names_it.json) ----------
+  // ---------- ricerca: eroi (Partita, in ogni stato, e preferiti) e mappe; nomi italiani ufficiali (names_it.json) ----------
   {
     const { ctx: c12, page: p12 } = await newPage({ serviceWorkers: "block" });
     lastPage = p12;
@@ -849,27 +988,77 @@ try {
     await p12.goto(BASE);
     await p12.locator("#grid .hero").first().waitFor();
     const shown = (sel) => p12.$$eval(sel, (bs) => bs.filter((b) => b.offsetParent).map((b) => (b.querySelector(".nm") ?? b).textContent));
-    const search = async (q) => { await p12.fill("#hero-q", q); return shown("#grid .hero"); };
+    const results = () => shown("#results-list .hero");
+    const search = async (q) => { await p12.fill("#hero-q", q); return results(); };
+    await p12.click("#hero-q");
+    check("ricerca: un tocco sul campo apre la ricerca (fasce nascoste, barra minima, selettore e posti in vista, barra in basso nascosta)",
+      await p12.evaluate(() => window.owcSearching()) && await p12.locator("#picks").isHidden() && await p12.locator("#mini").isVisible()
+      && await p12.locator("#groups").isVisible() && await p12.locator("#slots").isVisible() && await p12.locator(".dock").isHidden()
+      && await p12.locator("#search-hint").isVisible());
     check("ricerca eroi: senza accenti («lucio» → Lúcio)", (await search("lucio")).join() === "Lúcio", (await search("lucio")).join());
     check("ricerca eroi: per iniziali («jq» → Junker Queen)", (await search("jq")).join() === "Junker Queen", (await search("jq")).join());
     check("ricerca eroi: nome italiano mostrato e trovato anche in inglese e senza simboli",
       (await search("soldier76")).join() === "Soldato-76" && (await search("soldato")).join() === "Soldato-76", (await search("soldier76")).join());
+    const an = await search("an");
+    check("ricerca eroi: risultati di tutti i ruoli, prima chi comincia con la ricerca, al massimo 8, il primo con «INVIO»",
+      an.length >= 3 && an.length <= 8 && an.slice(0, 2).every((n) => /^an/i.test(n)) && new Set(an.map((n) => data.heroes.find((h) => itn(h.name) === n)?.role)).size >= 2
+      && await p12.locator("#results-list .hero:not([hidden])").first().evaluate((b) => b.classList.contains("first"))
+      && /risultat. per «an» in tutti i ruoli · un tocco = avversario/.test(await text(p12, "#results-hd")), an.join());
     const none = await search("zzz");
-    check("ricerca eroi: nessun risultato → messaggio, titoli dei ruoli nascosti", none.length === 0
-      && (await p12.locator("[data-none=grid]").isVisible()) && (await p12.locator("#grid .role-title").evaluateAll((ts) => ts.every((t) => !t.offsetParent))));
+    check("ricerca eroi: nessun risultato → messaggio", none.length === 0 && (await p12.locator("[data-none=results]").isVisible()));
     await shot(p12, "16-ricerca-eroi");
     await p12.fill("#hero-q", "phar");
     await p12.press("#hero-q", "Enter");
-    const afterEnter = await p12.evaluate(() => ({ q: document.querySelector("#hero-q").value, focus: document.activeElement?.id,
-      shown: [...document.querySelectorAll("#grid .hero")].filter((b) => b.offsetParent).length,
+    const afterEnter = await p12.evaluate(() => ({ q: document.querySelector("#hero-q").value, focus: document.activeElement?.id, searching: window.owcSearching(),
+      shown: [...document.querySelectorAll("#results-list .hero")].filter((b) => b.offsetParent).length,
       enemies: JSON.parse(localStorage.getItem("owc.match")).enemies.length }));
     check("ricerca eroi: Invio segna il primo risultato, il campo si svuota e resta attivo (tastiera aperta)",
-      afterEnter.enemies === 1 && afterEnter.q === "" && afterEnter.focus === "hero-q" && afterEnter.shown === data.heroes.length, JSON.stringify(afterEnter));
+      afterEnter.enemies === 1 && afterEnter.q === "" && afterEnter.focus === "hero-q" && afterEnter.searching && afterEnter.shown === 0, JSON.stringify(afterEnter));
+    await p12.fill("#hero-q", "phar");
+    check("ricerca: un eroe già segnato è «Già segnato» (un tocco lo toglie)", await p12.locator("#results-list .hero.marked .on-lab").isVisible());
     await p12.fill("#hero-q", "win");
-    await heroBtn(p12, "Winston").click();
+    await p12.locator("#results-list .hero", { has: p12.locator(".nm", { hasText: /^Winston$/ }) }).click();
     const afterTap = await p12.evaluate(() => ({ q: document.querySelector("#hero-q").value, focus: document.activeElement?.id,
       enemies: JSON.parse(localStorage.getItem("owc.match")).enemies.length }));
     check("ricerca eroi: tocco su un risultato → segnato, campo vuoto e ancora attivo", afterTap.enemies === 2 && afterTap.q === "" && afterTap.focus === "hero-q", JSON.stringify(afterTap));
+    // tastiera aperta: la finestra si accorcia (adjustResize) → i risultati stanno subito sopra, dentro l'area visibile
+    await p12.setViewportSize({ width: 390, height: 554 });
+    await p12.fill("#hero-q", "me");
+    await p12.waitForTimeout(150);
+    const kb = await p12.evaluate(() => { const r = document.querySelector("#results").getBoundingClientRect();
+      const tiles = [...document.querySelectorAll("#results-list .hero:not([hidden])")].map((b) => b.getBoundingClientRect());
+      return { bottom: Math.round(r.bottom), top: Math.round(r.top), h: innerHeight, n: tiles.length, inside: tiles.every((t) => t.top >= 0 && t.bottom <= innerHeight + 0.5),
+        input: document.querySelector("#hero-q").getBoundingClientRect().bottom, tall: tiles.every((t) => t.height >= 48) }; });
+    check("ricerca con la tastiera (finestra di 554 px): risultati ancorati sopra la tastiera, tutti in vista, sotto il campo",
+      kb.n >= 1 && Math.abs(kb.bottom - kb.h) <= 1 && kb.inside && kb.top >= kb.input && kb.tall, JSON.stringify(kb));
+    await shot(p12, "16b-ricerca-tastiera");
+    await p12.setViewportSize({ width: 390, height: 844 });
+    await p12.goBack();
+    await p12.waitForTimeout(200);
+    check("ricerca: «indietro» la chiude (e non chiude l'app)", !(await p12.evaluate(() => window.owcSearching())) && await p12.locator("#picks").isVisible()
+      && await p12.locator(".dock").isVisible() && (await p12.inputValue("#hero-q")) === "");
+    // raggiungibile con un tocco in ogni stato: Ban, Avversari, Alleati e «Tocca l'eroe preso da X»; trova eroi di un altro ruolo
+    for (const [g, q, want, what] of [["bans", "mer", "Mercy", "bannato"], ["enemies", "rein", "Reinhardt", "avversario"], ["allies", "lucio", "Lúcio", "alleato"], ["picked", "zen", "Zenyatta", "eroe preso da"]]) {
+      await toTop(p12);
+      if (g === "picked") await pickFromGrid(p12, 0);
+      else await p12.click(`#groups [data-group=${g}]`);
+      const tabBefore = await p12.locator("#role-tabs .tab[aria-pressed=true]").getAttribute("data-tab");
+      const visibleField = await p12.locator("#hero-q").isVisible();
+      await p12.click("#hero-q");
+      await p12.keyboard.type(q);
+      await p12.waitForTimeout(80);
+      const r = await results();
+      const otherRole = data.heroes.find((h) => itn(h.name) === want).role !== tabBefore;
+      const hd = await text(p12, "#results-hd");
+      await p12.press("#hero-q", "Enter");
+      const m = await matchState(p12);
+      const done = g === "picked" ? String(m.picked[0]) === heroId(want) : m[g].map(String).includes(heroId(want));
+      check(`ricerca in «${g}»: campo in vista e un tocco lo apre, trova ${want} anche fuori dalla scheda aperta (${tabBefore}), Invio lo segna`,
+        visibleField && r[0] === want && done && new RegExp(`un tocco = ${what}`).test(hd), JSON.stringify({ r, otherRole, hd, m: m[g] ?? m.picked }));
+      await p12.evaluate(() => document.activeElement.blur());
+      await p12.waitForTimeout(80);
+    }
+    check("ricerca: un tocco fuori la chiude", !(await p12.evaluate(() => window.owcSearching())));
 
     await p12.click("#map-btn");
     await p12.fill("#map-q", "kings");
@@ -877,6 +1066,7 @@ try {
     await p12.fill("#map-q", "gibraltar");
     check("ricerca mappe: nome italiano mostrato, trovato anche in inglese",
       (await shown("#map-list .map-opt")).join() === "Osservatorio: Gibilterra", (await shown("#map-list .map-opt")).join());
+    check("ricerca mappe: campo fermo in cima al foglio", await p12.locator("#map-dialog .search").evaluate((s) => getComputedStyle(s).position === "sticky"));
     await p12.fill("#map-q", "kings");
     await p12.press("#map-q", "Enter");
     check("ricerca mappe: Invio sceglie la mappa e chiude", !(await p12.locator("#map-dialog").evaluate((d) => d.open))
@@ -897,16 +1087,15 @@ try {
     await p12.click("#fav-dialog [data-close]");
     await p12.click(".tabs [data-view=match]");
 
+    await p12.click("#new-match");
     await p12.click("#groups [data-group=bans]");
     for (const n of ["Ana", "Kiriko", "Widowmaker", "Tracer", "Genji", "Moira"]) await heroBtn(p12, n).click();
-    check("ban: al massimo 5 (il sesto non entra, con avviso)", (await text(p12, "[data-count=bans]")) === "5"
+    check("ban: al massimo 5 (il sesto non entra, con avviso)", (await text(p12, "[data-count=bans]")) === "5/5"
       && (await text(p12, "#toast")).includes("Al massimo 5 ban"), await text(p12, "#toast"));
     await p12.click("#groups [data-group=enemies]");
 
     // abilità: nel «Come giocarla» i nomi ufficiali italiani (anche dentro i consigli scritti), non quelli inglesi
-    await toTop(p12);
-    await p12.locator(".pick .pick-cta").first().click();
-    await p12.locator("#guide-dialog[open]").waitFor();
+    await openGuideOf(p12, 0);
     await p12.click("#guide-body .more-btn");
     const hero = (await text(p12, "#t-guide")).replace(/^Come giocare /, "");
     const guide = await text(p12, "#guide-body");
@@ -925,10 +1114,10 @@ try {
     const { ctx: c14, page: p14 } = await newPage({ serviceWorkers: "block" });
     lastPage = p14;
     await p14.goto(BASE);
-    await p14.locator(".pick .pick-cta").first().waitFor();
+    await p14.locator("#picks .move .go").first().waitFor();
     const depth = () => p14.evaluate(() => history.state?.owc ?? 0);
     const d0 = await depth();
-    await p14.locator(".pick .pick-cta").first().click();
+    await p14.locator("#picks .move .go").first().click();
     await p14.locator("#guide-dialog[open]").waitFor();
     await p14.click("#guide-body .why-btn");
     await p14.locator("#why-dialog[open]").waitFor();
@@ -947,16 +1136,19 @@ try {
     await p14.click("#map-dialog [data-close]");
     await p14.waitForTimeout(150);
     check("foglio chiuso col pulsante: nessun passo in più nella cronologia", (await depth()) === d0, `${await depth()} vs ${d0}`);
-    await toTop(p14);
-    await p14.locator(".pick").nth(0).locator(".fav-more").click();
-    await p14.locator("#choose-dialog[open]").waitFor();
+    await openPlayer(p14, 0);
     await p14.goBack();
     await p14.waitForTimeout(150);
-    check("indietro: chiude il foglio «Scegli l'eroe»", !(await p14.locator("#choose-dialog").evaluate((d) => d.open)));
+    check("indietro: chiude il foglio del giocatore", !(await p14.locator("#choose-dialog").evaluate((d) => d.open)));
     await pickFromGrid(p14, 0);
     await p14.goBack();
     await p14.waitForTimeout(150);
     check("indietro durante «Tocca l'eroe preso»: annulla, torna il selettore", await p14.locator("#groups").isVisible());
+    await p14.click("#hero-q");
+    await p14.goBack();
+    await p14.waitForTimeout(150);
+    check("indietro con la ricerca aperta: la chiude, l'app resta", !(await p14.evaluate(() => window.owcSearching())) && await p14.locator("#picks").isVisible()
+      && (await depth()) === d0, String(await depth()));
     await c14.close();
   }
 
@@ -977,17 +1169,14 @@ try {
     await p13.click("#map-btn");
     await p13.locator("#map-list .map-opt", { hasText: "King's Row" }).click();
     await toTop(p13);
-    const cardsTxt = await p13.locator(".pick").evaluateAll((cs) => cs.map((c) => c.innerText));
-    check("solo guide: nei riquadri stelline, nessuna percentuale", cardsTxt.every((t) => /★/.test(t) && !/\d+[.,]\d%/.test(t)), cardsTxt.join(" | "));
+    const cardsTxt = await p13.locator(CARD).evaluateAll((cs) => cs.map((c) => [c.textContent, c.querySelectorAll(".tac").length]));
+    check("solo guide: nelle fasce tacche, nessuna percentuale", cardsTxt.every(([t, n]) => n > 0 && !/\d+%/.test(t)), JSON.stringify(cardsTxt));
     await p13.click("#groups [data-group=bans]");
-    const sub = await text(p13, "#ban-recs .br-sub");
-    check("solo guide: ban consigliati dalle guide (3 per ruolo)", sub.includes("guide") && (await p13.locator("#ban-recs .hero").count()) === 9, sub);
+    check("solo guide: ban consigliati dalle guide («BAN?» su 3 per ruolo)", (await p13.locator("#grid .hero.sugg").count()) === 9);
     await shot(p13, "17-solo-guide");
     await p13.click("#groups [data-group=enemies]");
     for (const n of ["Pharah", "Winston"]) await heroBtn(p13, n).click();
-    await toTop(p13);
-    await p13.locator(".pick .pick-cta").first().click();
-    await p13.locator("#guide-dialog[open]").waitFor();
+    await openGuideOf(p13, 0);
     await p13.click("#guide-body .more-btn");
     const g = await text(p13, "#guide-body");
     check("solo guide: «Come giocarla» senza righe dalle statistiche", (await p13.locator("#guide-body .data-badge, #guide-body .brief-row.is-data").count()) === 0
@@ -1000,13 +1189,13 @@ try {
     await p13.click("#why-dialog [data-close]");
     await p13.click("#guide-dialog [data-close]").catch(() => {});
     await toTop(p13);
+    check("solo guide: con avversari la riga del motivo è teoria (▨)", (await p13.locator("#picks .why .mk.data").count()) === 0);
     const gStars = (await favRows(p13, 0))[0].stars;
-    await p13.locator(".pick").nth(0).locator(".fav-row.is-rec").click();
+    await band(p13, 0).locator(".move .done").click();
     await toTop(p13);
-    const gCard = await p13.locator(".pick").nth(0).evaluate((c) => ({ stars: c.querySelector(".pick-stars")?.textContent ?? "",
-      pill: !!c.querySelector(".pick-est"), text: c.innerText }));
-    check("solo guide: eroe scelto con le stelline (le stesse della lista), senza pillola né percentuali",
-      gCard.stars === gStars && /^★{1,5}$/.test(gCard.stars) && !gCard.pill && !/\d+[.,]\d%/.test(gCard.text), JSON.stringify(gCard).slice(0, 300));
+    const gCard = await band(p13, 0).evaluate((c) => ({ n: Number(c.querySelector(".curmeta .tac")?.dataset.stars ?? 0), text: c.querySelector(".has").textContent }));
+    check("solo guide: eroe scelto con le tacche (le stesse della striscia), senza percentuali",
+      "★".repeat(gCard.n) === gStars && gCard.n >= 1 && !/\d+%/.test(gCard.text), JSON.stringify(gCard).slice(0, 300));
     await c13.close();
   }
 
@@ -1051,6 +1240,7 @@ try {
     });
     const before = await roleOf();
     swapped = true;
+    await p5.click(".tabs [data-view=profile]");
     await p5.click("#refresh");
     await p5.waitForFunction(() => !document.querySelector("#refresh").disabled);
     const after = await roleOf();
@@ -1080,9 +1270,35 @@ try {
     await p2.goto(BASE);
     await p2.locator(CARD).first().waitFor();
     const w = await text(p2, "#warn");
-    check("dati vecchi/parziali: avviso giallo, app funzionante", (await p2.locator("#warn").isVisible()) && w.includes("non vengono aggiornati") && w.includes("dati precedenti"), w);
+    const wf = await p2.locator("#warn-full").textContent();
+    check("dati vecchi/parziali: in testata la riga gialla al posto della freschezza, spiegazione completa nel foglio delle mappe, app funzionante",
+      (await p2.locator("#warn").isVisible()) && /dati vecchi: 3 giorni/.test(w) && await p2.locator("#fresh-short").isHidden()
+      && (await p2.locator("#warn").evaluate((x) => getComputedStyle(x).color)) === "rgb(255, 209, 102)"
+      && wf.includes("non vengono aggiornati") && wf.includes("dati precedenti") && (await p2.locator(CARD).count()) === 2, `${w} | ${wf}`);
+    await p2.click("#map-btn");
+    check("dati vecchi: la spiegazione completa è in cima al foglio delle mappe", await p2.locator("#warn-full").isVisible());
+    await p2.click("#map-dialog [data-close]");
     await shot(p2, "09-dati-vecchi");
     await c2.close();
+  }
+
+  // ---------- freschezza in testata: si aggiorna anche senza ridisegnare ----------
+  {
+    const { ctx: cf, page: pf } = await newPage({ serviceWorkers: "block" });
+    let checked = new Date(Date.now() - 3 * 3600e3).toISOString();
+    await cf.route("**/data.json*", (r) => r.fulfill({ json: { ...data, checked, problems: [] } }));
+    await pf.clock.install();
+    await pf.goto(BASE);
+    await pf.locator(CARD).first().waitFor();
+    const f1 = await text(pf, "#fresh-short");
+    check("freschezza in testata: «Ibrida/… · dati di 3 h fa» quando i dati sono freschi", await pf.locator("#fresh-short").isVisible() && f1 === "dati di 3 h fa"
+      && await pf.locator("#warn").isHidden(), f1);
+    await pf.clock.runFor(31 * 60e3);
+    checked = new Date(await pf.evaluate(() => Date.now())).toISOString(); // l'orologio della pagina è finto
+    await pf.click("#groups [data-group=bans]");
+    await pf.waitForFunction(() => /adesso/.test(document.querySelector("#fresh-short").textContent), null, { timeout: 5000 }).catch(() => {});
+    check("freschezza in testata: aggiornata al primo tocco dopo 30 minuti", /controllati adesso/.test(await text(pf, "#fresh-short")), await text(pf, "#fresh-short"));
+    await cf.close();
   }
 
   // ---------- dati irraggiungibili al primo avvio ----------
@@ -1114,7 +1330,6 @@ try {
     await p4.fill("#token", "github_pat_PROVA");
     await p4.click("#token-save");
     check("token salvato e non mostrato", (await p4.inputValue("#token")) === "" && (await p4.getAttribute("#token", "placeholder")).includes("salvato"));
-    await p4.click(".tabs [data-view=match]");
     await p4.click("#refresh");
     await p4.waitForTimeout(1000);
     check("aggiorna con token: avanzamento visibile", (await text(p4, "#refresh")).includes("in corso"), await text(p4, "#refresh"));
@@ -1149,12 +1364,23 @@ try {
     await seed(M0);
     const st = () => matchState(px);
     const has = (arr, n) => (arr ?? []).map(String).includes(heroId(n));
-    const threatTile = (n) => px.locator("#threats .hero", { has: px.locator(".nm", { hasText: new RegExp(`^${n}$`) }) });
-    const threatNames = () => px.locator("#threats .hero .nm").allInnerTexts();
+    // «Chi soffrite di più» = i nomi rossi (3 per ruolo) nella griglia degli Avversari
+    const threatNames = () => px.locator("#grid .hero.top3 .nm").evaluateAll((xs) => xs.map((x) => x.textContent));
     const gridCls = (n) => heroBtn(px, n).evaluate((b) => [...b.classList]);
-    const cardName = (k) => px.locator(".pick").nth(k).locator(".pick-name").innerText().catch(() => "");
+    const cardName = (k) => band(px, k).locator(".cur").textContent().catch(() => "");
+    const choices = async (k) => {
+      const inBand = (await favRows(px, k)).map((r) => r.name);
+      await openPlayer(px, k);
+      const inSheet = await px.locator("#choose-body .fav-row .fr-name").evaluateAll((xs) => xs.map((x) => x.textContent));
+      await px.click("#choose-dialog [data-close]");
+      return [...inBand, ...inSheet];
+    };
+    const chooseInSheet = async (k, n) => {
+      await openPlayer(px, k);
+      await px.locator("#choose-body .fav-row", { has: px.locator(".fr-name", { hasText: new RegExp(`^${esc(n)}$`) }) }).first().click();
+    };
 
-    check("incroci: «Chi soffrite di più» nascosto senza eroi scelti né alleati", await px.locator("#threats").isHidden());
+    check("incroci: «Chi soffrite di più» (nomi rossi) nascosto senza eroi scelti né alleati", (await threatNames()).length === 0);
 
     // un tank scelto da Fabio che compare anche tra i più pericolosi (il caso segnalato: Sigma)
     const tanks = data.heroes.filter((h) => h.role === "Tank").map((h) => itn(h.name));
@@ -1165,43 +1391,38 @@ try {
     }
     check("incroci: c'è un eroe scelto che è anche tra «Chi soffrite di più»", !!X, "nessun tank scelto compare tra i pericoli");
     if (X) {
-      check(`incroci: ${X} scelto → riquadro visibile, ${X} non ancora avversario`, await px.locator("#threats").isVisible()
-        && (await threatTile(X).getAttribute("aria-pressed")) === "false");
-      await threatTile(X).click();
+      check(`incroci: ${X} scelto → nomi rossi in vista, ${X} non ancora avversario`, (await threatNames()).length === 9
+        && (await heroBtn(px, X).getAttribute("aria-pressed")) === "false");
+      await heroBtn(px, X).click();
       let s = await st();
-      check(`incroci: tocco su ${X} in «Chi soffrite di più» → avversario E resta scelto da Fabio (mirror)`,
+      check(`incroci: tocco su ${X} (nome rosso) → avversario E resta scelto da Fabio (mirror)`,
         has(s.enemies, X) && String(s.picked[0]) === heroId(X) && (await cardName(0)) === X
-        && (await threatTile(X).getAttribute("aria-pressed")) === "true" && (await text(px, "[data-count=enemies]")) === "1", JSON.stringify(s));
+        && (await heroBtn(px, X).getAttribute("aria-pressed")) === "true" && (await text(px, "[data-count=enemies]")) === "1/5", JSON.stringify(s));
       const cls = await gridCls(X);
-      check(`incroci: in griglia ${X} è sia «preso da Fabio» sia avversario`, cls.includes("took") && cls.includes("in-enemies")
-        && (await heroBtn(px, X).getAttribute("aria-pressed")) === "true", cls.join(" "));
-      await px.evaluate(() => window.scrollTo(0, document.querySelector("#groups").getBoundingClientRect().top + window.scrollY - 60));
+      check(`incroci: in griglia ${X} è sia «preso da Fabio» sia avversario`, cls.includes("took") && cls.includes("in-enemies"), cls.join(" "));
       await shot(px, "05i-mirror");
-      check(`incroci: ${X} avversario non sparisce dai consigli di Fabio (è ancora il suo eroe)`, (await pickNames(px))[0] === X);
-      await threatTile(X).click();
+      check(`incroci: ${X} avversario non sparisce dalla fascia di Fabio (è ancora il suo eroe)`, (await pickNames(px))[0] === X);
+      await heroBtn(px, X).click();
       s = await st();
       check(`incroci: secondo tocco → ${X} non più avversario, sempre scelto`, !has(s.enemies, X) && String(s.picked[0]) === heroId(X), JSON.stringify(s));
       await heroBtn(px, X).click();
-      s = await st();
-      check(`incroci: tocco su ${X} nella griglia Avversari → avversario, sempre scelto`, has(s.enemies, X) && String(s.picked[0]) === heroId(X), JSON.stringify(s));
       await px.reload();
       await px.locator(CARD).first().waitFor();
       s = await st();
       check("incroci: dopo il riavvio scelto e avversario restano entrambi", has(s.enemies, X) && String(s.picked[0]) === heroId(X), JSON.stringify(s));
     }
 
-    // avversario già segnato → lo scelgo io: resta avversario
+    // avversario già segnato → lo scelgo io (foglio del giocatore): resta avversario
     await seed({ ...M0, enemies: ids("Reinhardt") });
-    await px.locator(".pick").nth(0).locator(".fav-row", { has: px.locator(".fr-name", { hasText: /^Reinhardt$/ }) }).click();
+    await chooseInSheet(0, "Reinhardt");
     let s = await st();
     check("incroci: scelgo un eroe già avversario → scelto e ancora avversario", String(s.picked[0]) === heroId("Reinhardt") && has(s.enemies, "Reinhardt"), JSON.stringify(s));
     await px.locator("#toast button", { hasText: "Annulla" }).click();
     s = await st();
     check("incroci: «Annulla» la scelta → non scelto, l'avversario resta", s.picked[0] === null && has(s.enemies, "Reinhardt"), JSON.stringify(s));
     // dalla guida: «Segna: Fabio l'ha scelto»
-    await px.locator(".pick").nth(0).locator(".fav-row", { has: px.locator(".fr-name", { hasText: /^Reinhardt$/ }) }).click();
-    await px.locator(".pick").nth(0).locator(".pick-cta").click();
-    await px.locator("#guide-dialog[open]").waitFor();
+    await chooseInSheet(0, "Reinhardt");
+    await openGuideOf(px, 0);
     await px.click("#guide-body .took-btn");
     s = await st();
     check("incroci: dalla guida tolgo la scelta → l'avversario resta", s.picked[0] === null && has(s.enemies, "Reinhardt"), JSON.stringify(s));
@@ -1218,9 +1439,8 @@ try {
     await heroBtn(px, "Winston").click();
     s = await st();
     check("incroci: lo stesso eroe alleato e avversario (mirror)", has(s.allies, "Winston") && has(s.enemies, "Winston"), JSON.stringify(s));
-    check("incroci: con un alleato «Chi soffrite di più» compare", await px.locator("#threats").isVisible());
-    await px.locator(".pick").nth(0).locator(".fav-row", { has: px.locator(".fr-name", { hasText: /^Winston$/ }) }).count()
-      .then((k) => check("incroci: un alleato non compare tra le scelte di Fabio (è già di un compagno)", k === 0));
+    check("incroci: con un alleato «Chi soffrite di più» compare", (await threatNames()).length === 9);
+    check("incroci: un alleato non compare tra le scelte di Fabio (è già di un compagno)", !(await choices(0)).includes("Winston"));
     await pickFromGrid(px, 0);
     await heroBtn(px, "Winston").click();
     s = await st();
@@ -1235,36 +1455,36 @@ try {
     await heroBtn(px, "Winston").click();
     s = await st();
     check("incroci: bannato → fuori da alleati e avversari", has(s.bans, "Winston") && !has(s.allies, "Winston") && !has(s.enemies, "Winston"), JSON.stringify(s));
-    check("incroci: bannato → fuori dai consigli e dalle liste", !(await pickNames(px)).includes("Winston")
-      && (await px.locator(".pick .fav-row .fr-name", { hasText: /^Winston$/ }).count()) === 0);
+    check("incroci: bannato → fuori dai consigli e dalle liste", !(await pickNames(px)).includes("Winston") && !(await choices(0)).includes("Winston"));
     await px.click("#groups [data-group=enemies]");
     await heroBtn(px, "Winston").click();
     s = await st();
     check("incroci: bannato toccato tra gli Avversari → non più bannato, avversario", !has(s.bans, "Winston") && has(s.enemies, "Winston"), JSON.stringify(s));
 
-    // scelto e bannato: il ban toglie la scelta; dai ban consigliati lo stesso
+    // scelto e bannato: il ban toglie la scelta; dai ban consigliati («BAN?») lo stesso
     await seed({ ...M0, picked: [heroId("Sigma"), null], enemies: ids("Sigma", "Ana") });
     await px.click("#groups [data-group=bans]");
     await heroBtn(px, "Sigma").click();
     s = await st();
     check("incroci: l'eroe scelto e avversario viene bannato → né scelto né avversario", has(s.bans, "Sigma") && s.picked[0] === null
       && !has(s.enemies, "Sigma") && has(s.enemies, "Ana"), JSON.stringify(s));
-    const recBan = (await px.locator("#ban-recs .hero:not(.in-bans) .nm").allInnerTexts())[0];
+    const recBan = (await px.locator("#grid .hero.sugg:not(.in-bans) .nm").evaluateAll((xs) => xs.map((x) => x.textContent)))[0];
     await px.click("#groups [data-group=enemies]");
     await heroBtn(px, recBan).click();
     await px.click("#groups [data-group=bans]");
-    await px.locator("#ban-recs .hero", { has: px.locator(".nm", { hasText: new RegExp(`^${recBan}$`) }) }).click();
+    check(`incroci: ${recBan} avversario resta tra i «BAN?»`, (await heroBtn(px, recBan).evaluate((b) => b.classList.contains("sugg"))));
+    await heroBtn(px, recBan).click();
     s = await st();
     check(`incroci: avversario bannato dai ban consigliati (${recBan}) → esce dagli avversari`, has(s.bans, recBan) && !has(s.enemies, recBan), JSON.stringify(s));
     // i ban consigliati non propongono mai eroi scelti né alleati (anche se forti sulla mappa)
     for (const [tank, sup] of [["Sigma", "Mizuki"], ["Reinhardt", "Wuyang"], ["Winston", "Zenyatta"]]) {
       await seed({ ...M0, picked: [heroId(tank), null], allies: ids(sup), group: "bans" });
-      const recs = await px.locator("#ban-recs .hero .nm").allInnerTexts();
-      check(`incroci: ban consigliati senza ${tank} (scelto) né ${sup} (alleato)`, recs.length === 9 && !recs.includes(tank) && !recs.includes(sup), recs.join());
+      const recs = await px.locator("#grid .hero.sugg .nm").evaluateAll((xs) => xs.map((x) => x.textContent));
+      check(`incroci: «BAN?» mai su ${tank} (scelto) né ${sup} (alleato)`, recs.length === 9 && !recs.includes(tank) && !recs.includes(sup), recs.join());
     }
-    // bannato poi scelto da Fabio dal foglio «＋»
+    // bannato poi scelto da Fabio dalla griglia
     await seed({ ...M0, bans: ids("Reinhardt") });
-    check("incroci: un bannato non compare tra le scelte", (await px.locator(".pick .fav-row .fr-name", { hasText: /^Reinhardt$/ }).count()) === 0);
+    check("incroci: un bannato non compare tra le scelte", !(await choices(0)).includes("Reinhardt"));
     await pickFromGrid(px, 0);
     await heroBtn(px, "Reinhardt").click();
     s = await st();
@@ -1283,11 +1503,9 @@ try {
     s = await st();
     check("incroci: 5 avversari (uno è il vostro Sigma) → il sesto è rifiutato, Sigma resta scelto", s.enemies.length === 5 && !has(s.enemies, "Mercy")
       && String(s.picked[0]) === heroId("Sigma") && (await text(px, "#toast")).includes("Al massimo 5"), JSON.stringify(s));
-    await threatTile("Sigma").count().then(async (k) => { if (k) {
-      await threatTile("Sigma").click();
-      const s2 = await st();
-      check("incroci: con 5 avversari si toglie Sigma da «Chi soffrite di più» → resta scelto", !has(s2.enemies, "Sigma") && String(s2.picked[0]) === heroId("Sigma"), JSON.stringify(s2));
-    } });
+    await px.locator(`#slots .slot.full[data-id="${heroId("Sigma")}"]`).click();
+    const s2 = await st();
+    check("incroci: con 5 avversari si toglie Sigma dal suo posto → resta scelto", !has(s2.enemies, "Sigma") && String(s2.picked[0]) === heroId("Sigma"), JSON.stringify(s2));
     await seed({ ...M0, bans: ids("Ana", "Genji", "Tracer", "Lúcio", "Mercy"), group: "bans" });
     await heroBtn(px, "Kiriko").click();
     s = await st();
@@ -1305,7 +1523,7 @@ try {
     await px.click("#new-match");
     s = await st();
     check("incroci: «Nuova partita» azzera scelte, avversari, alleati e ban", s.picked.every((x) => x === null) && !s.enemies.length && !s.allies.length && !s.bans.length);
-    check("incroci: dopo «Nuova partita» niente «Chi soffrite di più»", await px.locator("#threats").isHidden());
+    check("incroci: dopo «Nuova partita» niente «Chi soffrite di più»", (await threatNames()).length === 0);
     await px.locator("#toast button", { hasText: "Annulla" }).click();
     s = await st();
     check("incroci: «Annulla» ripristina Sigma scelto e avversario", String(s.picked[0]) === heroId("Sigma") && has(s.enemies, "Sigma") && has(s.allies, "Mercy"), JSON.stringify(s));
@@ -1335,10 +1553,8 @@ try {
     check("Stagione 5: sotto la griglia, Doctrine arriverà con i dati di counterwatch",
       /Doctrine: nuovo, comparirà qui quando counterwatch avrà le statistiche/.test(await text(ps, "#grid-note")), await text(ps, "#grid-note").catch(() => ""));
     check("Stagione 5: Sombra tra i preferiti di Giulia (Supporto)", (await favRows(ps, 0)).some((r) => r.name === "Sombra"));
-    await ps.locator(".pick").nth(0).locator(".fav-row", { has: ps.locator(".fr-name", { hasText: /^Sombra$/ }) }).click();
-    await toTop(ps);
-    await ps.locator(".pick").nth(0).locator(".pick-cta").click();
-    await ps.locator("#guide-dialog[open]").waitFor();
+    await band(ps, 0).locator(`[data-id="${heroId("Sombra")}"]`).first().click();
+    await openGuideOf(ps, 0);
     await ps.click("#guide-body .more-btn").catch(() => {});
     const note = await ps.locator("#guide-body [data-rolefix]").innerText().catch(() => "");
     const gtxt = await text(ps, "#guide-body");
@@ -1389,12 +1605,14 @@ try {
     // pulsante grande, esattamente al centro della barra in basso
     const dock = await pp.evaluate(() => {
       const b = document.querySelector("#photo-btn").getBoundingClientRect();
-      const tabs = [...document.querySelectorAll(".dock-side button")].map((x) => x.getBoundingClientRect());
-      return { w: b.width, h: b.height, cx: b.left + b.width / 2, vw: window.innerWidth, bottom: b.bottom, vh: window.innerHeight,
-        overlap: tabs.some((t) => t.right > b.left && t.left < b.right), maxTab: Math.max(...tabs.map((t) => t.height)) };
+      const tabs = [...document.querySelectorAll(".dock button:not(#photo-btn)")].map((x) => x.getBoundingClientRect());
+      return { w: b.width, h: b.height, left: b.left, right: b.right, vw: window.innerWidth, bottom: b.bottom, vh: window.innerHeight,
+        bg: getComputedStyle(document.querySelector("#photo-btn")).backgroundColor, text: document.querySelector("#photo-btn").textContent.trim(),
+        overlap: tabs.some((t) => t.right > b.left + 1 && t.left < b.right - 1), maxTab: Math.max(...tabs.map((t) => t.width)) };
     });
-    check("foto: pulsante grande al centro della barra in basso", dock.w >= 64 && dock.h >= 64 && Math.abs(dock.cx - dock.vw / 2) <= 1
-      && dock.bottom <= dock.vh && dock.bottom > dock.vh - 40 && !dock.overlap && dock.w > dock.maxTab, JSON.stringify(dock));
+    check("foto: «FOTO» arancione nella barra in basso, il pulsante più largo, sopra il centro dello schermo", dock.h >= 48 && dock.w > dock.maxTab
+      && dock.left < dock.vw / 2 && dock.right > dock.vw / 2 && Math.abs(dock.bottom - dock.vh) <= 1 && !dock.overlap && dock.text === "Foto"
+      && dock.bg === "rgb(249, 158, 26)", JSON.stringify(dock));
     await shot(pp, "19a-foto-pulsante");
 
     // prima volta: chiave e nomi nel gioco, poi subito la fotocamera
@@ -1414,6 +1632,7 @@ try {
     reply = () => ({ status: 200, json: okResp(readA), delay: 700 });
     await fc.setFiles({ name: "tabellone.png", mimeType: "image/png", buffer: shotBuf });
     await pp.locator("#photo-dialog[open] .ph-spin").waitFor();
+    const matchBeforePhoto = JSON.stringify(await matchState(pp));
     await shot(pp, "19c-foto-lettura");
     await pp.locator("#ph-confirm").waitFor();
 
@@ -1451,6 +1670,10 @@ try {
       && (await pp.locator("#photo-body .sb-ban").count()) === 4);
     const fitsSb = await pp.evaluate(() => { const d = document.querySelector("#photo-dialog"); return [d.scrollHeight, d.clientHeight]; });
     check("riepilogo: tutto in vista senza scorrere (390×844)", fitsSb[0] <= fitsSb[1] + 1, JSON.stringify(fitsSb));
+    const planShown = await pp.locator("#photo-body .sc .sc-row").evaluateAll((rs) => rs.map((r) => r.dataset.player));
+    check("riepilogo: «Se confermi», una riga per giocatore in partita (ritratto di chi ha → mossa)", planShown.join() === "0,1"
+      && /Se confermi/.test(await text(pp, "#photo-body .sc")), JSON.stringify(planShown));
+    check("riepilogo: «Se confermi» non tocca la partita finché non si conferma", JSON.stringify(await matchState(pp)) === matchBeforePhoto);
     await shot(pp, "19c2-foto-riepilogo");
     // un tocco su una riga del riepilogo la cambia subito (solita lista), senza passare da «Modifica»
     await pp.locator("#photo-body .sb-enemies .sb-row").nth(3).click();
@@ -1539,7 +1762,7 @@ try {
     check("foto: correzione con la lista divisa per ruolo e la ricerca", blocks.join() === "Tank,Damage,Support"
       && (await pp.locator("#photo-grid .hero").count()) === data.heroes.length && /Uno/.test(await text(pp, "#t-photo-hero")));
     check("foto: nella lista l'eroe attuale è premuto e quelli già in squadra segnati",
-      await pp.locator("#photo-grid .hero[aria-pressed=true] .nm").innerText() === "Winston" && (await pp.locator("#photo-grid .hero.in-enemies").count()) === 4);
+      await pp.locator("#photo-grid .hero[aria-pressed=true] .nm").textContent() === "Winston" && (await pp.locator("#photo-grid .hero.in-enemies").count()) === 4);
     await pp.fill("#photo-q", "rein");
     check("foto: la ricerca filtra la lista", (await pp.locator("#photo-grid .hero:not([hidden])").count()) === 1);
     await shot(pp, "19e-foto-scegli-eroe");
@@ -1593,7 +1816,8 @@ try {
     const noScroll = await pp.evaluate(() => document.querySelector("#photo-dialog").scrollWidth <= document.querySelector("#photo-dialog").clientWidth);
     const confirmVisible = await pp.locator("#ph-confirm").evaluate((b) => { const r = b.getBoundingClientRect(); return r.bottom <= window.innerHeight && r.top >= 0; });
     check("foto: «Conferma» sempre in vista, niente scorrimento orizzontale", noScroll && confirmVisible);
-    // conferma: la partita si compila
+    // conferma: la partita si compila; le fasce dicono quello che diceva «Se confermi»
+    const plan = await pp.evaluate(() => window.owcPhotoPlan());
     await pp.click("#ph-confirm");
     await pp.locator("#photo-dialog").waitFor({ state: "hidden" });
     let st = await matchState(pp);
@@ -1603,7 +1827,12 @@ try {
       && st.bans.map(String).join() === ["Widowmaker", "Zarya", "Lifeweaver", "Hanzo"].map(heroId).join(),
       JSON.stringify(st));
     check("foto: messaggio con «Annulla»", /compilata dalla foto/.test(await text(pp, "#toast")) && await pp.locator("#toast button", { hasText: "Annulla" }).isVisible());
-    check("foto: i riquadri mostrano gli eroi presi (Cassidy, Kiriko)", (await pickNames(pp)).join() === "Cassidy,Kiriko", (await pickNames(pp)).join());
+    check("foto: le fasce mostrano nel ritratto grande gli eroi presi (Cassidy, Kiriko)", (await pickNames(pp)).join() === "Cassidy,Kiriko"
+      && (await portraitsOk(pp)).length === 0, (await pickNames(pp)).join());
+    const bandsNow = await pp.evaluate(() => window.owcBands());
+    check("foto: «Se confermi» coerente con le fasce dopo la conferma (chi ha cosa, e la mossa)",
+      plan && plan.length === bandsNow.length && plan.every((x, k) => x.player === bandsNow[k].player && x.has === bandsNow[k].has && x.move === bandsNow[k].move),
+      JSON.stringify({ plan, bandsNow }));
     await toTop(pp);
     await shot(pp, "19f-foto-confermata");
     await pp.locator("#toast button", { hasText: "Annulla" }).click();
@@ -1646,25 +1875,25 @@ try {
     await shot(pp, "19j-foto-senza-giulia");
     await pp.click("#ph-confirm");
     st = await matchState(pp);
-    check("presenza: confermata → un solo riquadro (Fabio), Giulia fuori, 3 alleati (Ana compresa)", (await pp.locator(".pick").count()) === 1
+    check("presenza: confermata → una sola fascia (Fabio), Giulia fuori, 3 alleati (Ana compresa)", (await pp.locator(CARD).count()) === 1
       && st.away.join() === "false,true" && st.picked[1] === null && st.allies.map(String).includes(heroId("Ana")) && st.allies.length === 3
       && /Giulia non in partita/.test(await text(pp, "#toast")), JSON.stringify(st));
     check("presenza: «Non in questa partita: Giulia», un tocco per rimetterla", await pp.locator("#away .away-chip", { hasText: "Giulia" }).isVisible());
     await toTop(pp);
     await shot(pp, "19k-giulia-fuori");
     await pp.locator("#away .away-chip").click();
-    check("presenza: un tocco la rimette (due riquadri)", (await pp.locator(".pick").count()) === 2 && (await matchState(pp)).away.join() === "false,false"
+    check("presenza: un tocco la rimette (due fasce)", (await pp.locator(CARD).count()) === 2 && (await matchState(pp)).away.join() === "false,false"
       && await pp.locator("#away").isHidden());
     await snap(readNoG, "g2.png");
     await pp.click("#ph-confirm");
-    check("presenza: di nuovo fuori con la foto", (await pp.locator(".pick").count()) === 1);
+    check("presenza: di nuovo fuori con la foto", (await pp.locator(CARD).count()) === 1);
     await pp.click("#new-match");
-    check("presenza: «Nuova partita» non la rimette (lo decide la prossima foto)", (await pp.locator(".pick").count()) === 1);
+    check("presenza: «Nuova partita» non la rimette (lo decide la prossima foto)", (await pp.locator(CARD).count()) === 1);
     await snap(readA, "g3.png");
     check("presenza: nella foto dopo c'è di nuovo → riconosciuta", (await sbRows("ours"))[1].who === "Giulia");
     await pp.click("#ph-confirm");
     st = await matchState(pp);
-    check("presenza: e rientra da sola (due riquadri, il suo eroe preso)", (await pp.locator(".pick").count()) === 2 && st.away.join() === "false,false"
+    check("presenza: e rientra da sola (due fasce, il suo eroe preso)", (await pp.locator(CARD).count()) === 2 && st.away.join() === "false,false"
       && String(st.picked[1]) === heroId("Ana") && /Giulia di nuovo in partita/.test(await text(pp, "#toast")), JSON.stringify(st));
     // con la mappa già scelta nella partita: la foto senza mappa la lascia com'è
     await pp.click("#map-btn");
@@ -1817,7 +2046,7 @@ try {
       await pg.goto(BASE);
       await pg.locator(CARD).first().waitFor();
       await pg.clock.runFor(31 * 60e3);
-      const row = pg.locator(".pick").first().locator(".fav-row").nth(1);
+      const row = band(pg, 0).locator(".alts .alt").first();
       const want = await row.getAttribute("data-id");
       const b = await row.boundingBox();
       await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
@@ -1972,9 +2201,9 @@ try {
       await pg.goto(BASE);
       await pg.locator(CARD).first().waitFor({ timeout: 8000 }).catch(() => {});
       const st = await matchState(pg);
-      const ok = errs.length === 0 && await pg.locator(".pick").count() >= 1
+      const ok = errs.length === 0 && await pg.locator(CARD).count() >= 1
         && (label !== "partita senza ban (formato vecchio)" || (st.mapSlug === "kings-row" && st.enemies.includes(heroId("Tracer"))))
-        && (label !== "giocatore col ruolo singolo di una volta" || (await pg.locator(".pick .role-btn").first().innerText()).trim() === "Tank");
+        && (label !== "giocatore col ruolo singolo di una volta" || (await pg.locator("#picks .role-btn").first().textContent()).trim() === "Tank");
       check(`stato salvato vecchio o rovinato (${label}): l'app parte e tiene i dati buoni`, ok, errs.join(" | "));
       errors.splice(0, errors.length, ...errors.filter((e) => !errs.includes(e)));
       await cx.close();
@@ -2029,7 +2258,7 @@ try {
       check("giocatore di nuovo in partita: il messaggio dice quale alleato non ci sta più", msg.includes("Fabio di nuovo in partita") && msg.includes(itn("Tracer")), msg);
       // scelta di Fabio, poi si toglie Terzo dal Profilo, poi "Annulla" della scelta
       await pg.evaluate(() => window.scrollTo(0, 0));
-      await pg.locator(".pick").first().locator(".fav-row").first().click();
+      await band(pg, 0).locator(".move .done").click();
       const before = await matchState(pg);
       await pg.click('.tabs [data-view="profile"]');
       const rm = pg.locator("#players .card").nth(2).locator(".card-head button");
@@ -2062,9 +2291,10 @@ try {
       await cx.route("**/theory.json*", (r) => r.fulfill({ status: 404, body: "" }));
       await pg.goto(BASE);
       await pg.locator(CARD).first().waitFor();
-      const rec = await pg.locator(".pick").first().locator(".fav-row.is-rec .fr-tag").innerText();
+      const rec = await band(pg, 0).locator(".move .nums").textContent();
+      const wf = await pg.locator("#warn-full").textContent();
       check("«solo guide» senza le guide caricate: consigli dalle statistiche (stima in %) e avviso giallo",
-        /%/.test(rec) && /guide non sono state caricate/.test(await text(pg, "#warn")), `${rec} | ${await text(pg, "#warn")}`);
+        /%/.test(rec) && await pg.locator("#warn").isVisible() && /guide non sono state caricate/.test(wf), `${rec} | ${wf}`);
       await cx.close();
     }
 
@@ -2073,13 +2303,13 @@ try {
       const m0 = { roles: ["Damage", "Support"], picked: [null, null], pickFor: 0, mapSlug: "kings-row", side: null, bans: [], enemies: [], allies: [], group: "bans" };
       const { ctx: cx, page: pg } = await open({ serviceWorkers: "block" }, seed(P2, m0));
       await pg.goto(BASE);
-      await pg.locator("#ban-recs:not([hidden])").waitFor();
-      const recs = () => pg.locator("#ban-recs-list .hero").evaluateAll((bs) => bs.map((b) => `${b.dataset.id}:${b.dataset.stars}`).join());
+      await pg.locator(CARD).first().waitFor();
+      const recs = () => pg.locator("#grid .hero.sugg").evaluateAll((bs) => bs.map((b) => `${b.dataset.id}:${b.dataset.stars}`).join());
       await pg.click("#side [data-side=attack]");
       const sa = await starsOf(pg), ra = await recs();
       await pg.click("#side [data-side=defense]");
       const sd = await starsOf(pg), rd = await recs();
-      check("ban (sole statistiche): stelline e ban consigliati cambiano tra attacco e difesa",
+      check("ban (sole statistiche): tacche e ban consigliati («BAN?») cambiano tra attacco e difesa",
         Object.keys(sa).some((n) => sa[n].n !== sd[n].n) && ra !== rd);
       await cx.close();
     }

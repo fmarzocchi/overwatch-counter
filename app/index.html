@@ -3,80 +3,73 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0d16">
+  <meta name="theme-color" content="#0c1117">
   <meta name="description" content="Quale eroe prendere in Overwatch 2, da soli o in gruppo (fino a 5), in base a mappa, ban, avversari e alleati.">
   <title>Overwatch Counter</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/saira-ec-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/jost.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <a class="skip" href="#grid">Vai alla griglia eroi</a>
 
-  <!-- ============ PARTITA ============ -->
-  <main id="view-match" class="view" aria-labelledby="t-match">
+  <!-- ============ PARTITA (aspetto «Tabellone») ============ -->
+  <main id="view-match" class="view" aria-label="Partita">
+    <!-- barra minima: per ciascuno l'eroe che HA → la mossa proposta (fuori vista le fasce, o durante la ricerca) -->
     <div id="mini" class="mini" hidden></div>
 
-    <header class="top">
-      <h1 id="t-match" class="title">Partita</h1>
-      <button id="map-btn" class="map-btn glass" type="button" aria-haspopup="dialog">
-        <span class="map-label">Mappa</span>
-        <span id="map-name" class="map-name">Scegli mappa</span>
-        <span class="ic-slot chev" data-ic="chevron"></span>
+    <header class="head">
+      <button id="map-btn" class="map" type="button" aria-haspopup="dialog">
+        <b id="map-name" class="map-name">Scegli mappa</b>
+        <small class="map-sub"><span id="map-sub"></span><span class="sep" aria-hidden="true"> · </span><span id="fresh-short" class="fresh-short"></span><span id="warn" class="warn" role="status" hidden></span></small>
       </button>
+      <div id="side" class="side" role="group" aria-label="Lato" hidden>
+        <button type="button" data-side="attack" aria-pressed="false" aria-label="Attacco">ATT</button>
+        <button type="button" data-side="defense" aria-pressed="false" aria-label="Difesa">DIF</button>
+      </div>
     </header>
-    <div id="side" class="seg side glass" role="group" aria-label="Lato" hidden>
-      <button type="button" data-side="attack" aria-pressed="false">Attacco</button>
-      <button type="button" data-side="defense" aria-pressed="false">Difesa</button>
-    </div>
 
-    <section id="picks" class="picks" aria-live="polite" aria-label="Eroi consigliati"></section>
+    <section id="picks" class="picks" aria-live="polite" aria-label="Giocatori e consigli"></section>
     <div id="away" class="away-row" hidden></div>
 
-    <div id="warn" class="warn glass" role="status" hidden></div>
-
     <section class="groups" aria-label="Cosa stai segnando">
-      <div id="groups" class="seg groups-seg glass" role="group" aria-label="Tocca un eroe per aggiungerlo a">
-        <button type="button" data-group="bans" class="g-bans" aria-pressed="false">Ban <b data-count="bans">0</b></button>
-        <button type="button" data-group="enemies" class="g-enemies" aria-pressed="true">Avversari <b data-count="enemies">0</b></button>
-        <button type="button" data-group="allies" class="g-allies" aria-pressed="false">Alleati <b data-count="allies">0</b></button>
+      <div id="groups" class="mode" role="group" aria-label="Tocca un eroe per aggiungerlo a">
+        <button type="button" data-group="bans" class="g-bans" aria-pressed="false"><span class="lab">Ban <em data-count="bans">0</em></span></button>
+        <button type="button" data-group="enemies" class="g-enemies" aria-pressed="true"><span class="lab">Avversari <em data-count="enemies">0</em></span></button>
+        <button type="button" data-group="allies" class="g-allies" aria-pressed="false"><span class="lab">Alleati <em data-count="allies">0</em></span></button>
       </div>
-      <!-- al posto del selettore, mentre si segna l'eroe preso da un giocatore ("Altro" nel suo riquadro) -->
-      <div id="pick-banner" class="pick-banner" role="status" hidden>
+      <!-- al posto del selettore, mentre si segna l'eroe preso da un giocatore -->
+      <div id="pick-banner" class="pickbar" role="status" hidden>
         <span id="pick-banner-txt"></span>
         <button type="button" id="pick-cancel">Annulla</button>
       </div>
     </section>
-    <!-- sotto il selettore: con "Ban" i ban consigliati (3 per ruolo), con "Avversari" chi soffrite di più -->
-    <section id="ban-recs" class="ban-recs glass" aria-labelledby="t-ban-recs" hidden>
-      <h2 id="t-ban-recs" class="br-title">Ban consigliati</h2>
-      <p class="br-sub">Forti su questa mappa e contro i vostri eroi</p>
-      <div id="ban-recs-list" class="br-roles"></div>
-    </section>
-    <section id="threats" class="ban-recs threats glass" aria-labelledby="t-threats" hidden>
-      <h2 id="t-threats" class="br-title">Chi soffrite di più</h2>
-      <p class="br-sub" id="threats-sub"></p>
-      <div id="threats-list" class="br-roles"></div>
-    </section>
-    <div id="chosen" class="chosen" aria-label="Selezionati"></div>
+    <!-- posti per ruolo (T D D S S), o i 5 ban: pieno = un tocco lo toglie, vuoto = apre la scheda di quel ruolo -->
+    <div id="slots" class="slots" aria-label="Segnati"></div>
 
-    <div class="search glass">
-      <span class="ic-slot" data-ic="search"></span>
-      <input id="hero-q" type="search" placeholder="Cerca eroe" autocomplete="off" autocapitalize="off" spellcheck="false"
-        enterkeyhint="go" aria-label="Cerca eroe" aria-controls="grid">
-      <button type="button" class="search-clear" data-clear="hero-q" aria-label="Cancella la ricerca" hidden><span class="ic-slot" data-ic="xmark"></span></button>
+    <!-- riga: ricerca (sempre a portata) + schede di ruolo -->
+    <div class="roles" id="roles">
+      <div class="q search">
+        <span class="ic-slot" data-ic="search"></span>
+        <input id="hero-q" type="search" placeholder="Cerca" autocomplete="off" autocapitalize="off" spellcheck="false"
+          enterkeyhint="go" aria-label="Cerca eroe in tutti i ruoli" aria-controls="results">
+        <button type="button" class="search-clear" data-clear="hero-q" aria-label="Cancella la ricerca" hidden><span class="ic-slot" data-ic="xmark"></span></button>
+      </div>
+      <div id="role-tabs" class="tabs-r" role="group" aria-label="Ruolo"></div>
     </div>
+    <p id="legend" class="legend" hidden></p>
+    <p id="search-hint" class="hint">Cerca in tutti i ruoli: nome inglese o italiano, iniziali («jq» = Junker Queen). Invio = il primo.</p>
     <section id="grid" class="grid-wrap" aria-label="Eroi" tabindex="-1"></section>
     <p id="grid-note" class="muted small grid-note" hidden></p>
-    <p class="none-found" data-none="grid" hidden>Nessun eroe con questo nome.</p>
-
-    <footer class="match-foot">
-      <button id="refresh" type="button" class="btn glass">Aggiorna dati</button>
-      <p id="fresh" class="fresh"></p>
-      <p class="source">Dati: <a href="https://counterwatch.gg" rel="noopener">counterwatch.gg</a> · statistiche aggregate, consigli non certezze.</p>
-    </footer>
+    <!-- risultati della ricerca (tutti i ruoli), ancorati sopra la tastiera -->
+    <section id="results" class="res" aria-label="Risultati della ricerca">
+      <p id="results-hd" class="res-hd"></p>
+      <div id="results-list" class="res-list"></div>
+      <p class="none-found" data-none="results" hidden>Nessun eroe con questo nome.</p>
+    </section>
   </main>
 
   <!-- ============ PROFILO ============ -->
@@ -84,7 +77,7 @@
     <header class="top"><h1 id="t-profile" class="title">Profilo</h1></header>
     <div id="players"></div>
 
-    <section class="card glass" id="photo-card" aria-labelledby="t-photo-card">
+    <section class="card" id="photo-card" aria-labelledby="t-photo-card">
       <h2 id="t-photo-card">Foto del tabellone</h2>
       <p class="muted small">Il pulsante con la fotocamera in basso legge dal tabellone mappa, attacco/difesa ed eroi delle
         due squadre (Claude Sonnet 5.5). Serve una chiave API di Anthropic: console.anthropic.com → API Keys.</p>
@@ -98,9 +91,11 @@
         2–4 centesimi dei crediti API; il «Nome nel gioco» di ciascuno serve a capire quale riga è la vostra.</p>
     </section>
 
-    <section class="card glass">
+    <section class="card">
       <h2>Aggiornamento dati</h2>
+      <p id="fresh" class="fresh"></p>
       <p id="data-info" class="muted"></p>
+      <button id="refresh" type="button" class="btn wide-btn">Aggiorna dati</button>
       <label for="token">Token GitHub (per "Aggiorna dati" immediato)</label>
       <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
       <div class="row">
@@ -109,24 +104,18 @@
       </div>
       <p class="muted small">Il token resta solo su questo telefono. Senza token "Aggiorna dati" ricarica
         gli ultimi dati pubblicati (aggiornati da soli ogni 3 ore).</p>
+      <p class="source">Dati: <a href="https://counterwatch.gg" rel="noopener">counterwatch.gg</a> · statistiche aggregate, consigli non certezze.</p>
     </section>
   </main>
 
-  <!-- ============ BARRA IN BASSO (flottante): Partita · Nuova partita · FOTO (al centro) · Profilo ============ -->
+  <!-- ============ BARRA IN BASSO (piena): Partita · Nuova · FOTO · Profilo ============ -->
   <nav class="tabs dock" aria-label="Schede">
-    <div class="dock-bar glass-blur">
-      <div class="dock-side">
-        <button type="button" data-view="match" aria-current="page"><span class="ic-slot" data-ic="game"></span>Partita</button>
-        <!-- sempre a portata di pollice; si può annullare dal messaggio che compare -->
-        <button type="button" id="new-match" class="tab-action" aria-label="Nuova partita"><span class="ic-slot" data-ic="restart"></span>Nuova</button>
-      </div>
-      <span class="dock-gap" aria-hidden="true"></span>
-      <div class="dock-side">
-        <button type="button" data-view="profile"><span class="ic-slot" data-ic="person"></span>Profilo</button>
-      </div>
-    </div>
+    <button type="button" data-view="match" aria-current="page"><span class="ic-slot" data-ic="game"></span>Partita</button>
+    <!-- sempre a portata di pollice; si può annullare dal messaggio che compare -->
+    <button type="button" id="new-match" class="tab-action" aria-label="Nuova partita"><span class="ic-slot" data-ic="restart"></span>Nuova</button>
     <!-- foto del tabellone: Claude riconosce mappa, lato ed eroi (photo.js) -->
-    <button type="button" id="photo-btn" class="photo-btn" aria-label="Foto del tabellone"><span class="ic-slot" data-ic="camera"></span></button>
+    <button type="button" id="photo-btn" class="photo-btn" aria-label="Foto del tabellone"><span class="ic-slot" data-ic="camera"></span>Foto</button>
+    <button type="button" data-view="profile"><span class="ic-slot" data-ic="person"></span>Profilo</button>
   </nav>
   <!-- fotocamera (capture) e galleria; la foto resta solo in memoria (al massimo 5) -->
   <input id="photo-input" class="file-in" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
@@ -138,7 +127,8 @@
       <h2 id="t-map">Scegli la mappa</h2>
       <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
     </div>
-    <div class="search glass">
+    <p id="warn-full" class="warn-full" role="status" hidden></p>
+    <div class="search">
       <span class="ic-slot" data-ic="search"></span>
       <input id="map-q" type="search" placeholder="Cerca mappa" autocomplete="off" autocapitalize="off" spellcheck="false"
         enterkeyhint="go" aria-label="Cerca mappa" aria-controls="map-list">
@@ -154,7 +144,7 @@
       <h2 id="t-fav">Preferiti</h2>
       <button type="button" class="close done" data-close>Fatto</button>
     </div>
-    <div class="search glass">
+    <div class="search">
       <span class="ic-slot" data-ic="search"></span>
       <input id="fav-q" type="search" placeholder="Cerca eroe" autocomplete="off" autocapitalize="off" spellcheck="false"
         enterkeyhint="go" aria-label="Cerca eroe" aria-controls="fav-grid">
@@ -215,7 +205,7 @@
       <h2 id="t-photo-hero">Scegli l'eroe</h2>
       <button type="button" class="close" data-close aria-label="Chiudi"><span class="ic-slot" data-ic="xmark"></span></button>
     </div>
-    <div class="search glass">
+    <div class="search">
       <span class="ic-slot" data-ic="search"></span>
       <input id="photo-q" type="search" placeholder="Cerca eroe" autocomplete="off" autocapitalize="off" spellcheck="false"
         enterkeyhint="go" aria-label="Cerca eroe" aria-controls="photo-grid">
@@ -226,7 +216,7 @@
     <p class="none-found" data-none="photo-grid" hidden>Nessun eroe con questo nome.</p>
   </dialog>
 
-  <div id="toast" class="toast glass-blur" role="status" aria-live="polite" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script type="module" src="app.js"></script>
 </body>

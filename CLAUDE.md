@@ -280,6 +280,57 @@ esserci di più. Fonti degli altri eroi spesso vecchie (Icy Veins era OW1, 2022-
   carattere di sistema al 130% (visto sull'emulatore). e2e "carattere al 130%" lo imita;
   l'e2e ora fallisce se un nome va a capo a metà parola (prima "Symmetra"/"Widowmaker" si spezzavano).
 
+## Ridisegno «Tabellone» (2026-11-25, scelto dall'utente) — ha la precedenza su «Design: tre livelli», «Stile Vetro» e su ogni descrizione dei riquadri più sotto
+
+Studio di un agente designer (tavole T1–T11 e specifica in scratchpad `ux/`, non versionate) e scelte dell'utente: aspetto
+«Tabellone» (ricorda il tabellone di Overwatch, niente vetro né sfumature né capsule: angoli vivi, filetti, fasce piene),
+tutta la struttura nuova, più tre richieste rigide: **ricerca eroe sempre a un tocco**, **caratteri e colori di Overwatch
+per quanto possibile**, **il ritratto grande del riquadro è SEMPRE l'eroe che il giocatore ha preso** (mai il consigliato).
+La logica (recommend/theory/photo/state) non è cambiata: cambia la resa. Collaudo: e2e 561 controlli, unità 78.
+- **Caratteri**: quelli del gioco (Big Noodle Too, Futura secondo le fonti; mai confermati da Blizzard) sono a pagamento →
+  sostituti liberi OFL in `app/fonts/`: **Saira Extra Condensed** 500/700 (titoli, nomi, verbi: maiuscolo, inclinato
+  sintetico) e **Jost** (testi, numeri); licenze `OFL-saira.txt`, `OFL-jost.txt`. Inter tolto. Niente loghi o risorse Blizzard.
+- **Colori** (token in `style.css`): arancione Overwatch `--ow` = SOLO «consiglio dell'app» (mossa, «BAN?», «Se confermi»,
+  scheda attiva, pulsante Foto); `--ally` azzurro, `--enemy` rosso come nel gioco (valori a occhio: Blizzard non li pubblica);
+  pannelli ardesia; giocatori `--p0…--p4` = lime, magenta, giallo, lilla, avorio (lontani da azzurro/rosso/arancione).
+  Dati e Teoria si distinguono per FORMA: ■ pieno = dati, ▨ a righe = teoria (+ testo per lettori di schermo).
+- **Partita, dall'alto** (con 2 giocatori sta SENZA scorrere a 390×844, 407×833, 420×860; tutti i bersagli ≥ 48 px):
+  1. **Testata**: nome della mappa (tocco = foglio mappe) e sotto, in piccolo, «modalità · dati di 3 h fa» (`#fresh-short`:
+     la freschezza resta sempre visibile; gialla `#warn` se dati vecchi o `problems`, spiegazione in cima al foglio mappe);
+     a destra ATT/DIF (`#side`) per Scorta/Ibrida. «Aggiorna dati», dettaglio e fonte sono nel Profilo.
+  2. **Fascia per giocatore** (`section.band`, `data-player/data-has/data-move`): ritratto grande = eroe PRESO oppure posto
+     vuoto tratteggiato con l'icona del ruolo (+ pulsante del ruolo); sotto la **striscia arancione della mossa**
+     «PRENDI / PASSA A [volto piccolo] NOME ▮▮▮▮▮ 54% +7,5%» con pulsante separato «✓ PRESO / CAMBIATO» (un tocco = scelto,
+     messaggio con Annulla); se non conviene cambiare, striscia verde «RESTA SU X». Riga del motivo a parole («Symmetra
+     batte Winston; Cassidy teme Ana e Winston», sempre col soggetto; solo con avversari segnati). Prima della scelta 2
+     alternative toccabili. Tocco sul ritratto = foglio del giocatore (`openChooser`: «Come giocare X», «Non l'ho preso
+     (annulla la scelta)», «Scegline un altro», preferiti segnati «Preferito»). Tocco sulla mossa = «Come giocarla».
+     Da 3 a 5 giocatori: fasce compatte di una riga, se ne apre una alla volta.
+  3. **Selettore** Ban / Avversari / Alleati con contatore «n/limite» (`#groups`); durante «Tocca l'eroe preso da X» c'è `#pick-banner`.
+  4. **Posti** (`#slots`, al posto delle chip): avversari T D D S S, alleati 5 − giocatori, ban 5; pieno = tocco toglie,
+     vuoto = apre la scheda di quel ruolo.
+  5. **Riga «Cerca» + schede di ruolo** (`#hero-q`, `#role-tabs`): la griglia mostra UN ruolo alla volta (6 colonne,
+     tessere 48 px, nome su una riga, **tacche** 1–5 al posto delle stelline: stessi valori di `rankStars()`, `data-stars`).
+     **Ban consigliati** = bandierina «BAN?» e nome arancione sulle tessere (3 per ruolo, come prima); **«Chi soffrite di
+     più»** = nome rosso (3 per ruolo) + tacche rosse; legenda `#legend`. I due pannelli di prima non esistono più.
+  6. **Barra in basso** piena: Partita · Nuova · FOTO (arancione, al centro) · Profilo. Messaggi (`#toast`) in alto.
+  **Barra minima** `#mini` (quando le fasce escono di vista e sempre durante la ricerca): «[eroe che ha] → [volto] NOME proposto».
+- **Ricerca** (richiesta rigida): campo vero sempre nella riga delle schede, in Ban, Avversari, Alleati e «Tocca l'eroe
+  preso da X». Col fuoco (`body.searching`): fasce, griglia e barra in basso nascoste; restano barra minima, selettore e
+  posti; risultati di TUTTI i ruoli (max 8, tessere grandi) appoggiati sopra la tastiera (`visualViewport`), il primo con
+  «INVIO», i già segnati con «GIÀ SEGNATO». Comportamenti di `wireSearch` invariati (senza accenti, iniziali, italiano e
+  inglese, Invio = primo, dopo un tocco il campo si svuota e la tastiera resta). «Indietro» la chiude (un passo di
+  cronologia); conta come campo in uso per la ricarica sicura. Nei fogli lo stesso campo, fermo in cima.
+- **Foto**: riepilogo con lo stesso aspetto e, sopra i pulsanti, **«Se confermi»**: per ogni giocatore «[eroe che ha] 48% →
+  PASSA A [volto] SYMMETRA +7,8%» o «RESTA» (calcolato con `compute()` su una copia della partita, senza effetti).
+- **APK**: `windowSoftInputMode="adjustResize"` (risultati sopra la tastiera) → serve l'APK nuova. `test-on-emulator.sh`:
+  tocchi su Profilo (89%/92%), FOTO (50%/92%) e «✓ PRESO» della prima fascia (90%/20%). Service worker **v9**.
+- Ganci per i test: `window.owcBands()`, `owcSearching()`, `owcPhotoPlan()`, `owcFitText(el, {whole})`.
+- Tolti per progetto: riga del motivo senza avversari (resta in «Perché»), volti piccoli batte/teme (ora a parole),
+  «Scegline un altro» in riga (ora nel foglio), sottotitolo «Forti su questa mappa» dei ban, titolo «Partita».
+- **Aggiornamento dei dati** (deciso dall'utente il 2026-11-25): resta il cron di GitHub così com'è (in pratica 2–4 giri al
+  giorno); niente sveglia esterna né catena di workflow.
+
 ## Design: tre livelli (2026-10-05, richiesta dell'utente) — ha la precedenza su ciò che segue
 
 L'app si usa DURANTE la partita: l'essenziale si coglie con uno sguardo, il resto è a un tocco o due.
@@ -538,7 +589,7 @@ Audit con prove riprodotte (script in scratchpad `audit-backend/`), correzioni c
   WebView non si ripristina; niente file orfani né callback appese se l'attività viene ricreata con la fotocamera
   aperta. `test-on-emulator.sh` ora FALLISCE se la fotocamera non si apre o se in cache restano più di 5 foto.
 - **Noto e non risolto**: GitHub esegue il cron molto meno di ogni 30 minuti (2–4 giri al giorno, buchi di 8–12 h,
-  misurato sulle run del 16–25/11): i dati sono spesso più vecchi delle 3 ore. Deciderà l'utente come rimediare.
+  misurato sulle run del 16–25/11): i dati sono spesso più vecchi delle 3 ore. L'utente ha deciso di lasciare così (2026-11-25).
   Il build resta "debug" (serve `run-as` per il collaudo): la chiave si può leggere via USB con il debug attivo.
 
 ## Aggiornamento automatico (GitHub Actions + Pages)

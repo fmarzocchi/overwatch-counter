@@ -22,18 +22,20 @@ sleep 10                                    # icone degli eroi
 shot 1-avvio
 size=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1); W=${size%x*}; H=${size#*x}
 echo "schermo ${W}x${H}"
-adb shell input tap $((W * 3 / 4)) $((H * 90 / 100))   # scheda "Profilo" (barra flottante in basso)
+adb shell input tap $((W * 89 / 100)) $((H * 92 / 100))   # scheda "Profilo" (barra piena in basso, a destra di FOTO)
 sleep 4
 shot 2-profilo
 adb shell input keyevent KEYCODE_BACK                  # tasto indietro: dal Profilo torna alla Partita, l'app resta aperta
 sleep 3
 shot 2b-indietro
 if [ -z "$(adb shell pidof "$PKG" || true)" ]; then echo "ERRORE: il tasto indietro ha chiuso l'app"; exit 1; fi
-adb shell input swipe $((W / 2)) $((H * 80 / 100)) $((W / 2)) $((H * 35 / 100)) 300   # scorre alla griglia
-sleep 2
-adb shell input tap $((W * 12 / 100)) $((H * 60 / 100))  # tocca un eroe (avversario)
+# «✓ PRESO» sulla striscia arancione della prima fascia (a destra, in alto): un tocco = eroe scelto. Non si tocca la
+# griglia a coordinate fisse: a seconda dello schermo lì potrebbe esserci il campo «Cerca» (tastiera aperta).
+adb shell input tap $((W * 90 / 100)) $((H * 20 / 100))
 sleep 3
 shot 3-tocco-eroe
+adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 40 / 100)) 300   # scorre (se la pagina è più alta dello schermo)
+sleep 2
 pid=$(adb shell pidof "$PKG" || true)
 adb logcat -d | grep -E "chromium|CONSOLE|FATAL|AndroidRuntime: (FATAL|Process)" > "$OUT/logcat.txt" || true
 if [ -z "$pid" ]; then echo "ERRORE: l'app non è più in esecuzione"; exit 1; fi
@@ -48,7 +50,7 @@ resumed() { adb shell dumpsys activity activities | grep -E "mResumedActivity|to
 adb shell run-as "$PKG" mkdir -p cache/photos || echo "AVVISO: run-as non disponibile"
 adb shell run-as "$PKG" touch cache/photos/vecchia-1.jpg cache/photos/vecchia-2.jpg cache/photos/vecchia-3.jpg \
   cache/photos/vecchia-4.jpg cache/photos/vecchia-5.jpg cache/photos/vecchia-6.jpg cache/photos/vecchia-7.jpg || true
-adb shell input tap $((W / 2)) $((H * 90 / 100))
+adb shell input tap $((W / 2)) $((H * 92 / 100))   # FOTO (al centro della barra in basso)
 sleep 3
 shot 7-foto-impostazioni
 adb shell input text "sk-ant-prova-emulatore"

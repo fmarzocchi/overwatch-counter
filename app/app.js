@@ -349,8 +349,9 @@ function renderFresh() {
   const warn = $("#warn");
   if (!data) {
     $("#fresh").textContent = "";
+    $("#fresh-short").hidden = true;
     warn.hidden = false;
-    warn.textContent = "Impossibile caricare i dati. Controlla la connessione e premi «Aggiorna dati».";
+    warn.textContent = "Impossibile caricare i dati: controlla la connessione (Profilo → Aggiorna dati).";
     return;
   }
   const checked = new Date(data.checked);
@@ -361,7 +362,19 @@ function renderFresh() {
   if (data.problems?.length) msgs.push("Counterwatch è cambiato in parte: alcune sezioni usano i dati precedenti.");
   if (profile.guideOnly && !theoryLoaded()) msgs.push("Le guide non sono state caricate: «solo guide e pro» è sospeso, consigli dalle statistiche.");
   warn.hidden = !msgs.length;
-  warn.textContent = msgs.length ? `⚠ ${msgs.join(" ")} I consigli funzionano comunque.` : "";
+  const old = Date.now() - checked.getTime() > STALE_MS;
+  warn.textContent = !msgs.length ? "" : old ? `dati vecchi: ${ago(checked).replace(" fa", "")}`
+    : data.problems?.length ? "dati in parte vecchi" : "guide non caricate";
+  // freschezza corta nella testata della Partita (requisito: sempre visibile); vecchi o con problemi → in giallo (#warn)
+  const fs = $("#fresh-short");
+  fs.hidden = !warn.hidden;
+  const a = ago(checked);
+  fs.textContent = a === "adesso" ? "dati controllati adesso" : /giorni/.test(a) ? `dati del ${fmtDay(checked)}` : `dati di ${a}`;
+  fs.title = $("#fresh").textContent;
+  warn.title = msgs.join(" ");
+  const full = $("#warn-full");
+  full.hidden = !msgs.length;
+  full.textContent = msgs.length ? `${msgs.join(" ")} I consigli funzionano comunque.` : "";
   $("#data-info").textContent =
     `${data.heroes.length} eroi, ${data.maps.length} mappe, ${filterText()}. ` +
     `Fonte aggiornata il ${src.toLocaleString("it-IT")}; ultimo controllo ${ago(checked)}.` +
@@ -578,60 +591,98 @@ function openGuide(i, hero) {
   $("#guide-dialog").scrollTop = 0;
 }
 
-// Il riquadro completo dei consigli scorre con la pagina; quando è uscito dallo schermo compare in alto
-// la barra minima (n. 1 di ciascuno, toccabile) e il selettore Ban/Avversari/Alleati si ferma sotto di lei.
-// Se il consiglio di un giocatore cambia mentre si segnano gli avversari, il suo riquadrino lampeggia una volta.
+// ---------- tacche (al posto delle stelline: stessi valori di rankStars, 1–5) ----------
+const tac = (n, cls = "") => el("span", { class: `tac${cls ? ` ${cls}` : ""}`, "data-stars": String(n), "aria-hidden": "true" },
+  [1, 2, 3, 4, 5].map((k) => el("i", { class: k <= n ? "on" : null })));
+const starsLabel = (n) => `${n} tacc${n > 1 ? "he" : "a"} su 5`;
+const pctShort = (r) => (r && typeof r.estimate === "number" ? `${Math.round(r.estimate * 100)}%` : null);
+// quanto rende in più il cambio (solo statistiche: in "solo guide" niente numeri)
+function gainTxt(from, to) {
+  if (!from || !to || typeof from.estimate !== "number" || typeof to.estimate !== "number") return null;
+  const d = to.estimate - from.estimate;
+  return d >= 0.0005 ? `+${(d * 100).toFixed(1).replace(".", ",")}%` : null;
+}
+// posto vuoto: tratteggio con l'icona del ruolo
+const emptyFace = (role, cls = "") => el("span", { class: `hface none${cls ? ` ${cls}` : ""}`, "aria-hidden": "true" }, icon(ROLE_ICON[role] ?? "plus"));
+const heroFace = (h, cls = "") => el("span", { class: `hface${cls ? ` ${cls}` : ""}`, "aria-hidden": "true" }, face(h));
+const names2 = (xs) => xs.slice(0, 2).map((x) => x.hero.name).join(" e ");
+
+// La mossa proposta al giocatore i: «Prendi» (non ha scelto), «Passa a» (ha scelto, c'è di meglio), «Resta su».
+// Il ritratto grande della fascia è SEMPRE l'eroe che ha (match.picked); la proposta sta solo qui (striscia arancione).
+function moveOf(i) {
+  const rows = lastDuo?.lists?.[i] ?? [];
+  const top = rows[0];
+  if (!top) return null;
+  if (!top.picked) return { verb: "Prendi", hero: top.hero, row: top, from: null };
+  const sw = swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() });
+  if (!sw) return { stay: true, verb: "Resta su", hero: top.hero, row: top, from: top };
+  return { verb: "Passa a", hero: sw.hero, row: rowFor(i, sw.hero) ?? choiceRows(i).get(sid(sw.hero.id)), from: top, sw };
+}
+
+// una riga di motivo, a parole: ■ dati / ▨ teoria (forma, non colore)
+function whyOf(i, top, mv) {
+  if (!top) return null;
+  const g = guideMode();
+  const kindOf = (xs) => (g || !xs.some((x) => Math.abs(x.delta ?? 0) >= 0.01) ? "theory" : "data");
+  if (mv?.sw) {
+    // a parole: cosa batte il nuovo, cosa teme quello che ha (al massimo 2 nomi ciascuno)
+    const mNew = mv.row ? matchups(mv.row) : { strong: [], weak: [] };
+    const mOld = matchups(top);
+    const parts = [mNew.strong.length ? `${mv.hero.name} batte ${names2(mNew.strong)}` : null,
+      mOld.weak.length ? `${top.hero.name} teme ${names2(mOld.weak)}` : null].filter(Boolean);
+    if (parts.length) return { kind: kindOf([...mNew.strong, ...mOld.weak]), text: parts.join("; ") };
+    return { kind: g || mv.sw.kind === "teoria" ? "theory" : "data", text: `${mv.hero.name} ${mv.sw.why}` };
+  }
+  if (match.enemies.length) {
+    const m = matchups(top);
+    const parts = [m.strong.length ? `batte ${names2(m.strong)}` : null, m.weak.length ? `teme ${names2(m.weak)}` : null].filter(Boolean);
+    if (parts.length) return { kind: kindOf([...m.strong, ...m.weak]), text: `${top.hero.name} ${parts.join("; ")}` };
+    if (mv?.stay) return { kind: g ? "theory" : "data", text: "nessun altro eroe rende di più qui" };
+    return null;
+  }
+  // senza avversari niente riga (come nel tabellone disegnato): il motivo è in «Come giocarla» → «Perché»
+  return null;
+}
+
+// Barra minima (fasce fuori vista, o ricerca aperta): per ciascuno quello che HA → la mossa (volto + NOME in arancione).
 let miniTops = [];
 function renderMini() {
   const box = $("#mini");
   box.replaceChildren();
   if (!lastDuo) return;
-  box.className = `mini n${Math.min(present().length, 5)}`;
-  const tops = profile.players.map((p, i) => lastDuo.lists[i]?.[0]?.hero?.id ?? null);
-  profile.players.forEach((p, i) => {
-    const r = lastDuo.lists[i]?.[0];
-    if (match.away[i]) return;
-    if (!r) return;
+  const act = present();
+  box.className = `mini n${Math.min(act.length, 5)}`;
+  const tops = profile.players.map((p, i) => moveOf(i)?.hero?.id ?? null);
+  for (const i of act) {
+    const p = profile.players[i];
+    const mv = moveOf(i);
+    const has = match.picked[i] && byId[sid(match.picked[i])];
     const changed = miniTops[i] !== undefined && miniTops[i] !== tops[i];
-    box.append(el("button", { type: "button", class: `mini-pick${r.picked ? " took" : ""}${changed ? " pulse" : ""}`, style: `--pc: var(--p${i})`,
-      onclick: () => openGuide(i, r.hero),
-      "aria-label": `${p.name}: ${r.picked ? `ha scelto ${r.hero.name}, ${guideMode() ? "valutazione" : "stima"} ${est(r, i)}` : `consigliato ${r.hero.name}, ancora da scegliere`}. Tocca per come giocarla` },
-    face(r.hero), el("span", { class: "mini-txt" }, el("b", {}, r.hero.name),
-      el("small", {}, r.picked ? `✓ ${p.name} · ${est(r, i)}` : `${p.name} · consigliato`))));
-  });
+    const target = mv && !mv.stay ? mv.hero : has || mv?.hero;
+    box.append(el("button", {
+      type: "button", class: `mini-pick${changed ? " pulse" : ""}`, style: `--pc: var(--p${i})`, "data-player": String(i),
+      "data-has": has ? sid(has.id) : "", onclick: () => (target ? openGuide(i, target) : openChooser(i)),
+      "aria-label": `${p.name}: ${has ? `ha ${has.name}` : "non ha ancora scelto"}${mv && !mv.stay ? `, ${mv.verb.toLowerCase()} ${mv.hero.name}` : ""}. Tocca per come giocarla`,
+    },
+    has ? heroFace(has) : emptyFace(match.roles[i]),
+    mv && !mv.stay ? [el("span", { class: "ar", "aria-hidden": "true" }, "→"), heroFace(mv.hero, "sm"), el("b", { class: "nm" }, mv.hero.name)]
+      : el("span", { class: "ok", "aria-hidden": "true" }, "✓")));
+  }
   miniTops = tops;
+  for (const t of $$(".nm", box)) fitText(t, { whole: true });
 }
 function updateMini() {
   if ($("#view-match").hidden) return;
   const mini = $("#mini");
-  const show = $("#picks").getBoundingClientRect().bottom < 0;
+  // la riga del primo giocatore è uscita dallo schermo (a 360×640 con 2 giocatori le fasce non escono mai del tutto)
+  const r = $("#picks").getBoundingClientRect();
+  const show = searching || (r.height > 0 && r.top < -40);
   if (mini.hidden === show) mini.hidden = !show;
-  document.documentElement.style.setProperty("--picks-h", show ? `${Math.round(mini.getBoundingClientRect().height)}px` : "0px");
+  const h = show ? Math.round(mini.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--picks-h", `${h}px`);
+  // messaggi in alto: sotto la testata, o sotto la barra minima
+  document.documentElement.style.setProperty("--toast-top", `${show ? h + 6 : 52}px`);
 }
-
-// avversari che l'eroe batte (verde) e da cui deve guardarsi (rosso): solo volti, il dettaglio è nella guida
-function matchupRow(top) {
-  const m = matchups(top);
-  if (!m.strong.length && !m.weak.length) return el("p", { class: "pick-why" }, "Nessun vantaggio netto");
-  const grp = (cls, label, xs) => (xs.length ? el("span", {
-    class: `mu-grp ${cls}`, role: "img", "aria-label": `${label} ${xs.map((x) => x.hero.name).join(", ")}`,
-  }, el("span", { class: "mu-lab", "aria-hidden": "true" }, label), xs.map((x) => face(x.hero))) : null);
-  return el("div", { class: "mu" }, grp("good", "Batte", m.strong), grp("bad", "Teme", m.weak));
-}
-
-// Con gli avversari segnati: volti piccoli di chi l'eroe batte (bordo verde) e di chi teme (bordo rosso), senza
-// scritte (come «Batte/Teme» del riquadro). Restituisce i nodi e il testo per i lettori di schermo.
-function miniMatchups(r) {
-  const m = match.enemies.length && r ? matchups(r) : { strong: [], weak: [] };
-  const names = (xs) => xs.map((x) => x.hero.name).join(", ");
-  const mini = (cls, xs) => (xs.length ? el("span", { class: `alt-mu ${cls}`, "aria-hidden": "true" }, xs.map((x) => face(x.hero))) : null);
-  return {
-    nodes: [mini("good", m.strong), mini("bad", m.weak)].filter(Boolean),
-    label: `${m.strong.length ? `, batte ${names(m.strong)}` : ""}${m.weak.length ? `, teme ${names(m.weak)}` : ""}`,
-  };
-}
-const starsTxt = (n) => "★".repeat(n);
-const starsLabel = (n) => `${n} stell${n > 1 ? "e" : "a"} su 5`;
 
 // Eroi che il giocatore i può ancora prendere: non bannati, non presi da un compagno (giocatore o alleato segnato).
 function takenBy(i) {
@@ -646,7 +697,7 @@ function favoritesFor(i, role) {
     .sort((a, b) => rows.get(b).score - rows.get(a).score || byId[a].name.localeCompare(byId[b].name));
 }
 
-// "scegli": l'eroe preso da quel giocatore (dalla lista dei preferiti, da "Scegline un altro" o dal foglio "＋")
+// "scegli": l'eroe preso da quel giocatore (striscia «PRESO/CAMBIATO», alternative, foglio di scelta)
 function choose(i, id) {
   const was = match.picked[i] ? sid(match.picked[i]) : null;
   setPicked(i, id);
@@ -658,41 +709,29 @@ function choose(i, id) {
   });
 }
 
-// Una riga della lista dei preferiti: volto, nome, stelline bianche (1–5) e chi batte/teme. Un tocco = scelto.
-// rec: etichetta del consigliato (evidenziato); tag: {text, color} es. "per Lei" (consigliato a un compagno).
+// Una riga del foglio di scelta: volto, nome, tacche e (con gli avversari) chi batte/teme a parole. Un tocco = scelto.
 function favRow(i, id, { rec = null, note = null, tag = null, after = null } = {}) {
   const h = byId[id];
   const r = choiceRows(i).get(id);
   const n = choiceStars(i).get(id) ?? 3;
-  const mu = miniMatchups(r);
+  const m = match.enemies.length && r ? matchups(r) : null;
+  const mu = m ? [m.strong.length ? `batte ${names2(m.strong)}` : null, m.weak.length ? `teme ${names2(m.weak)}` : null].filter(Boolean).join(" · ") : "";
   return el("button", {
     type: "button", class: `fav-row${rec ? " is-rec" : ""}`, "data-id": id,
     onclick: () => { choose(i, id); if (after) after(); },
-    "aria-label": `${rec ? `${rec}: ` : ""}${h.name}, ${starsLabel(n)}${mu.label}${tag ? `, ${tag.text}` : ""}. Tocca per sceglierlo`,
+    "aria-label": `${rec ? `${rec}: ` : ""}${h.name}, ${starsLabel(n)}${mu ? `, ${mu}` : ""}${tag ? `, ${tag.text}` : ""}. Tocca per sceglierlo`,
   },
   face(h),
   el("span", { class: "fr-body", "aria-hidden": "true" },
     rec ? el("span", { class: "fr-tag" }, rec) : tag ? el("span", { class: "fr-tag other", style: `color: ${tag.color}` }, tag.text) : null,
     el("span", { class: "fr-name" }, h.name),
-    el("span", { class: "fr-stars" }, starsTxt(n)),
+    tac(n, "fr-stars"),
     note ? el("span", { class: "fr-note" }, note) : null,
-    mu.nodes.length ? el("span", { class: "fr-mu" }, mu.nodes) : null));
+    mu ? el("span", { class: "fr-mu" }, mu) : null));
 }
 
-// "Scegline un altro" (dopo la scelta): volto con stelline bianche e, sotto, chi batte e chi teme. Un tocco = scelto.
-function altButton(i, id) {
-  const h = byId[id];
-  const n = choiceStars(i).get(id) ?? 3;
-  const mu = miniMatchups(choiceRows(i).get(id));
-  return el("button", {
-    type: "button", class: "alt", "data-id": id, onclick: () => choose(i, id),
-    "aria-label": `Scegli invece ${h.name}, ${starsLabel(n)}${mu.label}`,
-  },
-  el("span", { class: "alt-face" }, face(h), el("span", { class: "alt-stars", "aria-hidden": "true" }, starsTxt(n))),
-  mu.nodes);
-}
-
-// Foglio "＋": tutti i preferiti del giocatore (prima quelli del ruolo), dal più adatto, e un eroe qualsiasi dalla griglia.
+// Foglio del giocatore (tocco sul ritratto grande o sul posto vuoto): se ha scelto, «Come giocarla» e «Non l'ho preso»;
+// poi i più adatti (o i preferiti) per sceglierne un altro, e un eroe qualsiasi dalla griglia.
 function openChooser(i) {
   const p = profile.players[i];
   const cur = match.picked[i] ? sid(match.picked[i]) : null;
@@ -706,11 +745,20 @@ function openChooser(i) {
   const favRest = onlyFav ? [] : favRole.filter((id) => !mine.includes(id));
   const otherRoles = favoritesFor(i, null).filter((id) => !mine.includes(id) && !favRest.includes(id));
   const fallback = !onlyFav || mine.length || otherRoles.length ? [] : bestRole;
+  // con «solo preferiti» spento i preferiti si riconoscono dalla nota
+  const favSet = new Set(p.favorites.map(sid));
+  const note = (id) => (!onlyFav && favSet.has(id) ? "Preferito" : null);
   const row = (id) => (id === cur
-    ? favRow(i, id, { rec: "Scelto", after: close })
-    : favRow(i, id, { after: close }));
-  $("#t-choose").textContent = `Scegli l'eroe di ${p.name}`;
+    ? favRow(i, id, { rec: "Scelto", note: note(id), after: close })
+    : favRow(i, id, { note: note(id), after: close }));
+  $("#t-choose").textContent = cur ? tr(`${p.name}: ${byId[cur].name}`) : `Scegli l'eroe di ${p.name}`;
   fill($("#choose-body"),
+    cur ? el("div", { class: "menu", style: `--pc: var(--p${i})` },
+      el("button", { type: "button", id: "menu-guide", class: "btn wide-btn primary", onclick: () => { close(); openGuide(i, byId[cur]); } },
+        icon("target"), `Come giocare ${byId[cur].name}`),
+      el("button", { type: "button", id: "menu-unpick", class: "btn wide-btn", onclick: () => { close(); togglePicked(i, byId[cur]); } },
+        icon("xmark"), "Non l'ho preso (annulla la scelta)")) : null,
+    cur ? el("h3", { class: "choose-h" }, "Scegline un altro") : null,
     el("p", { class: "muted small choose-sub" }, !onlyFav ? "I più adatti a questa partita tra tutti gli eroi. Un tocco per sceglierlo."
       : mine.length || otherRoles.length ? "I tuoi preferiti, dal più adatto a questa partita. Un tocco per sceglierlo."
         : "Nessun preferito nel Profilo: i più adatti per il ruolo."),
@@ -726,126 +774,108 @@ function openChooser(i) {
   $("#choose-dialog").scrollTop = 0;
 }
 
-// Riquadro del giocatore, in due momenti:
-// - prima della scelta: SOLO la lista dei suoi preferiti (del ruolo), dal più adatto, con il consigliato evidenziato
-//   (in cima; se non è tra i preferiti lo si dice). Un tocco su una riga = scelto. Nessun eroe sembra già preso.
-// - dopo la scelta: il riquadro dedicato a quell'eroe (volto grande, stima, Come giocarla, Batte/Teme, "Passa a") e sotto
-//   "Scegline un altro" con gli altri preferiti (quelli che ci stanno) e "＋" per il foglio con tutti.
-const MAX_ROWS = 4;
-function pickCard(p, i) {
+// ---------- fasce dei giocatori («Tabellone», variante 2) ----------
+// Ritratto grande = l'eroe che il giocatore HA (match.picked[i]) o il posto vuoto col ruolo; mai il consigliato.
+// Sotto, la striscia arancione della mossa («PRENDI» / «PASSA A», con «✓ PRESO/CAMBIATO»), o verde «RESTA SU»;
+// una riga di motivo; prima della scelta 2 alternative. Da 3 giocatori in su: fasce compatte, una aperta alla volta.
+let expanded = -1;
+function band(p, i, compact) {
   const rows = lastDuo.lists[i] ?? [];
   const top = rows[0];
   const took = !!top?.picked;
+  const has = took ? top.hero : null; // = match.picked[i]
   const role = took ? top.hero.role : match.roles[i];
-  const style = `--pc: var(--p${i}); --pca: var(--p${i}a)`;
-  const head = el("div", { class: "pick-head" },
-    el("span", { class: "pick-player", title: dataLabel(i) }, p.name),
-    took ? el("button", {
-      type: "button", class: "chosen-chip", onclick: () => togglePicked(i, top.hero),
-      "aria-label": `${p.name} ha scelto ${top.hero.name}: tocca per annullare la scelta`,
-    }, icon("check"), "Scelto", icon("xmark", "ic chip-x"))
-      : el("button", {
-        type: "button", class: "role-btn",
-        "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare`,
-        onclick: () => nextRole(i),
-      }, role ? ROLE_IT[role] : "Qualsiasi"));
-  if (!top) return el("article", { class: "pick empty", style }, head, el("p", { class: "pick-why" }, "Nessun eroe disponibile"));
-  const note = lastDuo.notes?.[i];
-  const noteEl = note ? el("div", { class: "pick-note warn-note" }, note) : null;
-  const favSet = new Set(p.favorites.map(sid));
-  // "Suggerisci solo eroi preferiti" (Profilo): acceso → la lista è dei preferiti; spento → i migliori del ruolo tra
-  // tutti gli eroi disponibili, con i preferiti segnati (segnalazione dell'utente del 2026-10-16)
-  const favs = profile.onlyFavorites ? favoritesFor(i, role) : [];
-  const best = rows.map((r) => sid(r.hero.id)).filter((id) => !takenBy(i).has(id));
-  const favNote = (id) => (!favs.length && favSet.has(id) ? "Preferito" : null);
-
-  if (!took) {
-    const recId = sid(top.hero.id);
-    const pool = favs.length ? favs : best;
-    const list = [recId, ...pool.filter((id) => id !== recId)];
-    const shown = list.slice(0, MAX_ROWS);
-    const more = favs.length ? list.length - shown.length : 0; // preferiti che non ci stanno (tra tutti: "Altri eroi")
-    // eroi consigliati a un compagno (non ancora presi): si possono scegliere, ma lo si segnala
-    const forMate = new Map((lastDuo.team ?? []).map((h, j) => (h && j !== i && !match.picked[j] ? [sid(h.id), j] : null)).filter(Boolean));
-    const why = match.enemies.length ? null : headline(top, partnersOf(i));
-    return el("article", { class: "pick glass choosing", style, "aria-label": `${p.name}: da scegliere` },
-      head, noteEl,
-      el("p", { class: "pick-ask" }, favs.length ? "Scegli tra i preferiti"
-        : profile.onlyFavorites ? `Nessun preferito${role ? ` ${ROLE_IT[role]}` : ""}: i più adatti`
-          : `I più adatti${role ? ` (${ROLE_IT[role]})` : ""} tra tutti gli eroi`),
-      el("div", { class: "fav-list" }, shown.map((id) => (id === recId
-        // il consigliato, evidenziato, con "Come giocarla" (anche prima di sceglierlo)
-        ? el("div", { class: "rec-box" },
-          favRow(i, id, {
-            rec: `Consigliato${top.estimate != null ? ` · ${est(top, i)}` : ""}`,
-            note: [favs.length && !favSet.has(id) ? "Non è tra i preferiti" : favNote(id), why].filter(Boolean).join(" · ") || null,
-          }),
-          el("button", {
-            type: "button", class: "pick-cta rec-cta", onclick: () => openGuide(i, top.hero),
-            "aria-label": `Come giocare ${top.hero.name} in questa partita`,
-          }, icon("target"), "Come giocarla", icon("chevron", "ic chev")))
-        : favRow(i, id, { note: favNote(id),
-          ...(forMate.has(id) ? { tag: { text: `per ${profile.players[forMate.get(id)].name}`, color: `var(--p${forMate.get(id)})` } } : {}) })))),
+  const mv = moveOf(i);
+  const nStars = (h) => choiceStars(i).get(sid(h.id)) ?? 3;
+  const style = `--pc: var(--p${i})`;
+  const attrs = (cls, label) => ({ class: `band${cls}`, style, "data-player": String(i), "data-has": has ? sid(has.id) : "",
+    "data-move": mv && !mv.stay ? sid(mv.hero.id) : "", "aria-label": label });
+  const doneBtn = (small) => el("button", {
+    type: "button", class: `done${small ? " sm" : ""}`, "data-id": sid(mv.hero.id), onclick: () => choose(i, sid(mv.hero.id)),
+    "aria-label": `${p.name} ${took ? `è passato a` : "ha preso"} ${mv.hero.name}`,
+  }, icon("check"), small ? null : took ? "Cambiato" : "Preso");
+  if (compact) {
+    const plus = mv?.sw ? gainTxt(mv.from, mv.row) : null;
+    return el("section", attrs(" compact", `${p.name}${has ? `, ha ${has.name}` : ", non ha ancora scelto"}`),
       el("button", {
-        type: "button", class: "fav-more",
-        onclick: () => (more || !favs.length ? openChooser(i) : choosePicker(i)),
-        "aria-label": more ? `Altri ${more} preferiti di ${p.name}` : favs.length ? `${p.name} ha preso un altro eroe: toccalo nella griglia`
-          : `Altri eroi per ${p.name}`,
-      }, icon("plus"), more ? `${more} ${more === 1 ? "altro" : "altri"}` : favs.length ? "Un altro eroe" : "Altri eroi"));
+        type: "button", class: "cmp", onclick: () => { expanded = i; renderPicks(); },
+        "aria-label": `${p.name}: ${has ? `ha ${has.name}` : "non ha ancora scelto"}${mv && !mv.stay ? `, ${mv.verb.toLowerCase()} ${mv.hero.name}` : ""}. Tocca per aprire`,
+      },
+      has ? heroFace(has) : emptyFace(role),
+      el("span", { class: "cmp-name", "aria-hidden": "true" }, p.name),
+      mv && !mv.stay ? [el("span", { class: "verb", "aria-hidden": "true" }, mv.verb), heroFace(mv.hero, "sm"),
+        el("span", { class: "nm", "aria-hidden": "true" }, mv.hero.name), plus ? el("span", { class: "plus" }, plus) : null]
+        : el("span", { class: "ok", "aria-hidden": "true" }, mv?.stay ? "✓ resta" : "")),
+      mv && !mv.stay ? doneBtn(true) : null);
   }
-
-  const sw = swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() });
-  const chosen = sid(top.hero.id);
-  const others = (favs.length ? favs : best).filter((id) => id !== chosen && !takenBy(i).has(id));
-  // stelline bianche anche sull'eroe scelto e su "Passa a" (richiesta del 2026-10-06), le stesse della lista
-  const nStars = (id) => choiceStars(i).get(id) ?? 3;
-  return el("article", { class: "pick glass took", style, "aria-label": `${p.name} ha scelto ${top.hero.name}` },
-    head, noteEl,
-    // eroe grande con alone nel colore del giocatore: un tocco → Come giocarla
-    el("button", {
-      type: "button", class: "pick-main", onclick: () => openGuide(i, top.hero),
-      "aria-label": `${p.name} ha scelto ${top.hero.name}, ${starsLabel(nStars(chosen))}`
-        + `${top.estimate == null ? "" : `, stima ${est(top, i)}`}. Tocca per come giocarla`,
-    },
-    el("span", { class: "halo" }, face(top.hero)),
-    el("span", { class: "pick-name" }, top.hero.name),
-    el("span", { class: "pick-stars", "aria-hidden": "true" }, starsTxt(nStars(chosen))),
-    // in "solo guide" la valutazione è già nelle stelline: niente pillola
-    top.estimate == null ? null : el("span", { class: "pick-est" }, est(top, i)),
-    el("span", { class: "pick-cta" }, icon("target"), "Come giocarla", icon("chevron", "ic chev"))),
-    match.enemies.length ? matchupRow(top) : null,
-    sw ? el("button", {
-      type: "button", class: "swap", onclick: () => openGuide(i, sw.hero),
-      "aria-label": `Meglio passare a ${sw.hero.name}, ${starsLabel(nStars(sid(sw.hero.id)))}: ${sw.why}. Tocca per come giocarla`,
-    }, el("span", { class: "swap-lab" }, icon("swap"), "Passa a"), el("span", { class: "swap-hero" }, face(sw.hero),
-      el("span", { class: "swap-txt" }, el("b", {}, sw.hero.name),
-        el("span", { class: "swap-stars", "aria-hidden": "true" }, starsTxt(nStars(sid(sw.hero.id))))))) : null,
-    el("div", { class: "others" },
-      el("span", { class: "others-lab" }, "Scegline un altro"),
-      el("div", { class: "alts" },
-        others.map((id) => altButton(i, id)),
-        el("button", {
-          type: "button", class: "alt alt-other", onclick: () => openChooser(i),
-          "aria-label": `Tutti i preferiti di ${p.name}`,
-        }, icon("plus")))));
-}
-
-// "Scegline un altro": restano i volti che ci stanno in una riga (il "＋" sempre); gli altri sono nel foglio
-function fitAlts(box) {
-  for (const row of $$(".others .alts", box)) {
-    const items = $$(".alt:not(.alt-other)", row);
-    for (const b of items) b.hidden = false;
-    const plus = $(".alt-other", row);
-    const room = row.clientWidth;
-    if (!room) continue;
-    const w = (b) => b.getBoundingClientRect().width + 4; // + margini
-    let used = plus ? w(plus) : 0;
-    for (const b of items) {
-      used += w(b);
-      if (used > room + 0.5) b.hidden = true;
-    }
+  const fold = compact === false && present().length >= 3
+    ? el("button", { type: "button", class: "fold", "aria-label": `Chiudi la fascia di ${p.name}`, onclick: () => { expanded = -1; renderPicks(); } }, icon("chevron", "ic up"))
+    : null;
+  if (!top) {
+    return el("section", attrs(" empty", `${p.name}: nessun eroe disponibile`),
+      el("div", { class: "has-row" }, el("div", { class: "has small" }, emptyFace(role),
+        el("span", { class: "col" }, el("span", { class: "who" }, el("b", {}, p.name)), el("span", { class: "waiting" }, "Nessun eroe disponibile"))), fold));
   }
+  const hasRow = took
+    ? el("div", { class: "has-row" },
+      el("button", {
+        type: "button", class: "has", onclick: () => openChooser(i),
+        "aria-label": `${p.name} ha scelto ${has.name}, ${starsLabel(nStars(has))}${pctShort(top) ? `, stima ${est(top, i)}` : ""}. Tocca per come giocarla, annullare o cambiarlo`,
+      },
+      heroFace(has),
+      el("span", { class: "col", "aria-hidden": "true" },
+        el("span", { class: "who" }, el("b", {}, p.name), " · ha scelto"),
+        el("span", { class: "cur" }, has.name),
+        el("span", { class: "curmeta" }, tac(nStars(has)), pctShort(top)))),
+      fold)
+    : el("div", { class: "has-row" },
+      el("button", {
+        type: "button", class: "has small", onclick: () => openChooser(i), "aria-label": `${p.name} non ha ancora scelto: tocca per scegliere l'eroe`,
+      }, emptyFace(role), el("span", { class: "col", "aria-hidden": "true" },
+        el("span", { class: "who" }, el("b", {}, p.name)), el("span", { class: "waiting" }, "non ha ancora scelto"))),
+      el("button", {
+        type: "button", class: "role-btn", "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare`,
+        onclick: () => nextRole(i),
+      }, role ? ROLE_IT[role] : "Qualsiasi"),
+      fold);
+  let moveEl = null;
+  if (mv?.stay) {
+    moveEl = el("div", { class: "move stay" }, el("div", { class: "go" }, el("span", { class: "verb" }, "Resta su"),
+      el("span", { class: "txt" }, el("span", { class: "nm" }, mv.hero.name), el("span", { class: "nums" }, tac(nStars(mv.hero))))));
+  } else if (mv) {
+    const plus = mv.sw ? gainTxt(mv.from, mv.row) : null;
+    moveEl = el("div", { class: "move" },
+      el("button", {
+        type: "button", class: "go", onclick: () => openGuide(i, mv.hero),
+        "aria-label": `${mv.verb} ${mv.hero.name}, ${starsLabel(nStars(mv.hero))}${pctShort(mv.row) ? `, stima ${est(mv.row, i)}` : ""}${plus ? `, ${plus}` : ""}. Tocca per come giocarla`,
+      },
+      el("span", { class: "verb", "aria-hidden": "true" }, mv.verb), heroFace(mv.hero),
+      el("span", { class: "txt", "aria-hidden": "true" }, el("span", { class: "nm" }, mv.hero.name),
+        el("span", { class: "nums" }, tac(nStars(mv.hero)), pctShort(mv.row) ? el("b", {}, pctShort(mv.row)) : null,
+          plus ? el("span", { class: "plus" }, plus) : null))),
+      doneBtn(false));
+  }
+  const why = whyOf(i, top, mv);
+  const note = lastDuo.notes?.[i];
+  // prima della scelta: 2 alternative (le stesse liste di sempre: preferiti con «solo preferiti», altrimenti i più adatti)
+  let alts = [];
+  if (!took) {
+    const favs = profile.onlyFavorites ? favoritesFor(i, role) : [];
+    const best = rows.map((r) => sid(r.hero.id)).filter((id) => !takenBy(i).has(id));
+    alts = (favs.length ? favs : best).filter((id) => id !== sid(top.hero.id)).slice(0, 2);
+  }
+  return el("section", attrs(took ? " took" : " choosing", `${p.name}${has ? ` ha scelto ${has.name}` : ": da scegliere"}`),
+    hasRow, moveEl,
+    note ? el("p", { class: "why warn-note" }, note) : null,
+    why ? el("p", { class: "why" }, el("span", { class: `mk ${why.kind}`, title: why.kind === "theory" ? "teoria" : "dati" }),
+      el("span", { class: "sr-only" }, why.kind === "theory" ? "Teoria: " : "Dati: "), why.text) : null,
+    alts.length ? el("div", { class: "alts" }, el("span", { class: "o", "aria-hidden": "true" }, "o"), alts.map((id) => el("button", {
+      type: "button", class: "alt", "data-id": id, onclick: () => choose(i, id),
+      "aria-label": `Oppure ${byId[id].name}, ${starsLabel(choiceStars(i).get(id) ?? 3)}. Tocca: l'ha preso ${p.name}`,
+    }, face(byId[id]), el("span", { class: "nm", "aria-hidden": "true" }, byId[id].name), tac(choiceStars(i).get(id) ?? 3)))) : null);
 }
+// per il collaudo: per ogni fascia l'eroe che ha (ritratto grande) e la mossa proposta
+window.owcBands = () => $$("#picks .band").map((b) => ({ player: Number(b.dataset.player), has: b.dataset.has || null, move: b.dataset.move || null }));
 
 function renderPicks() {
   const box = $("#picks");
@@ -854,8 +884,9 @@ function renderPicks() {
   lastDuo = compute();
   starCache = new Map();
   const act = present();
+  if (act.length < 3 || !act.includes(expanded)) expanded = -1;
   box.className = `picks n${act.length}`;
-  act.forEach((i) => box.append(pickCard(profile.players[i], i)));
+  act.forEach((i) => box.append(band(profile.players[i], i, act.length >= 3 ? i !== expanded : null)));
   // chi la foto ha lasciato fuori: si rimette in partita con un tocco
   const out = profile.players.map((p, i) => (match.away[i] ? i : -1)).filter((i) => i >= 0);
   const away = $("#away");
@@ -871,10 +902,12 @@ function renderPicks() {
         toast(`${profile.players[i].name} di nuovo in partita.${out.length ? ` Tolt${out.length > 1 ? "i" : "o"} dagli alleati: ${out.join(", ")}.` : ""}`,
           out.length ? 4500 : 2000);
       } }, el("span", { class: "p-dot", "aria-hidden": "true" }), profile.players[i].name, icon("plus")))] : null);
-  for (const t of $$(".pick-name, .fr-name", box)) fitText(t);
-  fitAlts(box);
+  fitBands();
   renderMini();
   updateMini();
+}
+function fitBands() {
+  for (const t of $$("#picks .cur, #picks .move .nm, #picks .alt .nm, #picks .cmp .nm, #picks .cmp-name")) fitText(t, { whole: true });
 }
 
 // ---------- ban consigliati (inizio partita) ----------
@@ -912,82 +945,31 @@ function ourComp() {
   for (const a of match.allies) if (byId[sid(a)]) heroes.push({ hero: byId[sid(a)], i: -1 });
   return heroes;
 }
-function renderThreats() {
-  const box = $("#threats");
-  // solo su "Avversari" e solo se c'è una squadra da confrontare (richiesta del 2026-10-06)
-  const comp = data && match.group === "enemies" ? ourComp() : [];
-  box.hidden = !comp.length;
-  if (box.hidden) return;
-  const map = currentMap();
-  const sets = presentSets();
-  const banned = new Set(match.bans.map(sid));
-  const rows = threatScores(sets, T, {
-    mapSlug: match.mapSlug, side: match.side, ours: match.picked.filter(Boolean), mates: match.allies, mode: starMode(),
-  });
-  const st = rankStars(rows, starOpts());
-  const enemies = new Set(match.enemies.map(sid));
-  $("#threats-sub").textContent = `${map ? `I più pericolosi su ${map.name}` : "I più pericolosi"}. Accanto, i vostri eroi:`
-    + " verde = li battono, rosso = li temono.";
-  fill($("#threats-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
-    el("span", { class: `br-role-lab r-${role}` }, ROLE_IT[role]),
-    el("div", { class: "br-heroes" }, rows.filter((r) => r.hero.role === role && !banned.has(sid(r.hero.id)))
-      .sort((a, b) => b.score - a.score).slice(0, THREATS_PER_ROLE).map((r) => {
-        const id = sid(r.hero.id);
-        const n = st.get(id) ?? 3;
-        const vs = comp.map((c) => ({ ...c, s: matchupSign(c.i >= 0 ? playerData(c.i) : data, T, c.hero, r.hero, { guide: guideMode() }) }))
-          .filter((c) => c.s !== 0);
-        const names = (s) => vs.filter((c) => c.s === s).map((c) => c.hero.name).join(", ");
-        return el("button", {
-          type: "button", class: `hero threat${enemies.has(id) ? " in-enemies" : ""}`, "data-id": id, "data-stars": String(n),
-          "aria-pressed": String(enemies.has(id)), onclick: () => toggleIn("enemies", id),
-          "aria-label": `${r.hero.name}, pericolo ${starsLabel(n)}${names(1) ? `; lo battono ${names(1)}` : ""}${names(-1) ? `; lo temono ${names(-1)}` : ""}. Tocca per segnarlo avversario`,
-        }, face(r.hero), el("span", { class: "stars st-enemies", "aria-hidden": "true" }, starsTxt(n)),
-        el("span", { class: `nm${heroName(r.hero).length >= 10 ? " long" : ""}` }, heroName(r.hero)),
-        vs.length ? el("span", { class: "th-ours", "aria-hidden": "true" }, vs.map((c) => el("span", { class: `th-o ${c.s > 0 ? "good" : "bad"}` }, face(c.hero)))) : null);
-      })))));
-  delete box.dataset.fitW;
-  fitNames(box);
+// minacce (tacche rosse e nome rosso dei 3 peggiori per ruolo nella griglia): forza sulla mappa dal LORO lato + quanto
+// battono la vostra squadra (eroi presi e alleati segnati)
+function threatRows() {
+  if (!starCache.has("threat")) {
+    starCache.set("threat", threatScores(presentSets(), T, {
+      mapSlug: match.mapSlug, side: match.side, ours: match.picked.filter(Boolean), mates: match.allies, mode: starMode(),
+    }));
+  }
+  return starCache.get("threat");
 }
-
-function renderBanRecs() {
-  const box = $("#ban-recs");
-  const map = currentMap();
-  // solo col selettore su "Ban" (richiesta del 2026-10-06), sotto il selettore; senza mappa sui dati generali
-  const show = !!data && match.group === "bans";
-  box.hidden = !show;
-  if (!show) return;
-  const guide = guideMode();
-  const rec = banScores(BANS_PER_ROLE);
-  // "contro i vostri eroi" solo se ce ne sono (scelti o alleati segnati)
-  const vs = ourHeroes().length ? " e contro i vostri eroi" : "";
-  const place = map ? "su questa mappa" : "in generale";
-  $(".br-sub", box).textContent = guide ? `Forti ${place} per guide e giocatori forti${vs}`
-    : profile.useTheory && T ? `Forti ${place}${vs} (statistiche e guide)` : `Forti ${place}${vs}`;
+// I 3 più pericolosi per ruolo (non bannati): solo con «Avversari» e se c'è una vostra squadra da confrontare
+function topThreats() {
+  if (match.group !== "enemies" || !ourComp().length) return new Set();
   const banned = new Set(match.bans.map(sid));
-  $("#t-ban-recs").textContent = map ? `Ban consigliati per ${map.name}` : "Ban consigliati";
-  const bst = banStars();
-  fill($("#ban-recs-list"), BAN_ROLES.map((role) => el("div", { class: "br-role" },
-    el("span", { class: `br-role-lab r-${role}` }, ROLE_IT[role]),
-    el("div", { class: "br-heroes" }, rec[role].map((r) => {
-      const id = sid(r.hero.id);
-      const on = banned.has(id);
-      const where = map ? `su ${map.name}` : "in generale";
-      const why = r.why ?? ([r.strength >= 0.003 ? `forte ${where}` : null,
-        r.beats.length ? `batte ${r.beats.map((h) => h.name).join(" e ")}` : null].filter(Boolean).join(", ") || `tra i migliori ${where}`);
-      const n = bst.get(id) ?? 3;
-      return el("button", {
-        type: "button", class: `hero${on ? " in-bans" : ""}`, "data-id": id, "data-stars": String(n), "aria-pressed": String(on), title: why,
-        "aria-label": `${on ? "Bannato" : "Banna"} ${r.hero.name}: ${why}, da bannare ${starsLabel(n)}`, onclick: () => toggleIn("bans", id),
-      }, face(r.hero), el("span", { class: "stars st-bans", "aria-hidden": "true" }, starsTxt(n)),
-      el("span", { class: `nm${heroName(r.hero).length >= 10 ? " long" : ""}` }, heroName(r.hero)));
-    })))));
-  fitBanRecs();
+  const rows = threatRows().filter((r) => !banned.has(sid(r.hero.id)));
+  return new Set(BAN_ROLES.flatMap((role) => rows.filter((r) => r.hero.role === role).sort((a, b) => b.score - a.score)
+    .slice(0, THREATS_PER_ROLE).map((r) => sid(r.hero.id))));
 }
-function fitBanRecs() {
-  const box = $("#ban-recs");
-  if (box.hidden) return;
-  delete box.dataset.fitW;
-  fitNames(box);
+// Ban consigliati (bandierina «BAN?» nella griglia): 3 per ruolo, l'elenco non cambia mentre si segnano (si vedono barrati)
+function banSuggested() {
+  if (!starCache.has("bansugg")) {
+    const rec = banScores(BANS_PER_ROLE);
+    starCache.set("bansugg", new Set(BAN_ROLES.flatMap((r) => (rec[r] ?? []).map((x) => sid(x.hero.id)))));
+  }
+  return starCache.get("bansugg");
 }
 
 // ---------- mappa e lato ----------
@@ -997,13 +979,18 @@ function currentMap() {
   return currentMapOf(match.mapSlug);
 }
 
+// testata: mappa (tocco = foglio delle mappe) con «modalità · ban …» sotto, ATT/DIF a destra (solo Scorta/Ibrida)
 function renderControls() {
   const map = currentMap();
   $("#map-btn").classList.toggle("empty", !map);
-  fill($("#map-name"), map ? [map.name, el("span", { class: "map-mode" }, ` · ${MODE_IT[map.mode] ?? map.mode}`)] : "Scegli mappa");
+  $("#map-name").textContent = map ? map.name : "Scegli mappa";
+  // riga piccola: modalità · freschezza dei dati (renderFresh), sempre in vista
+  $("#map-sub").textContent = map ? MODE_IT[map.mode] ?? map.mode : "senza mappa: dati generali";
+  $("#map-btn").setAttribute("aria-label", `Mappa: ${map ? `${map.name}, ${MODE_IT[map.mode] ?? map.mode}` : "nessuna"}. Tocca per cambiarla`);
   const side = $("#side");
   side.hidden = !hasSides(map);
   $$("button", side).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.side === match.side)));
+  fitText($("#map-name"), { whole: true });
 }
 
 function buildMapDialog(selected = match.mapSlug) {
@@ -1026,7 +1013,7 @@ function buildMapDialog(selected = match.mapSlug) {
 // ---------- ricerca (eroi e mappe) ----------
 // Senza accenti né simboli e anche per iniziali: "lucio" trova Lúcio, "soldier76" Soldier: 76, "jq" Junker Queen.
 // Cerca sia il nome inglese (quello di counterwatch) sia quello italiano del gioco, se diverso.
-const norm = (t) => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").trim();
+const norm = (t) => String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").trim();
 function searchKeys(names) {
   const keys = new Set();
   for (const n of names.filter(Boolean)) {
@@ -1038,6 +1025,7 @@ function searchKeys(names) {
   return [...keys].join("|");
 }
 function applySearch(input) {
+  if (input.id === "hero-q") { arrangeResults(); return; }
   const target = document.getElementById(input.getAttribute("aria-controls"));
   if (!target) return;
   const q = norm(input.value).replace(/\s+/g, "");
@@ -1053,6 +1041,7 @@ function applySearch(input) {
   if (none) none.hidden = shown > 0;
   const clear = input.parentElement.querySelector(".search-clear");
   if (clear) clear.hidden = !input.value;
+  if (target.closest("dialog")) { delete target.dataset.fitW; fitNames(target); }
 }
 function resetSearch(id) {
   const input = document.getElementById(id);
@@ -1076,7 +1065,113 @@ function wireSearch(id) {
   });
   // toccando un risultato la tastiera resta aperta (il campo non perde il fuoco)
   target.addEventListener("mousedown", (e) => { if (document.activeElement === input && e.target.closest("[data-q]")) e.preventDefault(); });
-  input.parentElement.querySelector(".search-clear")?.addEventListener("click", () => { input.value = ""; applySearch(input); input.focus(); });
+  const clear = input.parentElement.querySelector(".search-clear");
+  if (clear) {
+    clear.addEventListener("mousedown", (e) => { if (document.activeElement === input) e.preventDefault(); });
+    clear.addEventListener("click", () => { input.value = ""; applySearch(input); input.focus(); });
+  }
+}
+
+// Ricerca della Partita, sempre a portata (campo vero nella riga delle schede, in ogni stato): col campo attivo le fasce si
+// nascondono, in alto la barra minima, sotto selettore e posti; i risultati di TUTTI i ruoli stanno in una fascia ancorata
+// subito sopra la tastiera (visualViewport). Indietro, × o un tocco fuori la chiudono.
+let searching = false;
+const RES_MAX = 8; // 4 per riga, al massimo 2 righe
+function buildResults() {
+  const list = $("#results-list");
+  list.replaceChildren();
+  const order = (h) => ROLES.findIndex(([r]) => r === h.role);
+  const heroes = [...data.heroes].sort((a, b) => order(a) - order(b) || heroName(a).localeCompare(heroName(b)));
+  heroes.forEach((h, k) => list.append(el("button", {
+    type: "button", class: "hero res-tile", "data-id": sid(h.id), "data-q": searchKeys([h.name, heroName(h)]), "data-order": String(k), hidden: true,
+    onclick: () => { tapHero(sid(h.id)); afterSearchTap("hero-q"); },
+  }, face(h), el("span", { class: "role", "aria-hidden": "true" }, icon(ROLE_ICON[h.role])), el("span", { class: "nm" }, heroName(h)))));
+}
+function arrangeResults() {
+  const input = $("#hero-q");
+  const raw = input.value.trim();
+  const q = norm(raw).replace(/\s+/g, "");
+  const list = $("#results-list");
+  const items = $$(".hero", list);
+  const keysOf = (b) => b.dataset.q.split("|");
+  // prima chi inizia con la ricerca, poi gli altri; a parità, l'ordine della griglia
+  const hits = q ? items.filter((b) => keysOf(b).some((k) => k.includes(q)))
+    .sort((a, b) => (keysOf(a).some((k) => k.startsWith(q)) ? 0 : 1) - (keysOf(b).some((k) => k.startsWith(q)) ? 0 : 1)
+      || Number(a.dataset.order) - Number(b.dataset.order)) : [];
+  for (const b of items) b.hidden = true;
+  hits.forEach((b, k) => { list.append(b); b.hidden = k >= RES_MAX; b.classList.toggle("row-end", k % 4 === 3); });
+  const what = match.group === "picked" ? `eroe preso da ${profile.players[match.pickFor]?.name ?? ""}` : GROUP_ONE[match.group];
+  $("#results-hd").textContent = q ? `${hits.length} risultat${hits.length === 1 ? "o" : "i"} per «${raw}» in tutti i ruoli`
+    + `${hits.length > RES_MAX ? ` (i primi ${RES_MAX})` : ""} · un tocco = ${what}` : "";
+  $("#results-hd").hidden = !q || !hits.length;
+  $("[data-none=\"results\"]").hidden = !q || hits.length > 0;
+  $("#results").classList.toggle("has", !!q);
+  const clear = input.parentElement.querySelector(".search-clear");
+  if (clear) clear.hidden = !input.value;
+  paintResults();
+}
+// tacche del gruppo attivo, «INVIO» sul primo, «GIÀ SEGNATO» (un tocco lo toglie)
+function paintResults() {
+  if (!data || !searching) return;
+  const stars = gridStars();
+  const shown = $$("#results-list .hero:not([hidden])");
+  shown.forEach((b, k) => {
+    const id = b.dataset.id;
+    const on = match.group === "picked" ? pickerOf(id) === match.pickFor : inGroup(match.group, id);
+    b.classList.toggle("first", k === 0);
+    b.classList.toggle("marked", on);
+    b.className = b.className.replace(/\bg-\w+/g, "").trim() + ` g-${match.group}`;
+    b.setAttribute("aria-pressed", String(on));
+    const n = stars.get(id) ?? 3;
+    b.dataset.stars = String(n);
+    $(".tac", b)?.remove();
+    $(".on-lab", b)?.remove();
+    b.append(tac(n, `stars st-${match.group}`));
+    if (on) b.append(el("span", { class: "on-lab", "aria-hidden": "true" }, "Già segnato"));
+    b.setAttribute("aria-label", `${byId[id].name}${on ? ", già segnato: tocca per toglierlo" : ""}${k === 0 ? " (Invio)" : ""}, ${STAR_WHAT[match.group]} ${starsLabel(n)}`);
+  });
+  delete $("#results").dataset.fitW;
+  fitNames($("#results"));
+}
+// la fascia dei risultati sta subito sopra la tastiera: con adjustResize la finestra si accorcia (innerHeight), altrimenti
+// lo dice visualViewport
+function placeResults() {
+  const vv = window.visualViewport;
+  const bottom = vv ? Math.max(0, window.innerHeight - (vv.offsetTop + vv.height)) : 0;
+  $("#results").style.bottom = `${Math.round(bottom)}px`;
+}
+function openSearch() {
+  if (searching || !data) return;
+  searching = true;
+  document.body.classList.add("searching");
+  arrangeResults();
+  placeResults();
+  updateMini();
+  syncBack();
+}
+function closeSearch() {
+  if (!searching) return;
+  searching = false;
+  document.body.classList.remove("searching");
+  const input = $("#hero-q");
+  input.value = "";
+  arrangeResults();
+  if (document.activeElement === input) input.blur();
+  updateMini();
+  syncBack();
+  setTimeout(maybeReload, 0);
+}
+window.owcSearching = () => searching; // per il collaudo
+function wireHeroSearch() {
+  const input = $("#hero-q");
+  input.addEventListener("focus", openSearch);
+  // un tocco fuori (il campo perde il fuoco) chiude la ricerca; i risultati e la × non tolgono il fuoco
+  input.addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== input) closeSearch(); }, 0));
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", placeResults);
+    window.visualViewport.addEventListener("scroll", placeResults);
+  }
+  window.addEventListener("resize", placeResults);
 }
 
 // ---------- griglia eroi ----------
@@ -1095,34 +1190,38 @@ function buildHeroGrid(container, onTap) {
   }
 }
 
-// Nomi mai spezzati a metà parola: se la parola più lunga non ci sta nello spazio disponibile, il carattere si
-// rimpicciolisce quanto basta. Si misura il testo VERO sulla pagina (con il carattere del telefono e il suo
-// ingrandimento di sistema, es. 130% su Xiaomi) e si cambia solo un fattore (--fit): una dimensione in px
-// verrebbe ingrandita una seconda volta dalla WebView. Vale per la griglia, i riquadri e le alternative.
-function fitText(t) {
+// Nomi mai spezzati né tagliati: se il testo non ci sta nello spazio disponibile, il carattere si rimpicciolisce quanto
+// basta. Si misura il testo VERO sulla pagina (con il carattere del telefono e il suo ingrandimento di sistema, es. 130% su
+// Xiaomi) e si cambia solo un fattore (--fit): una dimensione in px verrebbe ingrandita una seconda volta dalla WebView.
+// whole: il nome sta su una riga sola (tessere, fasce, barra minima); altrimenti conta la parola più lunga.
+function fitText(t, { whole = false } = {}) {
   t.style.removeProperty("--fit");
   const box = t.parentElement;
   if (!box || !box.clientWidth) return;
   const cs = getComputedStyle(box);
-  const avail = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+  const own = getComputedStyle(t);
+  const avail = (whole ? t.clientWidth || box.clientWidth : box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight))
+    - (whole ? parseFloat(own.paddingLeft) + parseFloat(own.paddingRight) : 0) - 2;
+  const text = ((whole ? t.textContent : t.firstChild?.textContent) ?? "").trim();
   const probe = el("span", { class: "nm-probe", "aria-hidden": "true" });
   t.append(probe);
   let w = 0;
-  for (const word of (t.firstChild?.textContent ?? "").split(/\s+/)) {
+  for (const word of whole ? [text] : text.split(/\s+/)) {
     probe.textContent = word;
     w = Math.max(w, probe.getBoundingClientRect().width);
   }
   probe.remove();
-  if (w > avail) t.style.setProperty("--fit", String(Math.max(0.55, Math.floor((avail / w) * 100) / 100)));
+  if (w > avail && avail > 0) t.style.setProperty("--fit", String(Math.max(0.55, Math.floor((avail / w) * 100) / 100)));
 }
 window.owcFitText = fitText; // per il collaudo
 
 function fitNames(container) {
-  const nms = $$(".hero .nm", container);
+  const nms = $$(".hero .nm", container).filter((n) => n.offsetParent);
   const width = nms[0]?.parentElement.clientWidth ?? 0;
-  if (!width || container.dataset.fitW === String(width)) return;
-  container.dataset.fitW = String(width);
-  for (const nm of nms) fitText(nm);
+  const key = `${width}|${container.dataset.tab ?? ""}`;
+  if (!width || container.dataset.fitW === key) return;
+  container.dataset.fitW = key;
+  for (const nm of nms) fitText(nm, { whole: true });
 }
 
 // Regole di Overwatch 2: un ban vale per tutte e due le squadre; nella vostra squadra (eroi presi + alleati) un eroe
@@ -1158,14 +1257,15 @@ function toggleIn(g, id) {
       if (who >= 0) match.picked[who] = null;
     }
     match[g] = [...match[g], id];
+    // posti di quel ruolo pieni: la scheda passa al primo posto vuoto
+    if (g === match.group && g !== "bans" && byId[id]?.role === tab && !slotCells(g).some((c) => !c.id && c.role === tab)) tab = null;
   }
   saveMatch();
   render();
 }
 
-// Eroe scelto da un giocatore: un tocco su una riga della lista dei preferiti, su "Scegline un altro", nel foglio "＋",
-// nella guida ("Segna: X l'ha scelto") o nella griglia ("Un altro eroe"). Un eroe scelto esce dai ban e dagli alleati
-// (e da un altro giocatore), NON dagli avversari: anche loro possono averlo (mirror).
+// Eroe scelto da un giocatore (striscia della mossa, alternative, foglio di scelta, guida, griglia con «Tocca l'eroe preso
+// da X»). Un eroe scelto esce dai ban e dagli alleati (e da un altro giocatore), NON dagli avversari (mirror).
 function setPicked(i, id) {
   const who = pickerOf(id);
   if (who >= 0) match.picked[who] = null;
@@ -1183,39 +1283,39 @@ function togglePicked(i, hero) {
   toast(was ? `${profile.players[i].name}: scelta di ${hero.name} annullata` : `${profile.players[i].name} ha scelto ${hero.name} ✓`, 1800);
 }
 
-// "Altro": il prossimo tocco nella griglia è l'eroe preso da quel giocatore (poi si torna agli avversari)
+// "Un altro eroe": il prossimo tocco nella griglia è l'eroe preso da quel giocatore (poi si torna agli avversari)
 function choosePicker(i) {
   match.group = "picked";
   match.pickFor = i;
+  tab = null;
   saveMatch();
   render();
-  const top = $("#grid").getBoundingClientRect().top + window.scrollY;
-  window.scrollTo(0, Math.max(0, top - 170));
+  const top = $("#groups").parentElement.getBoundingClientRect().top + window.scrollY;
+  if (top - window.scrollY > window.innerHeight - 260) window.scrollTo(0, Math.max(0, top - 120));
 }
 
 function tapPicked(id) {
   const i = match.pickFor;
   setPicked(i, id);
   match.group = "enemies";
+  tab = null;
   saveMatch();
   render();
   toast(`${profile.players[i].name} ha scelto ${byId[id].name} ✓`, 2000);
 }
 
-// ---------- stelline (1–5) ----------
-// In tutta l'app da 1 a 5, ruolo per ruolo (rankStars), mai un eroe senza stelle. Cambiano con ogni scelta (mappa,
+// ---------- tacche (1–5) ----------
+// In tutta l'app da 1 a 5, ruolo per ruolo (rankStars), mai un eroe senza tacche. Cambiano con ogni scelta (mappa,
 // lato, ban, avversari, alleati, eroi presi) e seguono la modalità del Profilo (statistiche, + teoria, solo guide).
 // Griglia, secondo il selettore:
 //   Avversari (rosse) = quanto è pericoloso quel nemico: forte sulla mappa dal suo lato + quanto batte la vostra squadra,
 //     soprattutto i vostri eroi (threatScores); Ban (bianche) = stesso calcolo dei ban consigliati (i vostri eroi,
-//     eroi già scelti e alleati non si bannano: 1 stella); Alleati / eroe preso da un giocatore (dorate o col colore del
-//     giocatore) = quanto è una buona scelta per voi. Riquadri dei giocatori: stelline bianche, stessa "buona scelta".
+//     eroi già scelti e alleati non si bannano: 1); Alleati / eroe preso da un giocatore (azzurre o col colore del
+//     giocatore) = quanto è una buona scelta per voi. Fasce dei giocatori: tacche bianche, stessa "buona scelta".
 const STAR_WHAT = { enemies: "pericolo", bans: "da bannare", allies: "buona scelta", picked: "buona scelta" };
 const starMode = () => (guideMode() ? "guide" : profile.useTheory && T ? "blend" : "stat");
 const starOpts = (extra = {}) => ({ minSd: STAR_MIN_SD[starMode()], ...extra });
 let starCache = new Map(); // calcoli di questo giro: si svuota a ogni nuovo consiglio (renderPicks)
-// stelline dei ban (griglia e riquadro "Ban consigliati"): quanto conviene bannarlo, 1–5 dal punteggio vero (anche tra i
-// consigliati si vede chi è più urgente); eroi già scelti e alleati: 1 = non bannarlo
 function banStars() {
   if (!starCache.has("bans")) {
     const rec = banScores(999);
@@ -1229,15 +1329,13 @@ function gridStars() {
   const g = match.group;
   if (g === "bans") return banStars();
   if (g === "enemies") {
-    const sets = presentSets();
-    return rankStars(threatScores(sets, T, {
-      mapSlug: match.mapSlug, side: match.side, ours: match.picked.filter(Boolean), mates: match.allies, mode: starMode(),
-    }), starOpts());
+    if (!starCache.has("tstars")) starCache.set("tstars", rankStars(threatRows(), starOpts()));
+    return starCache.get("tstars");
   }
   return choiceStars(g === "picked" ? match.pickFor : -1);
 }
 // quanto ogni eroe (tutti, anche bannati o già presi) è una buona scelta per il giocatore i (-1 = per la squadra): gli
-// eroi GIÀ PRESI dagli altri contano come alleati (non i loro consigli). Righe di recommend() per id; usate da griglia, riquadri e foglio "＋".
+// eroi GIÀ PRESI dagli altri contano come alleati (non i loro consigli). Righe di recommend() per id.
 function choiceRows(i) {
   const key = `rows${i}`;
   if (!starCache.has(key)) {
@@ -1256,19 +1354,98 @@ function choiceStars(i) {
   return starCache.get(key);
 }
 
+// ---------- posti per ruolo e schede ----------
+// Posti: 5 celle T D D S S (coda a ruoli; alleati: quelle che restano dopo i giocatori in partita), o i 5 ban.
+const QUEUE = ["Tank", "Damage", "Damage", "Support", "Support"];
+function slotCells(g) {
+  const ids = match[g].map(sid).filter((id) => byId[id]);
+  if (g === "bans") return Array.from({ length: LIMITS.bans }, (_, k) => ({ role: null, id: ids[k] ?? null }));
+  let roles = QUEUE.slice();
+  if (g === "allies") {
+    for (const i of present()) {
+      const h = match.picked[i] ? byId[sid(match.picked[i])] : null;
+      const k = roles.indexOf(h ? h.role : match.roles[i]);
+      if (k >= 0) roles.splice(k, 1); else roles.pop();
+    }
+    roles = roles.slice(0, limitOf("allies"));
+  }
+  const cells = roles.map((role) => ({ role, id: null }));
+  const rest = [];
+  for (const id of ids) {
+    const c = cells.find((x) => !x.id && x.role === byId[id].role);
+    if (c) c.id = id; else rest.push(id);
+  }
+  for (const id of rest) { const c = cells.find((x) => !x.id); if (c) c.id = id; }
+  return cells;
+}
+let tab = null; // scheda di ruolo aperta nella griglia (null = quella del primo posto vuoto)
+function defaultTab() {
+  const g = match.group;
+  if (g === "picked") {
+    const h = match.picked[match.pickFor] ? byId[sid(match.picked[match.pickFor])] : null;
+    return h ? h.role : match.roles[match.pickFor] || "Damage";
+  }
+  if (g === "bans") return "Tank";
+  return slotCells(g).find((c) => !c.id)?.role ?? "Tank";
+}
+function setTab(role) {
+  tab = role;
+  renderTabs();
+  renderGrid();
+}
+function renderSlots() {
+  const box = $("#slots");
+  const g = match.group;
+  box.hidden = g === "picked";
+  if (box.hidden) return;
+  const cells = slotCells(g);
+  const first = cells.findIndex((c) => !c.id);
+  box.className = `slots g-${g}`;
+  box.style.gridTemplateColumns = `repeat(${Math.max(cells.length, 1)}, minmax(0, 1fr))`;
+  fill(box, cells.map((c, k) => (c.id
+    ? el("button", { type: "button", class: `slot full g-${g}`, "data-id": c.id, "aria-label": `Togli ${byId[c.id].name}`, onclick: () => tapHero(c.id) },
+      face(byId[c.id]), el("span", { class: "nm" }, heroName(byId[c.id])))
+    : g === "bans"
+      ? el("span", { class: `slot empty ban${k === first ? " target" : ""}` }, `Ban ${k + 1}`)
+      : el("button", {
+        type: "button", class: `slot empty${k === first ? " target" : ""}`, "data-role": c.role,
+        "aria-label": `Posto libero (${ROLE_IT[c.role]}): tocca per la scheda ${ROLE_IT[c.role]}`, onclick: () => setTab(c.role),
+      }, icon(ROLE_ICON[c.role])))));
+  for (const t of $$(".nm", box)) fitText(t, { whole: true });
+}
+function renderTabs() {
+  if (!tab) tab = defaultTab();
+  const g = match.group;
+  const cells = g === "enemies" || g === "allies" ? slotCells(g) : null;
+  fill($("#role-tabs"), ROLES.map(([r, label]) => {
+    const quota = cells ? cells.filter((c) => c.role === r).length : 0;
+    const got = cells ? match[g].filter((x) => byId[sid(x)]?.role === r).length : 0;
+    return el("button", {
+      type: "button", class: `tab${r === tab ? " on" : ""}`, "data-tab": r, "aria-pressed": String(r === tab),
+      "aria-label": `${label}${cells ? `: ${got} su ${quota}` : ""}`, onclick: () => setTab(r),
+    }, r === "Support" ? "Supp." : label, cells && (quota || got) ? el("small", {}, `${got}/${quota}`) : null);
+  }));
+}
+
 function renderGrid() {
   // eroi già ufficiali ma non ancora su counterwatch (es. Doctrine, Stagione 5): arrivano con i loro dati
   const soon = data?.officialOnly ?? [];
   $("#grid-note").hidden = !soon.length;
   $("#grid-note").textContent = soon.length ? `${soon.join(", ")}: ${soon.length > 1 ? "nuovi, compariranno" : "nuovo, comparirà"} `
     + "qui quando counterwatch avrà le statistiche." : "";
+  if (!tab) tab = defaultTab();
   const recs = (lastDuo?.lists ?? []).map((rows) => (rows[0] && !rows[0].picked ? sid(rows[0].hero.id) : null));
   const favs = new Set(present().flatMap((i) => profile.players[i].favorites.map(sid)));
   const stars = gridStars();
+  const g = match.group;
+  const sugg = g === "bans" ? banSuggested() : new Set();
+  const top3 = topThreats();
   const grid = $("#grid");
-  grid.dataset.stars = match.group;
-  if (match.group === "picked") grid.style.setProperty("--sc", `var(--p${match.pickFor})`);
+  grid.dataset.stars = g;
+  grid.dataset.tab = tab;
+  if (g === "picked") grid.style.setProperty("--sc", `var(--p${match.pickFor})`);
   else grid.style.removeProperty("--sc");
+  for (const b of $$("[data-block]", grid)) b.hidden = b.dataset.block !== tab;
   for (const b of $$("#grid .hero")) {
     const id = b.dataset.id;
     const gs = groupsOf(id);
@@ -1281,62 +1458,53 @@ function renderGrid() {
     b.classList.toggle("fav", favs.has(id));
     b.classList.toggle("took", took >= 0);
     b.classList.toggle("rec", rec >= 0);
+    b.classList.toggle("sugg", sugg.has(id));
+    b.classList.toggle("top3", top3.has(id));
     if (who >= 0) b.style.setProperty("--pc", `var(--p${who})`);
     else b.style.removeProperty("--pc");
-    const pressed = match.group === "picked" ? took === match.pickFor : gs.includes(match.group);
+    const pressed = g === "picked" ? took === match.pickFor : gs.includes(g);
     b.setAttribute("aria-pressed", String(pressed));
     const whoName = who >= 0 ? profile.players[who].name : "";
     const n = stars.get(id) ?? 3;
-    b.setAttribute("aria-label", `${byId[id].name}${gs.map((g) => `, ${GROUP_ONE[g]}`).join("")}` +
+    b.setAttribute("aria-label", `${byId[id].name}${gs.map((x) => `, ${GROUP_ONE[x]}`).join("")}` +
       `${took >= 0 ? `, preso da ${whoName}` : rec >= 0 ? `, consigliato a ${whoName}` : ""}` +
-      `, ${STAR_WHAT[match.group]} ${starsLabel(n)}`);
-    let st = $(".stars", b);
-    if (!st) {
-      st = el("span", { class: "stars", "aria-hidden": "true" });
-      b.append(st);
-    }
-    st.className = `stars st-${match.group}`;
-    st.textContent = "★".repeat(n);
-    st.hidden = !n;
+      `${sugg.has(id) ? ", ban consigliato" : ""}${top3.has(id) ? ", tra i più pericolosi" : ""}` +
+      `, ${STAR_WHAT[g]} ${starsLabel(n)}`);
+    $(".stars", b)?.remove();
+    b.append(tac(n, `stars st-${g}`));
     b.dataset.stars = String(n);
     $(".tag", b)?.remove();
-    if (who >= 0) {
-      b.append(el("span", { class: `tag${took >= 0 ? " tag-took" : ""}`, "aria-hidden": "true" },
-        `${initials(whoName).slice(0, 1)}${took >= 0 ? "✓" : ""}`));
-    }
+    if (took >= 0) b.append(el("span", { class: "tag tag-took", "aria-hidden": "true" }, `${initials(whoName).slice(0, 1)}✓`));
   }
+  // legenda: solo dove le tacche dicono qualcosa di nuovo (Ban, Avversari con una vostra squadra)
+  const leg = $("#legend");
+  leg.hidden = !(g === "bans" || (g === "enemies" && top3.size));
+  fill(leg, g === "bans" ? [tac(5, "st-bans"), el("b", {}, " quanto conviene bannarlo"), " · ", el("span", { class: "ow" }, "BAN?"), " = consigliato"]
+    : g === "enemies" && top3.size ? [tac(5, "st-enemies"), el("b", {}, " quanto è pericoloso"), " · ", el("span", { class: "red" }, "nome rosso"), " = i 3 peggiori"] : null);
+  fitNames(grid);
+  paintResults();
 }
 
 function renderGroups() {
   for (const b of $$("#groups button")) {
     const g = b.dataset.group;
     b.setAttribute("aria-pressed", String(g === match.group));
-    $(`[data-count="${g}"]`).textContent = match[g].length;
+    $(`[data-count="${g}"]`).textContent = `${match[g].length}/${limitOf(g)}`;
     if (g === "allies") b.hidden = !limitOf("allies");
   }
+  $("#groups").className = `mode g-${match.group}`;
+  for (const t of $$("#groups .lab")) fitText(t, { whole: true });
   // mentre si segna l'eroe preso da un giocatore, al posto del selettore c'è un avviso col suo colore
   const picking = match.group === "picked";
   $("#groups").hidden = picking;
   const banner = $("#pick-banner");
   banner.hidden = !picking;
-  const box = $("#chosen");
-  box.replaceChildren();
-  box.hidden = picking;
   if (picking) {
     banner.style.setProperty("--pc", `var(--p${match.pickFor})`);
-    $("#pick-banner-txt").textContent = `Tocca l'eroe preso da ${profile.players[match.pickFor].name}`;
-    return;
+    fill($("#pick-banner-txt"), "Tocca l'eroe preso da ", el("b", {}, profile.players[match.pickFor].name));
   }
-  const ids = match[match.group];
-  if (!ids.length) {
-    box.append(el("span", { class: "hint" }, GROUP_HINT[match.group]));
-    return;
-  }
-  for (const id of ids) {
-    const h = byId[sid(id)];
-    box.append(el("button", { type: "button", class: `chip ${match.group}`, "aria-label": `Togli ${h.name}`, onclick: () => tapHero(sid(id)) },
-      face(h), h.name, icon("xmark", "ic chip-x")));
-  }
+  renderSlots();
+  renderTabs();
 }
 
 // ---------- profilo ----------
@@ -1555,16 +1723,14 @@ function render({ keepProfile = false } = {}) {
   if (gridStale || !$("#grid .hero")) {
     gridStale = false;
     buildHeroGrid($("#grid"), (id) => { tapHero(id); afterSearchTap("hero-q"); });
+    buildResults();
     applySearch($("#hero-q"));
   }
   renderControls();
   starCache = new Map(); // stelline ricalcolate a ogni giro (anche quelle del riquadro dei ban)
   renderPicks();
-  renderBanRecs();
-  renderThreats();
   renderGroups();
   renderGrid();
-  fitNames($("#grid"));
   if (!$("#view-profile").hidden && !keepProfile) renderProfile();
 }
 
@@ -1577,15 +1743,17 @@ function showView(name) {
   syncBack();
   window.scrollTo(0, 0);
   // i nomi si misurano solo a vista (nascosti hanno larghezza 0)
-  if (name === "match" && data) { renderPicks(); fitNames($("#grid")); fitBanRecs(); }
+  if (name !== "match") closeSearch();
+  if (name === "match" && data) { renderPicks(); renderControls(); renderSlots(); delete $("#grid").dataset.fitW; fitNames($("#grid")); }
 }
 
 function wire() {
   fillIcons(document);
   for (const id of ["hero-q", "fav-q", "map-q", "photo-q"]) wireSearch(id);
+  wireHeroSearch();
   wirePhoto();
   $$(".tabs [data-view]").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
-  $$("#groups button").forEach((b) => b.addEventListener("click", () => { match.group = b.dataset.group; saveMatch(); render(); }));
+  $$("#groups button").forEach((b) => b.addEventListener("click", () => { match.group = b.dataset.group; tab = null; saveMatch(); render(); }));
   $$("#side button").forEach((b) => b.addEventListener("click", () => {
     match.side = match.side === b.dataset.side ? null : b.dataset.side;
     saveMatch(); render();
@@ -1614,16 +1782,18 @@ function wire() {
   $("#new-match").addEventListener("click", () => {
     const before = JSON.stringify(match);
     match = { ...emptyMatch(), away: match.away.slice() }; // chi gioca non cambia (lo decide la prossima foto)
+    tab = null;
+    expanded = -1;
     fitMatch();
     saveMatch();
     showView("match");
     render();
     toast("Nuova partita: scegli mappa e ban.", 6000, {
       label: "Annulla",
-      run: undoable(() => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); }),
+      run: undoable(() => { match = JSON.parse(before); tab = null; fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); }),
     });
   });
-  $("#pick-cancel").addEventListener("click", () => { match.group = "enemies"; saveMatch(); render(); });
+  $("#pick-cancel").addEventListener("click", () => { match.group = "enemies"; tab = null; saveMatch(); render(); });
   $("#refresh").addEventListener("click", refresh);
   $("#token-save").addEventListener("click", () => {
     const v = $("#token").value.trim();
@@ -1898,16 +2068,16 @@ function renderPhoto() {
       : ph.mapKept ? "Non letta nella foto: resta quella scelta prima (tocca per cambiarla)"
         : "Mappa non riconosciuta: sceglila tu, oppure conferma senza";
   const noteEl = () => el("p", { id: "ph-map-note", class: `ph-note ${ph.mapRead || (ph.mapChosen && map) ? "n-ok" : "n-warn"}` }, mapNote);
-  const sideSeg = (cls) => el("div", { class: `seg side glass ph-side ${cls}`, role: "group", "aria-label": "Lato" },
+  const sideSeg = (cls) => el("div", { class: `seg ph-side ${cls}`, role: "group", "aria-label": "Lato" },
     [["attack", "Attacco"], ["defense", "Difesa"]].map(([k, label]) => el("button", {
-      type: "button", "data-side": k, "aria-pressed": String(ph.side === k),
+      type: "button", "data-side": k, "aria-pressed": String(ph.side === k), "aria-label": label,
       onclick: () => { ph.side = ph.side === k ? null : k; ph.sideRead = false; renderPhoto(); },
-    }, label)));
+    }, cls === "sb-side" ? (k === "attack" ? "ATT" : "DIF") : label)));
   if (ph.view !== "edit") { renderSummary(body, map, sides, noteEl, sideSeg); return; }
   const head = el("div", { class: "ph-head" },
     el("button", { type: "button", class: "ph-thumb-btn", "aria-label": "Ingrandisci la foto", onclick: () => head.classList.toggle("big") }, thumb),
     el("div", { class: "ph-head-main" },
-      el("button", { type: "button", id: "ph-map", class: `map-btn glass ph-map${map ? "" : " empty"}`, "aria-haspopup": "dialog", onclick: openPhotoMap },
+      el("button", { type: "button", id: "ph-map", class: `map-btn ph-map${map ? "" : " empty"}`, "aria-haspopup": "dialog", onclick: openPhotoMap },
         el("span", { class: "map-label" }, "Mappa: "),
         el("span", { class: "map-name" }, map ? [map.name, el("span", { class: "map-mode" }, ` · ${MODE_IT[map.mode] ?? map.mode}`)] : "Nessuna mappa"),
         el("span", { class: "ic-slot chev" }, icon("chevron"))),
@@ -1976,12 +2146,59 @@ function renderSummary(body, map, sides, noteEl, sideSeg) {
     el("div", { class: "sb-vs", "aria-hidden": "true" }, el("span", {}, "VS")),
     sbTeam("enemies"),
     notes.length ? el("p", { class: "sb-note" }, notes.join(" ")) : null, // un solo paragrafo: tutto resta in vista
+    ifConfirmed(),
     el("div", { class: "ph-actions sticky sb-actions" },
       el("button", { type: "button", id: "ph-retake", class: "btn sb-icon", "aria-label": "Scatta di nuovo", onclick: takePhoto }, icon("camera")),
       el("button", { type: "button", id: "ph-edit", class: "btn", onclick: () => { ph.view = "edit"; renderPhoto(); $("#photo-dialog").scrollTop = 0; } }, "Modifica"),
       el("button", { type: "button", id: "ph-confirm", class: "btn primary", onclick: confirmPhoto }, icon("check"), "Conferma")));
   for (const t of $$(".sb-hero", body)) fitText(t);
 }
+// «Se confermi»: cosa direbbero le fasce dopo la conferma (ritratto di chi HA → mossa in arancione). Calcolato con
+// compute() su una copia provvisoria della partita (applyPhoto su un clone), senza toccare quella vera.
+function photoPlan() {
+  const map = data.maps.find((m) => m.slug === ph.mapSlug) ?? null;
+  const saved = match;
+  try {
+    match = applyPhoto(JSON.parse(JSON.stringify(saved)), {
+      mapSlug: ph.mapSlug, side: ph.side, sides: hasSides(map),
+      ours: ph.ours.map((r) => ({ heroId: r.heroId, owner: r.owner })),
+      enemies: ph.enemies.map((r) => ({ heroId: r.heroId })),
+      bans: ph.bans.map((r) => ({ heroId: r.heroId })),
+    }, { players: profile.players.length }).match;
+    match.missing = null;
+    fitMatch();
+    const res = compute();
+    return present().map((i) => {
+      const rows = res.lists[i] ?? [];
+      const top = rows[0];
+      if (!top) return { i, has: null, role: match.roles[i] };
+      if (!top.picked) return { i, has: null, role: match.roles[i], verb: "prendi", hero: top.hero, row: top };
+      const sw = swapAdvice(playerData(i), T, { hero: top.hero, rows, enemies: match.enemies, guide: guideMode() });
+      const to = sw ? rows.find((r) => sid(r.hero.id) === sid(sw.hero.id)) : null;
+      return { i, has: top.hero, hasRow: top, role: top.hero.role, verb: sw ? "passa a" : null, hero: sw ? sw.hero : null, row: to, plus: sw ? gainTxt(top, to) : null };
+    });
+  } catch (e) {
+    console.warn("anteprima della foto", e);
+    return [];
+  } finally {
+    match = saved;
+  }
+}
+window.owcPhotoPlan = () => (ph && ph.state === "result" ? photoPlan().map((x) => ({ player: x.i, has: x.has ? sid(x.has.id) : null, move: x.hero ? sid(x.hero.id) : null })) : null);
+function ifConfirmed() {
+  const plan = photoPlan();
+  if (!plan.length) return null;
+  return el("section", { class: "sc", "aria-label": "Se confermi" }, el("h3", { class: "sc-h" }, "Se confermi"),
+    plan.map((x) => el("div", { class: "sc-row", style: `--pc: var(--p${x.i})`, "data-player": String(x.i) },
+      el("b", { class: "sc-name" }, profile.players[x.i].name),
+      x.has ? heroFace(x.has) : emptyFace(x.role),
+      x.has && pctShort(x.hasRow) ? el("span", { class: "sc-pct" }, pctShort(x.hasRow)) : null,
+      el("span", { class: "ar", "aria-hidden": "true" }, "→"),
+      x.hero ? [el("span", { class: "verb" }, x.verb), heroFace(x.hero), el("b", { class: "sc-hero" }, x.hero.name),
+        x.plus ? el("span", { class: "plus" }, x.plus) : !x.has && pctShort(x.row) ? el("span", { class: "sc-pct" }, pctShort(x.row)) : null]
+        : el("span", { class: "verb stay" }, x.has ? "resta" : "nessun consiglio"))));
+}
+
 function sbTeam(key) {
   const ours = key === "ours";
   return el("section", { class: `sb-team ${ours ? "sb-ours" : "sb-enemies"}`, "aria-label": ours ? "La vostra squadra" : "Avversari" },
@@ -2151,6 +2368,7 @@ function confirmPhoto() {
   match = next;
   match.missing = null; // la foto dice com'è la partita adesso: niente da rimettere di quella di prima
   if (match.group === "picked") match.group = "enemies";
+  tab = null;
   fitMatch();
   saveMatch();
   $("#photo-dialog").close();
@@ -2201,7 +2419,7 @@ let backDepth = 0; // passi aggiunti alla cronologia
 let ownBack = false; // history.go chiamato dall'app (non dall'utente)
 const dialogOrder = []; // fogli aperti, l'ultimo in cima
 function wantedDepth() {
-  return dialogOrder.length + ($("#view-profile").hidden ? 0 : 1) + (match.group === "picked" ? 1 : 0);
+  return dialogOrder.length + ($("#view-profile").hidden ? 0 : 1) + (match.group === "picked" ? 1 : 0) + (searching ? 1 : 0);
 }
 // history.go è asincrono: un pushState fatto prima che arrivi si perderebbe nel salto (visto dopo un ricaricamento con
 // Profilo e "Tocca l'eroe preso da…" aperti: un livello senza il suo passo, e "indietro" chiudeva l'app). Finché il salto
@@ -2239,7 +2457,8 @@ function wireBack() {
     backDepth = Math.max(0, backDepth - 1);
     const top = dialogOrder[dialogOrder.length - 1];
     if (top) top.close();
-    else if (match.group === "picked") { match.group = "enemies"; saveMatch(); render(); }
+    else if (searching) closeSearch();
+    else if (match.group === "picked") { match.group = "enemies"; tab = null; saveMatch(); render(); }
     else if (!$("#view-profile").hidden) showView("match");
   });
 }
@@ -2293,7 +2512,7 @@ let reloadWanted = false;
 let reloading = false;
 const typing = () => {
   const a = document.activeElement;
-  return (!!a && ["INPUT", "SELECT", "TEXTAREA"].includes(a.tagName) && a.type !== "file") || profileBusy();
+  return (!!a && ["INPUT", "SELECT", "TEXTAREA"].includes(a.tagName) && a.type !== "file") || profileBusy() || searching;
 };
 const photoPending = () => !!photoAbort || $("#photo-dialog").open;
 function reloadSafe() {
@@ -2334,9 +2553,12 @@ async function start() {
     if (!data || $("#view-match").hidden) return;
     delete $("#grid").dataset.fitW;
     fitNames($("#grid"));
-    for (const t of $$("#picks .pick-name, #picks .fr-name")) fitText(t);
-    fitAlts($("#picks"));
-    fitBanRecs();
+    fitBands();
+    renderMini();
+    renderControls();
+    for (const t of $$("#slots .nm, #groups .lab")) fitText(t, { whole: true });
+    delete $("#results").dataset.fitW;
+    fitNames($("#results"));
   };
   window.addEventListener("resize", refit);
   if (document.fonts?.ready) document.fonts.ready.then(refit);
