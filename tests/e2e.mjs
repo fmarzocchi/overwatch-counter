@@ -1775,6 +1775,310 @@ try {
     lastPage = page;
   }
 
+  // ---------- revisione del 2026-11-25: tocchi persi, versione nuova, ban della foto, indietro, stato vecchio, … ----------
+  {
+    const P2 = [{ name: "Fabio", nick: "FABIO", rank: "", roles: ["Damage"], favorites: [] },
+      { name: "Giulia", nick: "Giuly", rank: "", roles: ["Support"], favorites: [] }];
+    // profilo (e partita) salvati solo al primo caricamento: i ricaricamenti del collaudo li tengono
+    const seed = (prof, m = null, key = "sk-ant-x") => ({ fn: ([p, mm, k]) => {
+      if (sessionStorage.getItem("seed")) return;
+      sessionStorage.setItem("seed", "1");
+      localStorage.setItem("owc.profile", JSON.stringify(Array.isArray(p) ? { players: p } : p));
+      if (mm) localStorage.setItem("owc.match", JSON.stringify(mm));
+      if (k) localStorage.setItem("owc.claudeKey", JSON.stringify(k));
+    }, arg: [prof, m, key] });
+    const open = async (opts, s) => { const r = await newPage(opts); if (s) await r.page.addInitScript(s.fn, s.arg); return r; };
+    const nameOf = (x) => (x ? itn(data.heroes.find((h) => String(h.id) === String(x)).name) : null);
+    const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "POST, OPTIONS" };
+    const okResp = (obj) => ({ id: "m", type: "message", role: "assistant", stop_reason: "end_turn",
+      content: [{ type: "text", text: JSON.stringify(obj) }], usage: { input_tokens: 1, output_tokens: 1 } });
+    const slot = (nickname, role, hero) => ({ nickname, role, hero, sure: true, alternatives: [], dead: false });
+    const mockClaude = (cx, read, delay = 0) => cx.route("https://api.anthropic.com/**", async (r) => {
+      if (r.request().method() === "OPTIONS") { await r.fulfill({ status: 204, headers: CORS }); return; }
+      if (delay) await new Promise((res) => setTimeout(res, delay));
+      await r.fulfill({ status: 200, headers: { ...CORS, "content-type": "application/json" }, body: JSON.stringify(okResp(read)) }).catch(() => {});
+    });
+    const sendPhoto = async (pg) => {
+      const fc = pg.waitForEvent("filechooser");
+      await pg.click("#photo-btn");
+      await (await fc).setFiles({ name: "t.png", mimeType: "image/png", buffer: await pg.screenshot() });
+    };
+    const readNoBans = { scoreboard: true, map: "King's Row", side: "attack", bans: [],
+      allies: [slot("FABIO", "Damage", "Cassidy"), slot("Giuly", "Support", "Ana")], enemies: [slot("x", "Tank", "Reinhardt")] };
+
+    // 1. primo tocco dopo 30 minuti con dati nuovi in arrivo: il tocco vale, i dati si vedono dopo
+    {
+      const { ctx: cx, page: pg } = await open({ hasTouch: false, isMobile: false, serviceWorkers: "block" }, seed(P2));
+      let n = 0;
+      await cx.route("**/data.json*", (r) => { n++; return r.fulfill({ json: n > 1
+        ? { ...data, checked: new Date().toISOString(), heroes: data.heroes.map((h) => (h.name === "Ana" ? { ...h, name: "Ana Amari" } : h)) }
+        : data }); });
+      await pg.clock.install();
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor();
+      await pg.clock.runFor(31 * 60e3);
+      const row = pg.locator(".pick").first().locator(".fav-row").nth(1);
+      const want = await row.getAttribute("data-id");
+      const b = await row.boundingBox();
+      await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+      await pg.mouse.down();
+      await new Promise((r) => setTimeout(r, 60)); // i dati nuovi arrivano mentre il dito è giù
+      await pg.mouse.up();
+      await pg.waitForFunction(() => [...document.querySelectorAll("#grid .hero .nm")].some((x) => x.textContent === "Ana Amari"), null, { timeout: 5000 });
+      const m = await matchState(pg);
+      check("primo tocco dopo 30 minuti con dati nuovi in arrivo: la scelta vale (prima il tocco si perdeva)",
+        n === 2 && m.picked[0] === want, `richieste ${n}, scelto ${nameOf(m.picked[0])} invece di ${nameOf(want)}`);
+      check("… e i dati nuovi arrivano a tocco finito, senza coprire il messaggio con «Annulla»",
+        /Annulla/.test(await text(pg, "#toast")), await text(pg, "#toast"));
+      // Profilo: un campo in cui si scrive non viene ricostruito (prima chiave e token sparivano)
+      await pg.click('.tabs [data-view="profile"]');
+      n = 1; // il prossimo data.json è di nuovo "nuovo"
+      await pg.clock.runFor(31 * 60e3);
+      await pg.locator("#claude-key").click();
+      await pg.keyboard.type("sk-ant-NUOVA");
+      await pg.waitForTimeout(1200);
+      check("Profilo: dati nuovi mentre si scrive la chiave → testo e tastiera restano",
+        await pg.locator("#claude-key").inputValue() === "sk-ant-NUOVA" && await pg.evaluate(() => document.activeElement?.id) === "claude-key"
+        && n === 2, `${await pg.locator("#claude-key").inputValue()} ${n}`);
+      await cx.close();
+    }
+
+    // 2. versione nuova dell'app: si ricarica solo quando si può (mai durante la lettura della foto o col foglio aperto)
+    {
+      const { ctx: cx, page: pg } = await open({ serviceWorkers: "allow" }, seed(P2));
+      await mockClaude(cx, readNoBans, 2500);
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor();
+      await pg.evaluate(() => navigator.serviceWorker.ready);
+      await pg.reload();
+      await pg.locator(CARD).first().waitFor();
+      const swPath = path.join(SITE, "sw.js");
+      const swOrig = readFileSync(swPath, "utf8");
+      const bump = (v) => writeFileSync(swPath, swOrig.replace(/const VERSION = "[^"]+"/, `const VERSION = "${v}"`));
+      const mark = () => pg.evaluate(() => { window.__owcMark = 1; });
+      const alive = () => pg.evaluate(() => window.__owcMark === 1).catch(() => false);
+      await mark();
+      bump("collaudo-1");
+      await sendPhoto(pg);
+      await pg.locator("#photo-dialog[open] .ph-spin").waitFor();
+      await pg.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
+      await pg.waitForTimeout(1200);
+      const during = await alive();
+      await pg.locator("#ph-confirm").waitFor();
+      const sheet = await alive();
+      await pg.click("#ph-confirm");
+      await pg.waitForTimeout(500);
+      const withUndo = await alive();
+      check("versione nuova durante la foto: niente ricarica né con la lettura in corso, né col foglio, né con «Annulla» in vista",
+        during && sheet && withUndo, `${during} ${sheet} ${withUndo}`);
+      await pg.waitForFunction(() => window.__owcMark !== 1, null, { timeout: 12000 }).catch(() => {});
+      check("… e appena tutto è chiuso la versione nuova prende il posto (ricarica)", !(await alive()));
+      await pg.locator(CARD).first().waitFor();
+      await mark();
+      bump("collaudo-2");
+      await pg.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
+      await pg.waitForFunction(() => window.__owcMark !== 1, null, { timeout: 8000 }).catch(() => {});
+      check("versione nuova con l'app ferma sulla partita: ricarica subito", !(await alive()));
+      writeFileSync(swPath, swOrig);
+      await cx.close();
+    }
+
+    // 3. ban nel foglio della foto: il foglio è l'unica fonte (anche vuoto), 5 ban di prima → 5 riquadri e «5/5»
+    {
+      const five = ["Widowmaker", "Zarya", "Hanzo", "Sojourn", "Mercy"].map((nm) => heroId(nm));
+      const m0 = { roles: ["Damage", "Support"], picked: [null, null], pickFor: 0, mapSlug: null, side: null, bans: five, enemies: [], allies: [], group: "enemies" };
+      const { ctx: cx, page: pg } = await open({ serviceWorkers: "block" }, seed(P2, m0));
+      let read = readNoBans;
+      await cx.route("https://api.anthropic.com/**", async (r) => {
+        if (r.request().method() === "OPTIONS") { await r.fulfill({ status: 204, headers: CORS }); return; }
+        await r.fulfill({ status: 200, headers: { ...CORS, "content-type": "application/json" }, body: JSON.stringify(okResp(read)) });
+      });
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor();
+      await sendPhoto(pg);
+      await pg.locator("#ph-confirm").waitFor();
+      await pg.click("#ph-edit");
+      check("foto senza ban, 5 già segnati: 5 riquadri e contatore «5/5» (prima «5/4»)",
+        await pg.locator(".ph-ban.has").count() === 5 && (await text(pg, ".ph-bans .ph-count")) === "5/5", await text(pg, ".ph-bans .ph-count"));
+      for (let k = 0; k < 5; k++) { await pg.locator(".ph-ban.has").first().click(); await pg.click("#photo-none"); }
+      await pg.click("#ph-confirm");
+      check("ban tolti tutti nel foglio → nessun ban nella partita (prima tornavano quelli vecchi)", (await matchState(pg)).bans.length === 0,
+        JSON.stringify((await matchState(pg)).bans.map(nameOf)));
+      // ban letti dalla foto, tolti nel foglio: non tornano quelli della partita di prima
+      await pg.evaluate((b) => { const m = JSON.parse(localStorage.getItem("owc.match")); m.bans = b; localStorage.setItem("owc.match", JSON.stringify(m)); }, [heroId("Hanzo")]);
+      await pg.reload();
+      await pg.locator(CARD).first().waitFor();
+      read = { ...readNoBans, bans: [{ hero: "Tracer", sure: true, alternatives: [] }, { hero: "Sojourn", sure: true, alternatives: [] }] };
+      await sendPhoto(pg);
+      await pg.locator("#ph-confirm").waitFor();
+      await pg.click("#ph-edit");
+      for (let k = 0; k < 2; k++) { await pg.locator(".ph-ban.has").first().click(); await pg.click("#photo-none"); }
+      await pg.click("#ph-confirm");
+      check("ban letti e poi tolti nel foglio → nessun ban (prima tornava Hanzo)", (await matchState(pg)).bans.length === 0,
+        JSON.stringify((await matchState(pg)).bans.map(nameOf)));
+      await shot(pg, "20a-ban-foglio");
+      await cx.close();
+    }
+
+    // 4. indietro dopo una ricarica con Profilo e "Tocca l'eroe preso da…" aperti: un livello per passo, poi si esce
+    {
+      const { ctx: cx, page: pg } = await open({ serviceWorkers: "block" }, seed(P2));
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor();
+      await pickFromGrid(pg, 0);
+      await pg.click('.tabs [data-view="profile"]');
+      await pg.locator("#players .btn", { hasText: "Scegli preferiti" }).first().click();
+      await pg.reload();
+      await pg.locator("#view-profile:not([hidden])").waitFor();
+      await pg.waitForTimeout(400);
+      const layers = () => pg.evaluate(() => ({ owc: history.state?.owc, profile: !document.querySelector("#view-profile").hidden,
+        picking: JSON.parse(localStorage.getItem("owc.match")).group === "picked" }));
+      const l0 = await layers();
+      await pg.goBack();
+      await pg.waitForTimeout(300);
+      const l1 = await layers();
+      await pg.goBack();
+      await pg.waitForTimeout(300);
+      const l2 = pg.url().startsWith(BASE) ? await layers() : null;
+      check("indietro dopo una ricarica: prima la scelta dalla griglia, poi il Profilo, l'app resta aperta (prima si chiudeva)",
+        l0.owc === 2 && l0.profile && l0.picking && l1.owc === 1 && l1.profile && !l1.picking && l2 && l2.owc === 0 && !l2.profile,
+        JSON.stringify([l0, l1, l2]));
+      await cx.close();
+    }
+
+    // 5. stato salvato da versioni vecchie o rovinato: l'app parte lo stesso, i dati buoni restano
+    for (const [label, prof, m] of [
+      ["partita senza ban (formato vecchio)", P2, { mapSlug: "kings-row", enemies: [heroId("Tracer")], allies: [], role: "Damage" }],
+      ["giocatore senza preferiti", [{ name: "Io", rank: "", roles: ["Damage"] }], null],
+      ["giocatore col ruolo singolo di una volta", [{ name: "Io", rank: "Oro", role: "Tank", favorites: [heroId("Winston")] }], null],
+      ["valori rovinati", { players: "x" }, "rotto"],
+    ]) {
+      const { ctx: cx, page: pg } = await newPage({ serviceWorkers: "block" });
+      const errs = [];
+      pg.on("pageerror", (e) => errs.push(String(e)));
+      await pg.addInitScript(([p, mm]) => {
+        if (sessionStorage.getItem("seed")) return;
+        sessionStorage.setItem("seed", "1");
+        localStorage.setItem("owc.profile", JSON.stringify(Array.isArray(p) ? { players: p } : p));
+        if (mm) localStorage.setItem("owc.match", JSON.stringify(mm));
+      }, [prof, m]);
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor({ timeout: 8000 }).catch(() => {});
+      const st = await matchState(pg);
+      const ok = errs.length === 0 && await pg.locator(".pick").count() >= 1
+        && (label !== "partita senza ban (formato vecchio)" || (st.mapSlug === "kings-row" && st.enemies.includes(heroId("Tracer"))))
+        && (label !== "giocatore col ruolo singolo di una volta" || (await pg.locator(".pick .role-btn").first().innerText()).trim() === "Tank");
+      check(`stato salvato vecchio o rovinato (${label}): l'app parte e tiene i dati buoni`, ok, errs.join(" | "));
+      errors.splice(0, errors.length, ...errors.filter((e) => !errs.includes(e)));
+      await cx.close();
+    }
+
+    // 6. eroe sparito per un momento dai dati (elenco incompleto): preferito, avversario e scelta tornano con lui
+    {
+      const gone = data.heroes.find((h) => h.name === "Tracer");
+      const m0 = { roles: ["Damage", "Support"], picked: [String(gone.id), null], pickFor: 0, mapSlug: null, side: null, bans: [],
+        enemies: [String(gone.id), heroId("Winston")], allies: [], group: "enemies" };
+      const prof = [{ ...P2[0], favorites: [String(gone.id), heroId("Genji")] }, P2[1]];
+      const { ctx: cx, page: pg } = await open({ serviceWorkers: "block" }, seed(prof, m0));
+      let partial = true;
+      await cx.route("**/data.json*", (r) => r.fulfill({ json: partial ? { ...data, heroes: data.heroes.filter((h) => h.id !== gone.id) } : data }));
+      const errs = [];
+      pg.on("pageerror", (e) => errs.push(String(e)));
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor();
+      await pg.click('.tabs [data-view="profile"]');
+      const favTxt = await pg.locator("#players .card").first().locator(".fav-list").innerText();
+      const during = await matchState(pg);
+      partial = false;
+      await pg.reload();
+      await pg.locator("#view-profile:not([hidden])").waitFor();
+      const after = await matchState(pg);
+      const favs = await pg.evaluate(() => JSON.parse(localStorage.getItem("owc.profile")).players[0].favorites);
+      check("eroe sparito per un momento dai dati: niente errori, fuori dalla partita e dal Profilo",
+        errs.length === 0 && !favTxt.includes("Tracer") && favTxt.includes("Genji") && !during.enemies.includes(String(gone.id)) && !during.picked[0],
+        `${errs} ${favTxt}`);
+      check("… e quando ricompare tornano preferito, avversario e scelta (prima si perdevano)",
+        favs.includes(String(gone.id)) && after.enemies.includes(String(gone.id)) && after.picked[0] === String(gone.id),
+        JSON.stringify({ favs, after: [after.picked, after.enemies] }));
+      await cx.close();
+    }
+
+    // 7. un giocatore torna in partita ("＋") e un alleato non ci sta più: il messaggio dice quale
+    // 8. "Annulla" dopo che è cambiato l'elenco dei giocatori: non sposta le scelte, lo dice
+    {
+      const P3 = [...P2, { name: "Terzo", nick: "Tre3", rank: "", roles: ["Tank"], favorites: [] }];
+      const read = { scoreboard: true, map: "King's Row", side: "attack", bans: [],
+        allies: [slot("Giuly", "Support", "Ana"), slot("a", "Tank", "Winston"), slot("b", "Support", "Lúcio"), slot("c", "Damage", "Genji"), slot("d", "Damage", "Tracer")],
+        enemies: [slot("x", "Tank", "Reinhardt")] };
+      const { ctx: cx, page: pg } = await open({ serviceWorkers: "block" }, seed(P3));
+      await mockClaude(cx, read);
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor();
+      await sendPhoto(pg);
+      await pg.locator("#ph-confirm").waitFor();
+      await pg.click("#ph-confirm");
+      await pg.locator("#away .away-chip").first().click();
+      const msg = await text(pg, "#toast");
+      check("giocatore di nuovo in partita: il messaggio dice quale alleato non ci sta più", msg.includes("Fabio di nuovo in partita") && msg.includes(itn("Tracer")), msg);
+      // scelta di Fabio, poi si toglie Terzo dal Profilo, poi "Annulla" della scelta
+      await pg.evaluate(() => window.scrollTo(0, 0));
+      await pg.locator(".pick").first().locator(".fav-row").first().click();
+      const before = await matchState(pg);
+      await pg.click('.tabs [data-view="profile"]');
+      const rm = pg.locator("#players .card").nth(2).locator(".card-head button");
+      await rm.click();
+      await rm.click();
+      await pg.click('.tabs [data-view="match"]');
+      await pg.locator("#new-match").click(); // "Nuova partita": il suo Annulla è di dopo, vale
+      await pg.click("#toast .toast-btn");
+      const restored = await matchState(pg);
+      check("«Annulla» di Nuova partita (stesso elenco di giocatori): ripristina", restored.picked[0] === before.picked[0], JSON.stringify(restored.picked));
+      // un Annulla vecchio: si toglie Fabio (il primo) dopo "Nuova partita". Il messaggio "rimosso" copre quello con
+      // "Annulla", quindi dall'interfaccia non ci si arriva più: si preme il vecchio pulsante (difesa in più)
+      await pg.locator("#new-match").click();
+      const oldUndo = await pg.locator("#toast .toast-btn").elementHandle();
+      await pg.click('.tabs [data-view="profile"]');
+      await pg.locator("#players .card").nth(0).locator(".card-head button").click();
+      await pg.locator("#players .card").nth(0).locator(".card-head button").click();
+      const mid = await matchState(pg);
+      await oldUndo.evaluate((b) => b.click());
+      const after = await matchState(pg);
+      check("«Annulla» dopo aver tolto un giocatore: non sposta le scelte e lo dice",
+        JSON.stringify(after.picked) === JSON.stringify(mid.picked) && /Non posso annullare/.test(await text(pg, "#toast")),
+        `${JSON.stringify([mid.picked, after.picked])} ${await text(pg, "#toast")}`);
+      await cx.close();
+    }
+
+    // 9. "solo guide" senza theory.json: non diventa un ordine alfabetico, si usano le statistiche e lo si dice
+    {
+      const { ctx: cx, page: pg } = await open({ serviceWorkers: "block" }, seed({ guideOnly: true, players: P2 }));
+      await cx.route("**/theory.json*", (r) => r.fulfill({ status: 404, body: "" }));
+      await pg.goto(BASE);
+      await pg.locator(CARD).first().waitFor();
+      const rec = await pg.locator(".pick").first().locator(".fav-row.is-rec .fr-tag").innerText();
+      check("«solo guide» senza le guide caricate: consigli dalle statistiche (stima in %) e avviso giallo",
+        /%/.test(rec) && /guide non sono state caricate/.test(await text(pg, "#warn")), `${rec} | ${await text(pg, "#warn")}`);
+      await cx.close();
+    }
+
+    // 10. ban consigliati e stelline dei ban: cambiano col lato anche con le sole statistiche (dal lato degli avversari)
+    {
+      const m0 = { roles: ["Damage", "Support"], picked: [null, null], pickFor: 0, mapSlug: "kings-row", side: null, bans: [], enemies: [], allies: [], group: "bans" };
+      const { ctx: cx, page: pg } = await open({ serviceWorkers: "block" }, seed(P2, m0));
+      await pg.goto(BASE);
+      await pg.locator("#ban-recs:not([hidden])").waitFor();
+      const recs = () => pg.locator("#ban-recs-list .hero").evaluateAll((bs) => bs.map((b) => `${b.dataset.id}:${b.dataset.stars}`).join());
+      await pg.click("#side [data-side=attack]");
+      const sa = await starsOf(pg), ra = await recs();
+      await pg.click("#side [data-side=defense]");
+      const sd = await starsOf(pg), rd = await recs();
+      check("ban (sole statistiche): stelline e ban consigliati cambiano tra attacco e difesa",
+        Object.keys(sa).some((n) => sa[n].n !== sd[n].n) && ra !== rd);
+      await cx.close();
+    }
+    lastPage = page;
+  }
+
   check("nessun errore JavaScript", errors.length === 0, errors.join("\n"));
 } catch (e) {
   if (lastPage) {

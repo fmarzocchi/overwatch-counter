@@ -309,6 +309,16 @@ test("guide: i consigli non dipendono dalle statistiche (stesse scelte con numer
   assert.ok(dmg.indexOf("Widowmaker") > dmg.length - 3 && dmg.indexOf("Pharah") > dmg.length - 3, "gli sconsigliati in fondo");
 });
 
+test("ban dal lato degli AVVERSARI anche con guide e teoria: Mei forte in difesa si banna quando voi attaccate", () => {
+  const TT = buildTheory(data, GUIDE_RAW, null);
+  const mei = (side) => guideBanSuggestions(data, TT, { mapSlug: "kings-row", side, perRole: 999 }).Damage.find((r) => r.hero.name === "Mei");
+  assert.ok(mei("attack").strength > mei("defense").strength, "voi in attacco → loro in difesa: per le guide Mei è forte");
+  assert.ok(mei("attack").why.includes("forte qui"));
+  assert.ok(!mei("defense").why.includes("forte qui"));
+  const bl = (side) => blendedBanSuggestions(data, TT, { mapSlug: "kings-row", side, perRole: 999 }).Damage.find((r) => r.hero.name === "Mei");
+  assert.ok(bl("attack").score > bl("defense").score, "statistiche + teoria: stessa regola");
+});
+
 test("guide: ban consigliati dalle guide (forti sulla mappa e contro i vostri eroi), mai i vostri", () => {
   const TT = buildTheory(data, GUIDE_RAW, null);
   const rec = guideBanSuggestions(data, TT, { mapSlug: "kings-row", ours: [id("Winston")], keep: [id("Lúcio")] });

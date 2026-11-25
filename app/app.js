@@ -2,6 +2,7 @@ import { recommend, recommendTeam, breakdown, details, hasSides, withDivision, h
   BANS_PER_ROLE, guideBanSuggestions, blendedBanSuggestions, guideDetails, threatScores, rankStars, STAR_MIN_SD, matchupSign } from "./recommend.js";
 import { buildTheory, heroTheory, playGuide, theoryStatus, swapAdvice, STYLE_IT, STYLE_DESC } from "./theory.js";
 import { icon, fillIcons } from "./icons.js";
+import { sanitizeProfile, sanitizeMatch, parkMissing } from "./state.js";
 import { API_URL, MAX_PHOTOS, MAX_BANS, photoRequest, photoHeaders, isFallbackRejection, photoError, readPhotoResponse, matchOwners, applyPhoto } from "./photo.js";
 
 // WebView Android meno recenti (Chrome < 86) non hanno replaceChildren
@@ -42,6 +43,9 @@ const STALE_MS = 24 * 3600e3;
 const AUTO_REFRESH_MS = 30 * 60e3;
 let lastLoad = 0;
 let refreshing = false;
+let dataSig = ""; // data.json com'era all'ultima lettura: se non cambia, niente da ridisegnare
+let dataChanged = false; // l'ultima loadData ha portato qualcosa di nuovo (dati o file di una divisione)
+let gridStale = false; // elenco eroi cambiato: la griglia si ricostruisce al prossimo render (mai sotto il dito)
 const DISPATCH_GAP_MS = 10 * 60e3;
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -95,8 +99,9 @@ function fitMatch() {
 
 let data = null;
 let byId = {};
-let profile = store.get("owc.profile", null) ?? defaultProfile();
-let match = store.get("owc.match", null) ?? emptyMatch();
+// profilo e partita salvati: un campo mancante o rovinato (versione vecchia) torna al predefinito, mai un errore all'avvio
+let profile = sanitizeProfile(store.get("owc.profile", null), { fallback: defaultProfile, ranks: RANKS, defaultName, maxPlayers: MAX_PLAYERS });
+let match = sanitizeMatch(store.get("owc.match", null), emptyMatch);
 fitMatch();
 let lastDuo = null;
 let theoryRaw = {}; // app/theory.json: sinergie, counter e modo di giocare raccolti da fonti di Overwatch
@@ -122,7 +127,10 @@ const divData = {}; // chiave divisione → dati generali uniti a quelli della d
 
 const saveProfile = () => store.set("owc.profile", profile);
 // "Solo guide e pro": consigli e ban senza le statistiche di counterwatch (servono la teoria e le mappe studiate)
-const guideMode = () => !!profile.guideOnly && !!T;
+// senza theory.json (non caricato) i consigli "solo guide" sarebbero tutti alla pari (in ordine alfabetico): si torna alle
+// statistiche e l'avviso in giallo lo dice (renderFresh)
+const theoryLoaded = () => Object.keys(theoryRaw).some((k) => !k.startsWith("_"));
+const guideMode = () => !!profile.guideOnly && !!T && theoryLoaded();
 const saveMatch = () => store.set("owc.match", match);
 
 // ---------- volti degli eroi ----------
@@ -177,17 +185,29 @@ function fill(box, ...kids) {
   box.replaceChildren(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false).map(tr));
 }
 
+// c'è in vista un messaggio con un'azione (es. "Annulla")?
+const toastAction = () => !$("#toast").hidden && $("#toast").classList.contains("with-action");
+// "Annulla" di qualcosa fatto prima di aggiungere o togliere un giocatore: le scelte sono salvate per posizione e
+// finirebbero alle persone sbagliate, quindi non si annulla e lo si dice
+let roster = 0; // cresce a ogni giocatore aggiunto o tolto
+function undoable(run) {
+  const r = roster;
+  return () => {
+    if (r !== roster) { toast("Non posso annullare: nel frattempo è cambiato l'elenco dei giocatori.", 3500); return; }
+    run();
+  };
+}
 // action: {label, run} → pulsante nel messaggio (es. "Annulla" dopo "Nuova partita")
 function toast(msg, ms = 4500, action = null) {
   const t = $("#toast");
   fill(t, el("span", {}, msg), action ? el("button", {
     type: "button", class: "toast-btn",
-    onclick: () => { t.hidden = true; clearTimeout(toast.timer); action.run(); },
+    onclick: () => { t.hidden = true; clearTimeout(toast.timer); action.run(); maybeReload(); },
   }, action.label) : null);
   t.classList.toggle("with-action", !!action);
   t.hidden = false;
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => { t.hidden = true; }, ms);
+  toast.timer = setTimeout(() => { t.hidden = true; maybeReload(); }, ms);
 }
 
 // ---------- dati ----------
@@ -199,9 +219,21 @@ async function loadData() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
     if (!Array.isArray(d.heroes) || !d.heroes.length) throw new Error("dati vuoti");
+    const sig = JSON.stringify(d);
+    if (data && sig === dataSig) {
+      // stessi dati: si riprovano solo i file delle divisioni che prima non erano arrivati (es. offline)
+      const retry = Object.keys(divFiles).filter((k) => divFiles[k] === null);
+      for (const k of retry) delete divFiles[k];
+      await loadDivisions();
+      dataChanged = retry.some((k) => divFiles[k]);
+      if (dataChanged) for (const k of Object.keys(divData)) delete divData[k];
+      return true;
+    }
+    dataSig = sig;
+    dataChanged = true;
     // elenco eroi cambiato (eroe nuovo o cambio di ruolo): la griglia va ridisegnata
     const heroSig = (x) => (x ? x.heroes.map((h) => `${h.id}:${h.role}:${h.name}`).join("|") : "");
-    if (heroSig(d) !== heroSig(data)) $("#grid").replaceChildren();
+    if (heroSig(d) !== heroSig(data)) gridStale = true;
     data = d;
     for (const m of data.maps) { m.en = m.name; m.name = IT.maps?.[m.name] || m.name; }
     T = buildTheory(data, theoryRaw, patches);
@@ -292,13 +324,16 @@ function dataLabel(i) {
     : `Ranked ${["Grandmaster", "Campione"].includes(p.rank) ? "Grandmaster+" : p.rank}`;
 }
 
-// eroi spariti dai dati (rimossi dal gioco): via da partita e preferiti
+// eroi (o mappe) spariti dai dati, magari solo per un momento (elenco di counterwatch incompleto): escono dalla partita
+// ma restano da parte (match.missing) e tornano quando ricompaiono. I preferiti restano nel profilo: chi li legge salta gli
+// eroi che i dati non hanno (knownFavorites, favoritesFor, recommend).
 function cleanSelections() {
-  for (const g of Object.keys(LIMITS)) match[g] = match[g].filter((x) => byId[sid(x)]);
-  match.picked = match.picked.map((x) => (x && byId[sid(x)] ? x : null));
-  for (const p of profile.players) p.favorites = p.favorites.filter((x) => byId[sid(x)]);
-  if (match.mapSlug && !data.maps.some((m) => m.slug === match.mapSlug)) match.mapSlug = null;
+  if (parkMissing(match, { known: (id) => !!byId[id], knownMap: (slug) => data.maps.some((m) => m.slug === slug), limitOf })) {
+    fitMatch();
+    saveMatch();
+  }
 }
+const knownFavorites = (p) => p.favorites.filter((x) => byId[sid(x)]);
 
 const fmtDay = (d) => d.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
 function ago(d) {
@@ -324,6 +359,7 @@ function renderFresh() {
   const msgs = [];
   if (Date.now() - checked.getTime() > STALE_MS) msgs.push(`I dati non vengono aggiornati da ${ago(checked).replace(" fa", "")}.`);
   if (data.problems?.length) msgs.push("Counterwatch è cambiato in parte: alcune sezioni usano i dati precedenti.");
+  if (profile.guideOnly && !theoryLoaded()) msgs.push("Le guide non sono state caricate: «solo guide e pro» è sospeso, consigli dalle statistiche.");
   warn.hidden = !msgs.length;
   warn.textContent = msgs.length ? `⚠ ${msgs.join(" ")} I consigli funzionano comunque.` : "";
   $("#data-info").textContent =
@@ -618,7 +654,7 @@ function choose(i, id) {
   render();
   toast(`${profile.players[i].name} ha scelto ${byId[id].name} ✓`, 2500, {
     label: "Annulla",
-    run: () => { if (was) setPicked(i, was); else match.picked[i] = null; saveMatch(); render(); },
+    run: undoable(() => { if (was) setPicked(i, was); else match.picked[i] = null; saveMatch(); render(); }),
   });
 }
 
@@ -828,8 +864,12 @@ function renderPicks() {
     out.map((i) => el("button", { type: "button", class: "away-chip", style: `--pc: var(--p${i})`, "aria-label": `Rimetti ${profile.players[i].name} in partita`,
       onclick: () => {
         match.away[i] = false;
+        const allies = match.allies.slice();
         fitMatch(); saveMatch(); render();
-        toast(`${profile.players[i].name} di nuovo in partita.`, 2000);
+        // un giocatore in più = un alleato in meno: si dice quale non ci sta più
+        const out = allies.filter((x) => !match.allies.some((y) => sid(y) === sid(x))).map((x) => byId[sid(x)]?.name).filter(Boolean);
+        toast(`${profile.players[i].name} di nuovo in partita.${out.length ? ` Tolt${out.length > 1 ? "i" : "o"} dagli alleati: ${out.join(", ")}.` : ""}`,
+          out.length ? 4500 : 2000);
       } }, el("span", { class: "p-dot", "aria-hidden": "true" }), profile.players[i].name, icon("plus")))] : null);
   for (const t of $$(".pick-name, .fr-name", box)) fitText(t);
   fitAlts(box);
@@ -1340,9 +1380,10 @@ function renderProfile() {
             if (!p.roles.includes(match.roles[i])) { match.roles[i] = p.roles[0] ?? null; saveMatch(); }
             saveProfile(); render();
           } }, label))),
-      el("label", {}, `Eroi preferiti (${p.favorites.length})`),
-      p.favorites.length ? null : el("p", { class: "muted small" }, "Nessun preferito: con «solo preferiti» si consiglia tra tutti."),
-      el("div", { class: "fav-list" }, p.favorites.map((id) => el("span", { class: "chip" }, face(byId[sid(id)]), byId[sid(id)].name))),
+      // solo gli eroi che i dati hanno (gli altri restano salvati e ricompaiono con loro)
+      el("label", {}, `Eroi preferiti (${knownFavorites(p).length})`),
+      knownFavorites(p).length ? null : el("p", { class: "muted small" }, "Nessun preferito: con «solo preferiti» si consiglia tra tutti."),
+      el("div", { class: "fav-list" }, knownFavorites(p).map((id) => el("span", { class: "chip" }, face(byId[sid(id)]), byId[sid(id)].name))),
       el("div", { class: "row" }, el("button", { type: "button", class: "btn", onclick: () => openFavorites(i) }, "Scegli preferiti")),
     ));
   });
@@ -1390,6 +1431,7 @@ function addPlayer() {
   const role = ROLES.map(([k]) => k).sort((a, b) => (ROLE_QUOTA[b] - used[b]) - (ROLE_QUOTA[a] - used[a]))[0];
   const i = profile.players.length;
   profile.players.push({ name: defaultName(i), rank: "", roles: [role], favorites: [] });
+  roster++;
   match.roles.push(role);
   match.picked.push(null);
   fitMatch();
@@ -1400,9 +1442,11 @@ function addPlayer() {
 function removePlayer(i) {
   if (profile.players.length <= 1) return;
   const [gone] = profile.players.splice(i, 1);
+  roster++;
   match.roles.splice(i, 1);
   match.picked.splice(i, 1);
   match.away.splice(i, 1);
+  if (match.missing && Array.isArray(match.missing.picked)) match.missing.picked.splice(i, 1);
   if (match.pickFor >= profile.players.length || match.pickFor === i) match.pickFor = 0;
   else if (match.pickFor > i) match.pickFor--;
   fitMatch();
@@ -1503,11 +1547,13 @@ async function refresh() {
 
 // ---------- tutto insieme ----------
 
-function render() {
+// keepProfile: il Profilo non si ricostruisce (aggiornamento in sottofondo mentre si scrive in un suo campo)
+function render({ keepProfile = false } = {}) {
   syncBack();
   renderFresh();
   if (!data) return;
-  if (!$("#grid .hero")) {
+  if (gridStale || !$("#grid .hero")) {
+    gridStale = false;
     buildHeroGrid($("#grid"), (id) => { tapHero(id); afterSearchTap("hero-q"); });
     applySearch($("#hero-q"));
   }
@@ -1519,7 +1565,7 @@ function render() {
   renderGroups();
   renderGrid();
   fitNames($("#grid"));
-  if (!$("#view-profile").hidden) renderProfile();
+  if (!$("#view-profile").hidden && !keepProfile) renderProfile();
 }
 
 function showView(name) {
@@ -1574,7 +1620,7 @@ function wire() {
     render();
     toast("Nuova partita: scegli mappa e ban.", 6000, {
       label: "Annulla",
-      run: () => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); },
+      run: undoable(() => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); }),
     });
   });
   $("#pick-cancel").addEventListener("click", () => { match.group = "enemies"; saveMatch(); render(); });
@@ -1779,7 +1825,7 @@ async function recognize(photo) {
     clearInterval(photoTimer);
   }
   if (photoAbort !== ctl) return; // foglio chiuso o un'altra foto nel frattempo
-  photoAbort = null;
+  photoAbort = null; // (il foglio resta aperto col risultato: la versione nuova aspetta che si chiuda)
   if (!res.ok) {
     ph = { photo, state: "error", status: res.status,
       msg: res.timedOut ? "Claude non ha risposto entro un minuto: riprova." : photoError(res.status, res.body) };
@@ -1966,9 +2012,10 @@ function banSection() {
     : ph.bansKept ? ["n-warn", "Non visti nella foto: restano quelli segnati prima"]
       : ["", "Nessun ban nella foto (partita rapida?): tocca + per aggiungerne"];
   return el("section", { class: "ph-team ph-bans", "aria-label": "Ban" },
-    el("h3", { class: "ph-team-title" }, "Ban", el("span", { class: "ph-count" }, `${ph.bans.filter((b) => b.heroId).length}/${MAX_BANS}`)),
+    // tanti riquadri quanti ban (4, o 5 se ne erano segnati 5 prima): il contatore dice quanti ce ne sono davvero
+    el("h3", { class: "ph-team-title" }, "Ban", el("span", { class: "ph-count" }, `${ph.bans.filter((b) => b.heroId).length}/${ph.bans.length}`)),
     el("p", { id: "ph-ban-note", class: `ph-note ${note[0]}` }, note[1]),
-    el("div", { class: "ph-ban-strip" }, ph.bans.map((b, k) => {
+    el("div", { class: `ph-ban-strip n${ph.bans.length}` }, ph.bans.map((b, k) => {
       const h = b.heroId ? byId[b.heroId] : null;
       const unsure = b.doubt && !b.fixed;
       return el("button", {
@@ -2102,6 +2149,7 @@ function confirmPhoto() {
     bans: ph.bans.map((r) => ({ heroId: r.heroId })),
   }, { players: profile.players.length });
   match = next;
+  match.missing = null; // la foto dice com'è la partita adesso: niente da rimettere di quella di prima
   if (match.group === "picked") match.group = "enemies";
   fitMatch();
   saveMatch();
@@ -2112,7 +2160,7 @@ function confirmPhoto() {
   toast(`Partita compilata dalla foto ✓${dropped.length ? ` (${dropped.length} alleat${dropped.length > 1 ? "i" : "o"} in più non segnat${dropped.length > 1 ? "i" : "o"})` : ""}`
     + `${gone.length ? ` · ${names(gone)} non in partita` : ""}${back.length ? ` · ${names(back)} di nuovo in partita` : ""}`, 6000, {
     label: "Annulla",
-    run: () => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); },
+    run: undoable(() => { match = JSON.parse(before); fitMatch(); saveMatch(); render(); toast("Partita ripristinata.", 2000); }),
   });
 }
 
@@ -2155,7 +2203,12 @@ const dialogOrder = []; // fogli aperti, l'ultimo in cima
 function wantedDepth() {
   return dialogOrder.length + ($("#view-profile").hidden ? 0 : 1) + (match.group === "picked" ? 1 : 0);
 }
+// history.go è asincrono: un pushState fatto prima che arrivi si perderebbe nel salto (visto dopo un ricaricamento con
+// Profilo e "Tocca l'eroe preso da…" aperti: un livello senza il suo passo, e "indietro" chiudeva l'app). Finché il salto
+// non è arrivato (popstate) non si tocca la cronologia; poi si ricontrolla.
+let backTimer = null;
 function syncBack() {
+  if (ownBack) return;
   const want = wantedDepth();
   while (backDepth < want) { history.pushState({ owc: ++backDepth }, ""); }
   if (backDepth > want) {
@@ -2163,6 +2216,9 @@ function syncBack() {
     backDepth = want;
     ownBack = true;
     history.go(-n);
+    // se il popstate non arrivasse, la cronologia non resta bloccata
+    clearTimeout(backTimer);
+    backTimer = setTimeout(() => { if (ownBack) { ownBack = false; syncBack(); } }, 1000);
   }
 }
 function wireBack() {
@@ -2175,10 +2231,11 @@ function wireBack() {
       if (d.open && k < 0) dialogOrder.push(d);
       if (!d.open && k >= 0) dialogOrder.splice(k, 1);
       syncBack();
+      if (!d.open) setTimeout(maybeReload, 0);
     }).observe(d, { attributes: true, attributeFilter: ["open"] });
   }
   window.addEventListener("popstate", () => {
-    if (ownBack) { ownBack = false; return; }
+    if (ownBack) { ownBack = false; clearTimeout(backTimer); syncBack(); return; }
     backDepth = Math.max(0, backDepth - 1);
     const top = dialogOrder[dialogOrder.length - 1];
     if (top) top.close();
@@ -2187,21 +2244,81 @@ function wireBack() {
   });
 }
 
+// Un aggiornamento in sottofondo non ridisegna mai sotto il dito: parte da un tocco (pointerdown) e, se i dati arrivano
+// prima che il dito si alzi, ricostruire i pulsanti farebbe perdere proprio quel tocco. Si ridisegna solo se i dati sono
+// cambiati, a tocco finito; il Profilo non si ricostruisce mentre si scrive in un suo campo (si perderebbe il testo).
+const pointers = new Set(); // dita (o mouse) appoggiate adesso
+let refreshRender = null; // {before}: ridisegno in attesa che il tocco finisca
+let refreshTimer = null;
+const profileBusy = () => !$("#view-profile").hidden && $$("#view-profile input, #view-profile select")
+  .some((e) => e === document.activeElement || (e.tagName === "INPUT" && e.value !== e.defaultValue));
+function applyRefresh() {
+  clearTimeout(refreshTimer);
+  if (!refreshRender || pointers.size) return; // con un dito giù si riprova quando si alza
+  const { before } = refreshRender;
+  refreshRender = null;
+  render({ keepProfile: profileBusy() });
+  // senza coprire un messaggio con "Annulla" ancora in vista (es. la scelta appena fatta con quel tocco)
+  if (data.checked !== before && !toastAction()) toast("Dati aggiornati ✓", 2500);
+}
+function wirePointers() {
+  document.addEventListener("pointerdown", (e) => { pointers.add(e.pointerId); }, { capture: true, passive: true });
+  const up = (e) => {
+    pointers.delete(e.pointerId);
+    // dopo il "click" che segue il dito alzato
+    if (refreshRender && !pointers.size) { clearTimeout(refreshTimer); refreshTimer = setTimeout(applyRefresh, 350); }
+    if (reloadWanted && !pointers.size) setTimeout(maybeReload, 350);
+  };
+  document.addEventListener("pointerup", up, { capture: true, passive: true });
+  document.addEventListener("pointercancel", up, { capture: true, passive: true });
+  // un dito "perso" (gesto di sistema, app in sottofondo) non deve bloccare per sempre il ridisegno
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") pointers.clear();
+    maybeReload();
+  });
+  document.addEventListener("focusout", () => setTimeout(maybeReload, 0));
+}
+
+// Versione nuova dell'app (service worker): ricaricare cancella fogli aperti, foto in lettura (già pagata), testo scritto
+// e l'"Annulla" in vista. Si aspetta il primo momento libero: controllato a ogni foglio chiuso, messaggio sparito, campo
+// lasciato, dito alzato, foto letta; con l'app in sottofondo basta che non ci sia una foto in lettura o da confermare.
+let reloadWanted = false;
+let reloading = false;
+const typing = () => {
+  const a = document.activeElement;
+  return (!!a && ["INPUT", "SELECT", "TEXTAREA"].includes(a.tagName) && a.type !== "file") || profileBusy();
+};
+const photoPending = () => !!photoAbort || $("#photo-dialog").open;
+function reloadSafe() {
+  if (document.visibilityState === "hidden") return !photoPending();
+  return !$$("dialog").some((d) => d.open) && !photoAbort && !toastAction() && !typing() && !pointers.size && !refreshing;
+}
+function maybeReload() {
+  if (!reloadWanted || reloading || !reloadSafe()) return;
+  reloading = true;
+  location.reload();
+}
+window.owcReloadState = () => ({ wanted: reloadWanted, safe: reloadSafe() }); // per il collaudo
+
 async function autoRefresh() {
   if (document.visibilityState === "hidden" || refreshing || !lastLoad) return;
   if (Date.now() - lastLoad < AUTO_REFRESH_MS) return;
-  // anche l'app stessa: se è uscita una versione nuova, il service worker la installa e la pagina si ricarica
+  // anche l'app stessa: se è uscita una versione nuova, il service worker la installa e la pagina si ricarica (quando si può)
   navigator.serviceWorker?.getRegistration().then((r) => r?.update()).catch(() => {});
   const before = data?.checked;
   if (await loadData()) {
-    render();
-    if (data.checked !== before) toast("Dati aggiornati ✓", 2500);
+    renderFresh(); // solo testi ("controllati … fa"): niente pulsanti sotto il dito
+    if (dataChanged) {
+      refreshRender = { before: refreshRender ? refreshRender.before : before };
+      applyRefresh();
+    }
   }
 }
 
 async function start() {
   wire();
   wireBack();
+  wirePointers();
   document.addEventListener("pointerdown", autoRefresh, { capture: true, passive: true });
   window.addEventListener("scroll", updateMini, { passive: true });
   const refit = () => {
@@ -2219,10 +2336,13 @@ async function start() {
   if ("serviceWorker" in navigator) {
     // versione nuova pubblicata: il nuovo service worker prende la pagina e la si ricarica una volta,
     // così non resta aperta (magari per ore nella WebView dell'APK) la versione vecchia
+    // ...ma solo quando si può (maybeReload): mai con un foglio aperto, una foto in lettura, un campo in cui si scrive o un
+    // messaggio con "Annulla" in vista; appena tutto è chiuso (o l'app va in sottofondo) si ricarica.
     const updating = !!navigator.serviceWorker.controller;
-    let reloaded = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (updating && !reloaded) { reloaded = true; location.reload(); }
+      if (!updating) return;
+      reloadWanted = true;
+      maybeReload();
     });
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }

@@ -871,6 +871,7 @@ dialog .search { margin: 0 16px 6px; }
 .ph-bans .ph-team-title::before { background: var(--bans); }
 .ph-bans .ph-note { margin: -2px 2px 8px; }
 .ph-ban-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-gap: 6px; }
+.ph-ban-strip.n5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .ph-ban-strip .ph-hero { width: auto; }
 .ph-ban.has .face { filter: grayscale(.85) brightness(.75); }
 .ph-ban.has::after {

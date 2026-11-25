@@ -278,7 +278,8 @@ export function matchOwners(rows, nicknames) {
 // uno senza riga no (match.away[i] = true: niente riquadro); le altre righe sono alleati, fino a 5 − giocatori in partita.
 // Se la foto non trova nessuno di voi, chi gioca resta com'era. Regole di Overwatch: nella vostra squadra un eroe una
 // volta; gli avversari possono avere gli stessi eroi (mirror); un eroe in campo non è bannato. Ban nel foglio → sono i ban
-// della partita; nessun ban nel foglio (partita rapida) → restano quelli segnati prima.
+// della partita, anche se il foglio non ne ha nessuno (il foglio parte dai ban già segnati: ciò che si vede è ciò che si
+// conferma); solo senza elenco (state.bans assente) restano quelli di prima.
 // Restituisce {match, dropped: [id] (alleati oltre il limite), gone: [i] (usciti), back: [i] (rientrati)}.
 export function applyPhoto(match, state, { players }) {
   const next = JSON.parse(JSON.stringify(match));
@@ -314,9 +315,14 @@ export function applyPhoto(match, state, { players }) {
   next.away = away;
   next.allies = allies;
   next.enemies = enemies;
+  // i ban del foglio SONO i ban della partita (anche nessuno: il foglio parte già da quelli segnati prima, vedi
+  // resultState in app.js); senza elenco nel foglio restano quelli di prima
   const read = [];
-  for (const b of state.bans || []) if (b.heroId && !read.includes(b.heroId) && read.length < BAN_LIMIT) read.push(b.heroId);
-  next.bans = (read.length ? read : (next.bans || []).map(sid)).filter((b) => !inPlay.has(b));
+  for (const b of Array.isArray(state.bans) ? state.bans : (next.bans || []).map((x) => ({ heroId: sid(x) }))) {
+    const x = b.heroId ? sid(b.heroId) : null;
+    if (x && !read.includes(x) && read.length < BAN_LIMIT) read.push(x);
+  }
+  next.bans = read.filter((b) => !inPlay.has(b));
   if (next.pickFor >= 0 && away[next.pickFor]) next.pickFor = Math.max(0, away.indexOf(false));
   const gone = away.map((a, i) => (a && !before[i] ? i : -1)).filter((i) => i >= 0);
   const back = away.map((a, i) => (!a && before[i] ? i : -1)).filter((i) => i >= 0);

@@ -181,11 +181,19 @@ test("conferma: mappa e lato, eroi presi dai giocatori, alleati fino al limite, 
   assert.deepEqual(dropped, []);
   assert.deepEqual(m.enemies, [id("D.Va"), id("Widowmaker"), id("Junkrat"), id("Cassidy")], "Cassidy anche avversaria (mirror)");
   assert.deepEqual(m.bans, [id("Tracer")], "Orisa e Junkrat sono in campo: non più bannati");
-  // ban letti dal tabellone: diventano i ban della partita (mai un eroe in campo); nessuno letto → restano quelli di prima
+  // ban letti dal tabellone: diventano i ban della partita (mai un eroe in campo); senza elenco (state.bans assente) restano quelli di prima
   const rb = applyPhoto(match, { ...state, bans: [{ heroId: id("Sombra") }, { heroId: null }, { heroId: id("Widowmaker") }, { heroId: id("Sombra") }, { heroId: id("Hanzo") }] },
     { players: 2 }).match;
   assert.deepEqual(rb.bans, [id("Sombra"), id("Hanzo")], "Widowmaker è avversaria nella foto: non bannata; Sombra una volta");
-  assert.deepEqual(applyPhoto(match, { ...state, bans: [] }, { players: 2 }).match.bans, [id("Tracer")]);
+  // il foglio è l'unica fonte: ban tolti tutti nel foglio → nessun ban (prima tornavano quelli vecchi)
+  assert.deepEqual(applyPhoto(match, { ...state, bans: [] }, { players: 2 }).match.bans, []);
+  assert.deepEqual(applyPhoto(match, { ...state, bans: [{ heroId: null }, { heroId: null }] }, { players: 2 }).match.bans, []);
+  // ban già segnati riportati nel foglio (anche 5): restano, mai un eroe in campo, al massimo 5
+  const kept = [id("Tracer"), id("Hanzo"), id("Sombra"), id("Zarya"), id("Moira"), id("Mercy")].map((h) => ({ heroId: h }));
+  assert.deepEqual(applyPhoto(match, { ...state, bans: kept }, { players: 2 }).match.bans,
+    [id("Tracer"), id("Hanzo"), id("Sombra"), id("Zarya"), id("Moira")]);
+  assert.deepEqual(applyPhoto(match, { ...state, bans: [{ heroId: id("Orisa") }, { heroId: id("Tracer") }] }, { players: 2 }).match.bans,
+    [id("Tracer")], "Orisa è in campo");
   assert.equal(match.mapSlug, "kings-row", "la partita di partenza non cambia (si può annullare)");
   // senza mappa riconosciuta né scelta: si conferma lo stesso; mappa senza lati → niente lato
   const r2 = applyPhoto(match, { ...state, mapSlug: null, side: "attack", sides: false }, { players: 2 }).match;

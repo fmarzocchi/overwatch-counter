@@ -130,11 +130,16 @@ export function recommend(
 // Restituisce {Tank: [righe], Damage: [...], Support: [...]}, riga = {hero, score, strength, threat, beats: [eroi vostri battuti]}.
 export const BANS_PER_ROLE = 3; // richiesta dell'utente (2026-10-06): 3 per ruolo
 export const BAN_ROLES = ["Tank", "Damage", "Support"];
-export function banSuggestions(datasets, { mapSlug = null, ours = [], keep = [], perRole = BANS_PER_ROLE } = {}) {
+// Lato (attacco/difesa): un ban toglie l'eroe agli AVVERSARI, quindi si valuta dal LORO lato (l'opposto del vostro), come
+// le stelline rosse (threatScores); stessa regola in tutte le modalità (statistiche, + teoria, solo guide).
+export const enemySideOf = (side) => (side === "attack" ? "defense" : side === "defense" ? "attack" : null);
+export function banSuggestions(datasets, { mapSlug = null, side = null, ours = [], keep = [], perRole = BANS_PER_ROLE } = {}) {
   const sets = (Array.isArray(datasets) ? datasets : [datasets]).filter(Boolean);
   if (!sets.length) return Object.fromEntries(BAN_ROLES.map((r) => [r, []]));
   const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
   const byId = Object.fromEntries(sets[0].heroes.map((h) => [sid(h.id), h]));
+  const map0 = mapSlug ? sets[0].maps.find((m) => m.slug === mapSlug) : null;
+  const enemySide = hasSides(map0) ? enemySideOf(side) : null;
   const mine = [...new Set(ours.map(sid))].filter((o) => byId[o]);
   const skip = new Set([...keep.map(sid), ...mine]);
   const rows = sets[0].heroes.filter((h) => !skip.has(sid(h.id))).map((h) => {
@@ -142,7 +147,7 @@ export function banSuggestions(datasets, { mapSlug = null, ours = [], keep = [],
     const strength = avg(sets.map((d) => {
       const map = mapSlug ? d.maps.find((m) => m.slug === mapSlug) : null;
       return (map?.winRates?.[id] ?? d.overall?.[id] ?? 0.5) - 0.5;
-    }));
+    })) + (enemySide ? sideBonus(h, enemySide) : 0);
     const vs = mine.map((o) => {
       const v = avg(sets.map((d) => d.counters?.[id]?.[o]).filter((x) => typeof x === "number"));
       return v === null ? null : { hero: byId[o], delta: v - 0.5 };
@@ -207,7 +212,7 @@ export function guideBanSuggestions(data, theory, { mapSlug = null, side = null,
   const mine = [...new Set(ours.map(sid))].map((o) => byId[o]).filter(Boolean);
   const skip = new Set([...keep.map(sid), ...mine.map((h) => sid(h.id))]);
   const rows = data.heroes.filter((h) => !skip.has(sid(h.id))).map((h) => {
-    const fit = mapFit(theory, mapSlug, h, side);
+    const fit = mapFit(theory, mapSlug, h, enemySideOf(side)); // dal lato degli avversari (vedi enemySideOf)
     const t = theory?.idx?.[h.name];
     const beats = t ? mine.filter((m) => t.counters.has(m.name)) : [];
     const strength = fit.points;
@@ -246,7 +251,7 @@ export function threatScores(datasets, theory, { mapSlug = null, side = null, ou
   const sets = (Array.isArray(datasets) ? datasets : [datasets]).filter(Boolean);
   const base = sets[0];
   const byId = Object.fromEntries(base.heroes.map((h) => [sid(h.id), h]));
-  const enemySide = side === "attack" ? "defense" : side === "defense" ? "attack" : null;
+  const enemySide = enemySideOf(side);
   const map = mapSlug ? base.maps.find((m) => m.slug === mapSlug) : null;
   const team = [...ours.map((x) => [sid(x), 2]), ...mates.map((x) => [sid(x), 1])].filter(([x]) => byId[x]);
   const wsum = team.reduce((a, [, w]) => a + w, 0) || 1;

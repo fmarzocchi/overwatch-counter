@@ -484,6 +484,34 @@ Formula: scarto dal 50% su mappa (o generale) + somma scarti contro ogni avversa
 + metà degli scarti di sinergia con ogni alleato. Esclude gli eroi già presi dagli alleati.
 Sentiti libero di migliorarla (es. usare anche `counterScores`), ma con test.
 
+## Audit del 2026-11-25: l'app (richiesta dell'utente) — ha la precedenza su ciò che segue
+
+Audit con prove riprodotte (script in scratchpad `audit-app/`), correzioni con controlli che falliscono sulla versione
+prima (unità: 78; e2e: blocco "revisione del 2026-11-25", 473 controlli in tutto).
+- **Aggiornamento dei dati senza rubare il tocco**: `loadData` confronta il `data.json` nuovo col precedente
+  (`dataChanged`); `autoRefresh` aggiorna subito solo il testo della freschezza e ridisegna (`applyRefresh`) solo se
+  qualcosa è cambiato, a dito alzato (350 ms dopo il tocco) e mai ricostruendo il Profilo mentre si scrive in un suo campo
+  (`profileBusy()`, `render({keepProfile})`). Prima il primo tocco dopo 30 minuti andava perso e il campo della chiave si svuotava.
+- **Versione nuova (service worker v8)**: `controllerchange` segna `reloadWanted`; `maybeReload()` ricarica solo quando
+  si può (nessun foglio aperto, nessuna foto in lettura o da confermare, nessun campo in uso, nessun "Annulla" in vista,
+  dito alzato), ricontrollando a ogni chiusura; app ferma sulla partita o in sottofondo → subito. Prima ricaricava anche
+  mentre Claude leggeva la foto.
+- **Foto, ban**: il foglio è l'unica verità. `applyPhoto`: `state.bans` (anche vuoto) = ban della partita; i ban già
+  segnati arrivano nel foglio da `resultState` e l'utente li può togliere. Fino a 5 riquadri, contatore vero ("5/5").
+- **Ban e lato**: un ban serve a toglierlo agli AVVERSARI → in tutte e tre le modalità (statistiche, + teoria, solo
+  guide) e per le stelline rosse si valuta dal lato avversario (`enemySideOf()` in recommend.js). Prima, con le sole
+  statistiche, i ban ignoravano attacco/difesa e in "solo guide" usavano il vostro lato.
+- **Stato salvato** (`app/state.js`, puro, `tests/state.test.js`): `sanitizeProfile`/`sanitizeMatch` sistemano campo per
+  campo un profilo o una partita vecchi o rovinati (mai più app bloccata all'avvio). `parkMissing`: un eroe o una mappa che
+  sparisce per un momento dai dati esce dalla partita ma resta in `match.missing` e torna al suo posto quando ricompare;
+  i preferiti di eroi assenti NON si cancellano più dal profilo (si ignorano finché l'eroe manca: `knownFavorites`).
+- **Tasto indietro dopo una ricarica**: `syncBack` aspetta il `popstate` di un `history.go()` suo prima di aggiungere passi.
+- Giocatore rimesso in partita con "＋": il messaggio dice quale alleato è stato tolto. "Annulla" dopo che l'elenco dei
+  giocatori è cambiato non fa nulla e lo dice (`undoable()`). "Solo guide" senza `theory.json` caricato: sospeso, con avviso.
+- CI: `ci.yml` gira su `ubuntu-24.04` (Playwright 1.56 non supporta Ubuntu 26.04, diventato `ubuntu-latest`).
+- Verificato corretto: nessun HTML da testo del modello o dei dati, chiave Claude solo verso api.anthropic.com, niente
+  API o CSS oltre Chrome 83, localStorage che lancia errori, eroe o mappa nuovi senza teoria, 1–5 giocatori a 360×640.
+
 ## Audit del 2026-11-25: scraper, workflow e guscio Android (richiesta dell'utente) — ha la precedenza su ciò che segue
 
 Audit con prove riprodotte (script in scratchpad `audit-backend/`), correzioni con test (`test_fetch.py`: 67 controlli).

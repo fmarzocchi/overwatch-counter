@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   recommend, recommendDuo, recommendTeam, matchups, headline, MATCHUP_MIN, reasons, breakdown, details, withDivision, heroProfile, sideBonus, hasSides, FAVORITE_BONUS, SYNERGY_WEIGHT, pairValue,
-  banSuggestions, BANS_PER_ROLE, threatScores, matchupSign, MATCHUP_THEORY, rankStars, STAR_Z, STAR_MIN_SD,
+  banSuggestions, BANS_PER_ROLE, enemySideOf, threatScores, matchupSign, MATCHUP_THEORY, rankStars, STAR_Z, STAR_MIN_SD,
 } from "../app/recommend.js";
 
 const data = JSON.parse(readFileSync(new URL("../app/data.json", import.meta.url)));
@@ -368,6 +368,25 @@ test("ban consigliati: mai i vostri eroi né quelli da tenere; chi batte i vostr
   const tanks = rec.Tank;
   assert.ok(tanks[0].score >= tanks[tanks.length - 1].score);
   assert.ok(Object.values(rec).flat().some((r) => r.beats.length), "qualcuno batte i vostri eroi");
+});
+
+test("ban consigliati: dipendono dal lato, valutato dal lato degli AVVERSARI (come le stelline rosse)", () => {
+  const map = mapOf("Escort");
+  const sig = (side) => JSON.stringify(Object.values(banSuggestions(data, { mapSlug: map.slug, side, perRole: 99 })).flat()
+    .map((r) => [r.hero.name, r.score.toFixed(6)]));
+  assert.notEqual(sig("attack"), sig("defense"), "attacco e difesa danno ban diversi");
+  assert.equal(enemySideOf("attack"), "defense");
+  assert.equal(enemySideOf(null), null);
+  // voi in attacco → loro in difesa: la forza include la regola del lato degli avversari, la stessa di threatScores
+  const rec = banSuggestions(data, { mapSlug: map.slug, side: "attack", perRole: 99 });
+  const th = new Map(threatScores([data], null, { mapSlug: map.slug, side: "attack" }).map((r) => [r.hero.name, r.score]));
+  for (const r of Object.values(rec).flat()) {
+    close(r.strength, (map.winRates[String(r.hero.id)] ?? data.overall[String(r.hero.id)]) - 0.5 + sideBonus(r.hero, "defense"), r.hero.name);
+    close(r.strength, th.get(r.hero.name), `${r.hero.name}: ban e stelline rosse con la stessa regola`);
+  }
+  // mappa senza lati (Controllo): il lato non conta
+  const ctl = mapOf("Control").slug;
+  assert.deepEqual(banSuggestions(data, { mapSlug: ctl, side: "attack" }), banSuggestions(data, { mapSlug: ctl }));
 });
 
 test("ban consigliati: con più divisioni si fa la media", () => {
