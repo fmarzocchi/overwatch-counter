@@ -45,7 +45,8 @@ adb shell input keyevent KEYCODE_BACK
 sleep 3
 shot 2d-nuova-indietro
 alive "il tasto indietro nell'Inizio partita ha chiuso l'app"
-# «✓ PRESO» della prima card (a destra, in alto: 79–93% della larghezza, 23–31% dell'altezza): un tocco = eroe scelto.
+# «✓ PRESO» della prima card (v5: pulsante arancione 72×64 a destra della riga delle tessere: 79–93% della larghezza,
+# 24–33% dell'altezza; verificato con elementFromPoint su 411×659 CSS): un tocco = eroe scelto.
 # Nessuna lista di eroi nella pagina: si apre solo toccando un posto o un ritratto.
 adb shell input tap $((W * 86 / 100)) $((H * 27 / 100))
 sleep 3

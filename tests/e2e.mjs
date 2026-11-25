@@ -97,9 +97,9 @@ const pickNames = async (page) => (await page.evaluate(() => window.owcBands()))
 // scelte proposte in una card prima della scelta: la proposta («PRENDI») e le 2 alternative («oppure»)
 const favRows = (page, k) => band(page, k).evaluate((b) => {
   const rows = [];
-  const go = b.querySelector(".go");
-  if (go) rows.push({ name: go.querySelector(".nm").textContent, n: Number(go.dataset.stars), rec: true, id: b.dataset.move });
-  for (const a of b.querySelectorAll(".oalts .alt3")) rows.push({ name: a.querySelector(".nm").textContent, n: Number(a.dataset.stars), rec: false, id: a.dataset.id });
+  const go = b.querySelector(".prop5");
+  if (go) rows.push({ name: go.querySelector(".plate").textContent, n: Number(go.dataset.stars), rec: true, id: b.dataset.move });
+  for (const a of b.querySelectorAll(".alts5 .alt5")) rows.push({ name: a.querySelector(".plate").textContent, n: Number(a.dataset.stars), rec: false, id: a.dataset.id });
   return rows;
 });
 // ---- foglio «lista eroi» (#hero-sheet): una scheda di ruolo alla volta, si chiude dopo ogni tocco ----
@@ -138,7 +138,7 @@ async function openPlayer(page, i) {
   await toTop(page);
   const b = page.locator(`#picks .band[data-player="${i}"]`);
   if (await b.locator(".cmp").count()) await b.locator(".cmp").click();
-  await page.locator(`#picks .band[data-player="${i}"] .has`).click();
+  await page.locator(`#picks .band[data-player="${i}"] .has5`).click();
   await page.locator("#hero-sheet[open]").waitFor();
 }
 async function choosePlayer(page, i, name) { await openPlayer(page, i); await tapSheet(page, name); }
@@ -150,7 +150,7 @@ async function openGuideOf(page, k) {
   if (await b.getAttribute("data-has")) {
     await openPlayer(page, Number(await b.getAttribute("data-player")));
     await page.click("#menu-guide");
-  } else await b.locator(".go").click();
+  } else await b.locator(".prop5").click();
   await page.locator("#guide-dialog[open]").waitFor();
 }
 // ---- Inizio partita ----
@@ -187,36 +187,41 @@ const portraitsOk = (page) => page.evaluate(() => {
   for (const b of document.querySelectorAll("#picks .band")) {
     const i = Number(b.dataset.player);
     const want = m.picked[i] ? String(m.picked[i]) : "";
-    const f = b.querySelector(".has .hface, .cmp > .hface");
-    const empty = f?.classList.contains("none");
+    const f = b.querySelector(".has5 .t5, .cmp > .t5");
+    const empty = f?.classList.contains("empty");
     const ok = b.dataset.has === want && !!f && (want ? !empty && !!f.querySelector(".face") : empty)
       && (!want || b.dataset.move !== want);
     if (!ok) out.push({ i, want, has: b.dataset.has, move: b.dataset.move, empty });
   }
   return out;
 });
-// volti batte/teme di ogni card: quelli disegnati e quelli attesi da matchups() (window.owcFaces); forma quadrata (raggio ≤ 6 px)
+// tessere di ogni card (v5): tutte quadrate (raggio ≤ 6), tacche coerenti con data-stars del pulsante e mai coperte dal bordo
+// (elementFromPoint sul primo segno), volti di «attento» rossi e di «punta» verdi, solo tra gli avversari segnati
 const facesState = (page) => page.evaluate(() => {
-  const want = window.owcFaces();
-  const ids = (b, sel) => [...b.querySelectorAll(sel)].map((f) => f.dataset.id);
   const rad = (e) => parseFloat(getComputedStyle(e).borderTopLeftRadius) || 0;
-  return [...document.querySelectorAll("#picks .band:not(.compact)")].map((b, k) => ({
-    want: want[k],
-    got: { hasBad: ids(b, ".hcol .mu.bad .mf"), propGood: ids(b, ".pcol .mu.good .mf"), propBad: ids(b, ".pcol .mu.bad .mf"), stayGood: ids(b, ".staybox .mu.good .mf") },
-    labeled: [...b.querySelectorAll(".mf")].every((f) => /^(batte|teme) /.test(f.getAttribute("aria-label") || "") && f.title === f.getAttribute("aria-label")),
-    // nessun elemento tondo tra i volti (ritratti, proposta, alternative, batte/teme)
-    square: [...b.querySelectorAll(".hface, .mf, .alt3, .mf::after")].every((e) => rad(e) <= 6),
-    colors: [...b.querySelectorAll(".mu.good .mf")].every((f) => /111, 208, 140/.test(getComputedStyle(f, "::after").boxShadow))
-      && [...b.querySelectorAll(".mu.bad .mf")].every((f) => /255, 122, 127/.test(getComputedStyle(f, "::after").boxShadow)),
-    words: [...b.querySelectorAll(".mu")].every((m) => /^(batte|teme)$/.test(m.querySelector(".mul").textContent)),
-  }));
+  const seen = (lv) => { const i = lv.querySelector("i"); const r = i.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!hit && hit.closest(".tac") === lv; };
+  return [...document.querySelectorAll("#picks .band:not(.compact)")].map((b) => {
+    const ids = (sel) => [...b.querySelectorAll(sel)].map((f) => f.dataset.id);
+    const btns = [...b.querySelectorAll(".has5, .prop5, .alt5")].filter((x) => x.querySelector(".t5 .lv"));
+    return {
+      player: Number(b.dataset.player),
+      bad: ids(".tr5.k-threat .t5"), good: ids(".tr5.k-target .t5"),
+      square: [...b.querySelectorAll(".t5, .done5")].every((e) => rad(e) <= 6),
+      lvMatch: btns.every((x) => x.querySelector(".lv").dataset.stars === x.dataset.stars && x.querySelectorAll(".lv i.on").length === Number(x.dataset.stars)),
+      lvSeen: [...b.querySelectorAll(".t5 .lv")].every(seen),
+      colors: [...b.querySelectorAll(".tr5.k-threat .t5")].every((f) => f.classList.contains("bad") && /255, 122, 127/.test(getComputedStyle(f, "::after").boxShadow))
+        && [...b.querySelectorAll(".tr5.k-target .t5")].every((f) => f.classList.contains("good") && /111, 208, 140/.test(getComputedStyle(f, "::after").boxShadow)),
+      words: [...b.querySelectorAll(".tl5")].every((m) => /^(attento|punta)$/.test(m.textContent)),
+    };
+  });
 });
-const facesOk = (fs, enemies) => fs.every((f) => ["hasBad", "propGood", "propBad", "stayGood"].every((k) => f.got[k].join() === f.want[k].join()
-  && f.got[k].every((id) => enemies.includes(id))) && f.labeled && f.square && f.colors && f.words);
+const facesOk = (fs, enemies) => fs.every((f) => [...f.bad, ...f.good].every((id) => enemies.includes(id)) && (enemies.length || !f.bad.length && !f.good.length)
+  && f.square && f.lvMatch && f.lvSeen && f.colors && f.words);
 // sezioni ben separate (≥ 12 px): testata · card · la vostra squadra · avversari · come giocarla · barra in basso
 const sectionGaps = (page) => page.evaluate(() => {
   const vis = (s) => { const e = document.querySelector(s); return e && !e.hidden && e.getClientRects().length ? e.getBoundingClientRect() : null; };
-  const seq = ["#hstatus", "#picks", "#us-strip", "#them-strip", "#tips"].map((s) => [s, vis(s)]).filter(([, r]) => r);
+  const seq = ["#hstatus", "#picks", "#us-strip", "#them-strip"].map((s) => [s, vis(s)]).filter(([, r]) => r);
   const gaps = {};
   for (let k = 1; k < seq.length; k++) gaps[`${seq[k - 1][0]}→${seq[k][0]}`] = Math.round(seq[k][1].top - seq[k - 1][1].bottom);
   if (document.scrollingElement.scrollHeight <= innerHeight) gaps["→dock"] = Math.round(document.querySelector(".dock").getBoundingClientRect().top - seq[seq.length - 1][1].bottom);
@@ -394,20 +399,23 @@ try {
   check("consigli: Fabio e Giulia hanno eroi diversi", afterBans[0] !== afterBans[1], afterBans.join());
   const cardNums = await page.locator(CARD).evaluateAll((cs) => cs.map((c) => (c.textContent.match(/\d+%/g) ?? []).length));
   check("prima della scelta: un numero solo per card (la stima della proposta)", cardNums.every((k) => k <= 1), JSON.stringify(cardNums));
-  check("prima degli avversari: nessun volto batte/teme, niente «Come giocarla» in vista", (await page.locator("#picks .mf").count()) === 0
-    && await page.locator("#tips").isHidden());
+  check("prima degli avversari: niente righe attento/punta nella card; il blocco separato #tips non esiste più",
+    (await page.locator("#picks .in5").count()) === 0 && (await page.locator("#tips").count()) === 0);
   const lists0 = [await favRows(page, 0), await favRows(page, 1)];
   check("prima della scelta: [posto vuoto] › [proposta, bordo arancione] ✓ PRESO e «oppure» 2 alternative, nessun eroe «scelto»",
     lists0.every((l) => l.length >= 1 && l.length <= 3 && l[0].rec && l.slice(1).every((r) => !r.rec))
-    && (await page.evaluate(() => window.owcBands().every((b) => !b.has))) && (await page.locator("#picks .go .hface.prop").count()) === 2
-    && (await page.locator("#picks .go .hface.prop").evaluateAll((fs) => fs.every((f) => /249, 158, 26/.test(getComputedStyle(f, "::after").boxShadow))))
-    && (await page.locator("#picks .done").count()) === 2 && (await page.locator("#picks .oalts .o").allTextContents()).every((t) => t === "oppure"),
+    && (await page.evaluate(() => window.owcBands().every((b) => !b.has))) && (await page.locator("#picks .prop5 .t5.prop").count()) === 2
+    && (await page.locator("#picks .prop5 .t5.prop").evaluateAll((fs) => fs.every((f) => /249, 158, 26/.test(getComputedStyle(f, "::after").boxShadow))))
+    && (await page.locator("#picks .done5").count()) === 2 && (await page.locator("#picks .alts5 .o5").allTextContents()).every((t) => t === "oppure"),
     JSON.stringify(lists0));
-  check("card: parole minime (nome del giocatore, PRENDI, PRESO, oppure)", (await page.locator("#picks .chead .pn").allTextContents()).join() === "Fabio,Giulia"
-    && (await page.locator("#picks .chead .verb").allTextContents()).every((t) => t === "Prendi")
-    && (await page.locator("#picks .done .dl").allTextContents()).every((t) => t === "Preso"));
+  check("card: parole minime (nome del giocatore, PRENDI, PRESO, oppure)", (await page.locator("#picks .pn5").allTextContents()).join() === "Fabio,Giulia"
+    && (await page.locator("#picks .vb5").allTextContents()).every((t) => t === "Prendi")
+    && (await page.locator("#picks .done5 .dl").allTextContents()).every((t) => t === "Preso"));
+  const fs0 = await facesState(page);
+  check("livello (tacche) su proposta e alternative: coerente con data-stars, mai coperto dal bordo; tessere quadrate (raggio ≤ 6)",
+    facesOk(fs0, []) && (await page.locator("#picks .prop5 .lv, #picks .alt5 .lv").count()) === 6, JSON.stringify(fs0));
   check("alternative ordinate dalla più adatta (tacche non crescenti)", lists0.every((l) => l.slice(1).every((r, k, xs) => !k || r.n <= xs[k - 1].n)));
-  check("card: la valutazione 1–5 resta nei dati (data-stars) di proposta e alternative", await page.locator("#picks .go, #picks .alt3").evaluateAll((xs) =>
+  check("card: la valutazione 1–5 resta nei dati (data-stars) di proposta e alternative", await page.locator("#picks .prop5, #picks .alt5").evaluateAll((xs) =>
     xs.length > 0 && xs.every((x) => { const n = Number(x.dataset.stars); return n >= 1 && n <= 5; })));
   // lista eroi del giocatore (interruttore «solo preferiti» spento): tutti gli eroi, la scheda del suo ruolo, il consigliato col bordo arancione
   await openPlayer(page, 1);
@@ -469,42 +477,47 @@ try {
   const enemyIds = ENEMIES.map(heroId);
   await toTop(page);
   const fs1 = await facesState(page);
-  check("con avversari: volti quadrati (raggio ≤ 6 px), verdi = batte e rossi = teme come da matchups(), solo tra gli avversari segnati, con l'etichetta",
-    facesOk(fs1, enemyIds) && fs1.some((f) => f.got.propGood.length + f.got.propBad.length), JSON.stringify(fs1));
-  const tips1 = await page.evaluate(() => ({ tips: window.owcTips(), rows: [...document.querySelectorAll("#tips .tip")].map((t) => ({
-    w: t.scrollWidth - t.clientWidth, h: Math.round(t.getBoundingClientRect().height), dots: /…/.test(t.textContent) })) }));
-  check("«Come giocarla» in vista: per ogni giocatore al massimo 2 righe (attento/punta) con i volti, una riga sola ciascuna, mai «…»",
-    await page.locator("#tips").isVisible() && [0, 1].every((i) => { const r = tips1.tips.filter((t) => t.player === i); return r.length >= 1 && r.length <= 2 && r.every((t) => t.ids.length >= 1 && t.ids.every((id) => enemyIds.includes(id))); })
-    && tips1.rows.every((r) => r.w <= 1 && r.h <= 30 && !r.dots), JSON.stringify(tips1));
-  check("«Come giocarla» in vista: segno ■ dati / ▨ teoria su ogni riga", (await page.locator("#tips .tip .mk").count()) === tips1.tips.length
-    && (await page.locator("#tips .tip .mk").evaluateAll((ms) => ms.every((m) => /\b(theory|data)\b/.test(m.className)))));
-  await page.locator("#tips .tipgrp").first().click();
+  check("con avversari: tessere quadrate, tacche coerenti e visibili, volti di «attento» rossi e di «punta» verdi solo tra gli avversari segnati",
+    facesOk(fs1, enemyIds) && fs1.some((f) => f.bad.length + f.good.length), JSON.stringify(fs1));
+  const tips1 = await page.evaluate(() => ({ tips: window.owcTips(), rows: [...document.querySelectorAll("#picks .in5 .tr5")].map((t) => ({
+    player: Number(t.closest(".band").dataset.player), own: Number(t.dataset.player),
+    w: t.scrollWidth - t.clientWidth, h: Math.round(t.getBoundingClientRect().height), fs: parseFloat(getComputedStyle(t.querySelector(".tx5")).fontSize),
+    face: Math.round(t.querySelector(".t5").getBoundingClientRect().width), dots: /…/.test(t.textContent) })) }));
+  check("«attento»/«punta» DENTRO la card del giocatore giusto: al massimo 2 righe, da 48 px, testo ≥ 15 px, volti 40, una riga sola, mai «…»",
+    (await page.locator("#tips").count()) === 0 && [0, 1].every((i) => { const r = tips1.tips.filter((t) => t.player === i); return r.length >= 1 && r.length <= 2
+      && r.every((t) => t.ids.length >= 1 && t.ids.every((id) => enemyIds.includes(id))); })
+    && tips1.rows.every((r) => r.player === r.own && r.w <= 1 && r.h >= 48 && r.h <= 56 && r.fs >= 15 && r.face === 40 && !r.dots), JSON.stringify(tips1));
+  check("«attento»/«punta»: segno ■ dati / ▨ teoria su ogni riga", (await page.locator("#picks .tr5 .mk").count()) === tips1.tips.length
+    && (await page.locator("#picks .tr5 .mk").evaluateAll((ms) => ms.every((m) => /\b(theory|data)\b/.test(m.className)))));
+  await band(page, 1).locator(".in5").click();
   await page.locator("#guide-dialog[open]").waitFor();
   const tg = await text(page, "#t-guide");
-  check("tocco su «Come giocarla» in vista: si apre la guida completa di quel giocatore", tg.includes(nameOfId((await page.evaluate(() => window.owcBands()))[0].move)), tg);
+  check("tocco su «attento/punta» nella card di Giulia: si apre la guida completa di Giulia", tg.includes(nameOfId((await page.evaluate(() => window.owcBands()))[1].move)), tg);
   await page.click("#guide-dialog [data-close]");
   await shot(page, "05e-avversari");
 
   // «✓ PRESO» = scelto → la card mostra quell'eroe nel ritratto grande
   const recF = (await favRows(page, 0))[0].name;
   const recStars = (await favRows(page, 0))[0].n;
-  await band(page, 0).locator(".done").click();
+  await band(page, 0).locator(".done5").click();
   await toTop(page);
-  const chosenSt = Number(await band(page, 0).locator(".has").getAttribute("data-stars"));
+  const chosenSt = Number(await band(page, 0).locator(".has5").getAttribute("data-stars"));
   check("eroe scelto: la stessa valutazione (1–5) della proposta", chosenSt === recStars, `${chosenSt} / ${recStars}`);
   check("un tocco su «✓ PRESO»: scelto, nel ritratto grande l'eroe preso",
-    (await band(page, 0).getAttribute("data-has")) === heroId(recF) && / ha /.test(await band(page, 0).locator(".has").getAttribute("aria-label"))
+    (await band(page, 0).getAttribute("data-has")) === heroId(recF) && / ha /.test(await band(page, 0).locator(".has5").getAttribute("aria-label"))
     && String((await matchState(page)).picked[0]) === heroId(recF) && (await text(page, "#toast")).includes("ha scelto"), recF);
   check("dopo la scelta: ritratto grande = eroe preso; il consigliato solo a destra della freccia", (await portraitsOk(page)).length === 0, JSON.stringify(await portraitsOk(page)));
-  const mv0 = await band(page, 0).evaluate((b) => ({ stay: b.querySelector(".stay3")?.textContent ?? null, move: b.dataset.move, has: b.dataset.has,
-    plus: b.querySelector(".plus")?.textContent ?? null, done: !!b.querySelector(".done"), doneLabel: b.querySelector(".done")?.getAttribute("aria-label") ?? "",
-    verb: b.querySelector(".verb")?.textContent ?? "", dl: b.querySelector(".done .dl")?.textContent ?? "", hn: b.querySelector(".hn")?.textContent ?? "" }));
-  check("dopo la scelta: [preso, «NOME 46%»] › PASSA A [cambio] +x% ✓ CAMBIO, oppure «resta» senza pulsante",
-    mv0.hn === recF && ((mv0.stay === "resta" && !mv0.move && !mv0.done)
+  const mv0 = await band(page, 0).evaluate((b) => ({ stay: b.querySelector(".stay5")?.textContent ?? null, move: b.dataset.move, has: b.dataset.has,
+    plus: b.querySelector(".plus5")?.textContent ?? null, done: !!b.querySelector(".done5"), doneLabel: b.querySelector(".done5")?.getAttribute("aria-label") ?? "",
+    verb: b.querySelector(".vb5")?.textContent ?? "", dl: b.querySelector(".done5 .dl")?.textContent ?? "", hn: b.querySelector(".has5 .plate")?.textContent ?? "",
+    pct: /\d+%/.test(b.querySelector(".has5").textContent), alts: b.querySelectorAll(".alt5").length }));
+  check("dopo la scelta: [tessera dell'eroe preso, senza %] › PASSA A +x% [cambio] ✓ CAMBIO, oppure «resta» senza pulsante; niente «oppure»",
+    mv0.hn === recF && !mv0.pct && !mv0.alts && ((mv0.stay === "resta" && !mv0.move && !mv0.done)
     || (mv0.move && mv0.move !== mv0.has && mv0.done && /passato a/.test(mv0.doneLabel) && mv0.verb === "Passa a" && mv0.dl === "Cambio"
       && (!mv0.plus || /^\+\d+,\d%$/.test(mv0.plus)))), JSON.stringify(mv0));
   const fs2 = await facesState(page);
-  check("dopo la scelta: volti rossi sotto l'eroe preso e verdi sotto il cambio (o sotto «resta»), come da matchups()", facesOk(fs2, enemyIds), JSON.stringify(fs2));
+  check("dopo la scelta: tacche sull'eroe preso (coerenti, visibili) e righe attento/punta coerenti", facesOk(fs2, enemyIds)
+    && (await band(page, 0).locator(".has5 .lv").count()) === 1, JSON.stringify(fs2));
   // «Chi soffrite di più»: con un eroe scelto compare nella lista degli avversari, 3 per ruolo, mai i bannati
   await page.locator("#them-strip .slot.empty").first().click();
   const th = await page.locator("#hs-grid .hero.top3").evaluateAll((bs) => bs.map((b) => ({ name: b.querySelector(".nm").textContent, n: Number(b.dataset.stars) })));
@@ -532,13 +545,13 @@ try {
   await unpick(page, 0);
   await toTop(page);
   check("«Non l'ho preso»: torna «PRENDI» e il posto vuoto, niente scelto", (await matchState(page)).picked[0] === null
-    && !(await band(page, 0).getAttribute("data-has")) && (await band(page, 0).locator(".go").count()) === 1 && (await portraitsOk(page)).length === 0);
+    && !(await band(page, 0).getAttribute("data-has")) && (await band(page, 0).locator(".prop5").count()) === 1 && (await portraitsOk(page)).length === 0);
   await page.locator("#them-strip .slot.empty").first().click();
   check("«Chi soffrite di più»: sparisce di nuovo senza eroi scelti né alleati", (await page.locator("#hs-grid .hero.top3").count()) === 0);
   await closeSheet(page);
   // «Come giocarla» del proposto, poi «Perché»
   const altName = (await favRows(page, 0))[0].name;
-  await band(page, 0).locator(".go").click();
+  await band(page, 0).locator(".prop5").click();
   await page.locator("#guide-dialog[open]").waitFor();
   check("«Come giocarla» del proposto (prima della scelta)", (await text(page, "#t-guide")).includes(altName), await text(page, "#t-guide"));
   await page.click("#guide-body .why-btn");
@@ -611,7 +624,7 @@ try {
     !/Alleati [+−]/.test(sumF) && !/Con Giulia/.test(sumF) && cardsTxt0.every((t) => !/Bene con (Fabio|Giulia)/.test(t)), sumF);
   await toTop(page);
   const recG = (await favRows(page, 1))[0].name;
-  await band(page, 1).locator(".done").click();
+  await band(page, 1).locator(".done5").click();
   const sumF2 = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
   await closeAll();
   check("dopo la scelta di Giulia: la sinergia con il suo eroe è «Con Giulia»", /Con Giulia [+−]/.test(sumF2), `${recG}: ${sumF2}`);
@@ -627,6 +640,14 @@ try {
   check("posto alleato Supporto: foglio sulla scheda Supporto, tacche azzurre da 1 a 5", as.kind === "allies" && as.tab === "Support" && sa.some((x) => x.n === 5)
     && sa.every((x) => x.n >= 1 && x.n <= 5 && x.cls.includes("st-allies") && x.color === "rgb(79, 193, 233)"), JSON.stringify(as));
   await tapSheet(page, "Lúcio");
+  await choosePlayer(page, 0, "Cassidy");
+  const usLv = await page.evaluate(() => { const seen = (lv) => { const i = lv.querySelector("i"); const r = i.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!hit && hit.closest(".tac") === lv; };
+    return [...document.querySelectorAll("#us-strip .slot.full")].map((x) => { const lv = x.querySelector(".lv.st-ours");
+      return { cls: x.className, n: lv ? Number(lv.dataset.stars) : 0, on: lv ? lv.querySelectorAll("i.on").length : -1, seen: !!lv && seen(lv) }; }); });
+  check("«La vostra squadra»: livello (tacche arancioni 1–5, visibili) su ogni posto pieno, giocatori e alleati", usLv.length === 2
+    && usLv.some((x) => /player/.test(x.cls)) && usLv.some((x) => /ally/.test(x.cls)) && usLv.every((x) => x.n >= 1 && x.n <= 5 && x.on === x.n && x.seen), JSON.stringify(usLv));
+  await unpick(page, 0);
   await toTop(page);
   const sumA = await openWhy(0).then(() => text(page, "#why-body .why-sum"));
   await closeAll();
@@ -643,14 +664,14 @@ try {
   // ruolo cambiato al volo
   await toTop(page);
   const fabioBefore = (await pickNames(page))[0];
-  await band(page, 1).locator(".role-btn").click();
+  await band(page, 1).locator(".role5").click();
   await toTop(page);
-  check("ruolo di Giulia cambiato al volo (Supporto → Danni)", (await band(page, 1).locator(".role-btn").textContent()) === "Danni");
+  check("ruolo di Giulia cambiato al volo (Supporto → Danni)", (await band(page, 1).locator(".role5").textContent()) === "Danni");
   const duo = await pickNames(page);
   check("con lo stesso ruolo eroi diversi", duo[0] !== duo[1] && roleOf(duo[0]) === "Damage" && roleOf(duo[1]) === "Damage", duo.join());
   check("il consiglio di Fabio non cambia per il ruolo di Giulia (salvo che serva un eroe diverso)", duo[0] === fabioBefore || duo[1] === fabioBefore,
     `${fabioBefore} → ${duo.join()}`);
-  await band(page, 1).locator(".role-btn").click();
+  await band(page, 1).locator(".role5").click();
   await toTop(page);
   await shot(page, "06-durante-partita");
 
@@ -678,7 +699,7 @@ try {
     /^#I tuoi preferiti F F #Tutti gli eroi( o)+$/.test(grp), grp);
   await tapSheet(page, "Brigitte");
   await toTop(page);
-  const swapCard = await band(page, 1).evaluate((b) => (b.dataset.move ? [b.querySelector(".gcol .nm").textContent] : []));
+  const swapCard = await band(page, 1).evaluate((b) => (b.dataset.move ? [b.querySelector(".prop5 .plate").textContent] : []));
   await openGuideOf(page, 1);
   const swapGuide = await page.locator("#guide-body .brief-row.k-swap .hchip").evaluateAll((cs) => cs.map((c) => c.lastChild.textContent));
   await page.click("#guide-dialog [data-close]");
@@ -776,8 +797,8 @@ try {
           check(`${nm}, ${k}: ritratto grande = eroe preso o posto vuoto; volti quadrati e coerenti con matchups()`, !bo.length
             && facesOk(fs, (m.enemies ?? []).map(String)), JSON.stringify({ bo, fs }));
           if (m.enemies.length) {
-            const tr = await pl.evaluate(() => [...document.querySelectorAll("#tips .tip")].map((t) => [t.scrollWidth - t.clientWidth, Math.round(t.getBoundingClientRect().height), /…/.test(t.textContent)]));
-            check(`${nm}, ${k}: «Come giocarla» in vista, righe su una riga sola e mai «…»`, tr.length >= 1 && tr.every(([o, hh, d]) => o <= 1 && hh <= 30 && !d), JSON.stringify(tr));
+            const tr = await pl.evaluate(() => [...document.querySelectorAll("#picks .in5 .tr5")].map((t) => [t.scrollWidth - t.clientWidth, Math.round(t.getBoundingClientRect().height), /…/.test(t.textContent)]));
+            check(`${nm}, ${k}: attento/punta nella card, righe da 48 px su una riga sola e mai «…»`, tr.length >= 1 && tr.every(([o, hh, d]) => o <= 1 && hh >= 48 && hh <= 56 && !d), JSON.stringify(tr));
           }
         }
         if (w === 390) await shot(pl, `07-${k}`);
@@ -788,7 +809,7 @@ try {
     const { ctx: cm, page: pm } = await seeded({}, P2, STATES.avversari);
     await pm.goto(BASE);
     await ready(pm);
-    await band(pm, 1).locator(".done").click();
+    await band(pm, 1).locator(".done5").click();
     const cover = await pm.evaluate(() => {
       const t = document.querySelector("#toast").getBoundingClientRect();
       const hits = [...document.querySelectorAll("#view-match button, .dock button")].filter((b) => !b.closest("#toast") && b.offsetParent
@@ -807,9 +828,9 @@ try {
     const { ctx: cm, page: pm } = await newPage({ serviceWorkers: "block" });
     await pm.goto(BASE);
     await ready(pm);
-    await band(pm, 0).locator(".done").click();
+    await band(pm, 0).locator(".done5").click();
     const first = (await matchState(pm)).picked[0];
-    await band(pm, 1).locator(".done").click();
+    await band(pm, 1).locator(".done5").click();
     const two = await pm.evaluate(() => ({ n: document.querySelectorAll("#toast").length, shown: [...document.querySelectorAll("#toast")].filter((t) => !t.hidden).length }));
     const msg = await text(pm, "#toast");
     await pm.locator("#toast .toast-btn").click();
@@ -829,8 +850,8 @@ try {
     await tapSheet(ps2, "Mercy");
     await ps2.waitForTimeout(100);
     // il tocco nel foglio non dà messaggi: ne serve uno → «✓» della barra minima non c'è, si usa «✓ PRESO» della seconda card dopo averla scorsa
-    await band(ps2, 1).locator(".done").scrollIntoViewIfNeeded();
-    await band(ps2, 1).locator(".done").click();
+    await band(ps2, 1).locator(".done5").scrollIntoViewIfNeeded();
+    await band(ps2, 1).locator(".done5").click();
     await ps2.evaluate(() => window.scrollTo(0, document.scrollingElement.scrollHeight));
     await ps2.waitForTimeout(150);
     const sm = await ps2.evaluate(() => { const t = document.querySelector("#toast").getBoundingClientRect(); const mini = document.querySelector("#mini").getBoundingClientRect();
@@ -871,12 +892,32 @@ try {
         if (lines > 1 || x.scrollWidth > x.clientWidth + 1) out.push(x.textContent);
       }
       return { out, overflow: document.documentElement.scrollWidth - innerWidth };
-    }, "#picks .gcol .nm, #picks .alt3 .nm, #picks .hn, .strip .plate, .strip .slot .rl, #map-name");
+    }, "#picks .t5 .plate, #picks .pn5, .strip .plate, .strip .slot .rl, #map-name");
     const b1 = await test();
-    b1.tips = await p11.evaluate(() => [...document.querySelectorAll("#tips .tip")].filter((t) => t.scrollWidth > t.clientWidth + 1 || t.getBoundingClientRect().height > 40
+    b1.tips = await p11.evaluate(() => [...document.querySelectorAll("#picks .in5 .tr5")].filter((t) => t.scrollWidth > t.clientWidth + 1 || t.getBoundingClientRect().height > 64
       || /…/.test(t.textContent)).map((t) => t.textContent));
     b1.out.push(...b1.tips);
     check("carattere al 130%: nomi di card, posti, «Come giocarla» e mappa interi, mai spezzati né tagliati", b1.out.length === 0 && b1.overflow <= 0, JSON.stringify(b1));
+    // tutti i 53 nomi nella tessera da 64 della card (e in quella delle alternative), al 130%
+    const all53 = await p11.evaluate(() => {
+      const out = [];
+      for (const sel of ["#picks .prop5 .t5, #picks .has5 .t5", "#picks .alt5 .t5"]) {
+        const src = document.querySelector(sel);
+        if (!src) { out.push(`manca ${sel}`); continue; }
+        const box = src.parentElement;
+        for (const b of document.querySelectorAll("#hs-grid .hero .nm")) {
+          const t = src.cloneNode(true);
+          box.append(t);
+          const pl = t.querySelector(".plate");
+          pl.textContent = b.textContent;
+          window.owcFitText(pl, { whole: true });
+          if (pl.scrollWidth > pl.clientWidth + 1) out.push(b.textContent);
+          t.remove();
+        }
+      }
+      return out;
+    });
+    check("carattere al 130%: i nomi dei 53 eroi interi nella tessera da 64 della card", !all53.length, all53.join(", "));
     await shot(p11, "15-carattere-130");
     // lista eroi al 130%: tutte le schede
     await p11.locator("#them-strip .slot.empty").first().click();
@@ -914,7 +955,7 @@ try {
           cards: document.querySelectorAll("#picks .band").length,
           compact: document.querySelectorAll("#picks .band.compact").length,
           moves: window.owcBands().map((b) => b.move),
-          firsts: [...document.querySelectorAll("#picks .band")].map((b) => (b.querySelector(".gcol .nm") ?? b.querySelector(".cmp .nm"))?.textContent ?? ""),
+          firsts: [...document.querySelectorAll("#picks .band")].map((b) => (b.querySelector(".prop5 .plate") ?? b.querySelector(".cmp .nm"))?.textContent ?? ""),
           colors: [...document.querySelectorAll("#picks .band")].map((x) => getComputedStyle(x, "::before").backgroundColor),
           us: !document.querySelector("#us-strip").hidden,
           usPlayers: [...document.querySelectorAll("#us-strip .slot.player")].map((s) => getComputedStyle(s, "::after").boxShadow),
@@ -963,6 +1004,23 @@ try {
         const after = await p9.evaluate(() => ({ bands: window.owcBands() }));
         check(`${label}: ogni card ha nel ritratto grande l'eroe preso`, after.bands.map((b) => nameOfId(b.has)).join() === taken.join() && (await portraitsOk(p9)).length === 0,
           JSON.stringify(after.bands));
+        if (n >= 3) {
+          const cl = await p9.evaluate(() => { const seen = (lv) => { const i = lv.querySelector("i"); const r = i.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!hit && hit.closest(".tac") === lv; };
+            return [...document.querySelectorAll("#picks .band.compact")].map((b) => ({ p: Number(b.dataset.player), move: !!b.dataset.move,
+              lv: [...b.querySelectorAll(".cmp .t5 .lv")].map((lv) => ({ n: Number(lv.dataset.stars), on: lv.querySelectorAll("i.on").length, seen: seen(lv) })),
+              h: Math.round(b.getBoundingClientRect().height) })); });
+          const first = cl[0];
+          await p9.locator(`#picks .band[data-player="${first.p}"] .cmp`).click();
+          const openN = Number(await p9.locator(`#picks .band[data-player="${first.p}"] .has5`).getAttribute("data-stars"));
+          check(`${label}: righe compatte con le tacche su [ha] e [proposta], coerenti con la card aperta, riga ≤ 64 px`,
+            cl.every((r) => r.lv.length === (r.move ? 2 : 1) && r.lv.every((x) => x.n >= 1 && x.n <= 5 && x.on === x.n && x.seen) && r.h <= 64)
+            && first.lv[0].n === openN, JSON.stringify({ cl, openN }));
+          check(`${label}: la card aperta (da compatta) è completa (tessere, ✓ o resta, attento/punta)`,
+            (await p9.locator(`#picks .band[data-player="${first.p}"] .has5 .t5`).count()) === 1
+            && (await p9.locator(`#picks .band[data-player="${first.p}"] .in5 .tr5`).count()) >= 1);
+          await p9.locator("#picks .band:not(.compact) .fold").click();
+        }
         check(`${label}: dopo la scelta un eventuale cambio («Passa a») non propone eroi presi dagli altri`,
           after.bands.every((b) => !b.move || !taken.includes(nameOfId(b.move))), JSON.stringify(after.bands));
         // barra minima (pagina scorsa o lista eroi aperta): tutti visibili, ognuno col suo eroe preso, non troppo alta
@@ -1005,14 +1063,14 @@ try {
     check("«Non l'ho preso»: l'eroe non è più segnato", (await matchState(p10)).picked[1] === null);
     await toTop(p10);
     const rec0 = (await favRows(p10, 0))[0].name;
-    await band(p10, 0).locator(".done").click();
+    await band(p10, 0).locator(".done5").click();
     await toTop(p10);
     check("un tocco su «✓ PRESO» e l'eroe è segnato come scelto", String((await matchState(p10)).picked[0]) === heroId(rec0)
       && (await band(p10, 0).getAttribute("data-has")) === heroId(rec0), rec0);
     await openPlayer(p10, 1);
     await closeSheet(p10);
     check("lista eroi chiusa con ×: niente segnato", (await matchState(p10)).picked[1] === null);
-    await band(p10, 1).locator(".go").click();
+    await band(p10, 1).locator(".prop5").click();
     await p10.locator("#guide-body .took-btn").click();
     check("dalla guida: «Segna: Lei l'ha preso»", (await matchState(p10)).picked[1] !== null
       && (await p10.locator("#guide-body .took-btn").getAttribute("aria-pressed")) === "true");
@@ -1021,7 +1079,7 @@ try {
     await unpick(p10, 1);
     await toTop(p10);
     const alt = (await favRows(p10, 1))[1];
-    await band(p10, 1).locator(`.alt3[data-id="${alt.id}"]`).click();
+    await band(p10, 1).locator(`.alt5[data-id="${alt.id}"]`).click();
     check("«oppure»: un tocco sull'alternativa la sceglie", String((await matchState(p10)).picked[1]) === alt.id, JSON.stringify(alt));
 
     // Profilo: si aggiungono giocatori fino a 5 e si tolgono; la partita si adegua
@@ -1168,7 +1226,7 @@ try {
     await ready(p14);
     const depth = () => p14.evaluate(() => history.state?.owc ?? 0);
     const d0 = await depth();
-    await p14.locator("#picks .go").first().click();
+    await p14.locator("#picks .prop5").first().click();
     await p14.locator("#guide-dialog[open]").waitFor();
     await p14.click("#guide-body .why-btn");
     await p14.locator("#why-dialog[open]").waitFor();
@@ -1232,7 +1290,7 @@ try {
     await p13.click(".tabs [data-view=match]");
     await setMap(p13, "King's Row");
     await toTop(p13);
-    const cardsTxt = await p13.locator(CARD).evaluateAll((cs) => cs.map((c) => [c.textContent + (c.querySelector(".go")?.getAttribute("aria-label") ?? ""),
+    const cardsTxt = await p13.locator(CARD).evaluateAll((cs) => cs.map((c) => [c.textContent + (c.querySelector(".prop5")?.getAttribute("aria-label") ?? ""),
       c.querySelectorAll("[data-stars]").length]));
     check("solo guide: nelle carte nessuna percentuale (neanche nelle etichette), valutazioni 1–5 presenti", cardsTxt.every(([t, n]) => n > 0 && !/\d+[.,]?\d*%/.test(t)), JSON.stringify(cardsTxt));
     await openEdit(p13);
@@ -1257,9 +1315,9 @@ try {
     const fsG = await facesState(p13);
     check("solo guide: i volti batte/teme vengono dalla teoria (matchups), solo tra gli avversari segnati", facesOk(fsG, ["Pharah", "Winston"].map(heroId)), JSON.stringify(fsG));
     const gStars = (await favRows(p13, 0))[0].n;
-    await band(p13, 0).locator(".done").click();
+    await band(p13, 0).locator(".done5").click();
     await toTop(p13);
-    const gCard = await band(p13, 0).evaluate((c) => ({ n: Number(c.querySelector(".has")?.dataset.stars ?? 0), text: c.textContent }));
+    const gCard = await band(p13, 0).evaluate((c) => ({ n: Number(c.querySelector(".has5")?.dataset.stars ?? 0), text: c.textContent }));
     check("solo guide: eroe scelto con le tacche (le stesse della striscia), senza percentuali",
       gCard.n === gStars && gCard.n >= 1 && !/\d+%/.test(gCard.text), JSON.stringify(gCard).slice(0, 300));
     await c13.close();
@@ -2112,7 +2170,7 @@ try {
       await pg.goto(BASE);
       await ready(pg);
       await pg.clock.runFor(31 * 60e3);
-      const row = band(pg, 0).locator(".oalts .alt3").first();
+      const row = band(pg, 0).locator(".alts5 .alt5").first();
       const want = await row.getAttribute("data-id");
       const b = await row.boundingBox();
       await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
@@ -2275,7 +2333,7 @@ try {
       const st = await matchState(pg);
       const ok = errs.length === 0 && await pg.locator(CARD).count() >= 1
         && (label !== "partita senza ban (formato vecchio)" || (st.mapSlug === "kings-row" && st.enemies.includes(heroId("Tracer"))))
-        && (label !== "giocatore col ruolo singolo di una volta" || (await pg.locator("#picks .role-btn").first().textContent()).trim() === "Tank");
+        && (label !== "giocatore col ruolo singolo di una volta" || (await pg.locator("#picks .role5").first().textContent()).trim() === "Tank");
       check(`stato salvato vecchio o rovinato (${label}): l'app parte e tiene i dati buoni`, ok, errs.join(" | "));
       errors.splice(0, errors.length, ...errors.filter((e) => !errs.includes(e)));
       await cx.close();
@@ -2330,7 +2388,7 @@ try {
       check("giocatore di nuovo in partita: il messaggio dice quale alleato non ci sta più", msg.includes("Fabio di nuovo in partita") && msg.includes(itn("Tracer")), msg);
       // scelta di Fabio, poi si toglie Terzo dal Profilo, poi "Annulla" della scelta
       await pg.evaluate(() => window.scrollTo(0, 0));
-      await band(pg, 0).locator(".done").click();
+      await band(pg, 0).locator(".done5").click();
       const before = await matchState(pg);
       await pg.click('.tabs [data-view="profile"]');
       const rm = pg.locator("#players .card").nth(2).locator(".card-head button");
@@ -2365,7 +2423,7 @@ try {
       await cx.route("**/theory.json*", (r) => r.fulfill({ status: 404, body: "" }));
       await pg.goto(BASE);
       await ready(pg);
-      const rec = (await band(pg, 0).locator(".go").getAttribute("aria-label")) + (await pg.locator("#picks .go").count());
+      const rec = (await band(pg, 0).locator(".prop5").getAttribute("aria-label")) + (await pg.locator("#picks .prop5").count());
       const wf = await pg.locator("#warn-full").textContent();
       check("«solo guide» senza le guide caricate: consigli dalle statistiche (stima in %) e avviso giallo",
         /%/.test(rec) && await pg.locator("#warn").isVisible() && /guide non sono state caricate/.test(wf), `${rec} | ${wf}`);

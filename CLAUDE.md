@@ -280,6 +280,25 @@ esserci di più. Fonti degli altri eroi spesso vecchie (Icy Veins era OW1, 2022-
   carattere di sistema al 130% (visto sull'emulatore). e2e "carattere al 130%" lo imita;
   l'e2e ora fallisce se un nome va a capo a metà parola (prima "Symmetra"/"Widowmaker" si spezzavano).
 
+## Scheda del giocatore «tutto nella card» (v5, 2026-11-25, scelta dall'utente tra 5 versioni) — ha la precedenza sulla «Card» e su «Come giocarla in vista» della sezione qui sotto
+
+L'utente: «la mia squadra e gli eroi scelti non hanno il livello»; scheda e «Come giocarla» «non sembrano parte della UI
+dell'app» e i consigli erano troppo piccoli. Il designer ha proposto 5 versioni sull'app vera (tavole T19, T20; `HANDOFF-v5.md`
+in scratchpad `ux/`); l'utente ha scelto la 2.
+- **Una sola tessera in tutta l'app** (come posti e lista eroi): ritratto pieno, nome nella fascia scura in basso, **tacche del
+  livello 1–5 in alto a sinistra** (sopra i bordi), bordo interno: colore del giocatore = eroe che ha, arancione = proposta,
+  verde = batte, rosso = teme.
+- **Scheda**: intestazione [nome] … [PASSA A +x% / PRENDI 54%]; riga [eroe che HA o posto vuoto col ruolo] › [proposta] …
+  [✓ CAMBIO / PRESO], oppure «✓ resta»; prima della scelta «oppure» + 2 tessere + ruolo; sotto un filetto, DENTRO la scheda,
+  **«attento» / «punta»** (righe da 48 px, testo 16, volti 40; solo avversari segnati; un tocco = guida completa).
+  Il blocco separato `#tips` non esiste più. Spariti per scelta: «CASSIDY 46%» sotto il ritratto e la riga dei volti verdi
+  di chi batte la proposta (restano in «Come giocarla»/«Perché»).
+- **Livello** (tacche) su: eroe preso, proposta, alternative, posti di «La vostra squadra» (giocatori e alleati), righe compatte
+  da 3 a 5 giocatori (tessere da 44) e barra minima. «Se confermi» della foto resta coi volti senza tacche.
+- Collaudo: e2e 573 controlli (tacche coerenti con `data-stars` e mai coperte dal bordo, consigli dentro la scheda del
+  giocatore giusto, righe ≥ 48 px, niente scorrimento con 2 giocatori ai tre schermi, 53 nomi interi nella tessera al 130%).
+  Service worker **v13**. Non serve un'APK nuova.
+
 ## Partita in due schermate (v4, 2026-11-25, richieste dell'utente dopo la prova sul telefono) — ha la precedenza su «Ridisegno Tabellone» qui sotto
 
 L'utente ha provato il «Tabellone» e ha chiesto, in ordine: più aria, meno elementi «disturbanti», mappa che si capisca

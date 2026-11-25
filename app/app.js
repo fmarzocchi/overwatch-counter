@@ -665,8 +665,9 @@ function renderMini() {
       "data-has": has ? sid(has.id) : "", onclick: () => (target ? openGuide(i, target) : openSheet({ kind: "player", i })),
       "aria-label": `${p.name}: ${has ? `ha ${has.name}` : "non ha ancora scelto"}${mv && !mv.stay ? `, proposta ${mv.hero.name}` : ""}. Tocca per come giocarla`,
     },
-    has ? heroFace(has) : emptyFace(match.roles[i]),
-    mv && !mv.stay ? [icon("chevron", "ic ar"), heroFace(mv.hero, "sm prop"), el("b", { class: "nm" }, mv.hero.name)]
+    // stesse tessere della card (piccole, con le tacche del livello)
+    has ? tile(has, { cls: "pc xs", n: choiceStars(i).get(sid(has.id)) ?? 3, name: false }) : emptyTile(match.roles[i], "xs"),
+    mv && !mv.stay ? [icon("chevron", "ic ar"), tile(mv.hero, { cls: "prop xs", n: choiceStars(i).get(sid(mv.hero.id)) ?? 3, lv: "st-ow", name: false }), el("b", { class: "nm" }, mv.hero.name)]
       : el("span", { class: "ok", "aria-hidden": "true" }, icon("check"))));
   }
   miniTops = tops;
@@ -707,30 +708,21 @@ function choose(i, id) {
   });
 }
 
-// ---------- card del giocatore (v4) ----------
-// [eroe che HA (o posto vuoto)] › [proposta, bordo arancione] NOME +x% / 55% [✓ CAMBIO/PRESO]; «✓ resta su X».
-// Volti tutti quadrati (raggio 4) con il bordo di stato interno: verde = batte, rosso = teme (solo avversari SEGNATI,
-// da matchups()), arancione = proposta. Parole minime: nome, verbo, «CASSIDY 46%», teme, batte, oppure.
-// Da 3 giocatori in su: card compatte di una riga, una aperta alla volta.
+// ---------- card del giocatore (v5, «tutto nella card») ----------
+// Tutto è una TESSERA, come nei posti e nella lista eroi: ritratto pieno, nome nella fascia in basso, tacche del livello
+// in alto a sinistra (sopra il bordo), bordo interno di 3 px: colore del giocatore = l'eroe che HA, arancione = proposta,
+// verde = batte, rosso = teme. Intestazione [giocatore] [PASSA A +x% / PRENDI 54%]; riga [ha o posto vuoto] › [proposta]
+// … [✓ CAMBIO/PRESO] (oppure «✓ resta»); prima della scelta «oppure» + 2 tessere + ruolo; sotto un filetto, DENTRO la card,
+// «attento»/«punta» (righe da 48, volti 40, testo 16; un tocco = guida completa). Da 3 giocatori: righe compatte con le
+// stesse tessere (piccole, con le tacche), se ne apre una alla volta.
 let expanded = -1;
-const muFaces = (xs, cls) => (xs.length ? el("span", { class: `mu ${cls}` }, el("span", { class: "mul", "aria-hidden": "true" }, cls === "good" ? "batte" : "teme"), xs.map((x) => {
-  const t = `${cls === "good" ? "batte" : "teme"} ${x.hero.name}`;
-  return el("span", { class: `mf ${cls}`, role: "img", "aria-label": t, title: t, "data-id": sid(x.hero.id) }, face(x.hero));
-})) : null);
-const muLabel = (m) => `${m.strong.length ? `, batte ${m.strong.map((x) => x.hero.name).join(", ")}` : ""}${m.weak.length ? `, teme ${m.weak.map((x) => x.hero.name).join(", ")}` : ""}`;
-// volti della card (solo tra gli avversari SEGNATI, da matchups()): sotto l'eroe preso chi teme (max 2); sotto la proposta chi
-// batte (max 2) e, prima della scelta, anche chi teme; con «resta» chi batte già. Senza avversari nessun volto.
-function facesOf(i) {
-  const none = { hasBad: [], propGood: [], propBad: [], stayGood: [] };
-  const top = lastDuo?.lists?.[i]?.[0];
-  const mv = moveOf(i);
-  if (!top || !mv || !match.enemies.length) return none;
-  if (!top.picked) { const m = matchups(top, 2); return { ...none, propGood: m.strong, propBad: m.weak }; }
-  if (mv.stay) return { ...none, stayGood: matchups(top, 3).strong };
-  return { ...none, hasBad: matchups(top, 2).weak, propGood: mv.row ? matchups(mv.row, 3).strong : [] };
-}
-// per il collaudo: per ogni giocatore in partita gli id attesi dei volti (verdi e rossi)
-window.owcFaces = () => present().map((i) => Object.fromEntries(Object.entries(facesOf(i)).map(([k, xs]) => [k, xs.map((x) => sid(x.hero.id))])));
+// tessera: {cls: "pc"|"prop"|"good"|"bad" + misura, n: tacche (null = senza), lv: classe delle tacche, name: targhetta col nome}
+const tile = (h, { cls = "", n = null, lv = "st-ours", name = true } = {}) => el("span", { class: `t5${cls ? ` ${cls}` : ""}`, "aria-hidden": "true", "data-id": sid(h.id) },
+  face(h), n != null ? tac(n, `lv ${lv}`) : null, name ? plate(heroName(h)) : null);
+// posto vuoto del giocatore: bordo del suo colore, icona e nome del ruolo
+const emptyTile = (role, cls = "") => el("span", { class: `t5 empty pcb${cls ? ` ${cls}` : ""}`, "aria-hidden": "true" },
+  icon(ROLE_ICON[role] ?? "plus"), /sm|xs/.test(cls) ? null : el("span", { class: "rl" }, ROLE_IT[role] ?? "Tutti"));
+const vsLabel = (m) => `${m.strong.length ? `, batte ${m.strong.map((x) => x.hero.name).join(", ")}` : ""}${m.weak.length ? `, teme ${m.weak.map((x) => x.hero.name).join(", ")}` : ""}`;
 function band(p, i, compact) {
   const rows = lastDuo.lists[i] ?? [];
   const top = rows[0];
@@ -738,78 +730,79 @@ function band(p, i, compact) {
   const has = took ? top.hero : null; // = match.picked[i]
   const role = took ? top.hero.role : match.roles[i];
   const mv = moveOf(i);
+  const move = mv && !mv.stay ? mv : null;
   const style = `--pc: var(--p${i})`;
-  const attrs = (cls, label) => ({ class: `band${cls}`, style, "data-player": String(i), "data-has": has ? sid(has.id) : "",
-    "data-move": mv && !mv.stay ? sid(mv.hero.id) : "", "aria-label": label });
-  const F = facesOf(i);
+  const sec = (cls, label, ...kids) => el("section", { class: `band${cls}`, style, "data-player": String(i), "data-has": has ? sid(has.id) : "",
+    "data-move": move ? sid(move.hero.id) : "", "aria-label": label }, ...kids);
   const nStars = (h) => choiceStars(i).get(sid(h.id)) ?? 3;
   const plus = mv?.sw ? gainTxt(mv.from, mv.row) : null;
-  const doneBtn = (small) => el("button", {
-    type: "button", class: `done${small ? " sm" : ""}`, "data-id": sid(mv.hero.id), onclick: () => choose(i, sid(mv.hero.id)),
-    "aria-label": `${p.name} ${took ? "è passato a" : "ha preso"} ${mv.hero.name}`,
-  }, icon("check"), small ? null : el("span", { class: "dl", "aria-hidden": "true" }, took ? "Cambio" : "Preso"));
-  const hasFace = has ? heroFace(has, "pc") : el("span", { class: "hface none", "aria-hidden": "true" }, icon("plus"));
+  const pct = move && !took ? pctShort(move.row) : null;
+  const done = (small) => (move ? el("button", {
+    type: "button", class: `done5${small ? " sm" : ""}`, "data-id": sid(move.hero.id), onclick: () => choose(i, sid(move.hero.id)),
+    "aria-label": `${p.name} ${took ? "è passato a" : "ha preso"} ${move.hero.name}`,
+  }, icon("check"), small ? null : el("span", { class: "dl", "aria-hidden": "true" }, took ? "Cambio" : "Preso")) : null);
+  const hasLabel = has ? `${p.name} ha ${has.name}${pctShort(top) ? ` (${pctShort(top)})` : ""}, livello ${starsLabel(nStars(has))}` : `${p.name} non ha ancora scelto`;
   if (compact) {
-    return el("section", attrs(" compact", `${p.name}${has ? `, ha ${has.name}` : ", non ha ancora scelto"}`),
+    return sec(" compact", `${p.name}${has ? `, ha ${has.name}` : ", non ha ancora scelto"}`,
       el("button", {
         type: "button", class: "cmp", onclick: () => { expanded = i; renderPicks(); },
-        "aria-label": `${p.name}: ${has ? `ha ${has.name}` : "non ha ancora scelto"}${mv && !mv.stay ? `, proposta ${mv.hero.name}` : ""}. Tocca per aprire`,
+        "aria-label": `${hasLabel}${move ? `, proposta ${move.hero.name}, livello ${starsLabel(nStars(move.hero))}` : ""}. Tocca per aprire`,
       },
-      el("span", { class: "pn", "aria-hidden": "true" }, p.name), hasFace,
-      mv && !mv.stay ? [icon("chevron", "ic ar"), heroFace(mv.hero, "prop sm"), el("span", { class: "nm", "aria-hidden": "true" }, mv.hero.name)]
+      el("span", { class: "pn", "aria-hidden": "true" }, p.name),
+      has ? tile(has, { cls: "pc sm", n: nStars(has), name: false }) : emptyTile(role, "sm"),
+      move ? [icon("chevron", "ic ar"), tile(move.hero, { cls: "prop sm", n: nStars(move.hero), name: false }), el("span", { class: "nm", "aria-hidden": "true" }, heroName(move.hero))]
         : el("span", { class: "ok", "aria-hidden": "true" }, icon("check"), "resta")),
-      mv && !mv.stay ? doneBtn(true) : null);
+      done(true));
   }
   const fold = compact === false && present().length >= 3
     ? el("button", { type: "button", class: "fold", "aria-label": `Chiudi la card di ${p.name}`, onclick: () => { expanded = -1; renderPicks(); } }, icon("chevron", "ic up"))
     : null;
-  const roleBtn = !took ? el("button", { type: "button", class: "role-btn", onclick: () => nextRole(i), "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare` },
-    icon(role ? ROLE_ICON[role] : "plus"), el("span", {}, role ? ROLE_IT[role] : "Tutti")) : null;
-  const verb = !mv ? null : mv.stay ? null : took ? "Passa a" : "Prendi";
-  const head = el("div", { class: "chead", "aria-hidden": "true" }, el("span", { class: "pn" }, p.name), verb ? el("span", { class: "verb" }, verb) : null);
-  if (!top) {
-    return el("section", attrs(" empty", `${p.name}: nessun eroe disponibile`), fold, head,
-      el("div", { class: "crow" }, el("div", { class: "hcol" }, hasFace), el("span", { class: "none-msg" }, "Nessun eroe disponibile")));
-  }
+  const head = el("div", { class: "h5" }, el("span", { class: "pn5", "aria-hidden": "true" }, p.name),
+    move ? el("span", { class: "vb5", "aria-hidden": "true" }, took ? "Passa a" : "Prendi") : null,
+    plus ? el("span", { class: "plus5", "aria-hidden": "true" }, plus) : pct ? el("span", { class: "pct5", "aria-hidden": "true" }, pct) : null, fold);
+  if (!top) return sec(" b5card empty", `${p.name}: nessun eroe disponibile`, head,
+    el("div", { class: "r5" }, emptyTile(role), el("span", { class: "none-msg" }, "Nessun eroe disponibile")));
   const hasBtn = el("button", {
-    type: "button", class: `has${has ? "" : " none"}`, onclick: () => openSheet({ kind: "player", i }), "data-stars": has ? String(nStars(has)) : null,
-    "aria-label": has ? `${p.name} ha ${has.name}${pctShort(top) ? ` (${pctShort(top)})` : ""}${F.hasBad.length ? `, teme ${F.hasBad.map((x) => x.hero.name).join(", ")}` : ""}. Tocca per come giocarla, annullare o cambiarlo`
-      : `${p.name} non ha ancora scelto: tocca per scegliere`,
-  }, hasFace);
-  // colonna sinistra: ritratto, «CASSIDY 46%», «teme» + volti; prima della scelta «oppure» + 2 alternative
+    type: "button", class: "has5", onclick: () => openSheet({ kind: "player", i }), "data-stars": has ? String(nStars(has)) : null,
+    "aria-label": `${hasLabel}. ${has ? "Tocca per come giocarla, annullare o cambiarlo" : "Tocca per scegliere"}`,
+  }, has ? tile(has, { cls: "pc", n: nStars(has) }) : emptyTile(role));
+  let mid;
+  if (move) {
+    mid = [icon("chevron", "ic ar5"), el("button", {
+      type: "button", class: "prop5", onclick: () => openGuide(i, move.hero), "data-stars": String(nStars(move.hero)),
+      "aria-label": `Proposta: ${move.hero.name}, livello ${starsLabel(nStars(move.hero))}${move.row && move.row.estimate != null ? `, stima ${est(move.row, i)}` : ""}${plus ? `, ${plus}` : ""}`
+        + `${match.enemies.length && move.row ? vsLabel(matchups(move.row, 3)) : ""}. Tocca per come giocarla`,
+    }, tile(move.hero, { cls: "prop", n: nStars(move.hero), lv: "st-ow" }))];
+  } else mid = el("span", { class: "stay5", "aria-label": `Resta su ${has?.name ?? ""}` }, icon("check"), "resta");
+  // prima della scelta: «oppure» + 2 alternative (preferiti del ruolo con «solo preferiti») e il ruolo
   let alts = [];
   if (!took) {
     const favs = profile.onlyFavorites ? favoritesFor(i, role) : [];
     const best = rows.map((r) => sid(r.hero.id)).filter((id) => !takenBy(i).has(id));
     alts = (favs.length ? favs : best).filter((id) => id !== sid(top.hero.id)).slice(0, 2);
   }
-  const hcol = el("div", { class: "hcol" }, hasBtn,
-    has ? el("span", { class: "hname", "aria-hidden": "true" }, el("b", { class: "hn" }, has.name), pctShort(top) ? el("small", {}, pctShort(top)) : null) : null,
-    muFaces(F.hasBad, "bad"),
-    alts.length ? el("div", { class: "oalts" }, el("span", { class: "o", "aria-hidden": "true" }, "oppure"), el("div", { class: "orow" }, alts.map((id) => el("button", {
-      type: "button", class: "alt3", "data-id": id, onclick: () => choose(i, id), "data-stars": String(choiceStars(i).get(id) ?? 3),
-      "aria-label": `Oppure ${byId[id].name}. Tocca: l'ha preso ${p.name}`,
-    }, face(byId[id]), el("span", { class: "nm", "aria-hidden": "true" }, byId[id].name))))) : null);
-  let right;
-  if (mv?.stay) {
-    right = el("div", { class: "staybox" }, el("span", { class: "stay3", "aria-label": `Resta su ${has.name}` }, icon("check"), "resta"), muFaces(F.stayGood, "good"));
-  } else if (mv) {
-    const num = plus ? el("span", { class: "plus", "aria-hidden": "true" }, plus) : !took && pctShort(mv.row) ? el("span", { class: "pct", "aria-hidden": "true" }, pctShort(mv.row)) : null;
-    right = [icon("chevron", "ic ar"),
-      el("div", { class: "pcol" },
-        el("button", {
-          type: "button", class: "go", onclick: () => openGuide(i, mv.hero), "data-stars": String(nStars(mv.hero)),
-          "aria-label": `Proposta: ${mv.hero.name}${mv.row && mv.row.estimate != null ? `, stima ${est(mv.row, i)}` : ""}${plus ? `, ${plus}` : ""}${muLabel({ strong: F.propGood, weak: F.propBad })}. Tocca per come giocarla`,
-        }, heroFace(mv.hero, "prop"), el("span", { class: "gcol" }, el("span", { class: "nm", "aria-hidden": "true" }, mv.hero.name), num)),
-        el("div", { class: "mus" }, muFaces(F.propGood, "good"), muFaces(F.propBad, "bad"))),
-      el("div", { class: "rcol" }, doneBtn(false), roleBtn)];
-  }
+  const roleBtn = !took ? el("button", { type: "button", class: "role5", onclick: () => nextRole(i), "aria-label": `Ruolo di ${p.name}: ${role ? ROLE_IT[role] : "qualsiasi"}. Tocca per cambiare` },
+    icon(role ? ROLE_ICON[role] : "plus"), el("span", {}, role ? ROLE_IT[role] : "Tutti")) : null;
+  const altRow = !took ? el("div", { class: "alts5" }, alts.length ? el("span", { class: "o5", "aria-hidden": "true" }, "oppure") : null,
+    alts.map((id) => el("button", {
+      type: "button", class: "alt5", "data-id": id, onclick: () => choose(i, id), "data-stars": String(nStars(byId[id])),
+      "aria-label": `Oppure ${byId[id].name}, livello ${starsLabel(nStars(byId[id]))}. Tocca: l'ha preso ${p.name}`,
+    }, tile(byId[id], { cls: "alt", n: nStars(byId[id]) }))), roleBtn) : null;
+  // «attento» / «punta» dentro la card (solo con avversari segnati)
+  const t = match.enemies.length ? tipsFor(i) : null;
+  const inside = t && t.rows.length ? el("button", {
+    type: "button", class: "in5", "data-player": String(i), onclick: () => openGuide(i, t.hero),
+    "aria-label": `${t.rows.map((r) => `${r.label} ${r.heroes.map((h) => h.name).join(" e ")}${r.text ? `, ${r.text}` : ""} (${r.kind === "teoria" ? "teoria" : "dati"})`).join("; ")}. Tocca per come giocare ${t.hero.name}`,
+  }, t.rows.map((r) => el("span", { class: `tr5 k-${r.key}`, "data-player": String(i), "aria-hidden": "true" },
+    el("span", { class: `tl5 ${r.cls}` }, r.label),
+    r.heroes.map((h) => tile(h, { cls: `f40 ${r.cls}`, name: false })),
+    el("span", { class: "tx5", "data-alt": r.alt }, el("span", { class: `mk ${r.kind === "teoria" ? "theory" : "data"}` }), r.text)))) : null;
   const note = lastDuo.notes?.[i];
-  return el("section", attrs(`${took ? " took" : " choosing"}${fold ? " open" : ""}`, `${p.name}${has ? ` ha ${has.name}` : ": da scegliere"}`),
-    fold, head, el("div", { class: "crow" }, hcol, right),
+  return sec(` b5card${took ? " took" : " choosing"}${fold ? " open" : ""}`, `${p.name}${has ? ` ha ${has.name}` : ": da scegliere"}`,
+    head, el("div", { class: "r5" }, hasBtn, mid, el("span", { class: "sp5" }), done(false)), altRow, inside,
     note ? el("p", { class: "why warn-note" }, note) : null);
 }
-// per il collaudo: per ogni card l'eroe che ha (ritratto grande) e la proposta
+// per il collaudo: per ogni card l'eroe che ha (tessera di sinistra) e la proposta
 window.owcBands = () => $$("#picks .band").map((b) => ({ player: Number(b.dataset.player), has: b.dataset.has || null, move: b.dataset.move || null }));
 
 function renderPicks() {
@@ -838,13 +831,13 @@ function renderPicks() {
           out.length ? 4500 : 2000);
       } }, el("span", { class: "p-dot", "aria-hidden": "true" }), profile.players[i].name, icon("plus")))] : null);
   fitBands();
+  fitTips();
   renderStrips();
-  renderTips();
   renderMini();
   updateMini();
 }
 function fitBands() {
-  for (const t of $$("#picks .gcol .nm, #picks .alt3 .nm, #picks .hn, #picks .cmp .nm, #picks .cmp .pn, #us-strip .plate, #them-strip .plate, #start-team .plate, #start-bans .plate, .strip .slot .rl"))
+  for (const t of $$("#picks .t5 .plate, #picks .pn5, #picks .cmp .nm, #picks .cmp .pn, #us-strip .plate, #them-strip .plate, #start-team .plate, #start-bans .plate, .strip .slot .rl"))
     fitText(t, { whole: true });
 }
 
@@ -907,7 +900,7 @@ function teamStrip(box, { start = false } = {}) {
         return el("button", {
           type: "button", class: `slot player${h ? " full" : " empty"}`, style: `--pc: var(--p${c.i})`, "data-player": String(c.i), "data-id": c.id ?? "",
           "aria-label": `${p.name}${h ? `: ${h.name}` : ": non ha ancora scelto"}. Tocca per scegliere`, onclick: () => openSheet({ kind: "player", i: c.i }),
-        }, h ? face(h) : icon("plus"), plate(p.name, "pcn"));
+        }, h ? face(h) : icon("plus"), h ? tac(choiceStars(c.i).get(c.id) ?? 3, "lv st-ours") : null, plate(p.name, "pcn"));
       }
       const h = c.id ? byId[c.id] : null;
       const k = allies.indexOf(c);
@@ -915,7 +908,7 @@ function teamStrip(box, { start = false } = {}) {
         type: "button", class: `slot ally${h ? " full" : " empty"}`, "data-role": c.role, "data-id": c.id ?? "",
         "aria-label": h ? `Alleato ${h.name}: tocca per cambiarlo o toglierlo` : `Alleato (${ROLE_IT[c.role]}): tocca per sceglierlo`,
         onclick: () => openSheet({ kind: "allies", role: h ? h.role : c.role, current: c.id, slot: k }),
-      }, h ? [face(h), plate(heroName(h))] : emptyCell(c.role));
+      }, h ? [face(h), tac(choiceStars(-1).get(c.id) ?? 3, "lv st-ours"), plate(heroName(h))] : emptyCell(c.role));
     })));
 }
 function renderStrips() {
@@ -971,40 +964,18 @@ function tipsFor(i) {
   }
   return { hero, rows: out };
 }
-function renderTips() {
-  const box = $("#tips");
-  const act = present();
-  box.hidden = !data || !match.enemies.length;
-  if (box.hidden) { box.replaceChildren(); return; }
-  fill(box, el("h3", {}, "Come giocarla"), act.map((i) => {
-    const t = tipsFor(i);
-    if (!t || !t.rows.length) return null;
-    // un blocco per giocatore = un pulsante (≥ 48 px): il tocco apre il suo «Come giocarla»
-    const say = t.rows.map((r) => `${r.label} ${r.heroes.map((h) => h.name).join(" e ")}${r.text ? `, ${r.text}` : ""} (${r.kind === "teoria" ? "teoria" : "dati"})`).join("; ");
-    return el("button", { type: "button", class: "tipgrp", style: `--pc: var(--p${i})`, "data-player": String(i), onclick: () => openGuide(i, t.hero),
-      "aria-label": `${profile.players[i].name}: ${say}. Tocca per come giocarla` }, t.rows.map((r, k) => el("span", {
-      class: `tip k-${r.key}`, "data-player": String(i),
-    },
-    el("span", { class: "tpn", "aria-hidden": "true" }, k ? "" : profile.players[i].name),
-    el("span", { class: `tl ${r.cls}`, "aria-hidden": "true" }, r.label),
-    r.heroes.map((h) => el("span", { class: `mf ${r.cls}`, "aria-hidden": "true", "data-id": sid(h.id) }, face(h))),
-    el("span", { class: "tx", "aria-hidden": "true", "data-alt": r.alt }, el("span", { class: `mk ${r.kind === "teoria" ? "theory" : "data"}` }), r.text))));
-  }));
-  fitTips();
-}
-// una riga sola, mai «…»: se le parole non ci stanno si tolgono (restano etichetta e volti)
+// una riga sola, mai «…»: se le parole non ci stanno si usa la forma corta; se nemmeno così, la riga non si mostra
 function fitTips() {
-  for (const t of $$("#tips .tip")) {
-    const tx = $(".tx", t);
+  for (const t of $$("#picks .in5 .tr5")) {
+    const tx = $(".tx5", t);
     if (!tx || t.scrollWidth <= t.clientWidth + 1) continue;
     tx.lastChild.textContent = tx.dataset.alt; // ripiego corto
-    if (t.scrollWidth > t.clientWidth + 1) t.remove(); // nemmeno così: la riga non si mostra (mai tagliata)
+    if (t.scrollWidth > t.clientWidth + 1) t.remove();
   }
-  for (const g of $$("#tips .tipgrp")) if (!$(".tip", g)) g.remove();
-  for (const g of $$("#tips .tipgrp")) { const f = $(".tip .tpn", g); if (f && !f.textContent) f.textContent = profile.players[Number(g.dataset.player)].name; }
+  for (const g of $$("#picks .in5")) if (!$(".tr5", g)) g.remove();
 }
-window.owcTips = () => $$("#tips .tip").map((t) => ({ player: Number(t.dataset.player), key: t.classList.contains("k-threat") ? "threat" : "target",
-  ids: $$(".mf", t).map((f) => f.dataset.id), text: $(".tx", t)?.textContent ?? "" }));
+window.owcTips = () => $$("#picks .in5 .tr5").map((t) => ({ player: Number(t.dataset.player), key: t.classList.contains("k-threat") ? "threat" : "target",
+  ids: $$(".t5", t).map((f) => f.dataset.id), text: $(".tx5", t)?.textContent ?? "" }));
 
 // ---------- ban consigliati (inizio partita) ----------
 // Con la mappa scelta, prima di segnare gli avversari o col selettore su "Ban": 3 per ruolo (banSuggestions), eroi forti su quella mappa e

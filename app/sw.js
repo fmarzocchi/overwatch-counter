@@ -1,7 +1,7 @@
 // Service worker: guscio dell'app network-first (sempre la versione pubblicata; la copia salvata solo offline:
 // prima si aggiornava in sottofondo e un'apertura poteva mescolare file vecchi e nuovi), data.json network-first
 // con ripiego sulla copia salvata se offline, icone degli eroi cache-first.
-const VERSION = "v12";
+const VERSION = "v13";
 const SHELL = `owc-shell-${VERSION}`;
 const DATA = "owc-data";
 const IMG = "owc-img";
