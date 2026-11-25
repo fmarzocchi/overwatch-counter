@@ -1,7 +1,7 @@
 // Service worker: guscio dell'app network-first (sempre la versione pubblicata; la copia salvata solo offline:
 // prima si aggiornava in sottofondo e un'apertura poteva mescolare file vecchi e nuovi), data.json network-first
 // con ripiego sulla copia salvata se offline, icone degli eroi cache-first.
-const VERSION = "v9";
+const VERSION = "v10";
 const SHELL = `owc-shell-${VERSION}`;
 const DATA = "owc-data";
 const IMG = "owc-img";
@@ -10,6 +10,12 @@ const SHELL_FILES = ["./", "index.html", "style.css", "app.js", "recommend.js", 
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
+});
+
+// La pagina lo richiede se questo service worker resta "in attesa": Chromium rimanda l'attivazione finché quello vecchio
+// ha richieste in corso e a volte non riprova da solo (visto nel collaudo su GitHub: `waiting` per più di 25 secondi).
+self.addEventListener("message", (e) => {
+  if (e.data === "owc-skip") self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {

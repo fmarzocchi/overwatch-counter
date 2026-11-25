@@ -2519,13 +2519,31 @@ function reloadSafe() {
   if (document.visibilityState === "hidden") return !photoPending();
   return !$$("dialog").some((d) => d.open) && !photoAbort && !toastAction() && !typing() && !fingersDown() && !refreshing;
 }
+// Il service worker nuovo è installato ma non ha ancora preso la pagina (vedi sw.js, "owc-skip"): glielo si richiede
+// subito, poche volte a distanza di secondi, e a ogni momento libero (foglio chiuso, campo lasciato…).
+let waitingSW = null;
+function nudgeWaiting() {
+  if (!waitingSW || waitingSW.state !== "installed") return;
+  try { waitingSW.postMessage("owc-skip"); } catch { /* già attivo o scartato */ }
+}
+function watchWorker(w) {
+  if (!w) return;
+  const seen = () => {
+    if (w.state !== "installed" || !navigator.serviceWorker.controller) return;
+    waitingSW = w;
+    [0, 1500, 5000, 12000].forEach((ms) => setTimeout(nudgeWaiting, ms));
+  };
+  w.addEventListener("statechange", seen);
+  seen();
+}
 function maybeReload() {
+  if (!reloadWanted) nudgeWaiting();
   if (!reloadWanted || reloading || !reloadSafe()) return;
   reloading = true;
   location.reload();
 }
 // per il collaudo: se non ricarica, cosa lo impedisce
-window.owcReloadState = () => ({ wanted: reloadWanted, safe: reloadSafe(), photo: !!photoAbort, toast: toastAction(), typing: typing(),
+window.owcReloadState = () => ({ wanted: reloadWanted, waitingSW: waitingSW ? waitingSW.state : null, safe: reloadSafe(), photo: !!photoAbort, toast: toastAction(), typing: typing(),
   fingers: fingersDown(), refreshing });
 
 async function autoRefresh() {
@@ -2575,7 +2593,11 @@ async function start() {
       reloadWanted = true;
       maybeReload();
     });
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      watchWorker(reg.waiting);
+      watchWorker(reg.installing);
+      reg.addEventListener("updatefound", () => watchWorker(reg.installing));
+    }).catch(() => {});
   }
   try {
     const r = await fetch("names_it.json");

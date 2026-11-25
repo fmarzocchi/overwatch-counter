@@ -324,7 +324,11 @@ La logica (recommend/theory/photo/state) non è cambiata: cambia la resa. Collau
 - **Foto**: riepilogo con lo stesso aspetto e, sopra i pulsanti, **«Se confermi»**: per ogni giocatore «[eroe che ha] 48% →
   PASSA A [volto] SYMMETRA +7,8%» o «RESTA» (calcolato con `compute()` su una copia della partita, senza effetti).
 - **APK**: `windowSoftInputMode="adjustResize"` (risultati sopra la tastiera) → serve l'APK nuova. `test-on-emulator.sh`:
-  tocchi su Profilo (89%/92%), FOTO (50%/92%) e «✓ PRESO» della prima fascia (90%/20%). Service worker **v9**.
+  tocchi su Profilo (89%/92%), FOTO (50%/92%) e «✓ PRESO» della prima fascia (90%/20%). Service worker **v10**.
+- **Service worker «in attesa»**: su GitHub il controllo «la versione nuova prende il posto (ricarica)» falliva ogni tanto
+  con il worker nuovo fermo in `waiting` (diagnosi stampata dal controllo: `wanted:false`, `waiting:true`): Chromium
+  rimanda l'attivazione finché il vecchio ha richieste in corso. Ora la pagina glielo richiede (`watchWorker`/
+  `nudgeWaiting` → messaggio `owc-skip` → `skipWaiting()` in sw.js) subito, dopo 1,5/5/12 s e a ogni momento libero.
 - Ganci per i test: `window.owcBands()`, `owcSearching()`, `owcPhotoPlan()`, `owcFitText(el, {whole})`.
 - Tolti per progetto: riga del motivo senza avversari (resta in «Perché»), volti piccoli batte/teme (ora a parole),
   «Scegline un altro» in riga (ora nel foglio), sottotitolo «Forti su questa mappa» dei ban, titolo «Partita».
